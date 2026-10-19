@@ -1,5 +1,6 @@
 """Tests for the editor server."""
 
+import asyncio
 import http.client
 import socket
 import threading
@@ -10,8 +11,9 @@ from pathlib import Path
 
 import pytest
 import uvicorn
-from sample_nodes import add
+from sample_nodes import add, show
 from starlette.types import ASGIApp
+from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
@@ -24,6 +26,7 @@ WASM_MAGIC = b"\x00asm\x01\x00\x00\x00"
 REQUEST_ID_7 = 7
 REQUEST_ID_8 = 8
 INVALID_PAYLOAD = 1007
+SILENCE = 0.3
 
 
 class _Server(uvicorn.Server):
@@ -302,3 +305,90 @@ def test_a_run_request_returns_the_outcome_of_every_node(web_dir: Path) -> None:
         result = RunResult.model_validate_json(websocket.recv())
     assert [(o.node, o.status) for o in result.outcomes] == [("n1", "error")]
     assert result.outcomes[0].error == "input 'a' has no value"
+
+
+def test_a_script_edit_reaches_a_page_that_is_already_open(
+    web_dir: Path,
+) -> None:
+    """`app.add_node` after the page connected: the page gets a new snapshot."""
+    assert web_dir.exists()
+    app = App([add, show])
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        first = app.add_node(add, x=1.0, y=2.0)
+        pushed = Snapshot.model_validate_json(websocket.recv(timeout=5))
+        second = app.add_node(show, x=3.0, y=4.0)
+        websocket.recv(timeout=5)
+        app.add_link(first, "out", second, "value")
+        linked = Snapshot.model_validate_json(websocket.recv(timeout=5))
+    assert [n.id for n in pushed.graph.nodes] == ["n1"]
+    assert [(n.source.node, n.target.node) for n in linked.graph.links] == [
+        ("n1", "n2")
+    ]
+
+
+def test_an_edit_in_one_page_reaches_the_other_page_only(web_dir: Path) -> None:
+    """The sender gets only its ack; the other page gets a snapshot."""
+    assert web_dir.exists()
+    app = App([add])
+    request = (
+        '{"op": "edit", "id": 1, "edit": {"kind": "add_node", "id": "n1",'
+        ' "node_type": "add", "x": 3.0, "y": 4.0}}'
+    )
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as sender, connect(url) as watcher:
+            sender.recv()
+            watcher.recv()
+            sender.send(request)
+            Ack.model_validate_json(sender.recv(timeout=5))
+            pushed = Snapshot.model_validate_json(watcher.recv(timeout=5))
+            with pytest.raises(TimeoutError):
+                sender.recv(timeout=SILENCE)
+    assert [n.id for n in pushed.graph.nodes] == ["n1"]
+
+
+def test_a_closed_page_is_forgotten(web_dir: Path) -> None:
+    """After one page closes, a script edit still reaches the other."""
+    assert web_dir.exists()
+    app = App([add])
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as stays:
+            stays.recv()
+            with connect(url) as leaves:
+                leaves.recv()
+            # The server notices the close in its own time; edit until it has.
+            app.add_node(add, x=0.0, y=0.0)
+            pushed = Snapshot.model_validate_json(stays.recv(timeout=5))
+    assert len(pushed.graph.nodes) == 1
+
+
+class _GoneSender:
+    """A page whose socket closed before the message could be sent."""
+
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+
+    async def send_text(self, data: str) -> None:
+        assert data == "hello"
+        raise self.error
+
+
+@pytest.mark.parametrize(
+    "error", [WebSocketDisconnect(code=1006), RuntimeError("closed")]
+)
+def test_the_sender_task_ends_quietly_when_the_page_is_gone(
+    error: Exception,
+) -> None:
+    """A send to a closed socket stops the task; nothing is raised."""
+
+    async def scenario() -> None:
+        connection = server.Connection()
+        connection.send("hello")
+        await connection.pump(_GoneSender(error))
+
+    asyncio.run(scenario())

@@ -109,25 +109,51 @@ fn a_reject_keeps_what_was_already_acknowledged() {
 }
 
 #[test]
-fn a_new_snapshot_discards_everything_pending() {
+fn a_new_snapshot_replaces_the_confirmed_graph() {
     let mut replica = replica();
-    replica.submit(add_node("n1")).unwrap();
+    replica.reset(snapshot_with(&["n7"]));
+    assert_eq!(node_ids(&replica), ["n7"]);
+    assert_eq!(replica.pending_len(), 0);
+}
+
+fn snapshot_with(ids: &[&str]) -> Snapshot {
     let fixture: Fixture = serde_json::from_str(CASES).unwrap();
-    let kept = element_51_core::PlacedNode {
-        id: "n7".into(),
-        node_type: "add".into(),
-        x: 5.0,
-        y: 6.0,
-    };
-    replica.reset(Snapshot {
+    let nodes = ids
+        .iter()
+        .map(|id| element_51_core::PlacedNode {
+            id: (*id).into(),
+            node_type: "add".into(),
+            x: 5.0,
+            y: 6.0,
+        })
+        .collect();
+    Snapshot {
         version: Snapshot::VERSION,
         node_types: fixture.node_types,
         graph: Graph {
-            nodes: vec![kept],
+            nodes,
             links: vec![],
         },
-    });
-    assert_eq!(node_ids(&replica), ["n7"]);
+    }
+}
+
+#[test]
+fn a_new_snapshot_keeps_the_pending_edits_that_still_apply() {
+    let mut replica = replica();
+    replica.submit(add_node("n2")).unwrap();
+    replica.reset(snapshot_with(&["n1"]));
+    assert_eq!(node_ids(&replica), ["n1", "n2"]);
+    assert_eq!(replica.pending_len(), 1);
+    assert!(replica.ack(1));
+    assert_eq!(node_ids(&replica), ["n1", "n2"]);
+}
+
+#[test]
+fn a_new_snapshot_drops_a_pending_edit_that_no_longer_applies() {
+    let mut replica = replica();
+    replica.submit(add_node("n1")).unwrap();
+    replica.reset(snapshot_with(&["n1"]));
+    assert_eq!(node_ids(&replica), ["n1"]);
     assert_eq!(replica.pending_len(), 0);
 }
 

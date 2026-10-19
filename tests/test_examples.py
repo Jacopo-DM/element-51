@@ -2,6 +2,7 @@
 
 import importlib.util
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -58,6 +59,7 @@ EXPECTED: dict[str, Expected] = {
         ("n3", "ok", {"q": 3, "r": 2}),
         ("n4", "ok", {"out": "3 remainder 2"}),
     ],
+    "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
     "a9_class_nodes.py": [
         ("n1", "ok", {"out": "hello, world!"}),
         ("n2", "ok", {"out": "HELLO, WORLD!"}),
@@ -73,6 +75,23 @@ EXPECTED: dict[str, Expected] = {
 }
 
 
+def load(name: str) -> ModuleType:
+    """Import an example file.
+
+    Returns
+    -------
+    ModuleType
+        The example as a module.
+    """
+    path = EXAMPLES / name
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def build(name: str) -> App:
     """Load an example file and call its `build_app`.
 
@@ -81,13 +100,7 @@ def build(name: str) -> App:
     App
         The app the example builds.
     """
-    path = EXAMPLES / name
-    spec = importlib.util.spec_from_file_location(path.stem, path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    app: App = module.build_app()
+    app: App = load(name).build_app()
     return app
 
 
@@ -114,4 +127,20 @@ def test_the_error_example_reports_each_kind_of_failure() -> None:
         "n3": "ZeroDivisionError: float division by zero",
         "n6": "input 'x' has no value",
         "n7": "returned str, expected float",
+    }
+
+
+def test_the_push_example_grows_a_running_total() -> None:
+    """Each step adds two nodes and two links; the total counts up."""
+    example = load("a10_live_push.py")
+    app = example.build_app()
+    example.keep_adding(app, steps=2, pause=0.0)
+    result = app.execute()
+    totals = {o.node: o.outputs["out"] for o in result.outcomes}
+    assert totals == {
+        "n1": 1.0,
+        "n2": 1.0,
+        "n3": 2.0,
+        "n4": 1.0,
+        "n5": 3.0,
     }

@@ -1,5 +1,7 @@
 """Tests for the live session."""
 
+from typing import TYPE_CHECKING
+
 import pytest
 from sample_nodes import add, show
 
@@ -7,6 +9,9 @@ from element_51.edits import AddLink, AddNode, EditError
 from element_51.model import Link, PortRef, PortType
 from element_51.nodes import Registered, node
 from element_51.session import App
+
+if TYPE_CHECKING:
+    from element_51.protocol import Snapshot
 
 
 def test_snapshot_lists_node_types_in_registration_order() -> None:
@@ -136,3 +141,35 @@ def test_execute_reports_instead_of_raising() -> None:
     app.add_link(source, "out", target, "a")
     statuses = [o.status for o in app.execute().outcomes]
     assert statuses == ["ok", "error"]
+
+
+def test_script_edits_tell_every_subscriber_the_new_snapshot() -> None:
+    """`add_node` and `add_link` call each listener with the new state."""
+    app = App([add, show])
+    heard: list[Snapshot] = []
+    app.subscribe(heard.append)
+    first = app.add_node(add, x=0.0, y=0.0)
+    second = app.add_node(show, x=1.0, y=1.0)
+    app.add_link(first, "out", second, "value")
+    assert [len(s.graph.nodes) for s in heard] == [1, 2, 2]
+    assert [len(s.graph.links) for s in heard] == [0, 0, 1]
+    assert heard[-1] == app.snapshot()
+
+
+def test_a_refused_edit_tells_nobody() -> None:
+    """A listener hears about changes, not about attempts."""
+    app = App([add])
+    heard: list[Snapshot] = []
+    app.subscribe(heard.append)
+    with pytest.raises(EditError):
+        app.add_link("n1", "out", "n2", "a")
+    assert heard == []
+
+
+def test_apply_is_silent() -> None:
+    """The browser's route, `apply`, is silent; the server tells the others."""
+    app = App([add])
+    heard: list[Snapshot] = []
+    app.subscribe(heard.append)
+    app.apply(AddNode(id="n1", node_type="add", x=0.0, y=0.0))
+    assert heard == []

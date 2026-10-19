@@ -12,7 +12,8 @@ the ignore list in CLAUDE.md.
 - `examples/a1_serve.py` to `a6_port_types.py`: served graphs, one idea each
   (blank canvas, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
-  `a9_class_nodes.py` (class-form nodes). `a7_script_api.py`: the graph from plain
+  `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
+  graph while the page is open). `a7_script_api.py`: the graph from plain
   Python, no browser. `a0_hello_world.py` is the project template, not an
   example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
@@ -29,8 +30,8 @@ the ignore list in CLAUDE.md.
 | `nodes` | `@node` and the `Node` base class turn a typed function or a class into a node type, with its defaults and output model | `node`, `Node` (`run`, `call`; `node_type`, `defaults`, `output_model` built per subclass), `NodeFunction` (`call`, `defaults`, `output_model`), `Registered` (protocol), `port_type` |
 | `engine` | runs a graph in dependency order | `run_graph`, `RunResult`, `NodeOutcome` (`outputs` by port) |
 | `protocol` | messages in both directions | `Snapshot`, `EditRequest`, `RunRequest`, `ClientMessage`, `Ack`, `Reject` (and `engine.RunResult`) |
-| `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.apply`, `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
-| `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app)`, `serve(app, port)`, async `reply_to`, `WEB_DIR`, `HOST` |
+| `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.subscribe`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
+| `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app)`, `serve(app, port)`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
 
 Import direction: `server` imports `session`, `protocol`, `edits`, `engine`;
 `session` imports `nodes`, `protocol`, `edits`, `engine`, `model`; `engine`
@@ -42,7 +43,7 @@ imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 
 | Crate | Purpose | Public interface |
 | --- | --- | --- |
-| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `EditError` (`kind`), `Replica` (`new`, `reset`, `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, PortHit, Side, Rect, constants}` |
+| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `EditError` (`kind`), `Replica` (`new`, `reset` (keeps pending edits that still apply), `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, PortHit, Side, Rect, constants}` |
 | `element-51-web` | WASM layer: websocket, canvas drawing (`draw`), mouse, menu and Run button handling, error banner | `start()` (runs on load) |
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never
@@ -59,7 +60,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a9` file and runs its graph).
+`test_examples.py` (loads every `examples/a1` to `a10` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
@@ -68,6 +69,6 @@ Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
 
 ## Not built yet
 
-Save and load (`store.py`), Python pushing messages to open browsers, node
+Save and load (`store.py`), node
 moving and deleting, value editing, undo, the theme, the nested menu. The
 planned layout is in DESIGN.md under Specs.

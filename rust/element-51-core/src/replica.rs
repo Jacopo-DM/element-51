@@ -3,6 +3,8 @@
 //! An edit applies at once and waits for Python's answer. Python confirms it
 //! (`ack`) or refuses it (`reject`). A refused edit is rolled back, together
 //! with any later pending edit that no longer applies without it.
+//! A new snapshot from Python (another page, or a script, changed the graph)
+//! replaces the confirmed state and keeps the pending edits that still apply.
 
 use crate::{Edit, EditError, EditRequest, Graph, NodeType, Snapshot, apply_edit};
 
@@ -27,12 +29,12 @@ impl Replica {
         }
     }
 
-    /// Replace everything with a new snapshot. Pending edits are dropped.
+    /// Replace the confirmed state with a new snapshot. Pending edits stay,
+    /// except those that no longer apply to it.
     pub fn reset(&mut self, snapshot: Snapshot) {
         self.node_types = snapshot.node_types;
-        self.local = snapshot.graph.clone();
         self.confirmed = snapshot.graph;
-        self.pending.clear();
+        self.replay();
     }
 
     /// What the user sees: confirmed state plus pending edits.

@@ -59,27 +59,27 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 5 (Tier 1 is complete, the graph runs, nodes can have several
+tasks 1 to 5 and 6a (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: the push task (6a below), once the user approves it in words; then
-task 6, save and load.
+Next step: task 6, save and load.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 5, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 6a, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 109 passed, 100% coverage, about 3 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 43 tests.
+- pytest: 119 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 45 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
   names; a long text value is trimmed with an ellipsis to fit its row; a node
   added in the browser is still there after a reload, with the run values
-  cleared.
+  cleared; with `a10_live_push.py` an open page shows each node the script
+  adds, with no reload, and Run then gives 2.0 to 6.0.
 
 ## Tasks
 
@@ -97,18 +97,10 @@ rollback).
 
 ### Goal `skeleton`, Tier 2 (ordered by value over risk plus cost)
 
-Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes) and 5
-(reload keeps the graph; no product code was needed).
+Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
+(reload keeps the graph; no product code was needed) and 6a (Python pushes to
+open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md).
 
-6a. **Python pushes to open browsers** (proposed 2026-10-19, NOT yet approved;
-   the user chose a separate task before task 6 but has not approved this one
-   in words). A registry of open websockets in `server.py`; `App` changes
-   (`add_node`, `add_link`, and later `load`) send a fresh `snapshot` to every
-   connected page. Also closes the known problem that a script's edits, or a
-   second tab's, show only after a reload. Risk medium: concurrent sockets,
-   and the ack/replay logic in `Replica` must cope with a snapshot arriving
-   while edits are pending. Cost about 100 lines Python, 20 Rust. Verify:
-   pytest with two websocket clients; by hand with two tabs.
 6. **Save and load.** `store.py`, versioned JSON, `app.save` and `app.load`
    (`load` pushes a snapshot through task 6a). Criterion 6. Risk low. Cost
    about 120 lines. Verify: round-trip pytest; an old version number is
@@ -166,9 +158,7 @@ Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes) and 5
 
 Oldest first.
 
-1. (2026-10-19) Approve task 6a (Python pushes to open browsers) in words.
-   Decided 2026-10-19: it is its own task, before task 6.
-2. (2026-10-19) The spec for goal `antimony-theme` is not written. Before task
+1. (2026-10-19) The spec for goal `antimony-theme` is not written. Before task
    11, propose the architecture (a `Theme` in `element-51-core`, all drawing
    through it, the menu tree) with alternatives, and get approval. The reference
    material is in DESIGN.md under Specs.
@@ -183,11 +173,10 @@ Oldest first.
   the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
   start (the `web/` folder is missing); the tests avoid this with a fake folder.
 - `element-51-web` has no automated test; it is checked by hand in the browser.
-- Python does not push edits to a connected browser. A script's `app.add_node`,
-  or a second tab's edits, reach a browser only on reload. Two clients can
-  therefore propose the same node id; Python rejects the second and the first
-  browser shows the reason, and a reload shows the other node. Task 6a (not yet
-  approved) fixes it.
+- `App` is not thread-safe. A script that edits while the server runs should do
+  so from one thread. A browser edit and a script edit that propose the same
+  node id race; Python refuses the later one and the browser may show the
+  reason, or may not, if the snapshot that makes the edit moot arrives first.
 - Links cannot yet be removed, and a node cannot be moved or deleted (task 7).
 - Every node of a type shares the function's defaults; there is no per-node
   value until task 8, and the browser does not show the defaults.

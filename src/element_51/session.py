@@ -1,6 +1,6 @@
 """The live session: node types and the graph being edited."""
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 from element_51.edits import AddLink, AddNode, apply_edit
 from element_51.engine import RunResult, run_graph
@@ -32,6 +32,7 @@ class App:
                 raise ValueError(msg)
             self.node_functions[name] = function
         self.graph = Graph(nodes=(), links=())
+        self._listeners: list[Callable[[Snapshot], None]] = []
 
     def add_node(self, function: Registered, *, x: float, y: float) -> str:
         """Place a new node of a registered type.
@@ -61,10 +62,11 @@ class App:
             raise ValueError(msg)
         node_id = self.graph.next_id()
         self.apply(AddNode(id=node_id, node_type=name, x=x, y=y))
+        self._changed()
         return node_id
 
     def apply(self, edit: AddNode | AddLink) -> None:
-        """Apply an edit from a script or from the browser.
+        """Apply an edit from the browser, without telling listeners.
 
         An edit the rules refuse raises `EditError` and leaves the graph
         unchanged.
@@ -104,6 +106,28 @@ class App:
                 target=PortRef(node=target, port=target_port),
             )
         )
+        self._changed()
+
+    def subscribe(self, listener: Callable[[Snapshot], None]) -> None:
+        """Call `listener` with a new snapshot after each change made here.
+
+        Only changes made through `add_node` and `add_link` count. An edit
+        applied with `apply` (the browser's route) is silent, because the
+        server answers the sender itself and tells the other pages.
+
+        Parameters
+        ----------
+        listener
+            Called with the whole state after each change. It may be called
+            from any thread, so it must not block.
+        """
+        self._listeners.append(listener)
+
+    def _changed(self) -> None:
+        """Tell every listener the state after a change."""
+        snapshot = self.snapshot()
+        for listener in self._listeners:
+            listener(snapshot)
 
     def execute(self) -> RunResult:
         """Run the graph and report what happened to every node.

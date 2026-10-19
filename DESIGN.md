@@ -237,6 +237,18 @@ theme, with the credit in the README.
 - A reload shows the graph Python holds and nothing else: pending edits that
   were not yet acknowledged are dropped with the old page, and run results are
   not kept in Python, so values disappear until the next Run (task 5).
+- Python pushes to open pages (task 6a). `App.add_node` and `App.add_link`
+  call each subscribed listener with a fresh snapshot; `App.apply`, the
+  browser's route, is silent. The server keeps a `Hub` of open pages, each
+  with an outbox queue and one sender task, so a script on another thread can
+  push safely (`call_soon_threadsafe`). After a browser edit is acknowledged
+  the server sends a snapshot to every other page and not to the sender, which
+  already has the edit. Whole snapshots, not edit deltas: simple, and the
+  graph is small. The browser's `Replica::reset` keeps pending edits that
+  still apply to the new snapshot and drops the rest, so a push never wipes
+  what the user just did. `App` itself is not thread-safe: a script that
+  edits while the server runs should do so from one thread, and a browser
+  edit racing a script edit with the same id is refused with a reason.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -264,6 +276,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 6a: Python pushes to open pages | `a10_live_push.py` adds nodes every two seconds and an already-open page shows each at once, no reload; Run then gives 2.0 to 6.0; 119 Python tests at 100%, 45 Rust tests; two-client pytest (script edit reaches an open page; a browser edit reaches the other page only) |
 | 2026-10-19 | task 5: reload keeps the graph | no product code needed: every connection already gets a snapshot (task 1); added tests for edits made through the socket surviving a reconnect and for two open pages; by hand: a node added in the browser survives a reload; 109 Python tests at 100% |
 | 2026-10-19 | task 4: several outputs, class-form nodes | `div_mod` shows `q` and `r` in the browser; class nodes run and list by class name; 107 Python tests at 100%, 43 Rust tests; 3 new link cases for a multi-output node run on both sides |
 | 2026-10-19 | task 3: run the graph | engine runs in dependency order; failed nodes red, downstream skipped, independent branches still run; 86 Python tests at 100% (including all examples), 42 Rust tests; by hand: errors and arithmetic examples in the browser |
