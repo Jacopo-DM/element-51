@@ -61,10 +61,11 @@
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 5 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 6, save and load.
-Nothing is uncommitted. The branches `task-4-multi-output` and `task-5-reload`
-are merged into `main` but not deleted (deleting branches needs the user's
-say-so). There is no remote, so nothing is pushed.
+Next step: the push task (6a below), once the user approves it in words; then
+task 6, save and load.
+Nothing is uncommitted except `.vscode/settings.json`, where an editor
+extension added a setting; the user chose to leave it. There is no remote, so
+nothing is pushed.
 
 ## Baseline
 
@@ -99,16 +100,21 @@ rollback).
 Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes) and 5
 (reload keeps the graph; no product code was needed).
 
+6a. **Python pushes to open browsers** (proposed 2026-10-19, NOT yet approved;
+   the user chose a separate task before task 6 but has not approved this one
+   in words). A registry of open websockets in `server.py`; `App` changes
+   (`add_node`, `add_link`, and later `load`) send a fresh `snapshot` to every
+   connected page. Also closes the known problem that a script's edits, or a
+   second tab's, show only after a reload. Risk medium: concurrent sockets,
+   and the ack/replay logic in `Replica` must cope with a snapshot arriving
+   while edits are pending. Cost about 100 lines Python, 20 Rust. Verify:
+   pytest with two websocket clients; by hand with two tabs.
 6. **Save and load.** `store.py`, versioned JSON, `app.save` and `app.load`
-   pushing a snapshot. Criterion 6. Risk low. Cost about 120 lines. Verify:
-   round-trip pytest; an old version number is rejected with a clear error.
-   Two things to know before starting. (1) `app.load` must reach a browser that
-   is already open, so Python has to push a message to connected websockets
-   (a registry of open connections in `server.py`). That does not exist yet and
-   is the same mechanism as the first known problem below; the user decides
-   whether it is built inside this task or as its own task. (2) The file needs a
-   `format_version` field and a clear error for a version it does not read;
-   task 8 adds per-node values, which will extend the format.
+   (`load` pushes a snapshot through task 6a). Criterion 6. Risk low. Cost
+   about 120 lines. Verify: round-trip pytest; an old version number is
+   rejected with a clear error. The file needs a `format_version` field and a
+   clear error for a version it does not read; task 8 adds per-node values,
+   which will extend the format.
 7. **Pan, zoom, move, select, delete.** Hit-testing and view maths in
    `element-51-core`, input handling in `element-51-web`. Risk low. Cost about 400
    lines Rust. Verify: native tests for hit-testing and zoom maths; by hand.
@@ -160,9 +166,8 @@ Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes) and 5
 
 Oldest first.
 
-1. (2026-10-19) Python pushing to open browsers: build it inside task 6 (which
-   needs it for `app.load`) or as its own task? It would also fix the known
-   problem that a script's edits, or a second tab's, only show after a reload.
+1. (2026-10-19) Approve task 6a (Python pushes to open browsers) in words.
+   Decided 2026-10-19: it is its own task, before task 6.
 2. (2026-10-19) The spec for goal `antimony-theme` is not written. Before task
    11, propose the architecture (a `Theme` in `element-51-core`, all drawing
    through it, the menu tree) with alternatives, and get approval. The reference
@@ -181,8 +186,8 @@ Oldest first.
 - Python does not push edits to a connected browser. A script's `app.add_node`,
   or a second tab's edits, reach a browser only on reload. Two clients can
   therefore propose the same node id; Python rejects the second and the first
-  browser shows the reason, and a reload shows the other node. Not in the task
-  list; proposed as a follow-up.
+  browser shows the reason, and a reload shows the other node. Task 6a (not yet
+  approved) fixes it.
 - Links cannot yet be removed, and a node cannot be moved or deleted (task 7).
 - Every node of a type shares the function's defaults; there is no per-node
   value until task 8, and the browser does not show the defaults.
