@@ -1,11 +1,11 @@
 [workspace]
 resolver = "3"
-members = ["patchbay-core", "patchbay-web"]
+members = ["element-51-core", "element-51-web"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 
 [profile.release]
 opt-level = "s"

@@ -1,5 +1,5 @@
 [package]
-name = "patchbay-core"
+name = "element-51-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

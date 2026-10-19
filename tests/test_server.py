@@ -81,7 +81,7 @@ def web_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         The folder, holding `index.html` and one `.wasm` file.
     """
     (tmp_path / "index.html").write_text("<p>element-51</p>")
-    (tmp_path / "patchbay_web_bg.wasm").write_bytes(WASM_MAGIC)
+    (tmp_path / "element_51_web_bg.wasm").write_bytes(WASM_MAGIC)
     monkeypatch.setattr(server, "WEB_DIR", tmp_path)
     return tmp_path
 
@@ -100,7 +100,7 @@ def test_wasm_is_served_with_the_wasm_type(web_dir: Path) -> None:
     """Browsers only stream-compile `.wasm` sent as application/wasm."""
     assert web_dir.exists()
     with running(server.asgi_app()) as port:
-        status, content_type, body = fetch(port, "/patchbay_web_bg.wasm")
+        status, content_type, body = fetch(port, "/element_51_web_bg.wasm")
     assert (status, content_type, body) == (
         HTTPStatus.OK,
         "application/wasm",

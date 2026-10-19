@@ -2,7 +2,7 @@
 
 Runs `cargo build` for `wasm32-unknown-unknown` with the rustup `stable`
 toolchain, then `wasm-bindgen`, then copies the output and `index.html` into
-`src/patchbay/web/`. Run it from the repo root: `uv run python
+`src/element_51/web/`. Run it from the repo root: `uv run python
 tools/build_wasm.py`.
 
 Notes
@@ -23,10 +23,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RUST = ROOT / "rust"
-WEB = ROOT / "src" / "patchbay" / "web"
+WEB = ROOT / "src" / "element_51" / "web"
 WASM_BINDGEN = ROOT / "tools" / "bin" / "wasm-bindgen"
 TARGET = "wasm32-unknown-unknown"
-CRATE = "patchbay_web"
+CRATE = "element_51_web"
 
 
 def rustup_which(tool: str) -> Path:
@@ -52,7 +52,7 @@ def rustup_which(tool: str) -> Path:
 
 
 def build() -> None:
-    """Compile the crate, run wasm-bindgen and fill `src/patchbay/web/`."""
+    """Compile the crate, run wasm-bindgen and fill `src/element_51/web/`."""
     cargo = rustup_which("cargo")
     rustc = rustup_which("rustc")
     env = os.environ | {
@@ -79,7 +79,7 @@ def build() -> None:
         ],
         check=True,
     )
-    shutil.copy(RUST / "patchbay-web" / "static" / "index.html", WEB)
+    shutil.copy(RUST / "element-51-web" / "static" / "index.html", WEB)
 
 
 if __name__ == "__main__":

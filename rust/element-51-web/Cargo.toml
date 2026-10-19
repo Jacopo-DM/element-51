@@ -1,5 +1,5 @@
 [package]
-name = "patchbay-web"
+name = "element-51-web"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
-patchbay-core = { path = "../patchbay-core" }
+element-51-core = { path = "../element-51-core" }
 wasm-bindgen = "=0.2.129"
 
 [dependencies.web-sys]
