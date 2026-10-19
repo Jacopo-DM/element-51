@@ -1,10 +1,12 @@
 [project]
-name = "patchbay"
+name = "element-51"
 version = "0.1.0"
-description = "Add your description here"
+description = "Build browser node-editor GUIs from Python, with a Rust/WASM canvas."
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.md"
 authors = [
-    { name = "jmdm", email = "jacopo.michele.dimatteo@gmail.com" }
+    { name = "jmdm" }
 ]
 requires-python = ">=3.13"
 dependencies = [

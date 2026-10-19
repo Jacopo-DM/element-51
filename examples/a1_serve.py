@@ -3,12 +3,12 @@
 Build the browser layer first: `uv run python tools/build_wasm.py`.
 """
 
-import patchbay
+import element_51
 
 
 def main() -> None:
     """Entry point."""
-    patchbay.serve()
+    element_51.serve()
 
 
 if __name__ == "__main__":  # pragma: no cover

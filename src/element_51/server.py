@@ -19,7 +19,7 @@ def asgi_app() -> Starlette:
     Returns
     -------
     Starlette
-        The app. It serves the files under `src/patchbay/web/`, which
+        The app. It serves the files under `src/element_51/web/`, which
         `tools/build_wasm.py` fills.
     """
     return Starlette(

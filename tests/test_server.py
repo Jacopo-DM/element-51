@@ -12,7 +12,7 @@ import pytest
 import uvicorn
 from starlette.types import ASGIApp
 
-from patchbay import server
+from element_51 import server
 
 WASM_MAGIC = b"\x00asm\x01\x00\x00\x00"
 
@@ -73,14 +73,14 @@ def fetch(port: int, path: str) -> tuple[int, str, bytes]:
 
 @pytest.fixture
 def web_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Build a fake output folder in place of `src/patchbay/web/`.
+    """Build a fake output folder in place of `src/element_51/web/`.
 
     Returns
     -------
     Path
         The folder, holding `index.html` and one `.wasm` file.
     """
-    (tmp_path / "index.html").write_text("<p>patchbay</p>")
+    (tmp_path / "index.html").write_text("<p>element-51</p>")
     (tmp_path / "patchbay_web_bg.wasm").write_bytes(WASM_MAGIC)
     monkeypatch.setattr(server, "WEB_DIR", tmp_path)
     return tmp_path
@@ -93,7 +93,7 @@ def test_index_page_is_served_at_root(web_dir: Path) -> None:
         status, content_type, body = fetch(port, "/")
     assert status == HTTPStatus.OK
     assert content_type.startswith("text/html")
-    assert body == b"<p>patchbay</p>"
+    assert body == b"<p>element-51</p>"
 
 
 def test_wasm_is_served_with_the_wasm_type(web_dir: Path) -> None:
