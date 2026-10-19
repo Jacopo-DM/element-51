@@ -292,8 +292,13 @@ theme, with the credit in the README.
 - Rounded look (extra task 17, the user's request): node cards have corners
   of radius 8 (graph units), the header takes them by clipping to the card
   path, the selection outline follows the rounded path, and wires have round
-  caps and joins and are 3 units thick (4.5 when selected), thickened from 2 at
-  the user's request. Port squares and input boxes were left as they were by the
+  caps and joins and were then copied from the Antimony screenshots at the user's
+  request: a wire takes the colour of the port it leaves (numbers `#edc27b`,
+  text `#94a95f`, sampled from the screenshots; bool stays blue), is 3.5 units
+  thick (5 when selected; measured as about 7 screenshot pixels on a card 450
+  pixels wide against our 220 units), and the curve keeps horizontal ends with
+  a reach of half the horizontal gap, at least 20 units (was 40). The port
+  markers take the same two colours. Port squares and input boxes were left as they were by the
   user's choice. The radius is a constant in `draw.rs` until the Theme exists.
 - Undo and redo (task 9). The history lives in `element-51-core`
   (`History`). For each edit the user makes, it records the edit and the edits

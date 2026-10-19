@@ -145,7 +145,7 @@ pub fn node_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option
 /// The four control points of the curve a link is drawn along: it leaves
 /// `from` and arrives at `to` horizontally.
 pub fn wire_controls(from: (f64, f64), to: (f64, f64)) -> [(f64, f64); 4] {
-    let reach = ((to.0 - from.0).abs() / 2.0).max(40.0);
+    let reach = ((to.0 - from.0).abs() / 2.0).max(20.0);
     [from, (from.0 + reach, from.1), (to.0 - reach, to.1), to]
 }
 

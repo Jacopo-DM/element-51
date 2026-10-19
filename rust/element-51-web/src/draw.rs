@@ -18,14 +18,13 @@ const HEADER_SKIPPED: &str = "#3f3f3f";
 const TEXT_DIM: &str = "#808080";
 const VALUE: &str = "#a6e3a6";
 const TEXT: &str = "#d0d0d0";
-const WIRE: &str = "#8fa04f";
 const SELECTED: &str = "#e8e8e8";
 const ALLOWED: &str = "#6fcf6f";
 const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
 /// How thick a wire is, and a selected one, in graph units.
-const WIRE_WIDTH: f64 = 3.0;
-const WIRE_WIDTH_SELECTED: f64 = 4.5;
+const WIRE_WIDTH: f64 = 3.5;
+const WIRE_WIDTH_SELECTED: f64 = 5.0;
 /// How round the corners of a node card are, in graph units.
 const CARD_RADIUS: f64 = 8.0;
 const VALUE_GAP: f64 = 8.0;
@@ -65,10 +64,26 @@ pub struct Frame<'a> {
     pub run: Option<&'a RunResult>,
 }
 
+/// A wire is drawn in the colour of the port it leaves, as in Antimony.
+fn wire_colour(graph: &Graph, types: &[NodeType], source: &PortRef) -> &'static str {
+    graph
+        .nodes
+        .iter()
+        .find(|node| node.id == source.node)
+        .and_then(|node| types.iter().find(|known| known.name == node.node_type))
+        .and_then(|node_type| {
+            node_type
+                .outputs
+                .iter()
+                .find(|port| port.name == source.port)
+        })
+        .map_or(port_colour(PortType::Str), |port| port_colour(port.kind))
+}
+
 fn port_colour(kind: PortType) -> &'static str {
     match kind {
-        PortType::Float | PortType::Int => "#f5b461",
-        PortType::Str => "#8fbf6f",
+        PortType::Float | PortType::Int => "#edc27b",
+        PortType::Str => "#94a95f",
         PortType::Bool => "#6fa8dc",
     }
 }
@@ -116,7 +131,8 @@ pub fn draw(
         let to = anchor_of(graph, types, &link.target, Side::Input);
         if let (Some(from), Some(to)) = (from, to) {
             let chosen = selected == Some(&Selected::Link(link.clone()));
-            context.set_stroke_style_str(if chosen { SELECTED } else { WIRE });
+            let colour = wire_colour(graph, types, &link.source);
+            context.set_stroke_style_str(if chosen { SELECTED } else { colour });
             context.set_line_width(if chosen {
                 WIRE_WIDTH_SELECTED
             } else {
@@ -125,11 +141,11 @@ pub fn draw(
             wire(context, from, to);
         }
     }
-    context.set_stroke_style_str(WIRE);
     context.set_line_width(WIRE_WIDTH);
     if let Some(drag) = drag
         && let Some(from) = anchor_of(graph, types, &drag.source, Side::Output)
     {
+        context.set_stroke_style_str(wire_colour(graph, types, &drag.source));
         wire(context, from, (drag.x, drag.y));
     }
 
