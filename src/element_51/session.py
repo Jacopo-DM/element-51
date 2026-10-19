@@ -2,7 +2,8 @@
 
 from collections.abc import Iterable
 
-from element_51.model import Graph, Node
+from element_51.edits import AddLink, AddNode, apply_edit
+from element_51.model import Graph
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot
 
@@ -57,11 +58,26 @@ class App:
         if self.node_functions.get(name) is not function:
             msg = f"node type {name!r} is not registered with this app"
             raise ValueError(msg)
-        node = Node(id=self.graph.next_id(), node_type=name, x=x, y=y)
-        self.graph = Graph(
-            nodes=(*self.graph.nodes, node), links=self.graph.links
-        )
-        return node.id
+        node_id = self.graph.next_id()
+        self.apply(AddNode(id=node_id, node_type=name, x=x, y=y))
+        return node_id
+
+    def apply(self, edit: AddNode | AddLink) -> None:
+        """Apply an edit from a script or from the browser.
+
+        An edit the rules refuse raises `EditError` and leaves the graph
+        unchanged.
+
+        Parameters
+        ----------
+        edit
+            The edit to apply.
+        """
+        node_types = {
+            name: function.node_type
+            for name, function in self.node_functions.items()
+        }
+        self.graph = apply_edit(self.graph, node_types, edit)
 
     def snapshot(self) -> Snapshot:
         """Describe the whole state for a browser that just connected.

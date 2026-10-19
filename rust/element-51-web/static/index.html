@@ -11,10 +11,17 @@ canvas { display: block; width: 100%; height: 100%; }
   background: #5a2d2d; color: #f0d0d0; font: 14px sans-serif; border-radius: 6px; }
 #error[hidden] { display: none; }
 #error button { margin-left: 12px; }
+#menu { position: fixed; display: flex; flex-direction: column; min-width: 140px;
+  background: #ececec; border-radius: 4px; padding: 4px 0; box-shadow: 0 2px 8px #0008; }
+#menu[hidden] { display: none; }
+#menu button { border: 0; background: none; text-align: left; padding: 4px 14px;
+  font: 14px sans-serif; color: #222; cursor: pointer; }
+#menu button:hover { background: #4a90d9; color: #fff; }
 </style>
 </head>
 <body>
 <canvas id="canvas" width="800" height="600"></canvas>
+<div id="menu" hidden></div>
 <div id="error" hidden><span></span><button type="button" onclick="this.parentElement.hidden = true">Dismiss</button></div>
 <script type="module">
 import init from "./element_51_web.js";

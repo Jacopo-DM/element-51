@@ -12,6 +12,18 @@ pub enum PortType {
     Bool,
 }
 
+impl std::fmt::Display for PortType {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            PortType::Float => "float",
+            PortType::Int => "int",
+            PortType::Str => "str",
+            PortType::Bool => "bool",
+        };
+        formatter.write_str(name)
+    }
+}
+
 /// One input or output of a node type.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -84,19 +96,66 @@ impl Snapshot {
     }
 }
 
-/// A message from Python, tagged by its `op` field.
+/// A change to the graph, tagged by its `kind` field.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Edit {
+    /// Place a node. The browser proposes the id.
+    AddNode {
+        id: String,
+        node_type: String,
+        x: f64,
+        y: f64,
+    },
+    /// Link an output port to an input port.
+    AddLink { source: PortRef, target: PortRef },
+}
+
+/// The browser asks Python to confirm an edit it already applied.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EditRequest {
+    pub id: u64,
+    pub edit: Edit,
+}
+
+/// Python confirms the edit with this request id.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Ack {
+    pub id: u64,
+}
+
+/// Python refuses the edit with this request id.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Reject {
+    pub id: u64,
+    pub reason: String,
+}
+
+/// A message in either direction, tagged by its `op` field.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Message {
     Snapshot(Snapshot),
+    Edit(EditRequest),
+    Ack(Ack),
+    Reject(Reject),
 }
 
 impl Message {
-    /// Parse a message and check that its protocol version is one we read.
+    /// Write the message as JSON text.
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(self).expect("a message always serialises")
+    }
+
+    /// Parse a message and check that a snapshot's protocol version is one we read.
     pub fn from_json(text: &str) -> Result<Message, serde_json::Error> {
         let message: Message = serde_json::from_str(text)?;
-        let Message::Snapshot(snapshot) = &message;
-        if snapshot.version != Snapshot::VERSION {
+        if let Message::Snapshot(snapshot) = &message
+            && snapshot.version != Snapshot::VERSION
+        {
             return Err(serde::de::Error::custom(format!(
                 "protocol version {} is not supported (this build reads version {})",
                 snapshot.version,
@@ -104,5 +163,18 @@ impl Message {
             )));
         }
         Ok(message)
+    }
+}
+
+impl Graph {
+    /// An unused node id, one above the highest `n<number>` in use.
+    pub fn next_id(&self) -> String {
+        let highest = self
+            .nodes
+            .iter()
+            .filter_map(|node| node.id.strip_prefix('n')?.parse::<u64>().ok())
+            .max()
+            .unwrap_or(0);
+        format!("n{}", highest + 1)
     }
 }

@@ -7,7 +7,9 @@ const FIXTURE: &str = include_str!("../../../tests/fixtures/snapshot.json");
 
 #[test]
 fn shared_fixture_parses() {
-    let Message::Snapshot(snapshot) = Message::from_json(FIXTURE).unwrap();
+    let Message::Snapshot(snapshot) = Message::from_json(FIXTURE).unwrap() else {
+        panic!("not a snapshot");
+    };
     assert_eq!(snapshot.version, 1);
     let names: Vec<&str> = snapshot
         .node_types
@@ -59,7 +61,9 @@ fn other_protocol_version_is_refused() {
 
 #[test]
 fn snapshot_finds_a_node_type_by_name() {
-    let Message::Snapshot(snapshot) = Message::from_json(FIXTURE).unwrap();
+    let Message::Snapshot(snapshot) = Message::from_json(FIXTURE).unwrap() else {
+        panic!("not a snapshot");
+    };
     assert!(snapshot.node_type("show").is_some());
     assert!(snapshot.node_type("nope").is_none());
 }

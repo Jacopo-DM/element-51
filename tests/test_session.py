@@ -3,7 +3,8 @@
 import pytest
 from sample_nodes import add, show
 
-from element_51.model import PortType
+from element_51.edits import AddLink, AddNode, EditError
+from element_51.model import Link, PortRef, PortType
 from element_51.nodes import Registered, node
 from element_51.session import App
 
@@ -67,3 +68,21 @@ def test_two_node_types_with_one_name_are_refused() -> None:
     """The name is the identity of a type."""
     with pytest.raises(ValueError, match="add"):
         App([add, make_clashing_add()])
+
+
+def test_apply_changes_the_graph_and_rejects_bad_edits() -> None:
+    """`apply` is the one way an edit, from a script or a browser, lands."""
+    app = App([add, show])
+    app.apply(AddNode(id="n1", node_type="add", x=0.0, y=0.0))
+    app.apply(AddNode(id="n2", node_type="show", x=9.0, y=9.0))
+    link = AddLink(
+        source=PortRef(node="n1", port="out"),
+        target=PortRef(node="n2", port="value"),
+    )
+    app.apply(link)
+    expected_nodes = 2
+    assert len(app.graph.nodes) == expected_nodes
+    assert app.graph.links == (Link(source=link.source, target=link.target),)
+    with pytest.raises(EditError):
+        app.apply(link)
+    assert len(app.graph.links) == 1

@@ -1,0 +1,18 @@
+{
+  "edit_add_node": {
+    "op": "edit",
+    "id": 17,
+    "edit": {"kind": "add_node", "id": "n3", "node_type": "add", "x": 120.5, "y": 80.0}
+  },
+  "edit_add_link": {
+    "op": "edit",
+    "id": 18,
+    "edit": {
+      "kind": "add_link",
+      "source": {"node": "n1", "port": "out"},
+      "target": {"node": "n3", "port": "a"}
+    }
+  },
+  "ack": {"op": "ack", "id": 17},
+  "reject": {"op": "reject", "id": 18, "reason": "cannot link float to str"}
+}

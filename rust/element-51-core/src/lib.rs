@@ -4,10 +4,17 @@
 //! `src/element_51/protocol.py`; `tests/fixtures/snapshot.json` is read by both
 //! sides.
 
+mod edit;
 pub mod layout;
 mod model;
+mod replica;
 
-pub use model::{Graph, Link, Message, Node, NodeType, Port, PortRef, PortType, Snapshot};
+pub use edit::{EditError, apply_edit};
+pub use model::{
+    Ack, Edit, EditRequest, Graph, Link, Message, Node, NodeType, Port, PortRef, PortType, Reject,
+    Snapshot,
+};
+pub use replica::Replica;
 
 /// Whether an output of type `from` may feed an input of type `to`.
 ///

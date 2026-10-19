@@ -12,13 +12,17 @@ import pytest
 import uvicorn
 from sample_nodes import add
 from starlette.types import ASGIApp
+from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
 from element_51 import server
-from element_51.protocol import Snapshot
+from element_51.protocol import Ack, Reject, Snapshot
 from element_51.session import App
 
 WASM_MAGIC = b"\x00asm\x01\x00\x00\x00"
+REQUEST_ID_7 = 7
+REQUEST_ID_8 = 8
+INVALID_PAYLOAD = 1007
 
 
 class _Server(uvicorn.Server):
@@ -166,3 +170,64 @@ def test_every_new_connection_gets_the_current_graph(web_dir: Path) -> None:
             after = Snapshot.model_validate_json(second.recv())
     assert len(before.graph.nodes) == 0
     assert len(after.graph.nodes) == 1
+
+
+def test_an_edit_from_the_browser_is_applied_and_acknowledged(
+    web_dir: Path,
+) -> None:
+    """The browser adds a node; Python acks it and `app.graph` has it."""
+    assert web_dir.exists()
+    app = App([add])
+    request = (
+        '{"op": "edit", "id": 7, "edit": {"kind": "add_node", "id": "n1",'
+        ' "node_type": "add", "x": 3.0, "y": 4.0}}'
+    )
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()  # the snapshot
+        websocket.send(request)
+        reply = Ack.model_validate_json(websocket.recv())
+    assert reply.id == REQUEST_ID_7
+    assert [(n.id, n.x, n.y) for n in app.graph.nodes] == [("n1", 3.0, 4.0)]
+
+
+def test_a_bad_edit_is_rejected_with_a_reason(web_dir: Path) -> None:
+    """A link to a node that does not exist gets `reject`, not a crash."""
+    assert web_dir.exists()
+    app = App([add])
+    request = (
+        '{"op": "edit", "id": 8, "edit": {"kind": "add_link",'
+        ' "source": {"node": "n1", "port": "out"},'
+        ' "target": {"node": "n2", "port": "a"}}}'
+    )
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        websocket.send(request)
+        reply = Reject.model_validate_json(websocket.recv())
+        websocket.send(request)  # the connection is still usable
+        again = Reject.model_validate_json(websocket.recv())
+    assert reply.id == REQUEST_ID_8
+    assert "n1" in reply.reason
+    assert again.id == reply.id
+    assert app.graph.links == ()
+
+
+def test_a_malformed_message_closes_the_connection(web_dir: Path) -> None:
+    """Garbage is not guessed at: the socket closes with 1007 and a reason."""
+    assert web_dir.exists()
+    with (
+        running(server.asgi_app(App([add]))) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        websocket.send("not json")
+        with pytest.raises(ConnectionClosed) as closed:
+            websocket.recv()
+    assert closed.value.rcvd is not None
+    assert closed.value.rcvd.code == INVALID_PAYLOAD
+    assert "malformed" in closed.value.rcvd.reason

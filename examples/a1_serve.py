@@ -1,6 +1,8 @@
 """Serve the editor on http://127.0.0.1:8765 until Ctrl+C.
 
-Build the browser layer first: `uv run python tools/build_wasm.py`.
+Right-click the canvas to add a node. Drag from an output port to an input
+port to link them. Build the browser layer first:
+`uv run python tools/build_wasm.py`.
 """
 
 import element_51
@@ -16,12 +18,14 @@ def show(value: float) -> float:
     return value
 
 
+@element_51.node
+def shout(text: str) -> str:
+    return text.upper()
+
+
 def main() -> None:
     """Entry point."""
-    app = element_51.App([add, show])
-    app.add_node(add, x=60.0, y=60.0)
-    app.add_node(show, x=320.0, y=100.0)
-    element_51.serve(app)
+    element_51.serve(element_51.App([add, show, shout]))
 
 
 if __name__ == "__main__":  # pragma: no cover

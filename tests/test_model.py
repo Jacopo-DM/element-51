@@ -6,7 +6,14 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from element_51.model import Graph, Node, NodeType, Port, PortType
+from element_51.model import (
+    Graph,
+    Node,
+    NodeType,
+    Port,
+    PortType,
+    can_link,
+)
 from element_51.protocol import Snapshot
 
 FIXTURE = Path(__file__).parent / "fixtures" / "snapshot.json"
@@ -75,3 +82,11 @@ def test_node_type_holds_ordered_ports() -> None:
         outputs=(Port(name="out", kind=PortType.FLOAT),),
     )
     assert [p.name for p in node_type.inputs] == ["a", "b"]
+
+
+def test_can_link_rule() -> None:
+    """Equal types link, and an int output may feed a float input."""
+    assert can_link(PortType.STR, PortType.STR)
+    assert can_link(PortType.INT, PortType.FLOAT)
+    assert not can_link(PortType.FLOAT, PortType.INT)
+    assert not can_link(PortType.FLOAT, PortType.STR)

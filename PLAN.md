@@ -56,38 +56,31 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-task 1 (node types reach the browser).
-Next step: task 2, add nodes and links in the browser, synced.
+tasks 1 and 2 (the walking skeleton, Tier 1, is complete).
+Next step: task 3, run the graph.
 
 ## Baseline
 
-Measured 2026-10-19 after task 1, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 2, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 27 passed, 100% coverage, about 2 s.
-- cargo fmt, clippy (`-D warnings`), test: pass, 13 tests.
-- `tools/build_wasm.py`: builds, about 7 s from cold. In the browser pane the
-  example draws both nodes with the right ports, no console errors, and the
-  lost-connection banner shows and dismisses.
+- pytest: 55 passed, 100% coverage, about 2 s.
+- cargo fmt, clippy (`-D warnings`), test: pass, 36 tests.
+- `tools/build_wasm.py`: builds, about 7 s from cold.
+- By hand in the browser pane: right-click menu adds nodes; a link between
+  float ports is accepted and Python keeps it (a reload shows it); a float to
+  str drag is refused in the browser with a Dismiss banner; a conflicting node
+  id is rolled back with Python's reason.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; task 1 is done. Sizes are estimates by analogy with the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 and 2 are done. Sizes are estimates by analogy with the
 skeleton (about 80 lines of Python, 60 of Rust); there is no measured data
 yet. Every area below is new code, so no existing test pins it; each task
 writes its tests first. `element-51-web` is checked by hand in the in-app
 browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ### Goal `skeleton`, Tier 1: walking skeleton
-
-2. **Add nodes and links in the browser, synced.** Right-click flat list (the
-   nested menu is goal `antimony-theme`), drag a link, `can_link` refusal and
-   cycle refusal in Rust, numbered edits answered `ok N` or `rejected N`,
-   rollback with a Dismiss message, `app.graph` in Python. Serves criteria 2
-   and 3. Risk high: the sync protocol is the core of the product. Cost: about
-   400 lines Python, 600 Rust. Verify: native tests for the link rules and the
-   rollback logic; a Python test driving the websocket with a fake browser
-   client; two nodes and a refused float-to-str link by hand.
 
 ### Goal `skeleton`, Tier 2 (ordered by value over risk plus cost)
 
@@ -165,7 +158,12 @@ None yet.
   the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
   start (the `web/` folder is missing); the tests avoid this with a fake folder.
 - `element-51-web` has no automated test; it is checked by hand in the browser.
-- Until task 2, `/ws` reads messages from the browser and drops them.
+- Python does not push edits to a connected browser. A script's `app.add_node`,
+  or a second tab's edits, reach a browser only on reload. Two clients can
+  therefore propose the same node id; Python rejects the second and the first
+  browser shows the reason, and a reload shows the other node. Not in the task
+  list; proposed as a follow-up.
+- Links cannot yet be removed, and a node cannot be moved or deleted (task 7).
 - The WASM build works around a broken `rust-lld` in the rustup toolchain
   (see CLAUDE.md, things that bite). Not reported upstream.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran

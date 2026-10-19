@@ -21,7 +21,7 @@ leaves room for one), live re-run on every edit.
 Behaviour:
 
 - Graph owner: the browser edits first and sends numbered edits. Python replies
-  `ok N` or `rejected N: reason`. On a rejection the browser rolls the edit
+  `ack` or `reject` with the request id and a reason. On a rejection the browser rolls the edit
   back and shows a message with a Dismiss button. On connect or reload Python
   sends a full snapshot.
 - Port types: float, int, str, bool. An int output may feed a float input. Any
@@ -114,6 +114,27 @@ in-app browser against the running example.
   Dismiss; the same pattern serves the rollback and run-error messages later.
 - `@node` accepts only plain functions: a `functools.partial` has no name to
   give the node type.
+- Edit protocol (task 2): the browser proposes the id of a node it adds
+  (`n<number>`, one above the highest it knows), so it can apply the edit before
+  Python answers. Python refuses an id already in use. Chosen over letting
+  Python allocate ids, which would need temporary ids and a rename on ack.
+- Requests are numbered by the browser; acks and rejects carry the number.
+  The browser keeps the last confirmed graph plus pending edits (`Replica`). A
+  reject removes that edit and replays the rest on the confirmed graph,
+  dropping any that no longer apply, so a node and the links that depended on
+  it roll back together. A reject for an id already dropped is ignored.
+- The link rules (types agree, int feeds float, one link per input, no cycles)
+  exist twice, in `edits.py` and `edit.rs`. The shared `link_cases.json` is run
+  by both test suites, so they cannot drift apart unnoticed. Check order:
+  nodes, ports, types, input taken, cycle.
+- A malformed message from the browser closes the websocket with code 1007 and
+  the reason "malformed message", not a guess at what was meant.
+- The right-click menu is a real HTML element, not canvas drawing, with one
+  delegated click handler. The canvas bitmap is sized to the window, so one
+  pixel is one pixel.
+- Port colours and wire style are placeholders until the theme tasks (11, 12).
+- The browser's graph copy is called `Replica`: `Sync` collides with the
+  standard `Sync` trait.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -134,6 +155,7 @@ in-app browser against the running example.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 2: edits synced with ack and rollback | add node, drag link, float to str refused in the browser, id conflict rolled back with Python's reason, all by hand in the browser pane; 55 Python tests at 100%, 36 Rust tests; 13 link cases and the message fixture run on both sides |
 | 2026-10-19 | task 1: node types reach the browser | `@node` hints become ports; snapshot over `/ws`; Rust parses it and draws both nodes; 27 Python tests at 100%, 13 Rust tests; one JSON fixture parsed by both sides |
 | 2026-10-19 | skeleton: Python serves, WASM draws, core logic runs | page shows `float to str link allowed: false`; 4 Python tests at 100%, 4 Rust tests; WASM 706 KB unoptimised |
 

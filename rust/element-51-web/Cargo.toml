@@ -18,9 +18,12 @@ features = [
     "CloseEvent",
     "Document",
     "Element",
+    "Event",
+    "EventTarget",
     "HtmlCanvasElement",
     "Location",
     "MessageEvent",
+    "MouseEvent",
     "WebSocket",
     "Window",
 ]

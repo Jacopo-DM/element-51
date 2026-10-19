@@ -6,8 +6,9 @@ is the format the browser layer reads, so field names are a contract with
 """
 
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Model(BaseModel):
@@ -23,6 +24,31 @@ class PortType(StrEnum):
     INT = "int"
     STR = "str"
     BOOL = "bool"
+
+
+def can_link(source: PortType, target: PortType) -> bool:
+    """Whether an output of type `source` may feed an input of type `target`.
+
+    Equal types link. An int output may also feed a float input.
+
+    Parameters
+    ----------
+    source
+        The type of the output port.
+    target
+        The type of the input port.
+
+    Returns
+    -------
+    bool
+        True if the link is allowed.
+    """
+    return source == target or (
+        source is PortType.INT and target is PortType.FLOAT
+    )
+
+
+type NodeId = Annotated[str, Field(pattern=r"^n[0-9]+$")]
 
 
 class Port(Model):
@@ -57,7 +83,7 @@ class Link(Model):
 class Node(Model):
     """A node placed in the graph."""
 
-    id: str
+    id: NodeId
     node_type: str
     x: float
     y: float
