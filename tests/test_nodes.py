@@ -279,3 +279,15 @@ def test_a_class_run_without_a_return_hint_is_refused() -> None:
 
             def run(self):  # type: ignore[no-untyped-def]  # ruff: ignore[missing-return-type-private-function]  # pragma: no cover  # never called; the point of the test
                 return self.x
+
+
+def test_the_node_type_carries_the_python_defaults() -> None:
+    """The browser can show a default because the node type sends it."""
+
+    @node
+    def scale(
+        value: float, factor: float = 2.0
+    ) -> float:  # pragma: no cover  # only its hints are read
+        return value * factor
+
+    assert scale.node_type.defaults == {"factor": 2.0}

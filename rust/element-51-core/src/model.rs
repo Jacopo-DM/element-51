@@ -41,6 +41,9 @@ pub struct NodeType {
     pub name: String,
     pub inputs: Vec<Port>,
     pub outputs: Vec<Port>,
+    /// What an unlinked input takes when the node has no value of its own.
+    #[serde(default)]
+    pub defaults: BTreeMap<String, serde_json::Value>,
 }
 
 /// One end of a link: a port on a node in the graph.
@@ -67,6 +70,9 @@ pub struct PlacedNode {
     pub node_type: String,
     pub x: f64,
     pub y: f64,
+    /// Values the user gave to unlinked inputs, by input name.
+    #[serde(default)]
+    pub values: BTreeMap<String, serde_json::Value>,
 }
 
 /// The nodes and links the user has built.
@@ -117,6 +123,12 @@ pub enum Edit {
     DeleteNode { id: String },
     /// Remove one link.
     DeleteLink { source: PortRef, target: PortRef },
+    /// Give an input its own value, or take it away with `None`.
+    SetValue {
+        node: String,
+        port: String,
+        value: Option<serde_json::Value>,
+    },
 }
 
 /// The browser asks Python to confirm an edit it already applied.

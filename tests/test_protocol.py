@@ -12,6 +12,7 @@ from element_51.edits import (
     DeleteLink,
     DeleteNode,
     MoveNode,
+    SetValue,
 )
 from element_51.engine import RunResult
 from element_51.protocol import (
@@ -63,10 +64,12 @@ def test_add_link_request_round_trips() -> None:
         ("edit_move_node", MoveNode),
         ("edit_delete_node", DeleteNode),
         ("edit_delete_link", DeleteLink),
+        ("edit_set_value", SetValue),
+        ("edit_clear_value", SetValue),
     ],
 )
 def test_move_and_delete_requests_round_trip(
-    key: str, kind: type[MoveNode | DeleteNode | DeleteLink]
+    key: str, kind: type[MoveNode | DeleteNode | DeleteLink | SetValue]
 ) -> None:
     """The browser's move and delete requests are the shape Rust writes."""
     request = round_trip(EditRequest, key)

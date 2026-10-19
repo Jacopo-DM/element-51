@@ -5,6 +5,7 @@ is the format the browser layer reads, so field names are a contract with
 `rust/element-51-core/src/model.rs`.
 """
 
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Annotated, TypeGuard
 
@@ -88,11 +89,16 @@ class Port(Model):
 
 
 class NodeType(Model):
-    """The shape of a node: its name and its ports, in drawing order."""
+    """The shape of a node: its name and its ports, in drawing order.
+
+    `defaults` holds the value an unlinked input takes when the node has no
+    value of its own; an input with no default must be given one.
+    """
 
     name: str
     inputs: tuple[Port, ...]
     outputs: tuple[Port, ...]
+    defaults: Mapping[str, PortValue] = {}
 
 
 class PortRef(Model):
@@ -110,12 +116,17 @@ class Link(Model):
 
 
 class PlacedNode(Model):
-    """A node placed in the graph."""
+    """A node placed in the graph.
+
+    `values` holds the values the user typed for unlinked inputs, by input
+    name. They win over the node type's defaults.
+    """
 
     id: NodeId
     node_type: str
     x: float
     y: float
+    values: Mapping[str, PortValue] = {}
 
 
 class Graph(Model):

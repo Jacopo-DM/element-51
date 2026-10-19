@@ -20,7 +20,9 @@ from element_51.model import (
     PlacedNode,
     Port,
     PortRef,
+    PortValue,
     can_link,
+    value_fits,
 )
 
 
@@ -35,6 +37,7 @@ class EditErrorKind(StrEnum):
     INPUT_TAKEN = "input_taken"
     CYCLE = "cycle"
     UNKNOWN_LINK = "unknown_link"
+    BAD_VALUE = "bad_value"
 
 
 class EditError(Exception):
@@ -96,7 +99,16 @@ class DeleteLink(Model):
     target: PortRef
 
 
-type AnyEdit = AddNode | AddLink | MoveNode | DeleteNode | DeleteLink
+class SetValue(Model):
+    """Give an input its own value, or take it away with `None`."""
+
+    kind: Literal["set_value"] = "set_value"
+    node: NodeId
+    port: str
+    value: PortValue | None
+
+
+type AnyEdit = AddNode | AddLink | MoveNode | DeleteNode | DeleteLink | SetValue
 type Edit = Annotated[AnyEdit, Field(discriminator="kind")]
 
 
@@ -130,6 +142,8 @@ def apply_edit(
             return _delete_node(graph, edit)
         case DeleteLink():
             return _delete_link(graph, edit)
+        case SetValue():
+            return _set_value(graph, node_types, edit)
         case _:  # pragma: no cover  # unreachable: the match is exhaustive
             assert_never(edit)
 
@@ -200,6 +214,29 @@ def _delete_link(graph: Graph, edit: DeleteLink) -> Graph:
         nodes=graph.nodes,
         links=tuple(link for link in graph.links if link != gone),
     )
+
+
+def _set_value(
+    graph: Graph, node_types: Mapping[str, NodeType], edit: SetValue
+) -> Graph:
+    port = _port(
+        graph, node_types, PortRef(node=edit.node, port=edit.port), output=False
+    )
+    if edit.value is not None and not value_fits(edit.value, port.kind):
+        msg = f"{edit.value!r} is not a {port.kind} for {edit.node}.{port.name}"
+        raise EditError(EditErrorKind.BAD_VALUE, msg)
+    nodes = tuple(
+        _with_value(node, edit) if node.id == edit.node else node
+        for node in graph.nodes
+    )
+    return Graph(nodes=nodes, links=graph.links)
+
+
+def _with_value(node: PlacedNode, edit: SetValue) -> PlacedNode:
+    values = {k: v for k, v in node.values.items() if k != edit.port}
+    if edit.value is not None:
+        values[edit.port] = edit.value
+    return node.model_copy(update={"values": values})
 
 
 def _require_node(graph: Graph, node_id: str) -> None:

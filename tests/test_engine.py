@@ -315,3 +315,37 @@ def test_a_field_value_that_skips_validation_is_still_checked() -> None:
         graph_of({"n1": "wrong_field"}, []), FUNCTIONS, raise_errors=False
     )
     assert result.outcomes[0].error == "output 'q' is str, expected int"
+
+
+def test_a_value_on_the_node_beats_the_default_and_a_link_beats_both() -> None:
+    """The order is link, then the node's own value, then the default."""
+    base = graph_of({"n1": "double", "n2": "double"}, [])
+    nodes = (
+        base.nodes[0].model_copy(update={"values": {"x": 5.0}}),
+        base.nodes[1].model_copy(update={"values": {"x": 7.0}}),
+    )
+    graph = Graph(
+        nodes=nodes,
+        links=(
+            Link(
+                source=PortRef(node="n1", port="out"),
+                target=PortRef(node="n2", port="x"),
+            ),
+        ),
+    )
+    first, second = run_graph(graph, FUNCTIONS, raise_errors=False).outcomes
+    assert first.outputs["out"] == pytest.approx(10.0)
+    assert second.outputs["out"] == pytest.approx(20.0)
+
+
+def test_a_value_on_the_node_fills_an_input_that_has_no_default() -> None:
+    """`add` has no defaults; typed values make it runnable."""
+    base = graph_of({"n1": "add"}, [])
+    graph = Graph(
+        nodes=(
+            base.nodes[0].model_copy(update={"values": {"a": 1.0, "b": 2}}),
+        ),
+        links=(),
+    )
+    (outcome,) = run_graph(graph, FUNCTIONS, raise_errors=False).outcomes
+    assert outcome.outputs["out"] == pytest.approx(3.0)

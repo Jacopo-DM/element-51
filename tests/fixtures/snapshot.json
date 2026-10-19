@@ -5,26 +5,66 @@
     {
       "name": "add",
       "inputs": [
-        {"name": "a", "kind": "float"},
-        {"name": "b", "kind": "float"}
+        {
+          "name": "a",
+          "kind": "float"
+        },
+        {
+          "name": "b",
+          "kind": "float"
+        }
       ],
-      "outputs": [{"name": "out", "kind": "float"}]
+      "outputs": [
+        {
+          "name": "out",
+          "kind": "float"
+        }
+      ],
+      "defaults": {
+        "b": 2.5
+      }
     },
     {
       "name": "show",
-      "inputs": [{"name": "value", "kind": "float"}],
-      "outputs": []
+      "inputs": [
+        {
+          "name": "value",
+          "kind": "float"
+        }
+      ],
+      "outputs": [],
+      "defaults": {}
     }
   ],
   "graph": {
     "nodes": [
-      {"id": "n1", "node_type": "add", "x": 40.0, "y": 60.0},
-      {"id": "n2", "node_type": "show", "x": 300.0, "y": 80.0}
+      {
+        "id": "n1",
+        "node_type": "add",
+        "x": 40.0,
+        "y": 60.0,
+        "values": {
+          "a": 4.0
+        }
+      },
+      {
+        "id": "n2",
+        "node_type": "show",
+        "x": 300.0,
+        "y": 80.0,
+        "values": {}
+      }
     ],
     "links": [
       {
-        "source": {"node": "n1", "port": "out"},
-        "target": {"node": "n2", "port": "value"}
+        "source": {
+          "node": "n1",
+          "port": "out"
+        },
+        "target": {
+          "node": "n2",
+          "port": "value"
+        }
       }
     ]
   }

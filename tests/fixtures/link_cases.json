@@ -17,7 +17,8 @@
           "name": "out",
           "kind": "float"
         }
-      ]
+      ],
+      "defaults": {}
     },
     {
       "name": "label",
@@ -32,7 +33,8 @@
           "name": "out",
           "kind": "str"
         }
-      ]
+      ],
+      "defaults": {}
     },
     {
       "name": "count",
@@ -47,7 +49,8 @@
           "name": "out",
           "kind": "int"
         }
-      ]
+      ],
+      "defaults": {}
     },
     {
       "name": "divmod",
@@ -70,7 +73,8 @@
           "name": "r",
           "kind": "int"
         }
-      ]
+      ],
+      "defaults": {}
     }
   ],
   "graph": {
@@ -79,31 +83,36 @@
         "id": "n1",
         "node_type": "add",
         "x": 0.0,
-        "y": 0.0
+        "y": 0.0,
+        "values": {}
       },
       {
         "id": "n2",
         "node_type": "add",
         "x": 0.0,
-        "y": 0.0
+        "y": 0.0,
+        "values": {}
       },
       {
         "id": "n3",
         "node_type": "label",
         "x": 0.0,
-        "y": 0.0
+        "y": 0.0,
+        "values": {}
       },
       {
         "id": "n4",
         "node_type": "count",
         "x": 0.0,
-        "y": 0.0
+        "y": 0.0,
+        "values": {}
       },
       {
         "id": "n5",
         "node_type": "divmod",
         "x": 0.0,
-        "y": 0.0
+        "y": 0.0,
+        "values": {}
       }
     ],
     "links": [

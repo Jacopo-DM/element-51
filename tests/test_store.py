@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from sample_nodes import add, show
 
+from element_51.edits import SetValue
 from element_51.session import App
 from element_51.store import FORMAT_VERSION, StoreError
 
@@ -86,7 +87,7 @@ def test_a_version_this_library_does_not_read_is_refused(
     )
     app = built_app()
     before = app.graph
-    with pytest.raises(StoreError, match=r"version 99.*version 1"):
+    with pytest.raises(StoreError, match=r"version 99.*versions 1 and 2"):
         app.load(path)
     assert app.graph == before
 
@@ -130,3 +131,53 @@ def test_a_missing_file_raises_the_usual_error(tmp_path: Path) -> None:
     """`FileNotFoundError` is not wrapped: it already says what happened."""
     with pytest.raises(FileNotFoundError):
         App([add]).load(tmp_path / "nope.json")
+
+
+def test_node_values_survive_a_round_trip(tmp_path: Path) -> None:
+    """What the user typed into an input is saved and comes back."""
+    path = tmp_path / "g.json"
+    app = built_app()
+    app.apply(SetValue(node="n1", port="a", value=4.5))
+    app.save(path)
+    fresh = App([add, show])
+    fresh.load(path)
+    assert fresh.graph.nodes[0].values == {"a": 4.5}
+
+
+def test_a_version_1_file_without_values_still_loads(tmp_path: Path) -> None:
+    """Files written before node values existed read as having none."""
+    path = tmp_path / "g.json"
+    path.write_text(
+        json.dumps({
+            "format_version": 1,
+            "nodes": [{"id": "n1", "node_type": "add", "x": 1.0, "y": 2.0}],
+            "links": [],
+        }),
+        "utf-8",
+    )
+    app = App([add])
+    app.load(path)
+    assert app.graph.nodes[0].values == {}
+
+
+def test_a_value_that_does_not_fit_its_port_is_refused(tmp_path: Path) -> None:
+    """A hand-edited file with text in a float input does not load."""
+    path = tmp_path / "g.json"
+    path.write_text(
+        json.dumps({
+            "format_version": 2,
+            "nodes": [
+                {
+                    "id": "n1",
+                    "node_type": "add",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "values": {"a": "text"},
+                }
+            ],
+            "links": [],
+        }),
+        "utf-8",
+    )
+    with pytest.raises(StoreError, match="not a float"):
+        App([add]).load(path)

@@ -170,7 +170,10 @@ class Node(Model):
             raise TypeError(msg)
         outputs, output_model = _output_ports(name, hints["return"])
         cls.node_type = NodeType(
-            name=name, inputs=tuple(inputs), outputs=outputs
+            name=name,
+            inputs=tuple(inputs),
+            outputs=outputs,
+            defaults=defaults,
         )
         cls.defaults = defaults
         cls.output_model = output_model
@@ -336,5 +339,10 @@ def node[**P, R](func: Callable[P, R]) -> NodeFunction[P, R]:
         msg = f"{name}, return: no type hint"
         raise TypeError(msg)
     outputs, output_model = _output_ports(name, hints["return"])
-    node_type = NodeType(name=name, inputs=tuple(inputs), outputs=outputs)
+    node_type = NodeType(
+        name=name,
+        inputs=tuple(inputs),
+        outputs=outputs,
+        defaults=defaults,
+    )
     return NodeFunction(func, node_type, defaults, output_model)

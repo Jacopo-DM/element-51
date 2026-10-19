@@ -439,3 +439,26 @@ def test_move_and_delete_from_the_browser_change_the_graph(
             websocket.send(request)
             Ack.model_validate_json(websocket.recv(timeout=5))
     assert [(n.id, n.x, n.y) for n in app.graph.nodes] == [("n1", 9.5, 8.0)]
+
+
+def test_a_value_set_in_the_browser_is_applied_and_pushed(
+    web_dir: Path,
+) -> None:
+    """Typing into an input: ack to the sender, snapshot to the other page."""
+    assert web_dir.exists()
+    app = App([add])
+    app.add_node(add, x=0.0, y=0.0)
+    request = (
+        '{"op": "edit", "id": 1, "edit": {"kind": "set_value",'
+        ' "node": "n1", "port": "a", "value": 4.5}}'
+    )
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as sender, connect(url) as watcher:
+            sender.recv()
+            watcher.recv()
+            sender.send(request)
+            Ack.model_validate_json(sender.recv(timeout=5))
+            pushed = Snapshot.model_validate_json(watcher.recv(timeout=5))
+    assert app.graph.nodes[0].values == {"a": 4.5}
+    assert pushed.graph.nodes[0].values == {"a": 4.5}

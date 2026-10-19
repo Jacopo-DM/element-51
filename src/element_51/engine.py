@@ -32,9 +32,10 @@ def run_graph(
 ) -> RunResult:
     """Run every node once, upstream nodes first.
 
-    A node takes each input from the link into it, or else from its function's
-    default. A node that fails is marked `error`; every node downstream of it
-    is `skipped`; independent nodes still run.
+    A node takes each input from the link into it, or else from the value the
+    user gave the node, or else from its function's default. A node that fails
+    is marked `error`; every node downstream of it is `skipped`; independent
+    nodes still run.
 
     Parameters
     ----------
@@ -188,6 +189,8 @@ def _evaluate(
             inputs[port.name] = outputs_by_node[link.source.node][
                 link.source.port
             ]
+        elif port.name in node.values:
+            inputs[port.name] = node.values[port.name]
         elif port.name in function.defaults:
             inputs[port.name] = function.defaults[port.name]
         else:

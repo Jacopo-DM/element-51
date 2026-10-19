@@ -125,6 +125,7 @@ fn snapshot_with(ids: &[&str]) -> Snapshot {
             node_type: "add".into(),
             x: 5.0,
             y: 6.0,
+            values: Default::default(),
         })
         .collect();
     Snapshot {

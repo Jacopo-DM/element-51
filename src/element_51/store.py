@@ -11,10 +11,12 @@ from pathlib import Path
 
 from pydantic import ConfigDict, ValidationError
 
-from element_51.edits import AddLink, AddNode, EditError, apply_edit
+from element_51.edits import AddLink, AddNode, EditError, SetValue, apply_edit
 from element_51.model import Graph, Link, Model, NodeType, PlacedNode
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
+# Version 1 had no node values; it reads as version 2 with none.
+READABLE_VERSIONS = frozenset({1, FORMAT_VERSION})
 
 
 class StoreError(Exception):
@@ -30,7 +32,7 @@ class _Header(Model):
 
 
 class _SavedGraph(Model):
-    """A graph file, version 1."""
+    """A graph file, as version 2 writes it and version 1 reads."""
 
     format_version: int
     nodes: tuple[PlacedNode, ...]
@@ -82,10 +84,10 @@ def load_graph(path: Path, node_types: Mapping[str, NodeType]) -> Graph:
         raise StoreError(msg) from error
     try:
         header = _Header.model_validate(data)
-        if header.format_version != FORMAT_VERSION:
+        if header.format_version not in READABLE_VERSIONS:
             msg = (
                 f"{path} is format version {header.format_version}; "
-                f"this library reads version {FORMAT_VERSION}"
+                "this library reads versions 1 and 2"
             )
             raise StoreError(msg)
         saved = _SavedGraph.model_validate(data)
@@ -105,6 +107,13 @@ def load_graph(path: Path, node_types: Mapping[str, NodeType]) -> Graph:
                     y=placed.y,
                 ),
             )
+        for placed in saved.nodes:
+            for port, value in placed.values.items():
+                graph = apply_edit(
+                    graph,
+                    node_types,
+                    SetValue(node=placed.id, port=port, value=value),
+                )
         for link in saved.links:
             graph = apply_edit(
                 graph,

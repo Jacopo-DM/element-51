@@ -25,6 +25,12 @@ pub enum EditError {
     InputTaken(PortRef),
     Cycle,
     UnknownLink,
+    BadValue {
+        value: serde_json::Value,
+        kind: crate::PortType,
+        node: String,
+        port: String,
+    },
 }
 
 impl EditError {
@@ -39,6 +45,7 @@ impl EditError {
             EditError::InputTaken(_) => "input_taken",
             EditError::Cycle => "cycle",
             EditError::UnknownLink => "unknown_link",
+            EditError::BadValue { .. } => "bad_value",
         }
     }
 }
@@ -65,6 +72,12 @@ impl fmt::Display for EditError {
             }
             EditError::Cycle => write!(formatter, "that link would make a cycle"),
             EditError::UnknownLink => write!(formatter, "there is no such link"),
+            EditError::BadValue {
+                value,
+                kind,
+                node,
+                port,
+            } => write!(formatter, "{value} is not a {kind} for {node}.{port}"),
         }
     }
 }
@@ -92,6 +105,7 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 node_type: node_type.clone(),
                 x: *x,
                 y: *y,
+                values: Default::default(),
             });
             Ok(next)
         }
@@ -138,6 +152,35 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 .retain(|link| link.source.node != *id && link.target.node != *id);
             Ok(next)
         }
+        Edit::SetValue {
+            node,
+            port: name,
+            value,
+        } => {
+            let reference = PortRef {
+                node: node.clone(),
+                port: name.clone(),
+            };
+            let input = port(graph, node_types, &reference, false)?;
+            if let Some(value) = value
+                && !value_fits(value, input.kind)
+            {
+                return Err(EditError::BadValue {
+                    value: value.clone(),
+                    kind: input.kind,
+                    node: node.clone(),
+                    port: name.clone(),
+                });
+            }
+            let mut next = graph.clone();
+            if let Some(placed) = next.nodes.iter_mut().find(|placed| placed.id == *node) {
+                match value {
+                    Some(value) => placed.values.insert(name.clone(), value.clone()),
+                    None => placed.values.remove(name),
+                };
+            }
+            Ok(next)
+        }
         Edit::DeleteLink { source, target } => {
             let position = graph
                 .links
@@ -148,6 +191,23 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
             next.links.remove(position);
             Ok(next)
         }
+    }
+}
+
+/// Whether a port of type `kind` can carry `value`. Stricter than JSON: a bool
+/// is not a number, an int port wants a whole number, and a float port takes
+/// either.
+pub fn value_fits(value: &serde_json::Value, kind: crate::PortType) -> bool {
+    use crate::PortType;
+    match value {
+        serde_json::Value::Bool(_) => kind == PortType::Bool,
+        serde_json::Value::Number(number) => match kind {
+            PortType::Float => true,
+            PortType::Int => number.is_i64() || number.is_u64(),
+            PortType::Str | PortType::Bool => false,
+        },
+        serde_json::Value::String(_) => kind == PortType::Str,
+        _ => false,
     }
 }
 

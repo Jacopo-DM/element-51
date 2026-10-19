@@ -19,6 +19,7 @@ fn node_at(x: f64, y: f64) -> PlacedNode {
         node_type: "t".to_string(),
         x,
         y,
+        values: Default::default(),
     }
 }
 
@@ -27,6 +28,7 @@ fn node_type(inputs: &[&str], outputs: &[&str]) -> NodeType {
         name: "t".to_string(),
         inputs: inputs.iter().map(|n| port(n)).collect(),
         outputs: outputs.iter().map(|n| port(n)).collect(),
+        defaults: Default::default(),
     }
 }
 
@@ -150,12 +152,14 @@ fn node_at_finds_the_node_under_a_point_and_the_topmost_when_they_overlap() {
                 node_type: "t".into(),
                 x: 0.0,
                 y: 0.0,
+                values: Default::default(),
             },
             PlacedNode {
                 id: "n2".into(),
                 node_type: "t".into(),
                 x: 100.0,
                 y: 10.0,
+                values: Default::default(),
             },
         ],
         links: vec![],
@@ -188,12 +192,14 @@ fn link_at_finds_a_link_near_its_curve_and_nothing_far_from_it() {
                 node_type: "t".into(),
                 x: 0.0,
                 y: 0.0,
+                values: Default::default(),
             },
             PlacedNode {
                 id: "n2".into(),
                 node_type: "t".into(),
                 x: 400.0,
                 y: 0.0,
+                values: Default::default(),
             },
         ],
         links: vec![Link {

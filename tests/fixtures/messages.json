@@ -58,6 +58,26 @@
       }
     }
   },
+  "edit_set_value": {
+    "op": "edit",
+    "id": 22,
+    "edit": {
+      "kind": "set_value",
+      "node": "n3",
+      "port": "a",
+      "value": 4.5
+    }
+  },
+  "edit_clear_value": {
+    "op": "edit",
+    "id": 23,
+    "edit": {
+      "kind": "set_value",
+      "node": "n3",
+      "port": "a",
+      "value": null
+    }
+  },
   "ack": {
     "op": "ack",
     "id": 17
