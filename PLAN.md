@@ -71,11 +71,11 @@ goal is complete and the antimony-theme goal has criteria 1 to 4 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme and a nested menu).
 Next step: task 15 (README credit, a draft for the user's review; the user has
 said "start task 15" and it is not started), then task 18 (the header icon
-menu; confirm its entries with the user first). The user's own try-out of goal
+menu; one entry, Delete node, confirmed). The user's own try-out of goal
 `skeleton` is still pending, and so is their look at the menu (task 14).
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. All merged branches are
-deleted except the notes branch from this pass. There is no remote, so nothing
+deleted. There is no remote, so nothing
 is pushed. The user approves each task start and each branch deletion in one
 reply ("Yes, start task N, and delete the merged branch ...").
 
@@ -150,8 +150,8 @@ with search) are done; detail in DESIGN.md. Open, below: 15 and 18.
 18. **The header icon opens a small menu** (added 2026-10-19 by the user's
     choice while approving the spec). Clicking the three-bar icon on a card
     opens a small popup with one entry, Delete node, in the theme's menu
-    style. The user gave "for example Delete node"; I will confirm the entries
-    before starting. After task 12 (done). Risk low. Cost about 120 lines Rust.
+    style. The user gave "for example Delete node"; The user confirmed on 2026-10-19
+    that Delete node is the only entry. After task 12 (done). Risk low. Cost about 120 lines Rust.
     Verify: native test for the entry list; by hand.
 
 ### Tier 3: listed, not executed
@@ -170,15 +170,13 @@ with search) are done; detail in DESIGN.md. Open, below: 15 and 18.
 
 Oldest first.
 
-1. (2026-10-19) Task 18: which entries should the header icon's menu hold?
-   The user said "for example Delete node"; the task assumes that one entry.
+None.
 
 ## Known problems
 
 - `README.md`, `docs/index.md` and the `pyproject.toml` description are still
   template text. The README credit for Antimony is part of goal
   `antimony-theme`.
-- `docs/reference.md` autosummary points at `.`, not at `element_51`.
 - CI (`.github/workflows/ci.yml`) runs Python checks only. It does not build
   the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
   start (the `web/` folder is missing); the tests avoid this with a fake folder.
