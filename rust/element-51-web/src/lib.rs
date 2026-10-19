@@ -5,19 +5,21 @@ mod draw;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use element_51_core::layout::{PortHit, Side, link_at, node_at, port_at};
+use element_51_core::fields::{format_value, parse_input};
+use element_51_core::layout::{PortHit, Side, link_at, node_at, node_rect, port_at};
 use element_51_core::view::View;
 use element_51_core::{
-    Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult, apply_edit,
+    Edit, EditRequest, Graph, Message, PortRef, PortType, Replica, RunRequest, RunResult,
+    apply_edit,
 };
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
     CanvasRenderingContext2d, CloseEvent, Document, Element, EventTarget, HtmlCanvasElement,
-    KeyboardEvent, MessageEvent, MouseEvent, WebSocket, WheelEvent,
+    HtmlInputElement, KeyboardEvent, MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use draw::{Drag, Frame, Selected, draw};
+use draw::{Drag, FONT, Frame, Selected, draw, field_box};
 
 /// What the pointer is doing between a press and a release.
 enum Gesture {
@@ -199,21 +201,28 @@ fn fit_canvas(state: &Shared, window: &web_sys::Window) {
     state.canvas.set_height(height as u32);
 }
 
-fn redraw(state: &Shared) {
-    let state = state.borrow();
-    // While a node is dragged it is shown at the pointer without touching the
-    // replica; the move is sent once, when the button is released.
-    let preview = match (&state.gesture, state.replica.as_ref()) {
-        (Gesture::Move(moving), Some(replica)) => {
-            let edit = Edit::MoveNode {
-                id: moving.id.clone(),
-                x: moving.now.0,
-                y: moving.now.1,
-            };
-            apply_edit(replica.graph(), replica.node_types(), &edit).ok()
-        }
-        _ => None,
+/// The graph with a node being dragged shown at the pointer, if one is. The
+/// replica is not touched; the move is sent once, when the button is released.
+fn dragged_graph(state: &State) -> Option<Graph> {
+    let (Gesture::Move(moving), Some(replica)) = (&state.gesture, state.replica.as_ref()) else {
+        return None;
     };
+    let edit = Edit::MoveNode {
+        id: moving.id.clone(),
+        x: moving.now.0,
+        y: moving.now.1,
+    };
+    apply_edit(replica.graph(), replica.node_types(), &edit).ok()
+}
+
+fn redraw(shared: &Shared) {
+    draw_canvas(shared);
+    sync_fields(shared);
+}
+
+fn draw_canvas(state: &Shared) {
+    let state = state.borrow();
+    let preview = dragged_graph(&state);
     let frame = Frame {
         graph: preview
             .as_ref()
@@ -554,8 +563,18 @@ fn on_wheel(shared: &Shared, event: &WheelEvent) {
     redraw(shared);
 }
 
-/// Delete or Backspace removes what is selected; Escape lets go of it.
+/// Delete or Backspace removes what is selected; Escape lets go of it. Keys
+/// typed into an input box belong to the box; Enter there ends the edit.
 fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
+    if let Some(field) = event
+        .target()
+        .and_then(|target| target.dyn_into::<HtmlInputElement>().ok())
+    {
+        if event.key() == "Enter" {
+            let _ = field.blur();
+        }
+        return;
+    }
     let edit = {
         let mut state = shared.borrow_mut();
         match event.key().as_str() {
@@ -579,6 +598,160 @@ fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
             event.prevent_default();
             submit(shared, edit);
         }
+        None => redraw(shared),
+    }
+}
+
+/// Make the input boxes over the canvas match the graph: one per unlinked
+/// input, placed on its node's row under the current pan and zoom.
+fn sync_fields(shared: &Shared) {
+    let state = shared.borrow();
+    let (Some(container), Some(replica)) = (
+        state.document.get_element_by_id("fields"),
+        state.replica.as_ref(),
+    ) else {
+        return;
+    };
+    let preview = dragged_graph(&state);
+    let graph = preview.as_ref().unwrap_or_else(|| replica.graph());
+    state.context.set_font(FONT);
+    let zoom = state.view.zoom();
+    let focused = state.document.active_element().map(|element| element.id());
+    let mut wanted: Vec<String> = Vec::new();
+    for node in &graph.nodes {
+        let Some(node_type) = replica
+            .node_types()
+            .iter()
+            .find(|known| known.name == node.node_type)
+        else {
+            continue;
+        };
+        let rect = node_rect(node, node_type);
+        for (row, port) in node_type.inputs.iter().enumerate() {
+            if graph.is_linked(&node.id, &port.name) {
+                continue;
+            }
+            let id = format!("field-{}-{}", node.id, port.name);
+            wanted.push(id.clone());
+            let Ok((x, y, width, height)) = field_box(&state.context, &rect, row, &port.name)
+            else {
+                continue;
+            };
+            let (left, top) = state.view.to_screen(x, y);
+            let Some(field) = field_for(shared, &state.document, &container, &id, node, port)
+            else {
+                continue;
+            };
+            let _ = field.set_attribute(
+                "style",
+                &format!(
+                    "left: {left}px; top: {top}px; width: {}px; height: {}px; font-size: {}px",
+                    width * zoom,
+                    height * zoom,
+                    12.0 * zoom
+                ),
+            );
+            let own = node.values.get(&port.name);
+            let default = node_type.defaults.get(&port.name);
+            if port.kind == PortType::Bool {
+                let on = own.or(default).and_then(|value| value.as_bool()) == Some(true);
+                field.set_checked(on);
+            } else {
+                field.set_placeholder(&default.map_or("value".to_string(), format_value));
+                if focused.as_deref() != Some(id.as_str()) {
+                    field.set_value(&own.map(format_value).unwrap_or_default());
+                }
+            }
+        }
+    }
+    let children = container.children();
+    for index in (0..children.length()).rev() {
+        if let Some(child) = children.item(index)
+            && !wanted.contains(&child.id())
+        {
+            child.remove();
+        }
+    }
+}
+
+/// The input box with `id`, made (and wired up) if it does not exist yet.
+fn field_for(
+    shared: &Shared,
+    document: &Document,
+    container: &Element,
+    id: &str,
+    node: &element_51_core::PlacedNode,
+    port: &element_51_core::Port,
+) -> Option<HtmlInputElement> {
+    if let Some(existing) = document.get_element_by_id(id) {
+        return existing.dyn_into().ok();
+    }
+    let field: HtmlInputElement = document.create_element("input").ok()?.dyn_into().ok()?;
+    field.set_id(id);
+    let kind = if port.kind == PortType::Bool {
+        "checkbox"
+    } else {
+        "text"
+    };
+    field.set_type(kind);
+    let _ = field.set_attribute("data-node", &node.id);
+    let _ = field.set_attribute("data-port", &port.name);
+    let _ = field.set_attribute("spellcheck", "false");
+    let shared = shared.clone();
+    let source = field.clone();
+    listen(&field, "change", move |_event: web_sys::Event| {
+        on_field_change(&shared, &source)
+    })
+    .ok()?;
+    container.append_child(&field).ok()?;
+    Some(field)
+}
+
+/// The user finished typing in a box: read it, and send the new value.
+fn on_field_change(shared: &Shared, field: &HtmlInputElement) {
+    let edit = {
+        let state = shared.borrow();
+        let (Some(node), Some(port), Some(replica)) = (
+            field.get_attribute("data-node"),
+            field.get_attribute("data-port"),
+            state.replica.as_ref(),
+        ) else {
+            return;
+        };
+        let placed = replica
+            .graph()
+            .nodes
+            .iter()
+            .find(|placed| placed.id == node);
+        let kind = placed
+            .and_then(|placed| {
+                replica
+                    .node_types()
+                    .iter()
+                    .find(|known| known.name == placed.node_type)
+            })
+            .and_then(|node_type| node_type.inputs.iter().find(|input| input.name == port))
+            .map(|input| input.kind);
+        let (Some(placed), Some(kind)) = (placed, kind) else {
+            return;
+        };
+        let text = if kind == PortType::Bool {
+            field.checked().to_string()
+        } else {
+            field.value()
+        };
+        match parse_input(&text, kind) {
+            Ok(value) if value.as_ref() == placed.values.get(&port) => None,
+            Ok(value) => Some(Edit::SetValue { node, port, value }),
+            Err(reason) => {
+                show_error(&state.document, &reason);
+                None
+            }
+        }
+    };
+    match edit {
+        Some(edit) => submit(shared, edit),
+        // Nothing to send: put the box back to what the graph holds.
         None => redraw(shared),
     }
 }

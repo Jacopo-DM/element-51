@@ -3,7 +3,7 @@
 use crate::{Graph, Link, NodeType, PlacedNode, PortRef};
 
 /// Width of every node box.
-pub const NODE_WIDTH: f64 = 160.0;
+pub const NODE_WIDTH: f64 = 220.0;
 /// Height of the title bar.
 pub const HEADER_HEIGHT: f64 = 28.0;
 /// Height of one port row.

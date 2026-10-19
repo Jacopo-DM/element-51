@@ -257,6 +257,13 @@ impl Message {
 }
 
 impl Graph {
+    /// Whether a link ends at input `port` of node `node`.
+    pub fn is_linked(&self, node: &str, port: &str) -> bool {
+        self.links
+            .iter()
+            .any(|link| link.target.node == node && link.target.port == port)
+    }
+
     /// An unused node id, one above the highest `n<number>` in use.
     pub fn next_id(&self) -> String {
         let highest = self

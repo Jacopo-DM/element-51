@@ -5,6 +5,7 @@
 //! sides.
 
 mod edit;
+pub mod fields;
 pub mod layout;
 mod model;
 mod replica;

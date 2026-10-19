@@ -60,20 +60,20 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 7 (Tier 1 is complete, the graph runs, nodes can have several
+tasks 1 to 8 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 8, value editing with HTML inputs.
+Next step: task 9, undo and redo.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 7, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 8, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 145 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 55 tests.
+- pytest: 164 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 60 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -83,11 +83,14 @@ Measured 2026-10-19 after task 7, Apple silicon, Python 3.13:
   adds, with no reload, and Run then gives 2.0 to 6.0; with `a12_big_graph.py`
   a node drags and its move survives a reload, the wheel zooms and empty
   canvas pans, Delete removes the selected node (its links go) or the selected
-  wire, and Run then shows `has no value` downstream.
+  wire, and Run then shows `has no value` downstream; with `a13_values.py` typed
+  numbers change the Run result, `abc` in a number box is refused with a message
+  and the box restored, the boxes follow pan, zoom and drag, and the values and
+  a ticked box survive a reload.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 7 are done (removed from the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 8 are done (removed from the
 list below, their detail is in DESIGN.md and git). A task added later needs its
 own approval in words. Sizes are estimates by analogy with the skeleton (about
 80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
@@ -103,12 +106,10 @@ rollback).
 
 Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 (reload keeps the graph; no product code was needed) and 6a (Python pushes to
-open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md) 6
-(save and load as versioned JSON) and 7 (pan, zoom, move, select, delete).
+open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md), 6
+(save and load as versioned JSON), 7 (pan, zoom, move, select, delete) and 8
+(value editing with HTML inputs).
 
-8. **Value editing with HTML inputs.** Real inputs placed over the canvas for
-   unlinked inputs. Risk medium: overlay positioning under pan and zoom. Cost
-   about 200 lines Rust, 60 JS. Verify: by hand, including copy-paste.
 9. **Undo and redo.** Reversible command log in `element-51-core`; one step per
    edit, a drag is one step. Risk medium. Depends on 2, 7 and 8. Cost about
    300 lines Rust. Verify: native tests for every command and its inverse.
@@ -173,8 +174,9 @@ Oldest first.
   so from one thread. A browser edit and a script edit that propose the same
   node id race; Python refuses the later one and the browser may show the
   reason, or may not, if the snapshot that makes the edit moot arrives first.
-- Every node of a type shares the function's defaults; there is no per-node
-  value until task 8, and the browser does not show the defaults.
+- An empty input box means "use the default", so a text input cannot be set to
+  the empty string. There is no script call for setting a value (`app.apply`
+  with `SetValue` works but does not push to open pages).
 - A long output value is trimmed with an ellipsis on the node. The full value is
   only available from `app.run()`; there is no hover or tooltip yet.
 - Port colours are placeholders; the nodes still look plain until tasks 11 and 12.

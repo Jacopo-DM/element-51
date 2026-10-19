@@ -24,6 +24,14 @@ const ALLOWED: &str = "#6fcf6f";
 const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
 const VALUE_GAP: f64 = 8.0;
+/// The font every label on a node is set in.
+pub const FONT: &str = "13px sans-serif";
+/// Width of an input box on a node, in graph units.
+pub const FIELD_WIDTH: f64 = 70.0;
+/// Height of an input box on a node, in graph units.
+pub const FIELD_HEIGHT: f64 = 18.0;
+/// Space between an input's label and its box.
+const FIELD_GAP: f64 = 6.0;
 
 /// A link being dragged from an output port. `x` and `y` are graph
 /// coordinates.
@@ -114,7 +122,7 @@ pub fn draw(
         wire(context, from, (drag.x, drag.y));
     }
 
-    context.set_font("13px sans-serif");
+    context.set_font(FONT);
     for node in &graph.nodes {
         let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
             continue;
@@ -162,7 +170,14 @@ pub fn draw(
                 let name_width = context.measure_text(&port.name)?.width();
                 let right = x - 10.0 - name_width - VALUE_GAP;
                 let input_width = match node_type.inputs.get(row) {
-                    Some(input) => context.measure_text(&input.name)?.width() + 10.0,
+                    Some(input) => {
+                        let label = context.measure_text(&input.name)?.width() + 10.0;
+                        if graph.is_linked(&node.id, &input.name) {
+                            label
+                        } else {
+                            label + FIELD_GAP + FIELD_WIDTH
+                        }
+                    }
                     None => 0.0,
                 };
                 let room = right - (rect.x + input_width + 2.0 * VALUE_GAP);
@@ -191,6 +206,25 @@ pub fn draw(
     }
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
     Ok(())
+}
+
+/// Where the input box for input row `row` sits: just right of its label.
+/// Returns `(x, y, width, height)` in graph units. The font must already be
+/// `FONT`.
+pub fn field_box(
+    context: &CanvasRenderingContext2d,
+    rect: &element_51_core::layout::Rect,
+    row: usize,
+    label: &str,
+) -> Result<(f64, f64, f64, f64), JsValue> {
+    let (_, centre) = input_anchor(rect, row);
+    let label_width = context.measure_text(label)?.width();
+    Ok((
+        rect.x + 10.0 + label_width + FIELD_GAP,
+        centre - FIELD_HEIGHT / 2.0,
+        FIELD_WIDTH,
+        FIELD_HEIGHT,
+    ))
 }
 
 fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str) {

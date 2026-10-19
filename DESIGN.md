@@ -271,6 +271,24 @@ theme, with the credit in the README.
   Delete and Backspace remove the selection, Escape drops it. The zoom range
   is 0.25 to 4. The page's `web-sys` dependency gained the `WheelEvent` and
   `KeyboardEvent` features (no new crate).
+- Value editing (task 8). A node holds `values`, the numbers and text the user
+  typed for unlinked inputs. An input takes its link, then the node's own
+  value, then the Python default, else the node errors "has no value". The
+  node type sends its defaults (`NodeType.defaults`), so the page can show them
+  in grey. One edit, `set_value` with a null value to clear, so an empty box
+  means "use the default" (a text input cannot be the empty string). The rule
+  checks the node, that the port is an input, and that the value fits the
+  port (an int fits a float, a bool is not a number); setting a value on a
+  linked input is allowed and ignored until the link goes. The file format is
+  version 2 and still reads version 1. Loading replays values through the same
+  rule, so a hand-edited bad value is refused. The boxes are real HTML inputs
+  in a `#fields` layer over the canvas, one per unlinked input, placed from
+  the same label-width maths the canvas uses and rescaled with the zoom; a
+  bool is a checkbox. An edit commits on change (Enter or leaving the box);
+  unreadable text shows a message and the box returns to the stored value.
+  While a box has focus the page does not overwrite it, and keys typed in a box
+  never reach the Delete handler. Nodes are 220 wide, up from 160, to leave
+  room for a box beside the label and a value on the output side.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -298,6 +316,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 8: value editing with HTML inputs | by hand with `a13_values.py`: typing 5 gives 15.0 on Run, `abc` is refused with a message and the box restored, a ticked box turns the text to capitals, boxes follow zoom, pan and drag, values survive a reload; set_value, bad values and clearing give identical graphs in Python and Rust on 9 more shared cases; 164 Python tests at 100%, 60 Rust tests |
 | 2026-10-19 | task 7: pan, zoom, move, select, delete | by hand with `a12_big_graph.py`: a node dragged to a new place and deleted, wheel zoom, empty-canvas pan, a wire selected and deleted, Run showing `has no value` after; both survive a reload; the move, delete node and delete link edits give identical graphs in Python and Rust on 7 shared cases; 145 Python tests at 100%, 55 Rust tests |
 | 2026-10-19 | task 6: save and load | round trip, version refusal, five kinds of damaged file, rule-breaking file, and a real websocket test that an open page receives the loaded graph; `a11_save_load.py` saves on Ctrl+C and loads on the next start (run for real); 133 Python tests at 100% |
 | 2026-10-19 | task 6a: Python pushes to open pages | `a10_live_push.py` adds nodes every two seconds and an already-open page shows each at once, no reload; Run then gives 2.0 to 6.0; 119 Python tests at 100%, 45 Rust tests; two-client pytest (script edit reaches an open page; a browser edit reaches the other page only) |
