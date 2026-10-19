@@ -2,7 +2,7 @@
 
 use element_51_core::layout::{
     HEADER_HEIGHT, NODE_WIDTH, PORT_RADIUS, ROW_HEIGHT, Side, anchor_of, input_anchor, link_at,
-    node_at as pick_node, node_rect, output_anchor, port_at,
+    node_at as pick_node, node_rect, output_anchor, port_at, wire_controls,
 };
 use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
 
@@ -219,4 +219,28 @@ fn link_at_finds_a_link_near_its_curve_and_nothing_far_from_it() {
     assert_eq!(hit.target.node, "n2");
     assert!(link_at(&graph, &types, 280.0, 60.0, 6.0).is_none());
     assert!(link_at(&graph, &types, 0.0, 40.0, 6.0).is_none());
+}
+
+#[test]
+fn a_wire_to_a_port_straight_above_swings_out_far_enough_to_clear_the_card() {
+    // Output and input in one column, 300 units apart: the curve must leave
+    // sideways by at least 60 units, or it runs along the card's edge.
+    let [from, first, second, to] = wire_controls((0.0, 300.0), (0.0, 0.0));
+    assert_eq!((from, to), ((0.0, 300.0), (0.0, 0.0)));
+    assert!(first.0 >= 60.0, "{first:?}");
+    assert!(second.0 <= -60.0, "{second:?}");
+}
+
+#[test]
+fn a_wire_across_a_wide_gap_keeps_half_the_gap_as_its_reach() {
+    let [_, first, second, _] = wire_controls((0.0, 0.0), (300.0, 10.0));
+    assert_eq!(first, (150.0, 0.0));
+    assert_eq!(second, (150.0, 10.0));
+}
+
+#[test]
+fn a_short_flat_wire_still_leaves_and_arrives_straight() {
+    let [_, first, second, _] = wire_controls((0.0, 0.0), (10.0, 0.0));
+    assert_eq!(first, (20.0, 0.0));
+    assert_eq!(second, (-10.0, 0.0));
 }

@@ -297,7 +297,10 @@ theme, with the credit in the README.
   text `#94a95f`, sampled from the screenshots; bool stays blue), is 3.5 units
   thick (5 when selected; measured as about 7 screenshot pixels on a card 450
   pixels wide against our 220 units), and the curve keeps horizontal ends with
-  a reach of half the horizontal gap, at least 20 units (was 40). The port
+  a reach of half the horizontal gap, at least 20 units (was 40), and when
+  the ends are nearly in one column a sideways swing of a third of the height
+  between them (at most 70), so a wire to a port above or below does not run
+  along the card's edge (the user spotted that overlap). The port
   markers take the same two colours. Port squares and input boxes were left as they were by the
   user's choice. The radius is a constant in `draw.rs` until the Theme exists.
 - Undo and redo (task 9). The history lives in `element-51-core`

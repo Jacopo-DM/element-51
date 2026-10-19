@@ -145,7 +145,12 @@ pub fn node_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option
 /// The four control points of the curve a link is drawn along: it leaves
 /// `from` and arrives at `to` horizontally.
 pub fn wire_controls(from: (f64, f64), to: (f64, f64)) -> [(f64, f64); 4] {
-    let reach = ((to.0 - from.0).abs() / 2.0).max(20.0);
+    // Half the horizontal gap, so a wire across a wide gap is a smooth S. When
+    // the ends are nearly in one column the wire needs a sideways swing that
+    // grows with the height between them, or it would run along the card's edge.
+    let across = (to.0 - from.0).abs() / 2.0;
+    let swing = ((to.1 - from.1).abs() / 3.0).min(70.0);
+    let reach = across.max(swing).max(20.0);
     [from, (from.0 + reach, from.1), (to.0 - reach, to.1), to]
 }
 
