@@ -289,6 +289,11 @@ theme, with the credit in the README.
   While a box has focus the page does not overwrite it, and keys typed in a box
   never reach the Delete handler. Nodes are 220 wide, up from 160, to leave
   room for a box beside the label and a value on the output side.
+- Rounded look (extra task 17, the user's request): node cards have corners
+  of radius 8 (graph units), the header takes them by clipping to the card
+  path, the selection outline follows the rounded path, and wires have round
+  caps and joins. Port squares and input boxes were left as they were by the
+  user's choice. The radius is a constant in `draw.rs` until the Theme exists.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 

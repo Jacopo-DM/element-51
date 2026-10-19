@@ -108,7 +108,9 @@ Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 (reload keeps the graph; no product code was needed) and 6a (Python pushes to
 open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md), 6
 (save and load as versioned JSON), 7 (pan, zoom, move, select, delete) and 8
-(value editing with HTML inputs).
+(value editing with HTML inputs). Extra task 17, added at the user's request and
+approved in words 2026-10-19: rounded node cards and wire ends (done; the radius
+is a constant that task 11 moves into the Theme).
 
 9. **Undo and redo.** Reversible command log in `element-51-core`; one step per
    edit, a drag is one step. Risk medium. Depends on 2, 7 and 8. Cost about

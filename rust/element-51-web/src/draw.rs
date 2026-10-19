@@ -23,6 +23,8 @@ const SELECTED: &str = "#e8e8e8";
 const ALLOWED: &str = "#6fcf6f";
 const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
+/// How round the corners of a node card are, in graph units.
+const CARD_RADIUS: f64 = 8.0;
 const VALUE_GAP: f64 = 8.0;
 /// The font every label on a node is set in.
 pub const FONT: &str = "13px sans-serif";
@@ -103,6 +105,8 @@ pub fn draw(
         view.pan_y(),
     )?;
 
+    context.set_line_cap("round");
+    context.set_line_join("round");
     context.set_line_width(2.0);
     for link in &graph.links {
         let from = anchor_of(graph, types, &link.source, Side::Output);
@@ -129,12 +133,8 @@ pub fn draw(
         };
         let rect = node_rect(node, node_type);
         context.set_fill_style_str(BODY);
-        context.fill_rect(rect.x, rect.y, rect.w, rect.h);
-        if selected == Some(&Selected::Node(node.id.clone())) {
-            context.set_stroke_style_str(SELECTED);
-            context.set_line_width(2.0);
-            context.stroke_rect(rect.x, rect.y, rect.w, rect.h);
-        }
+        card_path(context, &rect);
+        context.fill();
         let outcome = run.and_then(|result| result.outcome_for(&node.id));
         let status = outcome.map(|outcome| outcome.status);
         let (header, text) = match status {
@@ -143,7 +143,18 @@ pub fn draw(
             _ => (HEADER, TEXT),
         };
         context.set_fill_style_str(header);
+        // The header takes the card's rounded top corners by clipping to it.
+        context.save();
+        card_path(context, &rect);
+        context.clip();
         context.fill_rect(rect.x, rect.y, rect.w, HEADER_HEIGHT);
+        context.restore();
+        if selected == Some(&Selected::Node(node.id.clone())) {
+            context.set_stroke_style_str(SELECTED);
+            context.set_line_width(2.0);
+            card_path(context, &rect);
+            context.stroke();
+        }
         context.set_fill_style_str(text);
         context.set_text_align("left");
         context.fill_text(
@@ -225,6 +236,19 @@ pub fn field_box(
         FIELD_WIDTH,
         FIELD_HEIGHT,
     ))
+}
+
+/// Trace the outline of a node card with rounded corners.
+fn card_path(context: &CanvasRenderingContext2d, rect: &element_51_core::layout::Rect) {
+    let (left, top) = (rect.x, rect.y);
+    let (right, bottom) = (rect.x + rect.w, rect.y + rect.h);
+    context.begin_path();
+    context.move_to(left + CARD_RADIUS, top);
+    let _ = context.arc_to(right, top, right, bottom, CARD_RADIUS);
+    let _ = context.arc_to(right, bottom, left, bottom, CARD_RADIUS);
+    let _ = context.arc_to(left, bottom, left, top, CARD_RADIUS);
+    let _ = context.arc_to(left, top, right, top, CARD_RADIUS);
+    context.close_path();
 }
 
 fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str) {
