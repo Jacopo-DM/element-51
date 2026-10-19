@@ -56,7 +56,21 @@
 ## Current state
 
 Phase: planning. Goals `skeleton` and `antimony-theme` approved 2026-10-19.
-Next step: approve the spec and architecture for `skeleton`.
+Next step: approve the spec and architecture for `skeleton` (proposed in chat
+2026-10-19, not yet answered).
+
+Approved 2026-10-19, not yet installed (the skeleton step installs them):
+
+- Python runtime, PyPI: starlette 1.9.0, uvicorn 0.54.0, websockets 17.2 and
+  their dependencies (anyio, h11, click, idna), about 0.8 MB.
+- Rust target `wasm32-unknown-unknown` for the rustup `stable` toolchain, from
+  static.rust-lang.org, 23.2 MB. The Homebrew `rustc` on PATH cannot use it;
+  build with `rustup run stable cargo`.
+- wasm-bindgen CLI 0.2.129, prebuilt `aarch64-apple-darwin` from the GitHub
+  release, 7.9 MB, sha256 checked, kept in git-ignored `tools/bin/`.
+- Rust crates, crates.io: wasm-bindgen =0.2.129, js-sys 0.3.106, web-sys
+  0.3.106, serde 1.0.229, serde_json 1.0.154 (about 1.1 MB direct). Report the
+  transitive list from `cargo fetch` before building.
 
 ## Baseline
 
