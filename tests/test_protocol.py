@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from element_51.edits import AddLink, AddNode
+from element_51.edits import (
+    AddLink,
+    AddNode,
+    DeleteLink,
+    DeleteNode,
+    MoveNode,
+)
 from element_51.engine import RunResult
 from element_51.protocol import (
     Ack,
@@ -49,6 +55,23 @@ def test_add_link_request_round_trips() -> None:
     request = round_trip(EditRequest, "edit_add_link")
     assert isinstance(request, EditRequest)
     assert isinstance(request.edit, AddLink)
+
+
+@pytest.mark.parametrize(
+    ("key", "kind"),
+    [
+        ("edit_move_node", MoveNode),
+        ("edit_delete_node", DeleteNode),
+        ("edit_delete_link", DeleteLink),
+    ],
+)
+def test_move_and_delete_requests_round_trip(
+    key: str, kind: type[MoveNode | DeleteNode | DeleteLink]
+) -> None:
+    """The browser's move and delete requests are the shape Rust writes."""
+    request = round_trip(EditRequest, key)
+    assert isinstance(request, EditRequest)
+    assert isinstance(request.edit, kind)
 
 
 def test_ack_and_reject_round_trip() -> None:

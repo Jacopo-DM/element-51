@@ -1,0 +1,322 @@
+{
+  "node_types": [
+    {
+      "name": "add",
+      "inputs": [
+        {
+          "name": "a",
+          "kind": "float"
+        },
+        {
+          "name": "b",
+          "kind": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out",
+          "kind": "float"
+        }
+      ]
+    },
+    {
+      "name": "label",
+      "inputs": [
+        {
+          "name": "text",
+          "kind": "str"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out",
+          "kind": "str"
+        }
+      ]
+    }
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "n1",
+        "node_type": "add",
+        "x": 10.0,
+        "y": 20.0
+      },
+      {
+        "id": "n2",
+        "node_type": "add",
+        "x": 200.0,
+        "y": 20.0
+      },
+      {
+        "id": "n3",
+        "node_type": "add",
+        "x": 400.0,
+        "y": 60.0
+      }
+    ],
+    "links": [
+      {
+        "source": {
+          "node": "n1",
+          "port": "out"
+        },
+        "target": {
+          "node": "n2",
+          "port": "a"
+        }
+      },
+      {
+        "source": {
+          "node": "n2",
+          "port": "out"
+        },
+        "target": {
+          "node": "n3",
+          "port": "a"
+        }
+      },
+      {
+        "source": {
+          "node": "n1",
+          "port": "out"
+        },
+        "target": {
+          "node": "n3",
+          "port": "b"
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "a node can be moved",
+      "edit": {
+        "kind": "move_node",
+        "id": "n2",
+        "x": 55.5,
+        "y": 66.0
+      },
+      "result": "ok",
+      "graph": {
+        "nodes": [
+          {
+            "id": "n1",
+            "node_type": "add",
+            "x": 10.0,
+            "y": 20.0
+          },
+          {
+            "id": "n2",
+            "node_type": "add",
+            "x": 55.5,
+            "y": 66.0
+          },
+          {
+            "id": "n3",
+            "node_type": "add",
+            "x": 400.0,
+            "y": 60.0
+          }
+        ],
+        "links": [
+          {
+            "source": {
+              "node": "n1",
+              "port": "out"
+            },
+            "target": {
+              "node": "n2",
+              "port": "a"
+            }
+          },
+          {
+            "source": {
+              "node": "n2",
+              "port": "out"
+            },
+            "target": {
+              "node": "n3",
+              "port": "a"
+            }
+          },
+          {
+            "source": {
+              "node": "n1",
+              "port": "out"
+            },
+            "target": {
+              "node": "n3",
+              "port": "b"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "moving a missing node is refused",
+      "edit": {
+        "kind": "move_node",
+        "id": "n9",
+        "x": 1.0,
+        "y": 1.0
+      },
+      "result": "unknown_node"
+    },
+    {
+      "name": "deleting a node takes its links with it",
+      "edit": {
+        "kind": "delete_node",
+        "id": "n2"
+      },
+      "result": "ok",
+      "graph": {
+        "nodes": [
+          {
+            "id": "n1",
+            "node_type": "add",
+            "x": 10.0,
+            "y": 20.0
+          },
+          {
+            "id": "n3",
+            "node_type": "add",
+            "x": 400.0,
+            "y": 60.0
+          }
+        ],
+        "links": [
+          {
+            "source": {
+              "node": "n1",
+              "port": "out"
+            },
+            "target": {
+              "node": "n3",
+              "port": "b"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "deleting a source node frees the inputs it fed",
+      "edit": {
+        "kind": "delete_node",
+        "id": "n1"
+      },
+      "result": "ok",
+      "graph": {
+        "nodes": [
+          {
+            "id": "n2",
+            "node_type": "add",
+            "x": 200.0,
+            "y": 20.0
+          },
+          {
+            "id": "n3",
+            "node_type": "add",
+            "x": 400.0,
+            "y": 60.0
+          }
+        ],
+        "links": [
+          {
+            "source": {
+              "node": "n2",
+              "port": "out"
+            },
+            "target": {
+              "node": "n3",
+              "port": "a"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "deleting a missing node is refused",
+      "edit": {
+        "kind": "delete_node",
+        "id": "n9"
+      },
+      "result": "unknown_node"
+    },
+    {
+      "name": "a link can be deleted",
+      "edit": {
+        "kind": "delete_link",
+        "source": {
+          "node": "n2",
+          "port": "out"
+        },
+        "target": {
+          "node": "n3",
+          "port": "a"
+        }
+      },
+      "result": "ok",
+      "graph": {
+        "nodes": [
+          {
+            "id": "n1",
+            "node_type": "add",
+            "x": 10.0,
+            "y": 20.0
+          },
+          {
+            "id": "n2",
+            "node_type": "add",
+            "x": 200.0,
+            "y": 20.0
+          },
+          {
+            "id": "n3",
+            "node_type": "add",
+            "x": 400.0,
+            "y": 60.0
+          }
+        ],
+        "links": [
+          {
+            "source": {
+              "node": "n1",
+              "port": "out"
+            },
+            "target": {
+              "node": "n2",
+              "port": "a"
+            }
+          },
+          {
+            "source": {
+              "node": "n1",
+              "port": "out"
+            },
+            "target": {
+              "node": "n3",
+              "port": "b"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "deleting a link that is not there is refused",
+      "edit": {
+        "kind": "delete_link",
+        "source": {
+          "node": "n1",
+          "port": "out"
+        },
+        "target": {
+          "node": "n2",
+          "port": "b"
+        }
+      },
+      "result": "unknown_link"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from element_51.edits import AddLink, AddNode, apply_edit
+from element_51.edits import AddLink, AddNode, AnyEdit, apply_edit
 from element_51.engine import RunResult, run_graph
 from element_51.model import Graph, NodeType, PortRef, PortValue
 from element_51.nodes import Registered
@@ -67,7 +67,7 @@ class App:
         self._changed()
         return node_id
 
-    def apply(self, edit: AddNode | AddLink) -> None:
+    def apply(self, edit: AnyEdit) -> None:
         """Apply an edit from the browser, without telling listeners.
 
         An edit the rules refuse raises `EditError` and leaves the graph

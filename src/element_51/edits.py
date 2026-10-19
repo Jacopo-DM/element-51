@@ -34,6 +34,7 @@ class EditErrorKind(StrEnum):
     TYPE_MISMATCH = "type_mismatch"
     INPUT_TAKEN = "input_taken"
     CYCLE = "cycle"
+    UNKNOWN_LINK = "unknown_link"
 
 
 class EditError(Exception):
@@ -71,11 +72,36 @@ class AddLink(Model):
     target: PortRef
 
 
-type Edit = Annotated[AddNode | AddLink, Field(discriminator="kind")]
+class MoveNode(Model):
+    """Put a node at a new position."""
+
+    kind: Literal["move_node"] = "move_node"
+    id: NodeId
+    x: float
+    y: float
+
+
+class DeleteNode(Model):
+    """Remove a node, and every link that touches it."""
+
+    kind: Literal["delete_node"] = "delete_node"
+    id: NodeId
+
+
+class DeleteLink(Model):
+    """Remove one link."""
+
+    kind: Literal["delete_link"] = "delete_link"
+    source: PortRef
+    target: PortRef
+
+
+type AnyEdit = AddNode | AddLink | MoveNode | DeleteNode | DeleteLink
+type Edit = Annotated[AnyEdit, Field(discriminator="kind")]
 
 
 def apply_edit(
-    graph: Graph, node_types: Mapping[str, NodeType], edit: AddNode | AddLink
+    graph: Graph, node_types: Mapping[str, NodeType], edit: AnyEdit
 ) -> Graph:
     """Return the graph after `edit`, or refuse it.
 
@@ -98,6 +124,12 @@ def apply_edit(
             return _add_node(graph, node_types, edit)
         case AddLink():
             return _add_link(graph, node_types, edit)
+        case MoveNode():
+            return _move_node(graph, edit)
+        case DeleteNode():
+            return _delete_node(graph, edit)
+        case DeleteLink():
+            return _delete_link(graph, edit)
         case _:  # pragma: no cover  # unreachable: the match is exhaustive
             assert_never(edit)
 
@@ -131,6 +163,49 @@ def _add_link(
         raise EditError(EditErrorKind.CYCLE, msg)
     link = Link(source=edit.source, target=edit.target)
     return Graph(nodes=graph.nodes, links=(*graph.links, link))
+
+
+def _move_node(graph: Graph, edit: MoveNode) -> Graph:
+    _require_node(graph, edit.id)
+    nodes = tuple(
+        node.model_copy(update={"x": edit.x, "y": edit.y})
+        if node.id == edit.id
+        else node
+        for node in graph.nodes
+    )
+    return Graph(nodes=nodes, links=graph.links)
+
+
+def _delete_node(graph: Graph, edit: DeleteNode) -> Graph:
+    _require_node(graph, edit.id)
+    return Graph(
+        nodes=tuple(node for node in graph.nodes if node.id != edit.id),
+        links=tuple(
+            link
+            for link in graph.links
+            if edit.id not in {link.source.node, link.target.node}
+        ),
+    )
+
+
+def _delete_link(graph: Graph, edit: DeleteLink) -> Graph:
+    gone = Link(source=edit.source, target=edit.target)
+    if gone not in graph.links:
+        msg = (
+            f"no link from {edit.source.node}.{edit.source.port} "
+            f"to {edit.target.node}.{edit.target.port}"
+        )
+        raise EditError(EditErrorKind.UNKNOWN_LINK, msg)
+    return Graph(
+        nodes=graph.nodes,
+        links=tuple(link for link in graph.links if link != gone),
+    )
+
+
+def _require_node(graph: Graph, node_id: str) -> None:
+    if not any(node.id == node_id for node in graph.nodes):
+        msg = f"unknown node {node_id}"
+        raise EditError(EditErrorKind.UNKNOWN_NODE, msg)
 
 
 def _port(

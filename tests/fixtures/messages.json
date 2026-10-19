@@ -25,6 +25,39 @@
       }
     }
   },
+  "edit_move_node": {
+    "op": "edit",
+    "id": 19,
+    "edit": {
+      "kind": "move_node",
+      "id": "n3",
+      "x": 10.5,
+      "y": -4.0
+    }
+  },
+  "edit_delete_node": {
+    "op": "edit",
+    "id": 20,
+    "edit": {
+      "kind": "delete_node",
+      "id": "n3"
+    }
+  },
+  "edit_delete_link": {
+    "op": "edit",
+    "id": 21,
+    "edit": {
+      "kind": "delete_link",
+      "source": {
+        "node": "n1",
+        "port": "out"
+      },
+      "target": {
+        "node": "n3",
+        "port": "a"
+      }
+    }
+  },
   "ack": {
     "op": "ack",
     "id": 17

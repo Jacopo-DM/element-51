@@ -3,10 +3,12 @@
 from pathlib import Path
 
 import pytest
+from pydantic import TypeAdapter
 
 from element_51.edits import (
     AddLink,
     AddNode,
+    Edit,
     EditError,
     EditErrorKind,
     apply_edit,
@@ -108,3 +110,42 @@ def test_a_diamond_in_the_graph_is_searched_once() -> None:
         target=PortRef(node="n1", port="a"),
     )
     assert len(apply_edit(graph, NODE_TYPES, edit).links) == len(links) + 1
+
+
+EDIT_FIXTURE = Path(__file__).parent / "fixtures" / "edit_cases.json"
+EDIT = TypeAdapter(Edit)
+
+
+class EditCase(Model):
+    """One edit, with the graph it should give or the reason it is refused."""
+
+    name: str
+    edit: dict[str, object]
+    result: str
+    graph: Graph | None = None
+
+
+class EditCases(Model):
+    """The shared fixture for move and delete edits."""
+
+    node_types: tuple[NodeType, ...]
+    graph: Graph
+    cases: tuple[EditCase, ...]
+
+
+EDIT_CASES = EditCases.model_validate_json(EDIT_FIXTURE.read_text())
+EDIT_NODE_TYPES = {t.name: t for t in EDIT_CASES.node_types}
+
+
+@pytest.mark.parametrize("case", EDIT_CASES.cases, ids=lambda case: case.name)
+def test_move_and_delete_match_the_shared_cases(case: EditCase) -> None:
+    """Python gives the graph, or the refusal, the Rust side gives."""
+    edit = EDIT.validate_python(case.edit)
+    if case.result == "ok":
+        graph = apply_edit(EDIT_CASES.graph, EDIT_NODE_TYPES, edit)
+        assert graph == case.graph
+        return
+    with pytest.raises(EditError) as raised:
+        apply_edit(EDIT_CASES.graph, EDIT_NODE_TYPES, edit)
+    assert raised.value.kind == EditErrorKind(case.result)
+    assert raised.value.reason

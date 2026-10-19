@@ -413,3 +413,29 @@ def test_loading_a_file_updates_a_page_that_is_already_open(
         app.load(tmp_path / "g.json")
         pushed = Snapshot.model_validate_json(websocket.recv(timeout=5))
     assert pushed.graph == source.graph
+
+
+def test_move_and_delete_from_the_browser_change_the_graph(
+    web_dir: Path,
+) -> None:
+    """A moved node and a deleted node are acknowledged and applied."""
+    assert web_dir.exists()
+    app = App([add])
+    app.add_node(add, x=0.0, y=0.0)
+    app.add_node(add, x=1.0, y=1.0)
+    move = (
+        '{"op": "edit", "id": 1, "edit": {"kind": "move_node",'
+        ' "id": "n1", "x": 9.5, "y": 8.0}}'
+    )
+    delete = (
+        '{"op": "edit", "id": 2, "edit": {"kind": "delete_node", "id": "n2"}}'
+    )
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        for request in (move, delete):
+            websocket.send(request)
+            Ack.model_validate_json(websocket.recv(timeout=5))
+    assert [(n.id, n.x, n.y) for n in app.graph.nodes] == [("n1", 9.5, 8.0)]
