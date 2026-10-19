@@ -55,26 +55,19 @@
 
 ## Current state
 
-Phase: planning. Goals `skeleton` and `antimony-theme` approved 2026-10-19.
-Next step: approve the spec and architecture for `skeleton` (proposed in chat
-2026-10-19, not yet answered).
-
-Approved 2026-10-19, not yet installed (the skeleton step installs them):
-
-- Python runtime, PyPI: starlette 1.9.0, uvicorn 0.54.0, websockets 17.2 and
-  their dependencies (anyio, h11, click, idna), about 0.8 MB.
-- Rust target `wasm32-unknown-unknown` for the rustup `stable` toolchain, from
-  static.rust-lang.org, 23.2 MB. The Homebrew `rustc` on PATH cannot use it;
-  build with `rustup run stable cargo`.
-- wasm-bindgen CLI 0.2.129, prebuilt `aarch64-apple-darwin` from the GitHub
-  release, 7.9 MB, sha256 checked, kept in git-ignored `tools/bin/`.
-- Rust crates, crates.io: wasm-bindgen =0.2.129, js-sys 0.3.106, web-sys
-  0.3.106, serde 1.0.229, serde_json 1.0.154 (about 1.1 MB direct). Report the
-  transitive list from `cargo fetch` before building.
+Phase: skeleton built, task list not written.
+Next step: write the tiered task list for goals `skeleton` and
+`antimony-theme` (/zz-02-project-plan, step 6), then approve it.
 
 ## Baseline
 
-No code yet.
+Measured 2026-10-19 on the skeleton, Apple silicon, Python 3.13:
+
+- ruff format, ruff check, mypy, ty: pass.
+- pytest: 4 passed, 100% coverage, about 2 s.
+- cargo fmt, clippy (`-D warnings`), test: pass, 4 tests.
+- `tools/build_wasm.py`: builds, about 4 s; the page draws in the in-app
+  browser with no console errors.
 
 ## Tasks
 
@@ -86,15 +79,16 @@ None yet.
 
 ## Known problems
 
-Found by /zz-01-project-setup on the uv scaffolding (2026-10-19):
-
-- `uv run --locked ruff check --no-fix` reports 2 errors in
-  `src/patchbay/__init__.py`: `non-empty-init-module` (a function lives in
-  `__init__`) and `undocumented-public-package` (no docstring).
-- `uv run --locked pytest` fails: there is no `tests/` folder, so coverage is 0%
-  against the 100% floor.
-- `src/__init__.py` and `src/hello.py` sit beside the real package
-  `src/patchbay/`. They look like leftover scaffolding ("Hello from .!").
 - `README.md`, `docs/index.md` and the `pyproject.toml` description are still
-  template text.
-- `uv run --locked mypy .` passes (6 files).
+  template text. The README credit for Antimony is part of goal
+  `antimony-theme`.
+- `docs/reference.md` autosummary points at `.`, not at `patchbay`.
+- CI (`.github/workflows/ci.yml`) runs Python checks only. It does not build
+  the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
+  start (the `web/` folder is missing); the tests avoid this with a fake folder.
+- `patchbay-web` has no automated test; it is checked by hand in the browser.
+- The WASM build works around a broken `rust-lld` in the rustup toolchain
+  (see CLAUDE.md, things that bite). Not reported upstream.
+- `uv build` bundles `src/patchbay/web/` only if `tools/build_wasm.py` ran
+  first (checked 2026-10-19: the wheel held the WASM). Nothing stops a build
+  without it, which would ship a package whose `asgi_app()` fails.

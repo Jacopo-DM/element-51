@@ -1,5 +1,8 @@
 ### PROJECT ############################################################
 __data__/
+/tools/bin/
+/src/patchbay/web/
+/rust/target/
 ### HYPER-MODERN ############################################################
 /.coverage
 /.coverage.*
@@ -222,7 +225,8 @@ nohup.out
 __MACOSX/
 .AppleDouble
 .LSOverride
-Icon[]
+Icon[
+]
 # Thumbnails
 ._*
 # Files that might appear in the root of a volume

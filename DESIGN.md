@@ -111,8 +111,11 @@ in-app browser against the running example.
 
 ## Results
 
-None yet.
+| Date | Change | Result |
+| --- | --- | --- |
+| 2026-10-19 | skeleton: Python serves, WASM draws, core logic runs | page shows `float to str link allowed: false`; 4 Python tests at 100%, 4 Rust tests; WASM 706 KB unoptimised |
 
 ## Gotchas
 
-None yet.
+- The 22 transitive Rust crates come from wasm-bindgen (`futures-*`, `slab`,
+  `bumpalo`, `syn` 3.0.9 and friends) and serde (`serde_derive`).

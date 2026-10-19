@@ -1,0 +1,22 @@
+[package]
+name = "patchbay-web"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+patchbay-core = { path = "../patchbay-core" }
+wasm-bindgen = "=0.2.129"
+
+[dependencies.web-sys]
+version = "=0.3.106"
+features = [
+    "CanvasRenderingContext2d",
+    "Document",
+    "Element",
+    "HtmlCanvasElement",
+    "Window",
+]
