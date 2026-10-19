@@ -90,3 +90,7 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - Test dummies whose body never runs (functions built only to read their hints)
   take `# pragma: no cover  # reason` on the `def` line; everything else is
   called, so coverage stays at 100%.
+- `typing.TypeGuard` narrows only the first argument of the guard function, so
+  the value being checked goes first (`value_fits(value, kind)`).
+- A wrapped bullet in a docstring breaks the 4-space indent rule when the
+  continuation is indented by 2. Keep each bullet on one line.

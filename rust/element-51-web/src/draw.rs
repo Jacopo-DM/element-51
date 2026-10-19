@@ -3,13 +3,17 @@
 use element_51_core::layout::{
     HEADER_HEIGHT, PortHit, Side, anchor_of, input_anchor, node_rect, output_anchor,
 };
-use element_51_core::{Edit, PortRef, PortType, Replica, apply_edit};
+use element_51_core::{Edit, PortRef, PortType, Replica, RunResult, Status, apply_edit};
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
 const BACKGROUND: &str = "#1e1e1e";
 const BODY: &str = "#3a3a3a";
 const HEADER: &str = "#555555";
+const HEADER_ERROR: &str = "#8a3a3a";
+const HEADER_SKIPPED: &str = "#3f3f3f";
+const TEXT_DIM: &str = "#808080";
+const VALUE: &str = "#a6e3a6";
 const TEXT: &str = "#d0d0d0";
 const WIRE: &str = "#8fa04f";
 const ALLOWED: &str = "#6fcf6f";
@@ -39,6 +43,7 @@ pub fn draw(
     replica: Option<&Replica>,
     drag: Option<&Drag>,
     hover: Option<&PortHit>,
+    run: Option<&RunResult>,
 ) -> Result<(), JsValue> {
     context.set_fill_style_str(BACKGROUND);
     context.fill_rect(
@@ -76,25 +81,40 @@ pub fn draw(
         let rect = node_rect(node, node_type);
         context.set_fill_style_str(BODY);
         context.fill_rect(rect.x, rect.y, rect.w, rect.h);
-        context.set_fill_style_str(HEADER);
+        let outcome = run.and_then(|result| result.outcome_for(&node.id));
+        let status = outcome.map(|outcome| outcome.status);
+        let (header, text) = match status {
+            Some(Status::Error) => (HEADER_ERROR, TEXT),
+            Some(Status::Skipped) => (HEADER_SKIPPED, TEXT_DIM),
+            _ => (HEADER, TEXT),
+        };
+        context.set_fill_style_str(header);
         context.fill_rect(rect.x, rect.y, rect.w, HEADER_HEIGHT);
-        context.set_fill_style_str(TEXT);
+        context.set_fill_style_str(text);
         context.set_text_align("left");
         context.fill_text(
             &format!("{}  {}", node.id, node_type.name),
             rect.x + 8.0,
             rect.y + 18.0,
         )?;
+        if status == Some(Status::Ok)
+            && let Some(value) = outcome.and_then(|outcome| outcome.value_text())
+        {
+            context.set_fill_style_str(VALUE);
+            context.set_text_align("right");
+            context.fill_text(&value, rect.x + rect.w - 8.0, rect.y + 18.0)?;
+            context.set_text_align("left");
+        }
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row);
-            context.set_fill_style_str(TEXT);
+            context.set_fill_style_str(text);
             context.fill_text(&port.name, x + 10.0, y + 4.0)?;
             square(context, x, y, port_colour(port.kind));
         }
         context.set_text_align("right");
         for (row, port) in node_type.outputs.iter().enumerate() {
             let (x, y) = output_anchor(&rect, row);
-            context.set_fill_style_str(TEXT);
+            context.set_fill_style_str(text);
             context.fill_text(&port.name, x - 10.0, y + 4.0)?;
             square(context, x, y, port_colour(port.kind));
         }

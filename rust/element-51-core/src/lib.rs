@@ -11,8 +11,8 @@ mod replica;
 
 pub use edit::{EditError, apply_edit};
 pub use model::{
-    Ack, Edit, EditRequest, Graph, Link, Message, Node, NodeType, Port, PortRef, PortType, Reject,
-    Snapshot,
+    Ack, Edit, EditRequest, Graph, Link, Message, Node, NodeOutcome, NodeType, Port, PortRef,
+    PortType, Reject, RunRequest, RunResult, Snapshot, Status,
 };
 pub use replica::Replica;
 

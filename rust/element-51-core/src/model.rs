@@ -134,6 +134,72 @@ pub struct Reject {
     pub reason: String,
 }
 
+/// The browser asks Python to run the graph.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RunRequest {}
+
+/// What happened to a node in a run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Status {
+    Ok,
+    Error,
+    Skipped,
+}
+
+/// The outcome of one node in a run.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NodeOutcome {
+    pub node: String,
+    pub status: Status,
+    pub value: Option<serde_json::Value>,
+    pub error: Option<String>,
+}
+
+impl NodeOutcome {
+    /// The value as JSON text, for showing on the node. Strings keep their quotes.
+    pub fn value_text(&self) -> Option<String> {
+        self.value.as_ref().map(ToString::to_string)
+    }
+}
+
+/// The outcome of every node, in the order they ran.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RunResult {
+    pub outcomes: Vec<NodeOutcome>,
+}
+
+impl RunResult {
+    /// The outcome for node `id`, if it is in the result.
+    pub fn outcome_for(&self, id: &str) -> Option<&NodeOutcome> {
+        self.outcomes.iter().find(|outcome| outcome.node == id)
+    }
+
+    /// One line naming every failed node and why, or None if none failed.
+    pub fn error_summary(&self) -> Option<String> {
+        let errors: Vec<String> = self
+            .outcomes
+            .iter()
+            .filter(|outcome| outcome.status == Status::Error)
+            .map(|outcome| {
+                format!(
+                    "{}: {}",
+                    outcome.node,
+                    outcome.error.as_deref().unwrap_or("failed")
+                )
+            })
+            .collect();
+        if errors.is_empty() {
+            None
+        } else {
+            Some(errors.join("; "))
+        }
+    }
+}
+
 /// A message in either direction, tagged by its `op` field.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
@@ -142,6 +208,8 @@ pub enum Message {
     Edit(EditRequest),
     Ack(Ack),
     Reject(Reject),
+    Run(RunRequest),
+    RunResult(RunResult),
 }
 
 impl Message {

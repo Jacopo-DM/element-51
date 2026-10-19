@@ -16,6 +16,7 @@ from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
 from element_51 import server
+from element_51.engine import RunResult
 from element_51.protocol import Ack, Reject, Snapshot
 from element_51.session import App
 
@@ -231,3 +232,19 @@ def test_a_malformed_message_closes_the_connection(web_dir: Path) -> None:
     assert closed.value.rcvd is not None
     assert closed.value.rcvd.code == INVALID_PAYLOAD
     assert "malformed" in closed.value.rcvd.reason
+
+
+def test_a_run_request_returns_the_outcome_of_every_node(web_dir: Path) -> None:
+    """The browser's Run button: every node comes back with a status."""
+    assert web_dir.exists()
+    app = App([add])
+    app.add_node(add, x=0.0, y=0.0)
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        websocket.send('{"op": "run"}')
+        result = RunResult.model_validate_json(websocket.recv())
+    assert [(o.node, o.status) for o in result.outcomes] == [("n1", "error")]
+    assert result.outcomes[0].error == "input 'a' has no value"

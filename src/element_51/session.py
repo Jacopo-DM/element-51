@@ -3,7 +3,8 @@
 from collections.abc import Iterable
 
 from element_51.edits import AddLink, AddNode, apply_edit
-from element_51.model import Graph
+from element_51.engine import RunResult, run_graph
+from element_51.model import Graph, PortRef, PortValue
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot
 
@@ -78,6 +79,59 @@ class App:
             for name, function in self.node_functions.items()
         }
         self.graph = apply_edit(self.graph, node_types, edit)
+
+    def add_link(
+        self, source: str, source_port: str, target: str, target_port: str
+    ) -> None:
+        """Link an output port to an input port, by node id and port name.
+
+        An edit the rules refuse raises `EditError`.
+
+        Parameters
+        ----------
+        source
+            Id of the node the link starts at.
+        source_port
+            Name of its output port.
+        target
+            Id of the node the link ends at.
+        target_port
+            Name of its input port.
+        """
+        self.apply(
+            AddLink(
+                source=PortRef(node=source, port=source_port),
+                target=PortRef(node=target, port=target_port),
+            )
+        )
+
+    def execute(self) -> RunResult:
+        """Run the graph and report what happened to every node.
+
+        Returns
+        -------
+        RunResult
+            One outcome per node; nothing is raised for a failing node.
+        """
+        return run_graph(self.graph, self.node_functions, raise_errors=False)
+
+    def run(self) -> dict[str, PortValue]:
+        """Run the graph and return each node's value by node id.
+
+        A node that fails raises its own exception, with a note naming the
+        node.
+
+        Returns
+        -------
+        dict[str, PortValue]
+            The value of every node's output.
+        """
+        result = run_graph(self.graph, self.node_functions, raise_errors=True)
+        return {
+            outcome.node: outcome.value
+            for outcome in result.outcomes
+            if outcome.value is not None
+        }
 
     def snapshot(self) -> Snapshot:
         """Describe the whole state for a browser that just connected.

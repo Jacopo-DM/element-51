@@ -107,3 +107,41 @@ def test_something_that_is_not_a_plain_function_is_refused() -> None:
     """A `functools.partial` has no name to give the node type."""
     with pytest.raises(TypeError, match="plain function"):
         node(partial(add, 1.0))
+
+
+@node
+def with_defaults(a: float = 1.5, b: int = 2, label: str = "x") -> str:
+    return f"{a} {b} {label}"
+
+
+def test_defaults_are_recorded_by_input_name() -> None:
+    """An input with a Python default is not an error when unlinked."""
+    assert with_defaults.defaults == {"a": 1.5, "b": 2, "label": "x"}
+    assert add.defaults == {}
+
+
+def test_call_runs_the_function_by_input_name() -> None:
+    """The engine calls with a mapping of input name to value."""
+    assert with_defaults.call({"a": 1.0, "b": 3, "label": "y"}) == "1.0 3 y"
+
+
+def test_a_default_of_the_wrong_type_is_refused() -> None:
+    """A default must be a value the port can carry."""
+
+    def bad(a: float = "x") -> float:  # type: ignore[assignment]  # ty: ignore[invalid-parameter-default]  # pragma: no cover  # never called; the point of the test
+        return a
+
+    with pytest.raises(TypeError, match=r"bad, parameter 'a': default"):
+        node(bad)
+
+
+def test_positional_only_parameters_are_refused() -> None:
+    """The engine passes inputs by name, so every input needs a name."""
+
+    def bad(
+        a: float, /
+    ) -> float:  # pragma: no cover  # never called; only its signature is read
+        return a
+
+    with pytest.raises(TypeError, match=r"bad.*positional-only"):
+        node(bad)

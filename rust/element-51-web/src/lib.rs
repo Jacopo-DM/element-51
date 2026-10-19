@@ -6,7 +6,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use element_51_core::layout::{PortHit, Side, port_at};
-use element_51_core::{Edit, EditRequest, Message, PortRef, Replica};
+use element_51_core::{Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -25,11 +25,16 @@ struct State {
     replica: Option<Replica>,
     drag: Option<Drag>,
     hover: Option<PortHit>,
+    /// The last run's outcome. Cleared when the graph changes.
+    run: Option<RunResult>,
     /// Where the right-click menu was opened: new nodes are placed here.
     menu_at: (f64, f64),
 }
 
 type Shared = Rc<RefCell<State>>;
+
+/// The least gap between the right-click menu and the window edge, in pixels.
+const MENU_MARGIN: f64 = 8.0;
 
 /// Connect to `/ws`, draw the graph Python sends, and send the user's edits.
 #[wasm_bindgen(start)]
@@ -60,6 +65,7 @@ pub fn start() -> Result<(), JsValue> {
         replica: None,
         drag: None,
         hover: None,
+        run: None,
         menu_at: (0.0, 0.0),
     }));
     fit_canvas(&state, &window);
@@ -100,6 +106,10 @@ pub fn start() -> Result<(), JsValue> {
     listen(&canvas, "mouseup", move |event: MouseEvent| {
         on_mouse_up(&shared, &event)
     })?;
+    if let Some(button) = document.get_element_by_id("run") {
+        let shared = state.clone();
+        listen(&button, "click", move |_event: MouseEvent| on_run(&shared))?;
+    }
     if let Some(menu) = document.get_element_by_id("menu") {
         let shared = state.clone();
         listen(&menu, "click", move |event: MouseEvent| {
@@ -152,6 +162,7 @@ fn redraw(state: &Shared) {
         state.replica.as_ref(),
         state.drag.as_ref(),
         state.hover.as_ref(),
+        state.run.as_ref(),
     );
     if let Err(error) = result {
         show_error(&state.document, &format!("Drawing failed: {error:?}"));
@@ -188,7 +199,10 @@ fn submit(shared: &Shared, edit: Edit) {
             return;
         };
         match replica.submit(edit) {
-            Ok(request) => send(&state, request),
+            Ok(request) => {
+                send(&state, request);
+                state.run = None;
+            }
             Err(error) => show_error(&state.document, &error.to_string()),
         }
     }
@@ -205,6 +219,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
         let mut state = shared.borrow_mut();
         match parsed {
             Ok(Message::Snapshot(snapshot)) => {
+                state.run = None;
                 fill_menu(&state.document, &snapshot);
                 match state.replica.as_mut() {
                     Some(replica) => replica.reset(snapshot),
@@ -222,13 +237,25 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                     .as_mut()
                     .is_some_and(|replica| replica.reject(reject.id));
                 if known {
+                    state.run = None;
                     show_error(
                         &state.document,
                         &format!("Python refused the edit: {}", reject.reason),
                     );
                 }
             }
-            Ok(Message::Edit(_)) => show_error(&state.document, "Python sent an edit request."),
+            Ok(Message::RunResult(result)) => {
+                if let Some(summary) = result.error_summary() {
+                    show_error(&state.document, &summary);
+                }
+                state.run = Some(result);
+            }
+            Ok(Message::Edit(_) | Message::Run(_)) => {
+                show_error(
+                    &state.document,
+                    "Python sent a message only the browser should send.",
+                );
+            }
             Err(error) => show_error(&state.document, &error),
         }
     }
@@ -252,6 +279,20 @@ fn fill_menu(document: &Document, snapshot: &element_51_core::Snapshot) {
     }
 }
 
+fn on_run(shared: &Shared) {
+    let state = shared.borrow();
+    if state
+        .socket
+        .send_with_str(&Message::Run(RunRequest {}).to_json())
+        .is_err()
+    {
+        show_error(
+            &state.document,
+            "Could not send the run request: not connected to Python.",
+        );
+    }
+}
+
 fn on_context_menu(shared: &Shared, event: &MouseEvent) {
     event.prevent_default();
     let mut state = shared.borrow_mut();
@@ -259,9 +300,23 @@ fn on_context_menu(shared: &Shared, event: &MouseEvent) {
     let Some(menu) = state.document.get_element_by_id("menu") else {
         return;
     };
-    let style = format!("left: {}px; top: {}px", event.client_x(), event.client_y());
-    let _ = menu.set_attribute("style", &style);
+    let (left, top) = (f64::from(event.client_x()), f64::from(event.client_y()));
+    let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
     let _ = menu.remove_attribute("hidden");
+    // Now that it is laid out, move it back inside the window if it hangs out.
+    let Some(window) = web_sys::window() else {
+        return;
+    };
+    let size = |value: Result<JsValue, JsValue>| value.ok().and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let (width, height) = (size(window.inner_width()), size(window.inner_height()));
+    let rect = menu.get_bounding_client_rect();
+    let left = left
+        .min(width - rect.width() - MENU_MARGIN)
+        .max(MENU_MARGIN);
+    let top = top
+        .min(height - rect.height() - MENU_MARGIN)
+        .max(MENU_MARGIN);
+    let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
 }
 
 fn hide_menu(state: &State) {

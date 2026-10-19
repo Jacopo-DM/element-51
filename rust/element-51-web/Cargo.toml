@@ -17,6 +17,7 @@ features = [
     "CanvasRenderingContext2d",
     "CloseEvent",
     "Document",
+    "DomRect",
     "Element",
     "Event",
     "EventTarget",

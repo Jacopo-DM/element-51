@@ -7,13 +7,22 @@ import pytest
 from pydantic import ValidationError
 
 from element_51.edits import AddLink, AddNode
-from element_51.protocol import Ack, EditRequest, Reject
+from element_51.engine import RunResult
+from element_51.protocol import (
+    Ack,
+    ClientMessage,
+    EditRequest,
+    Reject,
+    RunRequest,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "messages.json"
 MESSAGES = json.loads(FIXTURE.read_text())
 
 
-def round_trip(model: type[EditRequest | Ack | Reject], key: str) -> object:
+def round_trip(
+    model: type[EditRequest | Ack | Reject | RunRequest | RunResult], key: str
+) -> object:
     """Parse the fixture message `key` and check it dumps back unchanged.
 
     Returns
@@ -61,3 +70,21 @@ def test_a_request_must_say_it_is_an_edit() -> None:
     """The `op` field is checked."""
     with pytest.raises(ValidationError):
         EditRequest.model_validate({**MESSAGES["ack"], "edit": {}})
+
+
+def test_run_request_and_result_round_trip() -> None:
+    """The run request and its result are the shapes Rust reads and writes."""
+    assert isinstance(round_trip(RunRequest, "run"), RunRequest)
+    result = round_trip(RunResult, "run_result")
+    assert isinstance(result, RunResult)
+    assert [o.status for o in result.outcomes] == ["ok", "error", "skipped"]
+
+
+def test_client_messages_are_told_apart_by_op() -> None:
+    """The server parses one union: an edit or a run request."""
+    edit = ClientMessage.validate_python(MESSAGES["edit_add_node"])
+    run = ClientMessage.validate_python(MESSAGES["run"])
+    assert isinstance(edit, EditRequest)
+    assert isinstance(run, RunRequest)
+    with pytest.raises(ValidationError):
+        ClientMessage.validate_python(MESSAGES["ack"])

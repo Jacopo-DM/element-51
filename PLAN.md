@@ -56,25 +56,24 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 and 2 (the walking skeleton, Tier 1, is complete).
-Next step: task 3, run the graph.
+tasks 1 to 3 (Tier 1 is complete, and the graph runs).
+Next step: task 4, pydantic `Node` class and multiple outputs.
 
 ## Baseline
 
-Measured 2026-10-19 after task 2, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 3, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 55 passed, 100% coverage, about 2 s.
-- cargo fmt, clippy (`-D warnings`), test: pass, 36 tests.
+- pytest: 86 passed, 100% coverage, about 3 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 42 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
-- By hand in the browser pane: right-click menu adds nodes; a link between
-  float ports is accepted and Python keeps it (a reload shows it); a float to
-  str drag is refused in the browser with a Dismiss banner; a conflicting node
-  id is rolled back with Python's reason.
+- By hand in the browser pane: Run on the errors example shows values on ok
+  nodes, red on failed ones, dimmed skipped ones and one banner with Dismiss;
+  an edit clears the results; the arithmetic example gives 3, 4, 7, 21, 21.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 and 2 are done. Sizes are estimates by analogy with the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 3 are done. Sizes are estimates by analogy with the
 skeleton (about 80 lines of Python, 60 of Rust); there is no measured data
 yet. Every area below is new code, so no existing test pins it; each task
 writes its tests first. `element-51-web` is checked by hand in the in-app
@@ -84,10 +83,6 @@ browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ### Goal `skeleton`, Tier 2 (ordered by value over risk plus cost)
 
-3. **Run the graph.** Engine in dependency order, per-node error capture,
-   `app.run()`, Run button, red node with a Dismiss message, downstream nodes
-   skipped. Criterion 3 and the error behaviour. Risk medium. Cost about 250
-   lines Python. Verify: pytest on order, error and skip cases.
 4. **Pydantic `Node` class and multiple outputs.** One output port per model
    field, in field order, named after the field; a plain return type gives
    `out`. Criteria 1 and 5. Risk low. Cost about 150 lines Python. Verify:
@@ -164,6 +159,9 @@ None yet.
   browser shows the reason, and a reload shows the other node. Not in the task
   list; proposed as a follow-up.
 - Links cannot yet be removed, and a node cannot be moved or deleted (task 7).
+- Every node of a type shares the function's defaults; there is no per-node
+  value until task 8, and the browser does not show the defaults.
+- Port colours are placeholders; the nodes still look plain until tasks 11 and 12.
 - The WASM build works around a broken `rust-lld` in the rustup toolchain
   (see CLAUDE.md, things that bite). Not reported upstream.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran

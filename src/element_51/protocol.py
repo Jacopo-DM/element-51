@@ -1,6 +1,8 @@
 """Messages between Python and the browser, as JSON."""
 
-from typing import Literal
+from typing import Annotated, Literal
+
+from pydantic import Field, TypeAdapter
 
 from element_51.edits import Edit
 from element_51.model import Graph, Model, NodeType
@@ -36,3 +38,14 @@ class Reject(Model):
     op: Literal["reject"] = "reject"
     id: int
     reason: str
+
+
+class RunRequest(Model):
+    """The browser asks Python to run the graph."""
+
+    op: Literal["run"] = "run"
+
+
+ClientMessage: TypeAdapter[EditRequest | RunRequest] = TypeAdapter(
+    Annotated[EditRequest | RunRequest, Field(discriminator="op")]
+)

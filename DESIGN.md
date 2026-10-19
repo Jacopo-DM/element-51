@@ -135,6 +135,28 @@ in-app browser against the running example.
 - Port colours and wire style are placeholders until the theme tasks (11, 12).
 - The browser's graph copy is called `Replica`: `Sync` collides with the
   standard `Sync` trait.
+- Values for unlinked inputs (task 3): the Python default of the function
+  parameter. An input with no link and no default makes that node fail with
+  "input 'x' has no value". This needs nothing in the graph format; task 8 adds
+  per-node values the browser can edit.
+- Two ways to run: `app.run()` returns each node's value by id and raises the
+  failing node's own exception with a note naming the node (3.11 `add_note`);
+  `app.execute()` never raises and returns an outcome per node, which is what
+  the browser's Run button gets back as `run_result`.
+- A node that raises is `error`; every node downstream of it is `skipped` and
+  never runs; independent nodes still run. A node that returns a value its
+  output port cannot carry (a bool for an int, a str for a float) is an
+  `error`: the port types are stricter than Python's, except that an int may
+  stand in for a float.
+- Running happens in a worker thread (`run_in_threadpool`), so a slow node does
+  not block the websocket. The engine reads the graph once at the start; it is
+  immutable, so edits during a run are safe.
+- The browser clears run results on any edit, snapshot or rejection, so what it
+  shows is always from the last run of the graph it is showing.
+- `@node` accepts defaults (checked against the port type) and refuses
+  positional-only parameters, because the engine calls by name.
+- The right-click menu is moved back inside the window and scrolls if the list
+  is longer than the window (found by trying it near the bottom edge).
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -155,6 +177,7 @@ in-app browser against the running example.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 3: run the graph | engine runs in dependency order; failed nodes red, downstream skipped, independent branches still run; 86 Python tests at 100% (including all examples), 42 Rust tests; by hand: errors and arithmetic examples in the browser |
 | 2026-10-19 | task 2: edits synced with ack and rollback | add node, drag link, float to str refused in the browser, id conflict rolled back with Python's reason, all by hand in the browser pane; 55 Python tests at 100%, 36 Rust tests; 13 link cases and the message fixture run on both sides |
 | 2026-10-19 | task 1: node types reach the browser | `@node` hints become ports; snapshot over `/ws`; Rust parses it and draws both nodes; 27 Python tests at 100%, 13 Rust tests; one JSON fixture parsed by both sides |
 | 2026-10-19 | skeleton: Python serves, WASM draws, core logic runs | page shows `float to str link allowed: false`; 4 Python tests at 100%, 4 Rust tests; WASM 706 KB unoptimised |

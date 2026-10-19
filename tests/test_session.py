@@ -86,3 +86,53 @@ def test_apply_changes_the_graph_and_rejects_bad_edits() -> None:
     with pytest.raises(EditError):
         app.apply(link)
     assert len(app.graph.links) == 1
+
+
+@node
+def one() -> float:
+    return 1.0
+
+
+@node
+def divide(a: float, b: float = 0.0) -> float:
+    return a / b
+
+
+def test_add_link_connects_two_ports_of_existing_nodes() -> None:
+    """The script-friendly way to link nodes."""
+    app = App([one, show])
+    source = app.add_node(one, x=0.0, y=0.0)
+    target = app.add_node(show, x=1.0, y=1.0)
+    app.add_link(source, "out", target, "value")
+    assert app.graph.links[0].target == PortRef(node=target, port="value")
+    with pytest.raises(EditError):
+        app.add_link(source, "out", target, "value")
+
+
+def test_run_returns_every_nodes_value_by_id() -> None:
+    """The computed values, keyed by node id."""
+    app = App([one, show])
+    source = app.add_node(one, x=0.0, y=0.0)
+    target = app.add_node(show, x=1.0, y=1.0)
+    app.add_link(source, "out", target, "value")
+    assert app.run() == {source: 1.0, target: 1.0}
+
+
+def test_run_raises_the_nodes_own_error() -> None:
+    """A node that raises makes `run` raise the same error."""
+    app = App([one, divide])
+    source = app.add_node(one, x=0.0, y=0.0)
+    target = app.add_node(divide, x=1.0, y=1.0)
+    app.add_link(source, "out", target, "a")
+    with pytest.raises(ZeroDivisionError):
+        app.run()
+
+
+def test_execute_reports_instead_of_raising() -> None:
+    """The browser's run: every node gets an outcome, nothing raises."""
+    app = App([one, divide])
+    source = app.add_node(one, x=0.0, y=0.0)
+    target = app.add_node(divide, x=1.0, y=1.0)
+    app.add_link(source, "out", target, "a")
+    statuses = [o.status for o in app.execute().outcomes]
+    assert statuses == ["ok", "error"]

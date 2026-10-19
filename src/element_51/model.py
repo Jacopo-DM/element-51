@@ -6,7 +6,7 @@ is the format the browser layer reads, so field names are a contract with
 """
 
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -49,6 +49,35 @@ def can_link(source: PortType, target: PortType) -> bool:
 
 
 type NodeId = Annotated[str, Field(pattern=r"^n[0-9]+$")]
+
+type PortValue = float | int | str | bool
+
+
+def value_fits(value: object, kind: PortType) -> TypeGuard[PortValue]:
+    """Whether `value` is something a port of type `kind` can carry.
+
+    The rules are stricter than Python's: a bool is not an int, and an int
+    may stand in for a float.
+
+    Parameters
+    ----------
+    value
+        A value from a node function or a default.
+    kind
+        The port type.
+
+    Returns
+    -------
+    bool
+        True if the value fits.
+    """
+    if isinstance(value, bool):
+        return kind is PortType.BOOL
+    if kind is PortType.FLOAT:
+        return isinstance(value, int | float)
+    if kind is PortType.INT:
+        return isinstance(value, int)
+    return kind is PortType.STR and isinstance(value, str)
 
 
 class Port(Model):
