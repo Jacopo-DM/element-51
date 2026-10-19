@@ -59,7 +59,7 @@
 - Status: approved 2026-10-19. Spec approved 2026-10-19 (DESIGN.md, under
   "antimony-theme spec"), with these choices: rows stacked like Antimony, the
   header icon opens a small menu (task 18), the theme is chosen only by
-  `serve(theme=...)`. In progress: next is task 11.
+  `serve(theme=...)`. In progress: task 11 is done, next is task 12.
 - Added: 2026-10-19
 
 ## Current state
@@ -67,19 +67,19 @@
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 10 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 11 (`Theme`), goal `antimony-theme`. The user's own try-out of
-goal `skeleton` is still pending.
+Next step: task 12 (the Antimony look), goal `antimony-theme`. The user's own
+try-out of goal `skeleton` is still pending.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 10, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 11, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 167 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 65 tests.
+- cargo fmt, clippy (`-D warnings`), test: pass, 76 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -124,12 +124,6 @@ is a constant that task 11 moves into the Theme).
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
 
-11. **`Theme` in `element-51-core`, all drawing and layout through it.**
-    Colours, metrics and fonts in one `Theme`; layout and hit-testing take the
-    metrics as an argument; CSS custom properties for the HTML parts; a test
-    that no colour literal is left in `element-51-web/src`. Criterion 2. Risk
-    low. Cost about 400 lines Rust. Verify: native tests (theme parses, layout
-    follows the metrics, no colour literals).
 12. **The Antimony look.** Stacked rows (inputs, then outputs), right-aligned
     labels, dark value boxes, greyed placeholder on a linked input, header with
     id left, type right and the three-bar icon, dot grid, selection outline,

@@ -1,10 +1,15 @@
 //! Size and position of a node box.
 
 use element_51_core::layout::{
-    HEADER_HEIGHT, NODE_WIDTH, PORT_RADIUS, ROW_HEIGHT, Side, anchor_of, input_anchor, link_at,
-    node_at as pick_node, node_rect, output_anchor, port_at, wire_controls,
+    Side, anchor_of, input_anchor, link_at, node_at as pick_node, node_rect, output_anchor,
+    port_at, wire_controls,
 };
+use element_51_core::theme::{Metrics, Theme};
 use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
+
+fn m() -> Metrics {
+    Theme::default().metrics
+}
 
 fn port(name: &str) -> Port {
     Port {
@@ -34,22 +39,22 @@ fn node_type(inputs: &[&str], outputs: &[&str]) -> NodeType {
 
 #[test]
 fn box_starts_at_the_node_position() {
-    let rect = node_rect(&node_at(40.0, 60.0), &node_type(&["a"], &[]));
-    assert_eq!((rect.x, rect.y, rect.w), (40.0, 60.0, NODE_WIDTH));
+    let rect = node_rect(&node_at(40.0, 60.0), &node_type(&["a"], &[]), &m());
+    assert_eq!((rect.x, rect.y, rect.w), (40.0, 60.0, m().node_width));
 }
 
 #[test]
 fn height_is_the_header_plus_one_row_per_port_on_the_busier_side() {
-    let two_in_one_out = node_rect(&node_at(0.0, 0.0), &node_type(&["a", "b"], &["out"]));
-    assert_eq!(two_in_one_out.h, HEADER_HEIGHT + 2.0 * ROW_HEIGHT);
-    let one_out_only = node_rect(&node_at(0.0, 0.0), &node_type(&[], &["out"]));
-    assert_eq!(one_out_only.h, HEADER_HEIGHT + ROW_HEIGHT);
+    let two_in_one_out = node_rect(&node_at(0.0, 0.0), &node_type(&["a", "b"], &["out"]), &m());
+    assert_eq!(two_in_one_out.h, m().header_height + 2.0 * m().row_height);
+    let one_out_only = node_rect(&node_at(0.0, 0.0), &node_type(&[], &["out"]), &m());
+    assert_eq!(one_out_only.h, m().header_height + m().row_height);
 }
 
 #[test]
 fn a_node_without_ports_is_just_a_header() {
-    let rect = node_rect(&node_at(0.0, 0.0), &node_type(&[], &[]));
-    assert_eq!(rect.h, HEADER_HEIGHT);
+    let rect = node_rect(&node_at(0.0, 0.0), &node_type(&[], &[]), &m());
+    assert_eq!(rect.h, m().header_height);
 }
 
 fn graph_of(node: PlacedNode) -> Graph {
@@ -61,19 +66,26 @@ fn graph_of(node: PlacedNode) -> Graph {
 
 #[test]
 fn anchors_sit_on_the_box_edges_at_the_row_centre() {
-    let rect = node_rect(&node_at(40.0, 60.0), &node_type(&["a", "b"], &["out"]));
-    let row_y = 60.0 + HEADER_HEIGHT + ROW_HEIGHT * 1.5;
-    assert_eq!(input_anchor(&rect, 1), (40.0, row_y));
-    assert_eq!(output_anchor(&rect, 1), (40.0 + NODE_WIDTH, row_y));
+    let rect = node_rect(
+        &node_at(40.0, 60.0),
+        &node_type(&["a", "b"], &["out"]),
+        &m(),
+    );
+    let row_y = 60.0 + m().header_height + m().row_height * 1.5;
+    assert_eq!(input_anchor(&rect, 1, &m()), (40.0, row_y));
+    assert_eq!(
+        output_anchor(&rect, 1, &m()),
+        (40.0 + m().node_width, row_y)
+    );
 }
 
 #[test]
 fn a_press_on_an_input_anchor_hits_that_port() {
     let types = [node_type(&["a", "b"], &["out"])];
     let graph = graph_of(node_at(40.0, 60.0));
-    let rect = node_rect(&graph.nodes[0], &types[0]);
-    let (x, y) = input_anchor(&rect, 1);
-    let hit = port_at(&graph, &types, x + 3.0, y - 3.0).unwrap();
+    let rect = node_rect(&graph.nodes[0], &types[0], &m());
+    let (x, y) = input_anchor(&rect, 1, &m());
+    let hit = port_at(&graph, &types, x + 3.0, y - 3.0, &m()).unwrap();
     assert_eq!(
         (hit.node.as_str(), hit.port.as_str(), hit.side),
         ("n1", "b", Side::Input)
@@ -84,9 +96,9 @@ fn a_press_on_an_input_anchor_hits_that_port() {
 fn a_press_on_an_output_anchor_hits_that_port() {
     let types = [node_type(&["a"], &["out"])];
     let graph = graph_of(node_at(0.0, 0.0));
-    let rect = node_rect(&graph.nodes[0], &types[0]);
-    let (x, y) = output_anchor(&rect, 0);
-    let hit = port_at(&graph, &types, x, y).unwrap();
+    let rect = node_rect(&graph.nodes[0], &types[0], &m());
+    let (x, y) = output_anchor(&rect, 0, &m());
+    let hit = port_at(&graph, &types, x, y, &m()).unwrap();
     assert_eq!((hit.port.as_str(), hit.side), ("out", Side::Output));
 }
 
@@ -94,10 +106,10 @@ fn a_press_on_an_output_anchor_hits_that_port() {
 fn a_press_outside_the_radius_or_off_every_node_hits_nothing() {
     let types = [node_type(&["a"], &["out"])];
     let graph = graph_of(node_at(0.0, 0.0));
-    let rect = node_rect(&graph.nodes[0], &types[0]);
-    let (x, y) = input_anchor(&rect, 0);
-    assert!(port_at(&graph, &types, x + PORT_RADIUS + 1.0, y).is_none());
-    assert!(port_at(&graph, &types, 900.0, 900.0).is_none());
+    let rect = node_rect(&graph.nodes[0], &types[0], &m());
+    let (x, y) = input_anchor(&rect, 0, &m());
+    assert!(port_at(&graph, &types, x + m().port_hit_radius + 1.0, y, &m()).is_none());
+    assert!(port_at(&graph, &types, 900.0, 900.0, &m()).is_none());
     assert!(
         port_at(
             &Graph {
@@ -106,7 +118,8 @@ fn a_press_outside_the_radius_or_off_every_node_hits_nothing() {
             },
             &types,
             x,
-            y
+            y,
+            &m()
         )
         .is_none()
     );
@@ -115,29 +128,32 @@ fn a_press_outside_the_radius_or_off_every_node_hits_nothing() {
 #[test]
 fn a_node_of_an_unknown_type_has_no_ports_to_hit() {
     let graph = graph_of(node_at(0.0, 0.0));
-    assert!(port_at(&graph, &[], 0.0, HEADER_HEIGHT + 11.0).is_none());
+    assert!(port_at(&graph, &[], 0.0, m().header_height + 11.0, &m()).is_none());
 }
 
 #[test]
 fn anchor_of_finds_a_named_port_on_either_side() {
     let types = [node_type(&["a", "b"], &["out"])];
     let graph = graph_of(node_at(10.0, 20.0));
-    let rect = node_rect(&graph.nodes[0], &types[0]);
+    let rect = node_rect(&graph.nodes[0], &types[0], &m());
     let named = |port: &str| PortRef {
         node: "n1".to_string(),
         port: port.to_string(),
     };
     assert_eq!(
-        anchor_of(&graph, &types, &named("b"), Side::Input),
-        Some(input_anchor(&rect, 1))
+        anchor_of(&graph, &types, &named("b"), Side::Input, &m()),
+        Some(input_anchor(&rect, 1, &m()))
     );
     assert_eq!(
-        anchor_of(&graph, &types, &named("out"), Side::Output),
-        Some(output_anchor(&rect, 0))
+        anchor_of(&graph, &types, &named("out"), Side::Output, &m()),
+        Some(output_anchor(&rect, 0, &m()))
     );
-    assert_eq!(anchor_of(&graph, &types, &named("out"), Side::Input), None);
     assert_eq!(
-        anchor_of(&graph, &types, &named("nope"), Side::Output),
+        anchor_of(&graph, &types, &named("out"), Side::Input, &m()),
+        None
+    );
+    assert_eq!(
+        anchor_of(&graph, &types, &named("nope"), Side::Output, &m()),
         None
     );
 }
@@ -164,22 +180,25 @@ fn node_at_finds_the_node_under_a_point_and_the_topmost_when_they_overlap() {
         ],
         links: vec![],
     };
-    assert_eq!(pick_node(&graph, &types, 10.0, 10.0).as_deref(), Some("n1"));
     assert_eq!(
-        pick_node(&graph, &types, 120.0, 20.0).as_deref(),
+        pick_node(&graph, &types, 10.0, 10.0, &m()).as_deref(),
+        Some("n1")
+    );
+    assert_eq!(
+        pick_node(&graph, &types, 120.0, 20.0, &m()).as_deref(),
         Some("n2")
     );
     assert_eq!(
-        pick_node(&graph, &types, 130.0, 20.0).as_deref(),
+        pick_node(&graph, &types, 130.0, 20.0, &m()).as_deref(),
         Some("n2")
     );
-    assert_eq!(pick_node(&graph, &types, 400.0, 400.0), None);
+    assert_eq!(pick_node(&graph, &types, 400.0, 400.0, &m()), None);
 }
 
 #[test]
 fn a_node_of_an_unknown_type_cannot_be_picked() {
     let graph = graph_of(node_at(0.0, 0.0));
-    assert_eq!(pick_node(&graph, &[], 5.0, 5.0), None);
+    assert_eq!(pick_node(&graph, &[], 5.0, 5.0, &m()), None);
 }
 
 #[test]
@@ -215,17 +234,17 @@ fn link_at_finds_a_link_near_its_curve_and_nothing_far_from_it() {
     };
     // Same height at both ends: the curve is a straight line between anchors,
     // 160 to 400 at the row centre (28 + 11 = 39).
-    let hit = link_at(&graph, &types, 280.0, 40.0, 6.0).unwrap();
+    let hit = link_at(&graph, &types, 280.0, 40.0, 6.0, &m()).unwrap();
     assert_eq!(hit.target.node, "n2");
-    assert!(link_at(&graph, &types, 280.0, 60.0, 6.0).is_none());
-    assert!(link_at(&graph, &types, 0.0, 40.0, 6.0).is_none());
+    assert!(link_at(&graph, &types, 280.0, 60.0, 6.0, &m()).is_none());
+    assert!(link_at(&graph, &types, 0.0, 40.0, 6.0, &m()).is_none());
 }
 
 #[test]
 fn a_wire_to_a_port_straight_above_swings_out_far_enough_to_clear_the_card() {
     // Output and input in one column, 300 units apart: the curve must leave
     // sideways by at least 60 units, or it runs along the card's edge.
-    let [from, first, second, to] = wire_controls((0.0, 300.0), (0.0, 0.0));
+    let [from, first, second, to] = wire_controls((0.0, 300.0), (0.0, 0.0), &m());
     assert_eq!((from, to), ((0.0, 300.0), (0.0, 0.0)));
     assert!(first.0 >= 60.0, "{first:?}");
     assert!(second.0 <= -60.0, "{second:?}");
@@ -233,14 +252,26 @@ fn a_wire_to_a_port_straight_above_swings_out_far_enough_to_clear_the_card() {
 
 #[test]
 fn a_wire_across_a_wide_gap_keeps_half_the_gap_as_its_reach() {
-    let [_, first, second, _] = wire_controls((0.0, 0.0), (300.0, 10.0));
+    let [_, first, second, _] = wire_controls((0.0, 0.0), (300.0, 10.0), &m());
     assert_eq!(first, (150.0, 0.0));
     assert_eq!(second, (150.0, 10.0));
 }
 
 #[test]
 fn a_short_flat_wire_still_leaves_and_arrives_straight() {
-    let [_, first, second, _] = wire_controls((0.0, 0.0), (10.0, 0.0));
+    let [_, first, second, _] = wire_controls((0.0, 0.0), (10.0, 0.0), &m());
     assert_eq!(first, (20.0, 0.0));
     assert_eq!(second, (-10.0, 0.0));
+}
+
+#[test]
+fn layout_follows_the_metrics_it_is_given() {
+    let mut wide = m();
+    wide.node_width = 300.0;
+    wide.header_height = 40.0;
+    wide.row_height = 30.0;
+    let rect = node_rect(&node_at(0.0, 0.0), &node_type(&["a"], &["out"]), &wide);
+    assert_eq!((rect.w, rect.h), (300.0, 70.0));
+    assert_eq!(output_anchor(&rect, 0, &wide), (300.0, 55.0));
+    assert_eq!(input_anchor(&rect, 0, &wide), (0.0, 55.0));
 }

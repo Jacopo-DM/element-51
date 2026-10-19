@@ -428,6 +428,22 @@ theme, with the credit in the README.
   status 0. A test starts a real process, sends SIGINT and checks the status
   and the absence of a traceback. `a1_two_nodes.py` replaced `a1_serve.py`; it
   shows one node written as a function and one as a class, linked.
+- Theme (task 11). `Theme` is plain data in `element-51-core::theme`, read from
+  JSON (`themes/antimony.json`, embedded). It has `colours`, `metrics` and
+  `fonts`. Layout and hit-testing take `&Metrics` as their last argument
+  (the old constants `NODE_WIDTH`, `HEADER_HEIGHT`, `ROW_HEIGHT` and
+  `PORT_RADIUS` are gone), so a theme can change sizes and the tests pass a
+  value in. Drawing reads colours and sizes from the theme in the `Frame`. The
+  page's own parts (input boxes, right-click menu, error banner, Run button)
+  read CSS custom properties that `apply_theme` sets from
+  `Theme::css_variables()` on the root element; `index.html` has no hex
+  colours, and uses the CSS keyword `Canvas` before the script runs. A native
+  test scans `draw.rs`, `lib.rs` and `index.html` for hex colours, which is how
+  criterion 2 is kept true as the code changes. The first theme repeats the
+  current look exactly, so the refactor changed nothing visible (checked in
+  the browser pane, including the right-click menu); the Antimony values come
+  in task 12. Interaction constants that are not part of a look (menu margin,
+  wheel zoom rate, link pick distance) stay as constants in the web crate.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -455,6 +471,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 11: `Theme` | native tests: both themes parse (one so far), css variables, layout follows given metrics, no hex colour in `draw.rs`, `lib.rs` or `index.html`; the page looks the same as before in the browser pane (cards, values, input boxes, menu); 76 Rust tests, 167 Python tests at 100% |
 | 2026-10-19 | task 10: `a1_two_nodes.py`, clean Ctrl+C | `uv run examples/a1_two_nodes.py` run for real with the browser opener stubbed: it logged the page URL as opened, Ctrl+C gave a graceful shutdown and exit 0; pytest runs a real process the same way; 167 Python tests at 100% |
 | 2026-10-19 | task 9: undo and redo | native tests: every accepted edit in the shared cases is undone and redone to the same graph, add node and link, delete with links and values, stack order and redo cleared by a new edit; by hand with `a14_undo_redo.py`: drag, delete and their undo, redo, and a reload keeps the result; 165 Python tests at 100%, 65 Rust tests |
 | 2026-10-19 | task 8: value editing with HTML inputs | by hand with `a13_values.py`: typing 5 gives 15.0 on Run, `abc` is refused with a message and the box restored, a ticked box turns the text to capitals, boxes follow zoom, pan and drag, values survive a reload; set_value, bad values and clearing give identical graphs in Python and Rust on 9 more shared cases; 164 Python tests at 100%, 60 Rust tests |

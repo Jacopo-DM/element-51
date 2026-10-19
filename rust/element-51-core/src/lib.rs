@@ -10,6 +10,7 @@ pub mod history;
 pub mod layout;
 mod model;
 mod replica;
+pub mod theme;
 pub mod view;
 
 pub use edit::{EditError, apply_edit, value_fits};

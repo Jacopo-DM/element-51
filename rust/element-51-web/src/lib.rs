@@ -8,6 +8,7 @@ use std::rc::Rc;
 use element_51_core::fields::{format_value, parse_input};
 use element_51_core::history::History;
 use element_51_core::layout::{PortHit, Side, link_at, node_at, node_rect, port_at};
+use element_51_core::theme::Theme;
 use element_51_core::view::View;
 use element_51_core::{
     Edit, EditRequest, Graph, Message, PortRef, PortType, Replica, RunRequest, RunResult,
@@ -20,7 +21,7 @@ use web_sys::{
     HtmlInputElement, KeyboardEvent, MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use draw::{Drag, FONT, Frame, Selected, draw, field_box};
+use draw::{Drag, Frame, Selected, draw, field_box};
 
 /// What the pointer is doing between a press and a release.
 enum Gesture {
@@ -54,6 +55,7 @@ struct State {
     context: CanvasRenderingContext2d,
     socket: WebSocket,
     replica: Option<Replica>,
+    theme: Theme,
     view: View,
     history: History,
     selected: Option<Selected>,
@@ -91,6 +93,8 @@ pub fn start() -> Result<(), JsValue> {
     };
     let socket = WebSocket::new(&format!("{scheme}://{}/ws", location.host()?))?;
 
+    let theme = Theme::default();
+    apply_theme(&document, &theme);
     let state: Shared = Rc::new(RefCell::new(State {
         document: document.clone(),
         canvas: canvas.clone(),
@@ -98,6 +102,7 @@ pub fn start() -> Result<(), JsValue> {
         socket: socket.clone(),
         replica: None,
         view: View::default(),
+        theme,
         history: History::default(),
         selected: None,
         gesture: Gesture::None,
@@ -175,6 +180,20 @@ pub fn start() -> Result<(), JsValue> {
     Ok(())
 }
 
+/// Hand the theme's colours and font to the page's own parts (input boxes, the
+/// menu, the error banner) as CSS custom properties on the root element.
+fn apply_theme(document: &Document, theme: &Theme) {
+    let Some(root) = document.document_element() else {
+        return;
+    };
+    let style: String = theme
+        .css_variables()
+        .iter()
+        .map(|(name, value)| format!("{name}: {value}; "))
+        .collect();
+    let _ = root.set_attribute("style", &style);
+}
+
 /// Register `handler` for `name` events on `target`, for the page's lifetime.
 fn listen<E: FromWasmAbi + 'static>(
     target: &EventTarget,
@@ -227,6 +246,7 @@ fn draw_canvas(state: &Shared) {
     let state = state.borrow();
     let preview = dragged_graph(&state);
     let frame = Frame {
+        theme: &state.theme,
         graph: preview
             .as_ref()
             .or_else(|| state.replica.as_ref().map(|replica| replica.graph())),
@@ -474,7 +494,13 @@ fn screen_point(event: &MouseEvent) -> (f64, f64) {
 
 fn port_under(state: &State, x: f64, y: f64) -> Option<PortHit> {
     let replica = state.replica.as_ref()?;
-    port_at(replica.graph(), replica.node_types(), x, y)
+    port_at(
+        replica.graph(),
+        replica.node_types(),
+        x,
+        y,
+        &state.theme.metrics,
+    )
 }
 
 fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
@@ -498,7 +524,7 @@ fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
         } else if let Some(id) = state
             .replica
             .as_ref()
-            .and_then(|r| node_at(r.graph(), r.node_types(), x, y))
+            .and_then(|r| node_at(r.graph(), r.node_types(), x, y, &state.theme.metrics))
         {
             let node = state
                 .replica
@@ -516,10 +542,16 @@ fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
             state.selected = Some(Selected::Node(id));
         } else {
             let tolerance = LINK_PICK_PIXELS / state.view.zoom();
-            let link = state
-                .replica
-                .as_ref()
-                .and_then(|r| link_at(r.graph(), r.node_types(), x, y, tolerance));
+            let link = state.replica.as_ref().and_then(|r| {
+                link_at(
+                    r.graph(),
+                    r.node_types(),
+                    x,
+                    y,
+                    tolerance,
+                    &state.theme.metrics,
+                )
+            });
             match link {
                 Some(link) => state.selected = Some(Selected::Link(link)),
                 None => {
@@ -659,7 +691,8 @@ fn sync_fields(shared: &Shared) {
     };
     let preview = dragged_graph(&state);
     let graph = preview.as_ref().unwrap_or_else(|| replica.graph());
-    state.context.set_font(FONT);
+    state.context.set_font(&state.theme.fonts.card);
+    let metrics = &state.theme.metrics;
     let zoom = state.view.zoom();
     let focused = state.document.active_element().map(|element| element.id());
     let mut wanted: Vec<String> = Vec::new();
@@ -671,14 +704,15 @@ fn sync_fields(shared: &Shared) {
         else {
             continue;
         };
-        let rect = node_rect(node, node_type);
+        let rect = node_rect(node, node_type, metrics);
         for (row, port) in node_type.inputs.iter().enumerate() {
             if graph.is_linked(&node.id, &port.name) {
                 continue;
             }
             let id = format!("field-{}-{}", node.id, port.name);
             wanted.push(id.clone());
-            let Ok((x, y, width, height)) = field_box(&state.context, &rect, row, &port.name)
+            let Ok((x, y, width, height)) =
+                field_box(&state.context, &rect, row, &port.name, metrics)
             else {
                 continue;
             };
@@ -693,7 +727,7 @@ fn sync_fields(shared: &Shared) {
                     "left: {left}px; top: {top}px; width: {}px; height: {}px; font-size: {}px",
                     width * zoom,
                     height * zoom,
-                    12.0 * zoom
+                    state.theme.fonts.field_px * zoom
                 ),
             );
             let own = node.values.get(&port.name);

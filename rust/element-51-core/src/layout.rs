@@ -1,13 +1,7 @@
 //! Where a node box sits and how big it is.
 
+use crate::theme::Metrics;
 use crate::{Graph, Link, NodeType, PlacedNode, PortRef};
-
-/// Width of every node box.
-pub const NODE_WIDTH: f64 = 220.0;
-/// Height of the title bar.
-pub const HEADER_HEIGHT: f64 = 28.0;
-/// Height of one port row.
-pub const ROW_HEIGHT: f64 = 22.0;
 
 /// A rectangle in canvas coordinates.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -19,18 +13,15 @@ pub struct Rect {
 }
 
 /// The box for `node`: a header plus one row per port on the busier side.
-pub fn node_rect(node: &PlacedNode, node_type: &NodeType) -> Rect {
+pub fn node_rect(node: &PlacedNode, node_type: &NodeType, metrics: &Metrics) -> Rect {
     let rows = node_type.inputs.len().max(node_type.outputs.len());
     Rect {
         x: node.x,
         y: node.y,
-        w: NODE_WIDTH,
-        h: HEADER_HEIGHT + ROW_HEIGHT * rows as f64,
+        w: metrics.node_width,
+        h: metrics.header_height + metrics.row_height * rows as f64,
     }
 }
-
-/// How close a press must be to a port anchor to hit the port.
-pub const PORT_RADIUS: f64 = 8.0;
 
 /// Which side of a node a port is on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -48,28 +39,34 @@ pub struct PortHit {
 }
 
 /// Where input row `row` meets the left edge of `rect`.
-pub fn input_anchor(rect: &Rect, row: usize) -> (f64, f64) {
-    (rect.x, row_centre(rect, row))
+pub fn input_anchor(rect: &Rect, row: usize, metrics: &Metrics) -> (f64, f64) {
+    (rect.x, row_centre(rect, row, metrics))
 }
 
 /// Where output row `row` meets the right edge of `rect`.
-pub fn output_anchor(rect: &Rect, row: usize) -> (f64, f64) {
-    (rect.x + rect.w, row_centre(rect, row))
+pub fn output_anchor(rect: &Rect, row: usize, metrics: &Metrics) -> (f64, f64) {
+    (rect.x + rect.w, row_centre(rect, row, metrics))
 }
 
-fn row_centre(rect: &Rect, row: usize) -> f64 {
-    rect.y + HEADER_HEIGHT + ROW_HEIGHT * (row as f64 + 0.5)
+fn row_centre(rect: &Rect, row: usize, metrics: &Metrics) -> f64 {
+    rect.y + metrics.header_height + metrics.row_height * (row as f64 + 0.5)
 }
 
-/// The port whose anchor is within `PORT_RADIUS` of `(x, y)`, if any.
+/// The port whose anchor is within the metrics' hit radius of `(x, y)`, if any.
 ///
 /// A node whose type is not in `node_types` has no ports.
-pub fn port_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option<PortHit> {
+pub fn port_at(
+    graph: &Graph,
+    node_types: &[NodeType],
+    x: f64,
+    y: f64,
+    metrics: &Metrics,
+) -> Option<PortHit> {
     for node in &graph.nodes {
         let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type) else {
             continue;
         };
-        let rect = node_rect(node, node_type);
+        let rect = node_rect(node, node_type, metrics);
         let sides = [
             (Side::Input, &node_type.inputs),
             (Side::Output, &node_type.outputs),
@@ -77,10 +74,10 @@ pub fn port_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option
         for (side, ports) in sides {
             for (row, port) in ports.iter().enumerate() {
                 let (anchor_x, anchor_y) = match side {
-                    Side::Input => input_anchor(&rect, row),
-                    Side::Output => output_anchor(&rect, row),
+                    Side::Input => input_anchor(&rect, row, metrics),
+                    Side::Output => output_anchor(&rect, row, metrics),
                 };
-                if (x - anchor_x).hypot(y - anchor_y) <= PORT_RADIUS {
+                if (x - anchor_x).hypot(y - anchor_y) <= metrics.port_hit_radius {
                     return Some(PortHit {
                         node: node.id.clone(),
                         port: port.name.clone(),
@@ -100,33 +97,40 @@ pub fn anchor_of(
     node_types: &[NodeType],
     reference: &PortRef,
     side: Side,
+    metrics: &Metrics,
 ) -> Option<(f64, f64)> {
     let node = graph.nodes.iter().find(|node| node.id == reference.node)?;
     let node_type = node_types
         .iter()
         .find(|known| known.name == node.node_type)?;
-    let rect = node_rect(node, node_type);
+    let rect = node_rect(node, node_type, metrics);
     match side {
         Side::Input => {
             let row = node_type
                 .inputs
                 .iter()
                 .position(|port| port.name == reference.port)?;
-            Some(input_anchor(&rect, row))
+            Some(input_anchor(&rect, row, metrics))
         }
         Side::Output => {
             let row = node_type
                 .outputs
                 .iter()
                 .position(|port| port.name == reference.port)?;
-            Some(output_anchor(&rect, row))
+            Some(output_anchor(&rect, row, metrics))
         }
     }
 }
 
 /// The topmost node whose box holds `(x, y)`, if any. Later nodes are drawn
 /// over earlier ones. A node whose type is not in `node_types` cannot be picked.
-pub fn node_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option<String> {
+pub fn node_at(
+    graph: &Graph,
+    node_types: &[NodeType],
+    x: f64,
+    y: f64,
+    metrics: &Metrics,
+) -> Option<String> {
     graph
         .nodes
         .iter()
@@ -136,7 +140,7 @@ pub fn node_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option
             else {
                 return false;
             };
-            let rect = node_rect(node, node_type);
+            let rect = node_rect(node, node_type, metrics);
             x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
         })
         .map(|node| node.id.clone())
@@ -144,13 +148,13 @@ pub fn node_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option
 
 /// The four control points of the curve a link is drawn along: it leaves
 /// `from` and arrives at `to` horizontally.
-pub fn wire_controls(from: (f64, f64), to: (f64, f64)) -> [(f64, f64); 4] {
+pub fn wire_controls(from: (f64, f64), to: (f64, f64), metrics: &Metrics) -> [(f64, f64); 4] {
     // Half the horizontal gap, so a wire across a wide gap is a smooth S. When
     // the ends are nearly in one column the wire needs a sideways swing that
     // grows with the height between them, or it would run along the card's edge.
     let across = (to.0 - from.0).abs() / 2.0;
-    let swing = ((to.1 - from.1).abs() / 3.0).min(70.0);
-    let reach = across.max(swing).max(20.0);
+    let swing = ((to.1 - from.1).abs() / 3.0).min(metrics.wire_max_swing);
+    let reach = across.max(swing).max(metrics.wire_min_reach);
     [from, (from.0 + reach, from.1), (to.0 - reach, to.1), to]
 }
 
@@ -188,18 +192,19 @@ pub fn link_at(
     x: f64,
     y: f64,
     tolerance: f64,
+    metrics: &Metrics,
 ) -> Option<Link> {
     graph
         .links
         .iter()
         .rev()
         .find(|link| {
-            let from = anchor_of(graph, node_types, &link.source, Side::Output);
-            let to = anchor_of(graph, node_types, &link.target, Side::Input);
+            let from = anchor_of(graph, node_types, &link.source, Side::Output, metrics);
+            let to = anchor_of(graph, node_types, &link.target, Side::Input, metrics);
             let (Some(from), Some(to)) = (from, to) else {
                 return false;
             };
-            let controls = wire_controls(from, to);
+            let controls = wire_controls(from, to, metrics);
             let mut previous = from;
             (1..=WIRE_STEPS).any(|step| {
                 let next = wire_point(&controls, step as f64 / WIRE_STEPS as f64);

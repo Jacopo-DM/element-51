@@ -1,41 +1,15 @@
 //! Drawing: a frame from the replica and the state of the pointer.
 
 use element_51_core::layout::{
-    HEADER_HEIGHT, PortHit, Side, anchor_of, input_anchor, node_rect, output_anchor, wire_controls,
+    PortHit, Rect, Side, anchor_of, input_anchor, node_rect, output_anchor, wire_controls,
 };
+use element_51_core::theme::{Colours, Metrics, Theme};
 use element_51_core::view::View;
 use element_51_core::{
     Edit, Graph, Link, NodeType, PortRef, PortType, RunResult, Status, apply_edit,
 };
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
-
-const BACKGROUND: &str = "#1e1e1e";
-const BODY: &str = "#3a3a3a";
-const HEADER: &str = "#555555";
-const HEADER_ERROR: &str = "#8a3a3a";
-const HEADER_SKIPPED: &str = "#3f3f3f";
-const TEXT_DIM: &str = "#808080";
-const VALUE: &str = "#a6e3a6";
-const TEXT: &str = "#d0d0d0";
-const SELECTED: &str = "#e8e8e8";
-const ALLOWED: &str = "#6fcf6f";
-const REFUSED: &str = "#e06060";
-const PORT_SIZE: f64 = 8.0;
-/// How thick a wire is, and a selected one, in graph units.
-const WIRE_WIDTH: f64 = 3.5;
-const WIRE_WIDTH_SELECTED: f64 = 5.0;
-/// How round the corners of a node card are, in graph units.
-const CARD_RADIUS: f64 = 8.0;
-const VALUE_GAP: f64 = 8.0;
-/// The font every label on a node is set in.
-pub const FONT: &str = "13px sans-serif";
-/// Width of an input box on a node, in graph units.
-pub const FIELD_WIDTH: f64 = 70.0;
-/// Height of an input box on a node, in graph units.
-pub const FIELD_HEIGHT: f64 = 18.0;
-/// Space between an input's label and its box.
-const FIELD_GAP: f64 = 6.0;
 
 /// A link being dragged from an output port. `x` and `y` are graph
 /// coordinates.
@@ -55,6 +29,7 @@ pub enum Selected {
 
 /// Everything one frame shows. With no graph yet, only the background.
 pub struct Frame<'a> {
+    pub theme: &'a Theme,
     pub graph: Option<&'a Graph>,
     pub types: &'a [NodeType],
     pub view: &'a View,
@@ -65,7 +40,12 @@ pub struct Frame<'a> {
 }
 
 /// A wire is drawn in the colour of the port it leaves, as in Antimony.
-fn wire_colour(graph: &Graph, types: &[NodeType], source: &PortRef) -> &'static str {
+fn wire_colour<'a>(
+    graph: &Graph,
+    types: &[NodeType],
+    source: &PortRef,
+    colours: &'a Colours,
+) -> &'a str {
     graph
         .nodes
         .iter()
@@ -77,14 +57,16 @@ fn wire_colour(graph: &Graph, types: &[NodeType], source: &PortRef) -> &'static 
                 .iter()
                 .find(|port| port.name == source.port)
         })
-        .map_or(port_colour(PortType::Str), |port| port_colour(port.kind))
+        .map_or(port_colour(PortType::Str, colours), |port| {
+            port_colour(port.kind, colours)
+        })
 }
 
-fn port_colour(kind: PortType) -> &'static str {
+fn port_colour(kind: PortType, colours: &Colours) -> &str {
     match kind {
-        PortType::Float | PortType::Int => "#edc27b",
-        PortType::Str => "#94a95f",
-        PortType::Bool => "#6fa8dc",
+        PortType::Float | PortType::Int => &colours.port_number,
+        PortType::Str => &colours.port_text,
+        PortType::Bool => &colours.port_bool,
     }
 }
 
@@ -95,6 +77,7 @@ pub fn draw(
     frame: &Frame,
 ) -> Result<(), JsValue> {
     let Frame {
+        theme,
         graph,
         types,
         view,
@@ -104,7 +87,8 @@ pub fn draw(
         run,
     } = *frame;
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
-    context.set_fill_style_str(BACKGROUND);
+    let (colours, metrics) = (&theme.colours, &theme.metrics);
+    context.set_fill_style_str(&colours.canvas);
     context.fill_rect(
         0.0,
         0.0,
@@ -125,101 +109,101 @@ pub fn draw(
 
     context.set_line_cap("round");
     context.set_line_join("round");
-    context.set_line_width(WIRE_WIDTH);
+    context.set_line_width(metrics.wire_width);
     for link in &graph.links {
-        let from = anchor_of(graph, types, &link.source, Side::Output);
-        let to = anchor_of(graph, types, &link.target, Side::Input);
+        let from = anchor_of(graph, types, &link.source, Side::Output, metrics);
+        let to = anchor_of(graph, types, &link.target, Side::Input, metrics);
         if let (Some(from), Some(to)) = (from, to) {
             let chosen = selected == Some(&Selected::Link(link.clone()));
-            let colour = wire_colour(graph, types, &link.source);
-            context.set_stroke_style_str(if chosen { SELECTED } else { colour });
+            let colour = wire_colour(graph, types, &link.source, colours);
+            context.set_stroke_style_str(if chosen { &colours.selected } else { colour });
             context.set_line_width(if chosen {
-                WIRE_WIDTH_SELECTED
+                metrics.wire_width_selected
             } else {
-                WIRE_WIDTH
+                metrics.wire_width
             });
-            wire(context, from, to);
+            wire(context, from, to, metrics);
         }
     }
-    context.set_line_width(WIRE_WIDTH);
+    context.set_line_width(metrics.wire_width);
     if let Some(drag) = drag
-        && let Some(from) = anchor_of(graph, types, &drag.source, Side::Output)
+        && let Some(from) = anchor_of(graph, types, &drag.source, Side::Output, metrics)
     {
-        context.set_stroke_style_str(wire_colour(graph, types, &drag.source));
-        wire(context, from, (drag.x, drag.y));
+        context.set_stroke_style_str(wire_colour(graph, types, &drag.source, colours));
+        wire(context, from, (drag.x, drag.y), metrics);
     }
 
-    context.set_font(FONT);
+    context.set_font(&theme.fonts.card);
     for node in &graph.nodes {
         let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
             continue;
         };
-        let rect = node_rect(node, node_type);
-        context.set_fill_style_str(BODY);
-        card_path(context, &rect);
+        let rect = node_rect(node, node_type, metrics);
+        context.set_fill_style_str(&colours.card);
+        card_path(context, &rect, metrics.card_radius);
         context.fill();
         let outcome = run.and_then(|result| result.outcome_for(&node.id));
         let status = outcome.map(|outcome| outcome.status);
         let (header, text) = match status {
-            Some(Status::Error) => (HEADER_ERROR, TEXT),
-            Some(Status::Skipped) => (HEADER_SKIPPED, TEXT_DIM),
-            _ => (HEADER, TEXT),
+            Some(Status::Error) => (&colours.header_error, &colours.text),
+            Some(Status::Skipped) => (&colours.header_skipped, &colours.text_dim),
+            _ => (&colours.header, &colours.text),
         };
         context.set_fill_style_str(header);
         // The header takes the card's rounded top corners by clipping to it.
         context.save();
-        card_path(context, &rect);
+        card_path(context, &rect, metrics.card_radius);
         context.clip();
-        context.fill_rect(rect.x, rect.y, rect.w, HEADER_HEIGHT);
+        context.fill_rect(rect.x, rect.y, rect.w, metrics.header_height);
         context.restore();
         if selected == Some(&Selected::Node(node.id.clone())) {
-            context.set_stroke_style_str(SELECTED);
-            context.set_line_width(2.0);
-            card_path(context, &rect);
+            context.set_stroke_style_str(&colours.selected);
+            context.set_line_width(metrics.selection_width);
+            card_path(context, &rect, metrics.card_radius);
             context.stroke();
         }
         context.set_fill_style_str(text);
         context.set_text_align("left");
         context.fill_text(
             &format!("{}  {}", node.id, node_type.name),
-            rect.x + 8.0,
-            rect.y + 18.0,
+            rect.x + metrics.title_pad,
+            rect.y + metrics.title_baseline,
         )?;
         for (row, port) in node_type.inputs.iter().enumerate() {
-            let (x, y) = input_anchor(&rect, row);
+            let (x, y) = input_anchor(&rect, row, metrics);
             context.set_fill_style_str(text);
-            context.fill_text(&port.name, x + 10.0, y + 4.0)?;
-            square(context, x, y, port_colour(port.kind));
+            context.fill_text(&port.name, x + metrics.label_pad, y + metrics.text_baseline)?;
+            square(context, x, y, port_colour(port.kind, colours), metrics);
         }
         context.set_text_align("right");
         for (row, port) in node_type.outputs.iter().enumerate() {
-            let (x, y) = output_anchor(&rect, row);
+            let (x, y) = output_anchor(&rect, row, metrics);
             context.set_fill_style_str(text);
-            context.fill_text(&port.name, x - 10.0, y + 4.0)?;
+            context.fill_text(&port.name, x - metrics.label_pad, y + metrics.text_baseline)?;
             if status == Some(Status::Ok)
                 && let Some(value) = outcome.and_then(|outcome| outcome.output_text(&port.name))
             {
                 // The value sits just left of the port's name, in whatever
                 // room the input label on the same row leaves free.
                 let name_width = context.measure_text(&port.name)?.width();
-                let right = x - 10.0 - name_width - VALUE_GAP;
+                let right = x - metrics.label_pad - name_width - metrics.value_gap;
                 let input_width = match node_type.inputs.get(row) {
                     Some(input) => {
-                        let label = context.measure_text(&input.name)?.width() + 10.0;
+                        let label = context.measure_text(&input.name)?.width() + metrics.label_pad;
                         if graph.is_linked(&node.id, &input.name) {
                             label
                         } else {
-                            label + FIELD_GAP + FIELD_WIDTH
+                            label + metrics.field_gap + metrics.field_width
                         }
                     }
                     None => 0.0,
                 };
-                let room = right - (rect.x + input_width + 2.0 * VALUE_GAP);
+                let room = right - (rect.x + input_width + 2.0 * metrics.value_gap);
                 let shown = fit_text(context, &value, room)?;
-                context.set_fill_style_str(VALUE);
+                context.set_fill_style_str(&colours.value);
                 context.fill_text(&shown, right, y + 4.0)?;
             }
-            square(context, x, y, port_colour(port.kind));
+            square(context, x, y, port_colour(port.kind, colours), metrics);
         }
     }
     if let (Some(drag), Some(hit)) = (drag, hover)
@@ -234,8 +218,13 @@ pub fn draw(
             target: target.clone(),
         };
         let allowed = apply_edit(graph, types, &edit).is_ok();
-        if let Some((x, y)) = anchor_of(graph, types, &target, Side::Input) {
-            square(context, x, y, if allowed { ALLOWED } else { REFUSED });
+        if let Some((x, y)) = anchor_of(graph, types, &target, Side::Input, metrics) {
+            let colour = if allowed {
+                &colours.allowed
+            } else {
+                &colours.refused
+            };
+            square(context, x, y, colour, metrics);
         }
     }
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
@@ -243,50 +232,47 @@ pub fn draw(
 }
 
 /// Where the input box for input row `row` sits: just right of its label.
-/// Returns `(x, y, width, height)` in graph units. The font must already be
-/// `FONT`.
+/// Returns `(x, y, width, height)` in graph units. The context's font must
+/// already be the theme's card font.
 pub fn field_box(
     context: &CanvasRenderingContext2d,
-    rect: &element_51_core::layout::Rect,
+    rect: &Rect,
     row: usize,
     label: &str,
+    metrics: &Metrics,
 ) -> Result<(f64, f64, f64, f64), JsValue> {
-    let (_, centre) = input_anchor(rect, row);
+    let (_, centre) = input_anchor(rect, row, metrics);
     let label_width = context.measure_text(label)?.width();
     Ok((
-        rect.x + 10.0 + label_width + FIELD_GAP,
-        centre - FIELD_HEIGHT / 2.0,
-        FIELD_WIDTH,
-        FIELD_HEIGHT,
+        rect.x + metrics.label_pad + label_width + metrics.field_gap,
+        centre - metrics.field_height / 2.0,
+        metrics.field_width,
+        metrics.field_height,
     ))
 }
 
 /// Trace the outline of a node card with rounded corners.
-fn card_path(context: &CanvasRenderingContext2d, rect: &element_51_core::layout::Rect) {
+fn card_path(context: &CanvasRenderingContext2d, rect: &Rect, radius: f64) {
     let (left, top) = (rect.x, rect.y);
     let (right, bottom) = (rect.x + rect.w, rect.y + rect.h);
     context.begin_path();
-    context.move_to(left + CARD_RADIUS, top);
-    let _ = context.arc_to(right, top, right, bottom, CARD_RADIUS);
-    let _ = context.arc_to(right, bottom, left, bottom, CARD_RADIUS);
-    let _ = context.arc_to(left, bottom, left, top, CARD_RADIUS);
-    let _ = context.arc_to(left, top, right, top, CARD_RADIUS);
+    context.move_to(left + radius, top);
+    let _ = context.arc_to(right, top, right, bottom, radius);
+    let _ = context.arc_to(right, bottom, left, bottom, radius);
+    let _ = context.arc_to(left, bottom, left, top, radius);
+    let _ = context.arc_to(left, top, right, top, radius);
     context.close_path();
 }
 
-fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str) {
+fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str, metrics: &Metrics) {
+    let size = metrics.port_size;
     context.set_fill_style_str(colour);
-    context.fill_rect(
-        x - PORT_SIZE / 2.0,
-        y - PORT_SIZE / 2.0,
-        PORT_SIZE,
-        PORT_SIZE,
-    );
+    context.fill_rect(x - size / 2.0, y - size / 2.0, size, size);
 }
 
 /// A smooth curve that leaves `from` and arrives at `to` horizontally.
-fn wire(context: &CanvasRenderingContext2d, from: (f64, f64), to: (f64, f64)) {
-    let [start, first, second, end] = wire_controls(from, to);
+fn wire(context: &CanvasRenderingContext2d, from: (f64, f64), to: (f64, f64), metrics: &Metrics) {
+    let [start, first, second, end] = wire_controls(from, to, metrics);
     context.begin_path();
     context.move_to(start.0, start.1);
     context.bezier_curve_to(first.0, first.1, second.0, second.1, end.0, end.1);
