@@ -13,7 +13,7 @@ the ignore list in CLAUDE.md.
   (blank canvas, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
-  graph while the page is open), `a11_save_load.py` (save and load a file). `a7_script_api.py`: the graph from plain
+  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete). `a7_script_api.py`: the graph from plain
   Python, no browser. `a0_hello_world.py` is the project template, not an
   example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
@@ -26,7 +26,7 @@ the ignore list in CLAUDE.md.
 | --- | --- | --- |
 | `__init__` | package surface | `App`, `Model`, `Node`, `NodeFunction`, `node`, `asgi_app`, `serve`, `StoreError` |
 | `model` | immutable records for node types and graphs | `Model`, `PortType`, `PortValue`, `value_fits`, `can_link`, `NodeId`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (with `next_id()`) |
-| `edits` | edits and the rules that allow or refuse them | `AddNode`, `AddLink`, `Edit`, `apply_edit`, `EditError`, `EditErrorKind` |
+| `edits` | edits and the rules that allow or refuse them | `AddNode`, `AddLink`, `MoveNode`, `DeleteNode`, `DeleteLink`, `AnyEdit`, `Edit`, `apply_edit`, `EditError`, `EditErrorKind` |
 | `nodes` | `@node` and the `Node` base class turn a typed function or a class into a node type, with its defaults and output model | `node`, `Node` (`run`, `call`; `node_type`, `defaults`, `output_model` built per subclass), `NodeFunction` (`call`, `defaults`, `output_model`), `Registered` (protocol), `port_type` |
 | `engine` | runs a graph in dependency order | `run_graph`, `RunResult`, `NodeOutcome` (`outputs` by port) |
 | `protocol` | messages in both directions | `Snapshot`, `EditRequest`, `RunRequest`, `ClientMessage`, `Ack`, `Reject` (and `engine.RunResult`) |
@@ -44,8 +44,8 @@ imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 
 | Crate | Purpose | Public interface |
 | --- | --- | --- |
-| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `EditError` (`kind`), `Replica` (`new`, `reset` (keeps pending edits that still apply), `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, PortHit, Side, Rect, constants}` |
-| `element-51-web` | WASM layer: websocket, canvas drawing (`draw`), mouse, menu and Run button handling, error banner | `start()` (runs on load) |
+| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `EditError` (`kind`), `Replica` (`new`, `reset` (keeps pending edits that still apply), `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, node_at, link_at, wire_controls, PortHit, Side, Rect, constants}`, `view::{View, MIN_ZOOM, MAX_ZOOM}` (`pan_by`, `zoom_at`, `to_screen`, `to_graph`) |
+| `element-51-web` | WASM layer: websocket, canvas drawing (`draw`, one `Frame` per frame), mouse, wheel, key, menu and Run button handling (a `Gesture` is a link drag, a node move or a pan), error banner | `start()` (runs on load) |
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never
 happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`.
@@ -54,14 +54,14 @@ happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`
 
 Each is read by a Python test and a Rust test, so the two sides cannot drift:
 `snapshot.json` (the snapshot message), `messages.json` (edit request, ack,
-reject, run, run result), `link_cases.json` (a graph with a multi-output node, candidate links and the expected verdicts).
+reject, run, run result), `link_cases.json` (a graph with a multi-output node, candidate links and the expected verdicts), `edit_cases.json` (move and delete edits with the expected graphs).
 
 ## Tests
 
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a11` file and runs its graph).
+`test_examples.py` (loads every `examples/a1` to `a12` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
@@ -70,6 +70,5 @@ Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
 
 ## Not built yet
 
-Node
-moving and deleting, value editing, undo, the theme, the nested menu. The
+Value editing, undo, the theme, the nested menu. The
 planned layout is in DESIGN.md under Specs.

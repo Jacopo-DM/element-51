@@ -22,10 +22,12 @@ features = [
     "Event",
     "EventTarget",
     "HtmlCanvasElement",
+    "KeyboardEvent",
     "Location",
     "MessageEvent",
     "MouseEvent",
     "TextMetrics",
     "WebSocket",
+    "WheelEvent",
     "Window",
 ]

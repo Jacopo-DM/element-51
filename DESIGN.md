@@ -257,6 +257,20 @@ theme, with the credit in the README.
   app keeps its old graph. A missing file raises `FileNotFoundError` as is.
   Task 8 adds per-node values; it must raise `FORMAT_VERSION` and decide
   whether to read version 1 files.
+- Pan, zoom, move, select, delete (task 7). Three new edits cross the wire:
+  `move_node`, `delete_node` (takes the node's links with it) and
+  `delete_link`, with a new refusal `unknown_link`. A shared fixture
+  (`edit_cases.json`) holds the expected graphs, run by both sides. The view
+  (pan and zoom) lives only in the browser and is not saved or sent. A node
+  drag shows the node at the pointer without touching the replica and sends
+  one `move_node` when the button is released, so one drag is one edit (and
+  later one undo step). Moving a node keeps the shown run values; any other
+  edit clears them. Pressing a node anywhere except an output port selects it
+  and starts a drag; pressing a wire selects it; pressing empty canvas clears
+  the selection and starts a pan. Leaving the canvas cancels the gesture.
+  Delete and Backspace remove the selection, Escape drops it. The zoom range
+  is 0.25 to 4. The page's `web-sys` dependency gained the `WheelEvent` and
+  `KeyboardEvent` features (no new crate).
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -284,6 +298,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 7: pan, zoom, move, select, delete | by hand with `a12_big_graph.py`: a node dragged to a new place and deleted, wheel zoom, empty-canvas pan, a wire selected and deleted, Run showing `has no value` after; both survive a reload; the move, delete node and delete link edits give identical graphs in Python and Rust on 7 shared cases; 145 Python tests at 100%, 55 Rust tests |
 | 2026-10-19 | task 6: save and load | round trip, version refusal, five kinds of damaged file, rule-breaking file, and a real websocket test that an open page receives the loaded graph; `a11_save_load.py` saves on Ctrl+C and loads on the next start (run for real); 133 Python tests at 100% |
 | 2026-10-19 | task 6a: Python pushes to open pages | `a10_live_push.py` adds nodes every two seconds and an already-open page shows each at once, no reload; Run then gives 2.0 to 6.0; 119 Python tests at 100%, 45 Rust tests; two-client pytest (script edit reaches an open page; a browser edit reaches the other page only) |
 | 2026-10-19 | task 5: reload keeps the graph | no product code needed: every connection already gets a snapshot (task 1); added tests for edits made through the socket surviving a reconnect and for two open pages; by hand: a node added in the browser survives a reload; 109 Python tests at 100% |

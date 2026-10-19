@@ -1,9 +1,12 @@
 //! Drawing: a frame from the replica and the state of the pointer.
 
 use element_51_core::layout::{
-    HEADER_HEIGHT, PortHit, Side, anchor_of, input_anchor, node_rect, output_anchor,
+    HEADER_HEIGHT, PortHit, Side, anchor_of, input_anchor, node_rect, output_anchor, wire_controls,
 };
-use element_51_core::{Edit, PortRef, PortType, Replica, RunResult, Status, apply_edit};
+use element_51_core::view::View;
+use element_51_core::{
+    Edit, Graph, Link, NodeType, PortRef, PortType, RunResult, Status, apply_edit,
+};
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
@@ -16,17 +19,37 @@ const TEXT_DIM: &str = "#808080";
 const VALUE: &str = "#a6e3a6";
 const TEXT: &str = "#d0d0d0";
 const WIRE: &str = "#8fa04f";
+const SELECTED: &str = "#e8e8e8";
 const ALLOWED: &str = "#6fcf6f";
 const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
 const VALUE_GAP: f64 = 8.0;
 
-/// A link being dragged from an output port.
+/// A link being dragged from an output port. `x` and `y` are graph
+/// coordinates.
 #[derive(Clone, Debug)]
 pub struct Drag {
     pub source: PortRef,
     pub x: f64,
     pub y: f64,
+}
+
+/// What the user has selected.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Selected {
+    Node(String),
+    Link(Link),
+}
+
+/// Everything one frame shows. With no graph yet, only the background.
+pub struct Frame<'a> {
+    pub graph: Option<&'a Graph>,
+    pub types: &'a [NodeType],
+    pub view: &'a View,
+    pub selected: Option<&'a Selected>,
+    pub drag: Option<&'a Drag>,
+    pub hover: Option<&'a PortHit>,
+    pub run: Option<&'a RunResult>,
 }
 
 fn port_colour(kind: PortType) -> &'static str {
@@ -37,15 +60,22 @@ fn port_colour(kind: PortType) -> &'static str {
     }
 }
 
-/// Draw everything. With no replica yet, only the background.
+/// Draw `frame`.
 pub fn draw(
     canvas: &HtmlCanvasElement,
     context: &CanvasRenderingContext2d,
-    replica: Option<&Replica>,
-    drag: Option<&Drag>,
-    hover: Option<&PortHit>,
-    run: Option<&RunResult>,
+    frame: &Frame,
 ) -> Result<(), JsValue> {
+    let Frame {
+        graph,
+        types,
+        view,
+        selected,
+        drag,
+        hover,
+        run,
+    } = *frame;
+    context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
     context.set_fill_style_str(BACKGROUND);
     context.fill_rect(
         0.0,
@@ -53,21 +83,31 @@ pub fn draw(
         f64::from(canvas.width()),
         f64::from(canvas.height()),
     );
-    let Some(replica) = replica else {
+    let Some(graph) = graph else {
         return Ok(());
     };
-    let graph = replica.graph();
-    let types = replica.node_types();
+    context.set_transform(
+        view.zoom(),
+        0.0,
+        0.0,
+        view.zoom(),
+        view.pan_x(),
+        view.pan_y(),
+    )?;
 
-    context.set_stroke_style_str(WIRE);
     context.set_line_width(2.0);
     for link in &graph.links {
         let from = anchor_of(graph, types, &link.source, Side::Output);
         let to = anchor_of(graph, types, &link.target, Side::Input);
         if let (Some(from), Some(to)) = (from, to) {
+            let chosen = selected == Some(&Selected::Link(link.clone()));
+            context.set_stroke_style_str(if chosen { SELECTED } else { WIRE });
+            context.set_line_width(if chosen { 3.0 } else { 2.0 });
             wire(context, from, to);
         }
     }
+    context.set_stroke_style_str(WIRE);
+    context.set_line_width(2.0);
     if let Some(drag) = drag
         && let Some(from) = anchor_of(graph, types, &drag.source, Side::Output)
     {
@@ -82,6 +122,11 @@ pub fn draw(
         let rect = node_rect(node, node_type);
         context.set_fill_style_str(BODY);
         context.fill_rect(rect.x, rect.y, rect.w, rect.h);
+        if selected == Some(&Selected::Node(node.id.clone())) {
+            context.set_stroke_style_str(SELECTED);
+            context.set_line_width(2.0);
+            context.stroke_rect(rect.x, rect.y, rect.w, rect.h);
+        }
         let outcome = run.and_then(|result| result.outcome_for(&node.id));
         let status = outcome.map(|outcome| outcome.status);
         let (header, text) = match status {
@@ -144,6 +189,7 @@ pub fn draw(
             square(context, x, y, if allowed { ALLOWED } else { REFUSED });
         }
     }
+    context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
     Ok(())
 }
 
@@ -159,10 +205,10 @@ fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str) {
 
 /// A smooth curve that leaves `from` and arrives at `to` horizontally.
 fn wire(context: &CanvasRenderingContext2d, from: (f64, f64), to: (f64, f64)) {
-    let reach = ((to.0 - from.0).abs() / 2.0).max(40.0);
+    let [start, first, second, end] = wire_controls(from, to);
     context.begin_path();
-    context.move_to(from.0, from.1);
-    context.bezier_curve_to(from.0 + reach, from.1, to.0 - reach, to.1, to.0, to.1);
+    context.move_to(start.0, start.1);
+    context.bezier_curve_to(first.0, first.1, second.0, second.1, end.0, end.1);
     context.stroke();
 }
 

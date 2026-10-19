@@ -5,16 +5,44 @@ mod draw;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use element_51_core::layout::{PortHit, Side, port_at};
-use element_51_core::{Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult};
+use element_51_core::layout::{PortHit, Side, link_at, node_at, port_at};
+use element_51_core::view::View;
+use element_51_core::{
+    Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult, apply_edit,
+};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
     CanvasRenderingContext2d, CloseEvent, Document, Element, EventTarget, HtmlCanvasElement,
-    MessageEvent, MouseEvent, WebSocket,
+    KeyboardEvent, MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use draw::{Drag, draw};
+use draw::{Drag, Frame, Selected, draw};
+
+/// What the pointer is doing between a press and a release.
+enum Gesture {
+    None,
+    /// Dragging a new link out of an output port.
+    Link(Drag),
+    /// Dragging a node. Nothing is sent until the button is released, so one
+    /// drag is one edit.
+    Move(Moving),
+    /// Dragging the empty canvas; holds the last pointer position on screen.
+    Pan(f64, f64),
+}
+
+struct Moving {
+    id: String,
+    /// Where inside the node the pointer took hold, in graph units.
+    grab: (f64, f64),
+    start: (f64, f64),
+    now: (f64, f64),
+}
+
+/// How close, in screen pixels, a press must be to a link to select it.
+const LINK_PICK_PIXELS: f64 = 6.0;
+/// How strongly the wheel zooms: one wheel pixel scales by `exp(0.001)`.
+const WHEEL_ZOOM_RATE: f64 = 0.001;
 
 /// Everything the event handlers share.
 struct State {
@@ -23,7 +51,9 @@ struct State {
     context: CanvasRenderingContext2d,
     socket: WebSocket,
     replica: Option<Replica>,
-    drag: Option<Drag>,
+    view: View,
+    selected: Option<Selected>,
+    gesture: Gesture,
     hover: Option<PortHit>,
     /// The last run's outcome. Cleared when the graph changes.
     run: Option<RunResult>,
@@ -63,7 +93,9 @@ pub fn start() -> Result<(), JsValue> {
         context,
         socket: socket.clone(),
         replica: None,
-        drag: None,
+        view: View::default(),
+        selected: None,
+        gesture: Gesture::None,
         hover: None,
         run: None,
         menu_at: (0.0, 0.0),
@@ -105,6 +137,19 @@ pub fn start() -> Result<(), JsValue> {
     let shared = state.clone();
     listen(&canvas, "mouseup", move |event: MouseEvent| {
         on_mouse_up(&shared, &event)
+    })?;
+    let shared = state.clone();
+    listen(&canvas, "mouseleave", move |_event: MouseEvent| {
+        shared.borrow_mut().gesture = Gesture::None;
+        redraw(&shared);
+    })?;
+    let shared = state.clone();
+    listen(&canvas, "wheel", move |event: WheelEvent| {
+        on_wheel(&shared, &event)
+    })?;
+    let shared = state.clone();
+    listen(&window, "keydown", move |event: KeyboardEvent| {
+        on_key_down(&shared, &event)
     })?;
     if let Some(button) = document.get_element_by_id("run") {
         let shared = state.clone();
@@ -156,14 +201,37 @@ fn fit_canvas(state: &Shared, window: &web_sys::Window) {
 
 fn redraw(state: &Shared) {
     let state = state.borrow();
-    let result = draw(
-        &state.canvas,
-        &state.context,
-        state.replica.as_ref(),
-        state.drag.as_ref(),
-        state.hover.as_ref(),
-        state.run.as_ref(),
-    );
+    // While a node is dragged it is shown at the pointer without touching the
+    // replica; the move is sent once, when the button is released.
+    let preview = match (&state.gesture, state.replica.as_ref()) {
+        (Gesture::Move(moving), Some(replica)) => {
+            let edit = Edit::MoveNode {
+                id: moving.id.clone(),
+                x: moving.now.0,
+                y: moving.now.1,
+            };
+            apply_edit(replica.graph(), replica.node_types(), &edit).ok()
+        }
+        _ => None,
+    };
+    let frame = Frame {
+        graph: preview
+            .as_ref()
+            .or_else(|| state.replica.as_ref().map(|replica| replica.graph())),
+        types: state
+            .replica
+            .as_ref()
+            .map_or(&[], |replica| replica.node_types()),
+        view: &state.view,
+        selected: state.selected.as_ref(),
+        drag: match &state.gesture {
+            Gesture::Link(drag) => Some(drag),
+            _ => None,
+        },
+        hover: state.hover.as_ref(),
+        run: state.run.as_ref(),
+    };
+    let result = draw(&state.canvas, &state.context, &frame);
     if let Err(error) = result {
         show_error(&state.document, &format!("Drawing failed: {error:?}"));
     }
@@ -198,10 +266,14 @@ fn submit(shared: &Shared, edit: Edit) {
         let Some(replica) = state.replica.as_mut() else {
             return;
         };
+        // Moving a node changes no result, so the shown values stay.
+        let keeps_results = matches!(edit, Edit::MoveNode { .. });
         match replica.submit(edit) {
             Ok(request) => {
                 send(&state, request);
-                state.run = None;
+                if !keeps_results {
+                    state.run = None;
+                }
             }
             Err(error) => show_error(&state.document, &error.to_string()),
         }
@@ -220,6 +292,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
         match parsed {
             Ok(Message::Snapshot(snapshot)) => {
                 state.run = None;
+                state.selected = None;
                 fill_menu(&state.document, &snapshot);
                 match state.replica.as_mut() {
                     Some(replica) => replica.reset(snapshot),
@@ -296,7 +369,9 @@ fn on_run(shared: &Shared) {
 fn on_context_menu(shared: &Shared, event: &MouseEvent) {
     event.prevent_default();
     let mut state = shared.borrow_mut();
-    state.menu_at = (f64::from(event.offset_x()), f64::from(event.offset_y()));
+    state.menu_at = state
+        .view
+        .to_graph(f64::from(event.offset_x()), f64::from(event.offset_y()));
     let Some(menu) = state.document.get_element_by_id("menu") else {
         return;
     };
@@ -346,6 +421,16 @@ fn on_menu_click(shared: &Shared, event: &MouseEvent) {
     submit(shared, edit);
 }
 
+/// The pointer position on the canvas, in screen pixels.
+fn screen_point(event: &MouseEvent) -> (f64, f64) {
+    (f64::from(event.offset_x()), f64::from(event.offset_y()))
+}
+
+fn port_under(state: &State, x: f64, y: f64) -> Option<PortHit> {
+    let replica = state.replica.as_ref()?;
+    port_at(replica.graph(), replica.node_types(), x, y)
+}
+
 fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
     {
         let mut state = shared.borrow_mut();
@@ -353,13 +438,10 @@ fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
         if event.button() != 0 {
             return;
         }
-        let (x, y) = (f64::from(event.offset_x()), f64::from(event.offset_y()));
-        let hit = state
-            .replica
-            .as_ref()
-            .and_then(|r| port_at(r.graph(), r.node_types(), x, y));
-        if let Some(hit) = hit.filter(|hit| hit.side == Side::Output) {
-            state.drag = Some(Drag {
+        let screen = screen_point(event);
+        let (x, y) = state.view.to_graph(screen.0, screen.1);
+        if let Some(hit) = port_under(&state, x, y).filter(|hit| hit.side == Side::Output) {
+            state.gesture = Gesture::Link(Drag {
                 source: PortRef {
                     node: hit.node,
                     port: hit.port,
@@ -367,6 +449,38 @@ fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
                 x,
                 y,
             });
+        } else if let Some(id) = state
+            .replica
+            .as_ref()
+            .and_then(|r| node_at(r.graph(), r.node_types(), x, y))
+        {
+            let node = state
+                .replica
+                .as_ref()
+                .and_then(|r| r.graph().nodes.iter().find(|node| node.id == id))
+                .map(|node| (node.x, node.y));
+            if let Some(start) = node {
+                state.gesture = Gesture::Move(Moving {
+                    id: id.clone(),
+                    grab: (x - start.0, y - start.1),
+                    start,
+                    now: start,
+                });
+            }
+            state.selected = Some(Selected::Node(id));
+        } else {
+            let tolerance = LINK_PICK_PIXELS / state.view.zoom();
+            let link = state
+                .replica
+                .as_ref()
+                .and_then(|r| link_at(r.graph(), r.node_types(), x, y, tolerance));
+            match link {
+                Some(link) => state.selected = Some(Selected::Link(link)),
+                None => {
+                    state.selected = None;
+                    state.gesture = Gesture::Pan(screen.0, screen.1);
+                }
+            }
         }
     }
     redraw(shared);
@@ -375,17 +489,23 @@ fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
 fn on_mouse_move(shared: &Shared, event: &MouseEvent) {
     {
         let mut state = shared.borrow_mut();
-        let (x, y) = (f64::from(event.offset_x()), f64::from(event.offset_y()));
-        let hover = state
-            .replica
-            .as_ref()
-            .and_then(|r| port_at(r.graph(), r.node_types(), x, y));
-        state.hover = hover;
-        let Some(drag) = state.drag.as_mut() else {
-            return;
-        };
-        drag.x = x;
-        drag.y = y;
+        let screen = screen_point(event);
+        let (x, y) = state.view.to_graph(screen.0, screen.1);
+        state.hover = port_under(&state, x, y);
+        match &mut state.gesture {
+            Gesture::None => return,
+            Gesture::Link(drag) => {
+                drag.x = x;
+                drag.y = y;
+            }
+            Gesture::Move(moving) => moving.now = (x - moving.grab.0, y - moving.grab.1),
+            Gesture::Pan(last_x, last_y) => {
+                let (dx, dy) = (screen.0 - *last_x, screen.1 - *last_y);
+                *last_x = screen.0;
+                *last_y = screen.1;
+                state.view.pan_by(dx, dy);
+            }
+        }
     }
     redraw(shared);
 }
@@ -393,25 +513,72 @@ fn on_mouse_move(shared: &Shared, event: &MouseEvent) {
 fn on_mouse_up(shared: &Shared, event: &MouseEvent) {
     let edit = {
         let mut state = shared.borrow_mut();
-        let Some(drag) = state.drag.take() else {
-            return;
-        };
-        let (x, y) = (f64::from(event.offset_x()), f64::from(event.offset_y()));
-        let hit = state
-            .replica
-            .as_ref()
-            .and_then(|r| port_at(r.graph(), r.node_types(), x, y));
-        hit.filter(|hit| hit.side == Side::Input)
-            .map(|hit| Edit::AddLink {
-                source: drag.source,
-                target: PortRef {
-                    node: hit.node,
-                    port: hit.port,
-                },
-            })
+        let screen = screen_point(event);
+        let (x, y) = state.view.to_graph(screen.0, screen.1);
+        match std::mem::replace(&mut state.gesture, Gesture::None) {
+            Gesture::Link(drag) => port_under(&state, x, y)
+                .filter(|hit| hit.side == Side::Input)
+                .map(|hit| Edit::AddLink {
+                    source: drag.source,
+                    target: PortRef {
+                        node: hit.node,
+                        port: hit.port,
+                    },
+                }),
+            Gesture::Move(moving) if moving.now != moving.start => Some(Edit::MoveNode {
+                id: moving.id,
+                x: moving.now.0,
+                y: moving.now.1,
+            }),
+            Gesture::Move(_) | Gesture::Pan(..) | Gesture::None => None,
+        }
     };
     match edit {
         Some(edit) => submit(shared, edit),
+        None => redraw(shared),
+    }
+}
+
+/// Zoom about the pointer. The wheel's own scrolling is not wanted.
+fn on_wheel(shared: &Shared, event: &WheelEvent) {
+    event.prevent_default();
+    {
+        let mut state = shared.borrow_mut();
+        let factor = (-event.delta_y() * WHEEL_ZOOM_RATE).exp();
+        state.view.zoom_at(
+            f64::from(event.offset_x()),
+            f64::from(event.offset_y()),
+            factor,
+        );
+    }
+    redraw(shared);
+}
+
+/// Delete or Backspace removes what is selected; Escape lets go of it.
+fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
+    let edit = {
+        let mut state = shared.borrow_mut();
+        match event.key().as_str() {
+            "Delete" | "Backspace" => match state.selected.take() {
+                Some(Selected::Node(id)) => Some(Edit::DeleteNode { id }),
+                Some(Selected::Link(link)) => Some(Edit::DeleteLink {
+                    source: link.source,
+                    target: link.target,
+                }),
+                None => None,
+            },
+            "Escape" => {
+                state.selected = None;
+                None
+            }
+            _ => return,
+        }
+    };
+    match edit {
+        Some(edit) => {
+            event.prevent_default();
+            submit(shared, edit);
+        }
         None => redraw(shared),
     }
 }

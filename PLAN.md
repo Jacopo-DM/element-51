@@ -60,31 +60,34 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 6 (Tier 1 is complete, the graph runs, nodes can have several
+tasks 1 to 7 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 7, pan, zoom, move, select, delete.
+Next step: task 8, value editing with HTML inputs.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 6, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 7, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 133 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 45 tests.
+- pytest: 145 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 55 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
   names; a long text value is trimmed with an ellipsis to fit its row; a node
   added in the browser is still there after a reload, with the run values
   cleared; with `a10_live_push.py` an open page shows each node the script
-  adds, with no reload, and Run then gives 2.0 to 6.0.
+  adds, with no reload, and Run then gives 2.0 to 6.0; with `a12_big_graph.py`
+  a node drags and its move survives a reload, the wheel zooms and empty
+  canvas pans, Delete removes the selected node (its links go) or the selected
+  wire, and Run then shows `has no value` downstream.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 6 are done (removed from the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 7 are done (removed from the
 list below, their detail is in DESIGN.md and git). A task added later needs its
 own approval in words. Sizes are estimates by analogy with the skeleton (about
 80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
@@ -100,12 +103,9 @@ rollback).
 
 Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 (reload keeps the graph; no product code was needed) and 6a (Python pushes to
-open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md) and
-6 (save and load as versioned JSON).
+open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md) 6
+(save and load as versioned JSON) and 7 (pan, zoom, move, select, delete).
 
-7. **Pan, zoom, move, select, delete.** Hit-testing and view maths in
-   `element-51-core`, input handling in `element-51-web`. Risk low. Cost about 400
-   lines Rust. Verify: native tests for hit-testing and zoom maths; by hand.
 8. **Value editing with HTML inputs.** Real inputs placed over the canvas for
    unlinked inputs. Risk medium: overlay positioning under pan and zoom. Cost
    about 200 lines Rust, 60 JS. Verify: by hand, including copy-paste.
@@ -173,7 +173,6 @@ Oldest first.
   so from one thread. A browser edit and a script edit that propose the same
   node id race; Python refuses the later one and the browser may show the
   reason, or may not, if the snapshot that makes the edit moot arrives first.
-- Links cannot yet be removed, and a node cannot be moved or deleted (task 7).
 - Every node of a type shares the function's defaults; there is no per-node
   value until task 8, and the browser does not show the defaults.
 - A long output value is trimmed with an ellipsis on the node. The full value is
