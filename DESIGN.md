@@ -294,6 +294,21 @@ theme, with the credit in the README.
   path, the selection outline follows the rounded path, and wires have round
   caps and joins. Port squares and input boxes were left as they were by the
   user's choice. The radius is a constant in `draw.rs` until the Theme exists.
+- Undo and redo (task 9). The history lives in `element-51-core`
+  (`History`). For each edit the user makes, it records the edit and the edits
+  that undo it, worked out from the graph before the edit: a move goes back to
+  the old position, a value to the old value (or none), a delete restores the
+  node, its values and its links (several edits, one step), an add is undone
+  by the matching delete. Undo and redo send their edits to Python like any
+  other edit and are not recorded again, so Python stays the one true copy
+  and other pages see the result. A new edit clears the redo stack. A drag is
+  already one `move_node`, so it is one step. A restored node goes to the end
+  of the node list, so it is drawn on top. The history is the page's own: it
+  is not saved, a reload empties it, and edits made by other pages or scripts
+  are not in it; an undo that no longer applies shows Python's or the rules'
+  reason and stops that step. Keys: Cmd or Ctrl with Z, Shift added for redo,
+  Ctrl+Y also redoes; no buttons, because none were asked for. Keys typed in
+  an input box belong to the box.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -321,6 +336,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 9: undo and redo | native tests: every accepted edit in the shared cases is undone and redone to the same graph, add node and link, delete with links and values, stack order and redo cleared by a new edit; by hand with `a14_undo_redo.py`: drag, delete and their undo, redo, and a reload keeps the result; 165 Python tests at 100%, 65 Rust tests |
 | 2026-10-19 | task 8: value editing with HTML inputs | by hand with `a13_values.py`: typing 5 gives 15.0 on Run, `abc` is refused with a message and the box restored, a ticked box turns the text to capitals, boxes follow zoom, pan and drag, values survive a reload; set_value, bad values and clearing give identical graphs in Python and Rust on 9 more shared cases; 164 Python tests at 100%, 60 Rust tests |
 | 2026-10-19 | task 7: pan, zoom, move, select, delete | by hand with `a12_big_graph.py`: a node dragged to a new place and deleted, wheel zoom, empty-canvas pan, a wire selected and deleted, Run showing `has no value` after; both survive a reload; the move, delete node and delete link edits give identical graphs in Python and Rust on 7 shared cases; 145 Python tests at 100%, 55 Rust tests |
 | 2026-10-19 | task 6: save and load | round trip, version refusal, five kinds of damaged file, rule-breaking file, and a real websocket test that an open page receives the loaded graph; `a11_save_load.py` saves on Ctrl+C and loads on the next start (run for real); 133 Python tests at 100% |

@@ -60,20 +60,20 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 8 (Tier 1 is complete, the graph runs, nodes can have several
+tasks 1 to 9 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 9, undo and redo.
+Next step: task 10, `examples/a1_two_nodes.py` (clean Ctrl+C stop).
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 8, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 9, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 164 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 60 tests.
+- pytest: 165 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 65 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -86,11 +86,13 @@ Measured 2026-10-19 after task 8, Apple silicon, Python 3.13:
   wire, and Run then shows `has no value` downstream; with `a13_values.py` typed
   numbers change the Run result, `abc` in a number box is refused with a message
   and the box restored, the boxes follow pan, zoom and drag, and the values and
-  a ticked box survive a reload.
+  a ticked box survive a reload; with `a14_undo_redo.py` Ctrl+Z undid a drag and
+  a node delete (the node came back with its links) and Ctrl+Shift+Z redid a
+  move, and the result survived a reload.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 8 are done (removed from the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 9 are done (removed from the
 list below, their detail is in DESIGN.md and git). A task added later needs its
 own approval in words. Sizes are estimates by analogy with the skeleton (about
 80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
@@ -107,14 +109,11 @@ rollback).
 Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 (reload keeps the graph; no product code was needed) and 6a (Python pushes to
 open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md), 6
-(save and load as versioned JSON), 7 (pan, zoom, move, select, delete) and 8
-(value editing with HTML inputs). Extra task 17, added at the user's request and
+(save and load as versioned JSON), 7 (pan, zoom, move, select, delete), 8
+(value editing with HTML inputs) and 9 (undo and redo). Extra task 17, added at the user's request and
 approved in words 2026-10-19: rounded node cards and wire ends (done; the radius
 is a constant that task 11 moves into the Theme).
 
-9. **Undo and redo.** Reversible command log in `element-51-core`; one step per
-   edit, a drag is one step. Risk medium. Depends on 2, 7 and 8. Cost about
-   300 lines Rust. Verify: native tests for every command and its inverse.
 10. **`examples/a1_two_nodes.py`.** Replaces `a1_serve.py`; Ctrl+C stops the
     server cleanly. Criterion 4. Risk low. Cost about 40 lines. Verify: run it
     by hand and check the exit.

@@ -13,7 +13,7 @@ the ignore list in CLAUDE.md.
   (blank canvas, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
-  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs). `a7_script_api.py`: the graph from plain
+  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo). `a7_script_api.py`: the graph from plain
   Python, no browser. `a0_hello_world.py` is the project template, not an
   example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
@@ -44,8 +44,8 @@ imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 
 | Crate | Purpose | Public interface |
 | --- | --- | --- |
-| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`, `is_linked`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `value_fits`, `EditError` (`kind`), `fields::{parse_input, format_value}`, `Replica` (`new`, `reset` (keeps pending edits that still apply), `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, node_at, link_at, wire_controls, PortHit, Side, Rect, constants}`, `view::{View, MIN_ZOOM, MAX_ZOOM}` (`pan_by`, `zoom_at`, `to_screen`, `to_graph`) |
-| `element-51-web` | WASM layer: websocket, canvas drawing (`draw`, one `Frame` per frame), the HTML input boxes over the canvas (`sync_fields`), mouse, wheel, key, menu and Run button handling (a `Gesture` is a link drag, a node move or a pan), error banner | `start()` (runs on load) |
+| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`, `is_linked`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `value_fits`, `EditError` (`kind`), `fields::{parse_input, format_value}`, `history::History` (`record`, `undo`, `redo`, `can_undo`, `can_redo`), `Replica` (`new`, `reset` (keeps pending edits that still apply), `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, node_at, link_at, wire_controls, PortHit, Side, Rect, constants}`, `view::{View, MIN_ZOOM, MAX_ZOOM}` (`pan_by`, `zoom_at`, `to_screen`, `to_graph`) |
+| `element-51-web` | WASM layer: websocket, canvas drawing (`draw`, one `Frame` per frame), the HTML input boxes over the canvas (`sync_fields`), undo and redo keys (`step_history`), mouse, wheel, key, menu and Run button handling (a `Gesture` is a link drag, a node move or a pan), error banner | `start()` (runs on load) |
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never
 happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`.
@@ -61,7 +61,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a13` file and runs its graph).
+`test_examples.py` (loads every `examples/a1` to `a14` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
@@ -70,5 +70,5 @@ Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
 
 ## Not built yet
 
-Value editing, undo, the theme, the nested menu. The
+The theme, the nested menu. The
 planned layout is in DESIGN.md under Specs.

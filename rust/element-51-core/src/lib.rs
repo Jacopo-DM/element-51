@@ -6,6 +6,7 @@
 
 mod edit;
 pub mod fields;
+pub mod history;
 pub mod layout;
 mod model;
 mod replica;

@@ -60,6 +60,11 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "ok", {"out": "3 remainder 2"}),
     ],
     "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
+    "a14_undo_redo.py": [
+        ("n1", "ok", {"out": 3.0}),
+        ("n2", "ok", {"out": 6.0}),
+        ("n3", "ok", {"out": 7.0}),
+    ],
     "a13_values.py": [
         ("n1", "ok", {"out": 6.0}),
         ("n2", "ok", {"out": "hello world"}),

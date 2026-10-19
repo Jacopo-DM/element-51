@@ -6,6 +6,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use element_51_core::fields::{format_value, parse_input};
+use element_51_core::history::History;
 use element_51_core::layout::{PortHit, Side, link_at, node_at, node_rect, port_at};
 use element_51_core::view::View;
 use element_51_core::{
@@ -54,6 +55,7 @@ struct State {
     socket: WebSocket,
     replica: Option<Replica>,
     view: View,
+    history: History,
     selected: Option<Selected>,
     gesture: Gesture,
     hover: Option<PortHit>,
@@ -96,6 +98,7 @@ pub fn start() -> Result<(), JsValue> {
         socket: socket.clone(),
         replica: None,
         view: View::default(),
+        history: History::default(),
         selected: None,
         gesture: Gesture::None,
         hover: None,
@@ -268,8 +271,14 @@ fn send(state: &State, request: EditRequest) {
     }
 }
 
-/// Apply `edit` locally and send it. A refused edit shows its reason.
+/// Apply an edit the user made, send it, and remember it so it can be undone.
 fn submit(shared: &Shared, edit: Edit) {
+    submit_edit(shared, edit, true);
+}
+
+/// Apply `edit` locally and send it. A refused edit shows its reason. With
+/// `record` the edit joins the undo history; undo and redo pass false.
+fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
     {
         let mut state = shared.borrow_mut();
         let Some(replica) = state.replica.as_mut() else {
@@ -277,14 +286,42 @@ fn submit(shared: &Shared, edit: Edit) {
         };
         // Moving a node changes no result, so the shown values stay.
         let keeps_results = matches!(edit, Edit::MoveNode { .. });
-        match replica.submit(edit) {
+        let before = replica.graph().clone();
+        match replica.submit(edit.clone()) {
             Ok(request) => {
+                if record {
+                    state.history.record(&before, &edit);
+                }
                 send(&state, request);
                 if !keeps_results {
                     state.run = None;
                 }
             }
             Err(error) => show_error(&state.document, &error.to_string()),
+        }
+    }
+    redraw(shared);
+}
+
+/// Undo the newest step, or redo the newest undone one. The edits go to Python
+/// like any others; the first one that no longer applies shows its reason and
+/// ends the step.
+fn step_history(shared: &Shared, undo: bool) {
+    let edits = {
+        let mut state = shared.borrow_mut();
+        state.selected = None;
+        if undo {
+            state.history.undo()
+        } else {
+            state.history.redo()
+        }
+    };
+    for edit in edits.unwrap_or_default() {
+        let before = shared.borrow().replica.as_ref().map(|r| r.graph().clone());
+        submit_edit(shared, edit, false);
+        let after = shared.borrow().replica.as_ref().map(|r| r.graph().clone());
+        if before == after {
+            break;
         }
     }
     redraw(shared);
@@ -572,6 +609,14 @@ fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
     {
         if event.key() == "Enter" {
             let _ = field.blur();
+        }
+        return;
+    }
+    if event.ctrl_key() || event.meta_key() {
+        let key = event.key().to_lowercase();
+        if key == "z" || key == "y" {
+            event.prevent_default();
+            step_history(shared, key == "z" && !event.shift_key());
         }
         return;
     }
