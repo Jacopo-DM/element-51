@@ -32,7 +32,8 @@ Behaviour:
   a pydantic model has one output port per field, in field order, named after
   the field.
 - Python API: `@node` on a typed function, and a pydantic `Node` subclass.
-  Both build the same node type.
+  Both build the same node type. An `App([...])` holds the node functions and
+  the authoritative graph; `app.add_node(fn, x=, y=)` places a node.
 - Execution: on demand (`app.run()` or a Run button), in dependency order. A
   node that raises is marked and shows its message with a Dismiss button;
   nodes downstream of it are skipped; `app.run()` raises the same error.
@@ -42,8 +43,9 @@ Behaviour:
 - Canvas: pan and zoom, move, select, delete, edit values in nodes through real
   HTML inputs placed over the canvas.
 - Palette: right-click menu.
-- Server: starlette and uvicorn. `bay.asgi_app()` and `bay.serve()` are both
-  public, so the editor can be mounted in an existing ASGI app.
+- Server: starlette and uvicorn. `asgi_app(app)` and `serve(app)` are both
+  public, so the editor can be mounted in an existing ASGI app. They are module
+  functions that take the `App`, so `session` never imports `server`.
 - Save and load: `app.save("g.json")` and `app.load("g.json")`, versioned JSON
   holding nodes, links, positions and values.
 
@@ -100,6 +102,18 @@ in-app browser against the running example.
   renaming it would break the link to this project's Claude session history, so
   that is the user's call. Earlier entries in this file were corrected to the
   new names, not left as history.
+- JSON field names (task 1): ports carry `kind`, nodes carry `node_type`,
+  messages carry `op` and `version`. Avoids `type`, which shadows a Python
+  builtin, and keeps `op` for message kinds. Links are `source` and `target`
+  port references.
+- Node ids are `n<number>`, one above the highest in use, so a deleted id is
+  never reused.
+- Both sides refuse unknown fields (pydantic `extra="forbid"`, serde
+  `deny_unknown_fields`) and a protocol version they do not read.
+- The browser shows errors in a banner that stays until the user presses
+  Dismiss; the same pattern serves the rollback and run-error messages later.
+- `@node` accepts only plain functions: a `functools.partial` has no name to
+  give the node type.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -120,6 +134,7 @@ in-app browser against the running example.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 1: node types reach the browser | `@node` hints become ports; snapshot over `/ws`; Rust parses it and draws both nodes; 27 Python tests at 100%, 13 Rust tests; one JSON fixture parsed by both sides |
 | 2026-10-19 | skeleton: Python serves, WASM draws, core logic runs | page shows `float to str link allowed: false`; 4 Python tests at 100%, 4 Rust tests; WASM 706 KB unoptimised |
 
 ## Gotchas

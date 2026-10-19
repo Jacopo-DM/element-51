@@ -7,10 +7,15 @@
 <style>
 html, body { margin: 0; background: #1e1e1e; height: 100%; }
 canvas { display: block; width: 100%; height: 100%; }
+#error { position: fixed; left: 16px; right: 16px; bottom: 16px; padding: 10px 14px;
+  background: #5a2d2d; color: #f0d0d0; font: 14px sans-serif; border-radius: 6px; }
+#error[hidden] { display: none; }
+#error button { margin-left: 12px; }
 </style>
 </head>
 <body>
 <canvas id="canvas" width="800" height="600"></canvas>
+<div id="error" hidden><span></span><button type="button" onclick="this.parentElement.hidden = true">Dismiss</button></div>
 <script type="module">
 import init from "./element_51_web.js";
 init();

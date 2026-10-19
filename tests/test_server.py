@@ -10,9 +10,13 @@ from pathlib import Path
 
 import pytest
 import uvicorn
+from sample_nodes import add
 from starlette.types import ASGIApp
+from websockets.sync.client import connect
 
 from element_51 import server
+from element_51.protocol import Snapshot
+from element_51.session import App
 
 WASM_MAGIC = b"\x00asm\x01\x00\x00\x00"
 
@@ -89,7 +93,7 @@ def web_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_index_page_is_served_at_root(web_dir: Path) -> None:
     """The page loads at `/` over a real local server."""
     assert web_dir.exists()
-    with running(server.asgi_app()) as port:
+    with running(server.asgi_app(App([]))) as port:
         status, content_type, body = fetch(port, "/")
     assert status == HTTPStatus.OK
     assert content_type.startswith("text/html")
@@ -99,7 +103,7 @@ def test_index_page_is_served_at_root(web_dir: Path) -> None:
 def test_wasm_is_served_with_the_wasm_type(web_dir: Path) -> None:
     """Browsers only stream-compile `.wasm` sent as application/wasm."""
     assert web_dir.exists()
-    with running(server.asgi_app()) as port:
+    with running(server.asgi_app(App([]))) as port:
         status, content_type, body = fetch(port, "/element_51_web_bg.wasm")
     assert (status, content_type, body) == (
         HTTPStatus.OK,
@@ -111,7 +115,7 @@ def test_wasm_is_served_with_the_wasm_type(web_dir: Path) -> None:
 def test_unknown_path_is_404(web_dir: Path) -> None:
     """A path outside the build output is not found."""
     assert web_dir.exists()
-    with running(server.asgi_app()) as port:
+    with running(server.asgi_app(App([]))) as port:
         status, _, _ = fetch(port, "/nope.txt")
     assert status == HTTPStatus.NOT_FOUND
 
@@ -128,5 +132,37 @@ def test_serve_listens_on_localhost_only(
         calls.append((host, port))
 
     monkeypatch.setattr(uvicorn, "run", fake_run)
-    server.serve(port=9000)
+    server.serve(App([]), port=9000)
     assert calls == [("127.0.0.1", 9000)]
+
+
+def test_websocket_sends_a_snapshot_on_connect(web_dir: Path) -> None:
+    """A browser that connects gets the node types and the graph."""
+    assert web_dir.exists()
+    app = App([add])
+    app.add_node(add, x=5.0, y=6.0)
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        message = websocket.recv()
+    snapshot = Snapshot.model_validate_json(message)
+    assert [t.name for t in snapshot.node_types] == ["add"]
+    assert [(n.id, n.x, n.y) for n in snapshot.graph.nodes] == [
+        ("n1", 5.0, 6.0)
+    ]
+
+
+def test_every_new_connection_gets_the_current_graph(web_dir: Path) -> None:
+    """A reload sees the edits made since the last connection."""
+    assert web_dir.exists()
+    app = App([add])
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as first:
+            before = Snapshot.model_validate_json(first.recv())
+        app.add_node(add, x=1.0, y=1.0)
+        with connect(url) as second:
+            after = Snapshot.model_validate_json(second.recv())
+    assert len(before.graph.nodes) == 0
+    assert len(after.graph.nodes) == 1

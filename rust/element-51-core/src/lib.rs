@@ -1,16 +1,13 @@
 //! Graph logic shared by the browser layer and the native tests.
+//!
+//! The JSON shapes here are a contract with `src/element_51/model.py` and
+//! `src/element_51/protocol.py`; `tests/fixtures/snapshot.json` is read by both
+//! sides.
 
-use serde::{Deserialize, Serialize};
+pub mod layout;
+mod model;
 
-/// The type of a port. A link may join two ports only if their types agree.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum PortType {
-    Float,
-    Int,
-    Str,
-    Bool,
-}
+pub use model::{Graph, Link, Message, Node, NodeType, Port, PortRef, PortType, Snapshot};
 
 /// Whether an output of type `from` may feed an input of type `to`.
 ///

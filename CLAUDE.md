@@ -84,3 +84,9 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - zsh does not split an unquoted `$cmd`: a loop over command strings needs
   `eval "$cmd"`, or every command exits 127.
 - `cargo fmt` at a workspace root needs `--all`.
+- mypy counts `Callable[..., X]` as an explicit `Any`. Type a callable with a
+  `ParamSpec` generic (`Callable[P, R]`), and use a `Protocol` where a container
+  holds callables of different signatures.
+- Test dummies whose body never runs (functions built only to read their hints)
+  take `# pragma: no cover  # reason` on the `def` line; everything else is
+  called, so coverage stays at 100%.

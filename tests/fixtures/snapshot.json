@@ -1,0 +1,31 @@
+{
+  "op": "snapshot",
+  "version": 1,
+  "node_types": [
+    {
+      "name": "add",
+      "inputs": [
+        {"name": "a", "kind": "float"},
+        {"name": "b", "kind": "float"}
+      ],
+      "outputs": [{"name": "out", "kind": "float"}]
+    },
+    {
+      "name": "show",
+      "inputs": [{"name": "value", "kind": "float"}],
+      "outputs": []
+    }
+  ],
+  "graph": {
+    "nodes": [
+      {"id": "n1", "node_type": "add", "x": 40.0, "y": 60.0},
+      {"id": "n2", "node_type": "show", "x": 300.0, "y": 80.0}
+    ],
+    "links": [
+      {
+        "source": {"node": "n1", "port": "out"},
+        "target": {"node": "n2", "port": "value"}
+      }
+    ]
+  }
+}

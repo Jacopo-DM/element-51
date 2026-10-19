@@ -55,23 +55,24 @@
 
 ## Current state
 
-Phase: walking skeleton merged (`9c489ef`); renamed to `element-51` (task 16,
-done 2026-10-19); task list for tasks 1 to 15 drafted.
-Next step: approve tasks 1 to 15 under Tasks, then start task 1.
+Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
+task 1 (node types reach the browser).
+Next step: task 2, add nodes and links in the browser, synced.
 
 ## Baseline
 
-Measured 2026-10-19 on the skeleton, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 1, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 4 passed, 100% coverage, about 2 s.
-- cargo fmt, clippy (`-D warnings`), test: pass, 4 tests.
-- `tools/build_wasm.py`: builds, about 4 s; the page draws in the in-app
-  browser with no console errors.
+- pytest: 27 passed, 100% coverage, about 2 s.
+- cargo fmt, clippy (`-D warnings`), test: pass, 13 tests.
+- `tools/build_wasm.py`: builds, about 7 s from cold. In the browser pane the
+  example draws both nodes with the right ports, no console errors, and the
+  lost-connection banner shows and dismisses.
 
 ## Tasks
 
-Draft 2026-10-19, awaiting approval. Sizes are estimates by analogy with the
+Tasks 1 to 15 approved 2026-10-19; task 1 is done. Sizes are estimates by analogy with the
 skeleton (about 80 lines of Python, 60 of Rust); there is no measured data
 yet. Every area below is new code, so no existing test pins it; each task
 writes its tests first. `element-51-web` is checked by hand in the in-app
@@ -79,16 +80,6 @@ browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ### Goal `skeleton`, Tier 1: walking skeleton
 
-1. **Node types reach the browser.** `@node` on a typed function builds a node
-   type (ports from the hints); the graph model, a `snapshot` message and a
-   `/ws` websocket endpoint carry it; Rust parses the snapshot and draws plain
-   boxes. Files: `src/element_51/{model,nodes,protocol,session,server}.py`,
-   `rust/element-51-core/src/{model,protocol}.rs`, `rust/element-51-web/src/lib.rs`,
-   tests. Serves criteria 1 (function form) and part of 3. Risk medium: first
-   time the pydantic and serde shapes must agree. Cost: about 350 lines Python
-   with tests, 250 Rust, no new dependency. Verify: pytest on ports derived
-   from hints; one shared JSON fixture parsed by both pydantic and serde; look
-   in the browser pane.
 2. **Add nodes and links in the browser, synced.** Right-click flat list (the
    nested menu is goal `antimony-theme`), drag a link, `can_link` refusal and
    cycle refusal in Rust, numbered edits answered `ok N` or `rejected N`,
@@ -174,6 +165,7 @@ None yet.
   the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
   start (the `web/` folder is missing); the tests avoid this with a fake folder.
 - `element-51-web` has no automated test; it is checked by hand in the browser.
+- Until task 2, `/ws` reads messages from the browser and drops them.
 - The WASM build works around a broken `rust-lld` in the rustup toolchain
   (see CLAUDE.md, things that bite). Not reported upstream.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran
