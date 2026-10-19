@@ -15,9 +15,9 @@ from element_51.model import (
     Graph,
     Link,
     Model,
-    Node,
     NodeId,
     NodeType,
+    PlacedNode,
     Port,
     PortRef,
     can_link,
@@ -111,7 +111,7 @@ def _add_node(
     if any(node.id == edit.id for node in graph.nodes):
         msg = f"node id {edit.id} is already in use"
         raise EditError(EditErrorKind.ID_IN_USE, msg)
-    node = Node(id=edit.id, node_type=edit.node_type, x=edit.x, y=edit.y)
+    node = PlacedNode(id=edit.id, node_type=edit.node_type, x=edit.x, y=edit.y)
     return Graph(nodes=(*graph.nodes, node), links=graph.links)
 
 

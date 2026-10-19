@@ -21,7 +21,7 @@ the ignore list in CLAUDE.md.
 | Module | Purpose | Public interface |
 | --- | --- | --- |
 | `__init__` | package surface | `App`, `NodeFunction`, `node`, `asgi_app`, `serve` |
-| `model` | immutable records for node types and graphs | `Model`, `PortType`, `PortValue`, `value_fits`, `can_link`, `NodeId`, `Port`, `NodeType`, `PortRef`, `Link`, `Node`, `Graph` (with `next_id()`) |
+| `model` | immutable records for node types and graphs | `Model`, `PortType`, `PortValue`, `value_fits`, `can_link`, `NodeId`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (with `next_id()`) |
 | `edits` | edits and the rules that allow or refuse them | `AddNode`, `AddLink`, `Edit`, `apply_edit`, `EditError`, `EditErrorKind` |
 | `nodes` | `@node` turns a typed function into a node type, with its defaults | `node`, `NodeFunction` (`call`, `defaults`), `Registered` (protocol), `port_type` |
 | `engine` | runs a graph in dependency order | `run_graph`, `RunResult`, `NodeOutcome` |
@@ -39,7 +39,7 @@ imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 
 | Crate | Purpose | Public interface |
 | --- | --- | --- |
-| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `Node`, `Graph` (`next_id`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`value_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `EditError` (`kind`), `Replica` (`new`, `reset`, `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, PortHit, Side, Rect, constants}` |
+| `element-51-core` | records, messages, edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`), `Snapshot`, `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`value_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `EditError` (`kind`), `Replica` (`new`, `reset`, `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, input_anchor, output_anchor, anchor_of, port_at, PortHit, Side, Rect, constants}` |
 | `element-51-web` | WASM layer: websocket, canvas drawing (`draw`), mouse, menu and Run button handling, error banner | `start()` (runs on load) |
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never

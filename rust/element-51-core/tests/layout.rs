@@ -4,7 +4,7 @@ use element_51_core::layout::{
     HEADER_HEIGHT, NODE_WIDTH, PORT_RADIUS, ROW_HEIGHT, Side, anchor_of, input_anchor, node_rect,
     output_anchor, port_at,
 };
-use element_51_core::{Graph, Node, NodeType, Port, PortRef, PortType};
+use element_51_core::{Graph, NodeType, PlacedNode, Port, PortRef, PortType};
 
 fn port(name: &str) -> Port {
     Port {
@@ -13,8 +13,8 @@ fn port(name: &str) -> Port {
     }
 }
 
-fn node_at(x: f64, y: f64) -> Node {
-    Node {
+fn node_at(x: f64, y: f64) -> PlacedNode {
+    PlacedNode {
         id: "n1".to_string(),
         node_type: "t".to_string(),
         x,
@@ -50,7 +50,7 @@ fn a_node_without_ports_is_just_a_header() {
     assert_eq!(rect.h, HEADER_HEIGHT);
 }
 
-fn graph_of(node: Node) -> Graph {
+fn graph_of(node: PlacedNode) -> Graph {
     Graph {
         nodes: vec![node],
         links: vec![],

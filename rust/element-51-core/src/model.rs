@@ -60,7 +60,7 @@ pub struct Link {
 /// A node placed in the graph.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Node {
+pub struct PlacedNode {
     pub id: String,
     pub node_type: String,
     pub x: f64,
@@ -71,7 +71,7 @@ pub struct Node {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Graph {
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<PlacedNode>,
     pub links: Vec<Link>,
 }
 

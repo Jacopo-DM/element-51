@@ -11,7 +11,7 @@ from element_51.edits import (
     EditErrorKind,
     apply_edit,
 )
-from element_51.model import Graph, Link, Model, Node, NodeType, PortRef
+from element_51.model import Graph, Link, Model, NodeType, PlacedNode, PortRef
 
 FIXTURE = Path(__file__).parent / "fixtures" / "link_cases.json"
 
@@ -56,7 +56,7 @@ def test_add_node_places_a_node() -> None:
     """A valid add_node returns a graph that holds the new node."""
     edit = AddNode(id="n5", node_type="add", x=1.0, y=2.0)
     graph = apply_edit(CASES.graph, NODE_TYPES, edit)
-    assert graph.nodes[-1] == Node(id="n5", node_type="add", x=1.0, y=2.0)
+    assert graph.nodes[-1] == PlacedNode(id="n5", node_type="add", x=1.0, y=2.0)
     assert graph.links == CASES.graph.links
 
 
@@ -99,7 +99,8 @@ def test_a_diamond_in_the_graph_is_searched_once() -> None:
         ),
     )
     nodes = tuple(
-        Node(id=f"n{i}", node_type="add", x=0.0, y=0.0) for i in range(1, 6)
+        PlacedNode(id=f"n{i}", node_type="add", x=0.0, y=0.0)
+        for i in range(1, 6)
     )
     graph = Graph(nodes=nodes, links=links)
     edit = AddLink(

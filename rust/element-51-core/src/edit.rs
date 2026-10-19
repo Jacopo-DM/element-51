@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use crate::{Edit, Graph, Link, Node, NodeType, Port, PortRef, can_link};
+use crate::{Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, can_link};
 
 /// Why an edit was refused.
 #[derive(Clone, Debug, PartialEq)]
@@ -84,7 +84,7 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 return Err(EditError::IdInUse(id.clone()));
             }
             let mut next = graph.clone();
-            next.nodes.push(Node {
+            next.nodes.push(PlacedNode {
                 id: id.clone(),
                 node_type: node_type.clone(),
                 x: *x,

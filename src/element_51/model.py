@@ -109,7 +109,7 @@ class Link(Model):
     target: PortRef
 
 
-class Node(Model):
+class PlacedNode(Model):
     """A node placed in the graph."""
 
     id: NodeId
@@ -121,7 +121,7 @@ class Node(Model):
 class Graph(Model):
     """The nodes and links the user has built."""
 
-    nodes: tuple[Node, ...]
+    nodes: tuple[PlacedNode, ...]
     links: tuple[Link, ...]
 
     def next_id(self) -> str:

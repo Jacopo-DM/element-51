@@ -113,7 +113,7 @@ fn a_new_snapshot_discards_everything_pending() {
     let mut replica = replica();
     replica.submit(add_node("n1")).unwrap();
     let fixture: Fixture = serde_json::from_str(CASES).unwrap();
-    let kept = element_51_core::Node {
+    let kept = element_51_core::PlacedNode {
         id: "n7".into(),
         node_type: "add".into(),
         x: 5.0,

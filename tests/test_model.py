@@ -8,8 +8,8 @@ from pydantic import ValidationError
 
 from element_51.model import (
     Graph,
-    Node,
     NodeType,
+    PlacedNode,
     Port,
     PortType,
     can_link,
@@ -43,7 +43,7 @@ def test_records_are_frozen() -> None:
 def test_unknown_fields_are_refused() -> None:
     """A typo in a message is an error, not a silent drop."""
     with pytest.raises(ValidationError):
-        Node.model_validate({
+        PlacedNode.model_validate({
             "id": "n1",
             "node_type": "add",
             "x": 0,
@@ -62,8 +62,8 @@ def test_next_id_follows_the_highest_existing_id() -> None:
     """Ids are not reused after a gap."""
     graph = Graph(
         nodes=(
-            Node(id="n1", node_type="add", x=0, y=0),
-            Node(id="n7", node_type="add", x=0, y=0),
+            PlacedNode(id="n1", node_type="add", x=0, y=0),
+            PlacedNode(id="n7", node_type="add", x=0, y=0),
         ),
         links=(),
     )

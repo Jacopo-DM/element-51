@@ -1,6 +1,6 @@
 //! Where a node box sits and how big it is.
 
-use crate::{Graph, Node, NodeType, PortRef};
+use crate::{Graph, NodeType, PlacedNode, PortRef};
 
 /// Width of every node box.
 pub const NODE_WIDTH: f64 = 160.0;
@@ -19,7 +19,7 @@ pub struct Rect {
 }
 
 /// The box for `node`: a header plus one row per port on the busier side.
-pub fn node_rect(node: &Node, node_type: &NodeType) -> Rect {
+pub fn node_rect(node: &PlacedNode, node_type: &NodeType) -> Rect {
     let rows = node_type.inputs.len().max(node_type.outputs.len());
     Rect {
         x: node.x,

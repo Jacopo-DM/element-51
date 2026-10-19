@@ -4,7 +4,7 @@ from collections import deque
 from collections.abc import Mapping
 from typing import Literal
 
-from element_51.model import Graph, Model, Node, PortValue, value_fits
+from element_51.model import Graph, Model, PlacedNode, PortValue, value_fits
 from element_51.nodes import Registered
 
 
@@ -124,7 +124,7 @@ def _describe(error: Exception) -> str:
     return f"{type(error).__name__}: {error}"
 
 
-def _order(graph: Graph) -> list[Node]:
+def _order(graph: Graph) -> list[PlacedNode]:
     """Return the nodes, each after everything it depends on.
 
     Nodes that depend on nothing keep their order in the graph. Nodes on a
@@ -132,7 +132,7 @@ def _order(graph: Graph) -> list[Node]:
 
     Returns
     -------
-    list[Node]
+    list[PlacedNode]
         The nodes that can run, in running order.
     """
     waiting = {node.id: 0 for node in graph.nodes}
@@ -140,7 +140,7 @@ def _order(graph: Graph) -> list[Node]:
         waiting[link.target.node] += 1
     by_id = {node.id: node for node in graph.nodes}
     ready = deque(node for node in graph.nodes if waiting[node.id] == 0)
-    order: list[Node] = []
+    order: list[PlacedNode] = []
     while ready:
         node = ready.popleft()
         order.append(node)
@@ -153,7 +153,7 @@ def _order(graph: Graph) -> list[Node]:
 
 
 def _evaluate(
-    node: Node,
+    node: PlacedNode,
     graph: Graph,
     function: Registered,
     values: Mapping[str, PortValue],

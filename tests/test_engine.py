@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 
 from element_51.engine import run_graph
-from element_51.model import Graph, Link, Node, PortRef
+from element_51.model import Graph, Link, PlacedNode, PortRef
 from element_51.nodes import node
 
 
@@ -82,7 +82,7 @@ def graph_of(
     """
     return Graph(
         nodes=tuple(
-            Node(id=node_id, node_type=name, x=0.0, y=0.0)
+            PlacedNode(id=node_id, node_type=name, x=0.0, y=0.0)
             for node_id, name in types.items()
         ),
         links=tuple(
