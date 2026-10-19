@@ -23,6 +23,9 @@ const SELECTED: &str = "#e8e8e8";
 const ALLOWED: &str = "#6fcf6f";
 const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
+/// How thick a wire is, and a selected one, in graph units.
+const WIRE_WIDTH: f64 = 3.0;
+const WIRE_WIDTH_SELECTED: f64 = 4.5;
 /// How round the corners of a node card are, in graph units.
 const CARD_RADIUS: f64 = 8.0;
 const VALUE_GAP: f64 = 8.0;
@@ -107,19 +110,23 @@ pub fn draw(
 
     context.set_line_cap("round");
     context.set_line_join("round");
-    context.set_line_width(2.0);
+    context.set_line_width(WIRE_WIDTH);
     for link in &graph.links {
         let from = anchor_of(graph, types, &link.source, Side::Output);
         let to = anchor_of(graph, types, &link.target, Side::Input);
         if let (Some(from), Some(to)) = (from, to) {
             let chosen = selected == Some(&Selected::Link(link.clone()));
             context.set_stroke_style_str(if chosen { SELECTED } else { WIRE });
-            context.set_line_width(if chosen { 3.0 } else { 2.0 });
+            context.set_line_width(if chosen {
+                WIRE_WIDTH_SELECTED
+            } else {
+                WIRE_WIDTH
+            });
             wire(context, from, to);
         }
     }
     context.set_stroke_style_str(WIRE);
-    context.set_line_width(2.0);
+    context.set_line_width(WIRE_WIDTH);
     if let Some(drag) = drag
         && let Some(from) = anchor_of(graph, types, &drag.source, Side::Output)
     {
