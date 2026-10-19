@@ -72,10 +72,13 @@ Testing: Python at 100% coverage. `element-51-core` under native `cargo test`.
 `element-51-web` cannot reach 100% automatically; it is checked through the
 in-app browser against the running example.
 
-### antimony-theme spec (PROPOSED 2026-10-19, waiting for the user's approval)
+### antimony-theme spec (approved 2026-10-19)
 
 Goal and criteria are in PLAN.md (approved). This is the architecture for them.
-Nothing below is built; tasks 11 to 15 wait for this to be approved.
+The user approved it as written, with three choices: (1) rows are stacked like
+Antimony (the first option under "Layout change"); (2) the header icon opens a
+small menu when clicked, which is new task 18, after task 12; (3) the theme is
+chosen only by `serve(theme=...)`, with no switcher in the page.
 
 **Measured from the user's Antimony screenshots** (sampled pixel colours; the
 screenshots stay outside the repo): card body `#202020`, header bar `#505050`,

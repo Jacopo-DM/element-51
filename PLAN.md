@@ -56,8 +56,10 @@
        pydantic class form both set the category.
     5. `README.md` credits Antimony and Matt Keeter with a link, and says the
        look is inspired by it. No Antimony image or code is in the repo.
-- Status: approved 2026-10-19. Its spec (modules, alternatives) is not written
-  or approved yet; see Open questions. Tasks 11 to 15 wait for tasks 1, 2 and 7.
+- Status: approved 2026-10-19. Spec approved 2026-10-19 (DESIGN.md, under
+  "antimony-theme spec"), with these choices: rows stacked like Antimony, the
+  header icon opens a small menu (task 18), the theme is chosen only by
+  `serve(theme=...)`. In progress: next is task 11.
 - Added: 2026-10-19
 
 ## Current state
@@ -65,8 +67,8 @@
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 10 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: the user's own try-out of goal `skeleton`, then the `antimony-theme`
-spec (open question 1), since tasks 11 to 15 need it.
+Next step: task 11 (`Theme`), goal `antimony-theme`. The user's own try-out of
+goal `skeleton` is still pending.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
@@ -122,25 +124,36 @@ is a constant that task 11 moves into the Theme).
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
 
-11. **`Theme` in `element-51-core`, all drawing through it.** Colours, sizes and
-    fonts in one definition; no colour literal in drawing code. Criterion 2.
-    Risk low. Cost about 300 lines Rust. Verify: native test that the theme
-    parses; grep for colour literals in `element-51-web`.
-12. **The Antimony look.** Card with grey header bar (id left, type right, menu
-    icon), right-aligned labels, dark value boxes, greyed placeholder on a
-    linked input, type-coloured port squares, S-curve wires, dot grid,
-    selection outline. Criterion 1. Risk medium: it is a matter of judgement.
-    Cost about 500 lines Rust. Verify: you accept it side by side with the
-    reference screenshots.
-13. **`antimony-light` and `serve(theme=...)`.** Criterion 3. Risk low. Cost
-    about 100 lines Python, 80 Rust. Verify: pytest; unknown name lists valid
-    names.
-14. **Nested category menu with search.** `@node(category=...)` and the class
-    form set the category. Criterion 4. Risk medium. Cost about 350 lines Rust,
-    40 Python. Verify: native tests for the menu tree and filtering.
+11. **`Theme` in `element-51-core`, all drawing and layout through it.**
+    Colours, metrics and fonts in one `Theme`; layout and hit-testing take the
+    metrics as an argument; CSS custom properties for the HTML parts; a test
+    that no colour literal is left in `element-51-web/src`. Criterion 2. Risk
+    low. Cost about 400 lines Rust. Verify: native tests (theme parses, layout
+    follows the metrics, no colour literals).
+12. **The Antimony look.** Stacked rows (inputs, then outputs), right-aligned
+    labels, dark value boxes, greyed placeholder on a linked input, header with
+    id left, type right and the three-bar icon, dot grid, selection outline,
+    input boxes moved onto the new rows. Criterion 1. Risk medium: judged by
+    eye. Cost about 600 lines Rust. Verify: you accept it side by side with
+    the reference screenshots.
+13. **`antimony-light`, `serve(theme=...)`, snapshot `theme`.** Protocol
+    version 2; unknown name lists the valid ones; shared theme-name fixture.
+    Criterion 3. Risk low. Cost about 100 lines Python, 80 Rust. Verify:
+    pytest and native tests.
+14. **Categories and the nested menu with search.** `@node(category=...)` and
+    the class form set the category (`/` between levels); menu tree and search
+    in `element-51-core`, rendered by the web crate. Criterion 4. Risk medium.
+    Cost about 350 lines Rust, 60 Python. Verify: native tests for the tree
+    and filtering; pytest for `category`.
 15. **README credit.** I draft the Antimony and Matt Keeter credit for your
     review; no Antimony asset in the repo. Criterion 5. Risk low. Cost about 5
     lines.
+18. **The header icon opens a small menu** (added 2026-10-19 by the user's
+    choice while approving the spec). Clicking the three-bar icon on a card
+    opens a small popup with one entry, Delete node, in the theme's menu
+    style. The user gave "for example Delete node"; I will confirm the entries
+    before starting. After task 12. Risk low. Cost about 120 lines Rust.
+    Verify: native test for the entry list; by hand.
 
 ### Tier 3: listed, not executed
 
@@ -158,10 +171,7 @@ is a constant that task 11 moves into the Theme).
 
 Oldest first.
 
-1. (2026-10-19) The spec for goal `antimony-theme` is not written. Before task
-   11, propose the architecture (a `Theme` in `element-51-core`, all drawing
-   through it, the menu tree) with alternatives, and get approval. The reference
-   material is in DESIGN.md under Specs.
+None.
 
 ## Known problems
 
