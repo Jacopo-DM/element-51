@@ -51,12 +51,12 @@ Behaviour:
 
 Architecture:
 
-- Python package `src/element_51/`: `model` (Graph, Node, Port, Link, PortType;
-  pydantic, frozen), `nodes`, `engine`, `protocol`, `session`, `server`,
-  `store`, and `web/` (built WASM, glue JS, index.html; git-ignored output).
-  Import direction: `server` imports `session`, `store`, `protocol`; `session`
-  imports `engine`, `model`; `engine`, `store`, `nodes` import only `model`.
-  Nothing imports `server`.
+- Python package `src/element_51/`: `model` (Graph, PlacedNode, Port, Link,
+  PortType; pydantic, frozen), `edits`, `nodes`, `engine`, `protocol`,
+  `session`, `server`, `store` (not built yet, task 6), and `web/` (built WASM,
+  glue JS, index.html; git-ignored output). Import direction as built is in
+  CODEMAP.md; the rule is that nothing imports `server` except the package
+  `__init__`, and `session` never imports `server`.
 - Rust workspace `rust/`: `element-51-core` (graph, port types, link rules,
   message types, undo log, layout, hit-testing, theme; plain `cargo test`) and
   `element-51-web` (wasm-bindgen layer: canvas drawing, DOM inputs, websocket).
@@ -71,6 +71,30 @@ Architecture:
 Testing: Python at 100% coverage. `element-51-core` under native `cargo test`.
 `element-51-web` cannot reach 100% automatically; it is checked through the
 in-app browser against the running example.
+
+### antimony-theme (goal approved 2026-10-19; spec not yet written)
+
+Reference material for the look and feel, not an approved spec. The user loves
+the look of Antimony, the CAD tool by Matt Keeter, and wants it as the default
+theme, with the credit in the README.
+
+- Sources, all outside the repo and only on the user's machine: the project
+  page https://www.mattkeeter.com/projects/antimony/3/ (saved as
+  `~/Downloads/Antimony (19_10_2026 11：04：14).html`), a screencast at
+  https://vimeo.com/125111378, and screenshots in `~/Downloads/antimony_pics/`
+  (the app window with the right-click menu, a Cube minus Circle example, and a
+  large graph on a near-black canvas).
+- What the screenshots show, beyond the list under criterion 1 in PLAN.md: the
+  app canvas is near-black with a faint dot grid, while the website figures use
+  a light grey canvas, so both themes exist (task 13). Every input row has a
+  right-aligned label and a dark rounded value box; a linked input shows a
+  greyed placeholder such as `Shape [output]`; value ports are orange squares,
+  shape ports olive green. The right-click menu is a light grey popup with
+  nested categories (`3D`, then `cones`, then `Cone (center)`), with a
+  separator before `Export` and `Script`.
+- Antimony nodes are Python scripts (`input('x', float)`, `output('shape', ...)`),
+  and it has a 3D viewport; neither is in scope here.
+- Not to be copied: Antimony's code or images. Only the look is replicated.
 
 ## Decisions
 
@@ -102,6 +126,34 @@ in-app browser against the running example.
   later the same day, together with Claude's history folder for the project.
   Earlier entries in this file were corrected to the new names, not left as
   history.
+- Approved downloads and dependencies (2026-10-19, by name, source and size):
+  Python, PyPI, runtime: starlette 1.9.0 (0.08 MB), uvicorn 0.54.0 (0.09 MB),
+  websockets 17.2 (0.22 MB), and their dependencies anyio (0.13 MB), h11
+  (0.04 MB), click (0.13 MB), idna (0.07 MB). Rust target
+  `wasm32-unknown-unknown` for the rustup stable toolchain, static.rust-lang.org,
+  23.2 MB. wasm-bindgen CLI 0.2.129, prebuilt `aarch64-apple-darwin` tarball from
+  the GitHub release, 7.9 MB, sha256 `81d4a23d...1cd1` checked. Rust crates,
+  crates.io: wasm-bindgen =0.2.129, js-sys 0.3.106, web-sys 0.3.106, serde
+  1.0.229, serde_json 1.0.154. Only some of these are used today (js-sys is not).
+  Any further dependency needs approval again.
+- The Python server dependencies use `>=` lower bounds, not `==`: a library
+  must not pin exact versions for the people who install it. `uv.lock` pins.
+- The author email is left out of `pyproject.toml` (the name is `jmdm`), to match
+  the placeholder packages the user published without one, because the file's
+  metadata is published with every wheel.
+- The `LICENSE` file is the standard Apache-2.0 text, taken from the
+  `LICENSE-APACHE` inside the wasm-bindgen release tarball already downloaded,
+  with the appendix line filled in as `Copyright 2026 jmdm`.
+- The user registered `element-51` on PyPI and on crates.io with 0.0.1
+  placeholder packages (author jmdm, Apache-2.0), through another session. The
+  repo never publishes: no `uv publish`, no `cargo publish`; the user does it.
+  Per that session, the 0.0.1 packages carry no repository link, so a 0.0.2
+  could add one; that is the user's call.
+- Every feature the user can try ships with a runnable example in `examples/`
+  (user's request, 2026-10-19: "plenty of examples"). Each example sets up a
+  graph in `build_app()`, says in its docstring what to try, and has a row in
+  `tests/test_examples.py`, so it cannot silently break. `a0_hello_world.py` is
+  the project template and is not an example of the library.
 - JSON field names (task 1): ports carry `kind`, nodes carry `node_type`,
   messages carry `op` and `version`. Avoids `type`, which shadows a Python
   builtin, and keeps `op` for message kinds. Links are `source` and `target`
@@ -200,6 +252,13 @@ in-app browser against the running example.
   app.
 - aiohttp: heaviest option, no benefit here.
 - Committing the built WASM: stale builds and large binaries in every commit.
+- Building the wasm-bindgen CLI from source with `cargo install`: it compiles for
+  minutes, downloads more than the 7.9 MB prebuilt tarball, and installs into
+  `~/.cargo`. The prebuilt tarball is kept in git-ignored `tools/bin/`.
+- `wasm-pack`, `trunk` and `console_error_panic_hook`: not needed for the
+  skeleton, so not added.
+- starlette's `TestClient`: needs `httpx` as a new dev dependency; tests use a
+  real uvicorn server and the `websockets` client instead (see Decisions).
 
 ## Results
 

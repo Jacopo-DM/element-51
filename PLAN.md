@@ -23,7 +23,9 @@
     6. `app.save("g.json")` writes nodes, links and positions with a format
        version field, and `app.load("g.json")` restores the same graph in
        Python and in the browser.
-- Status: approved 2026-10-19
+- Status: approved 2026-10-19; in progress. Criteria 1, 2, 3 and 5 are met by
+  tasks 1 to 4 (tests, and by hand in the browser). Criterion 4 needs task 10
+  and criterion 6 needs task 6.
 - Added: 2026-10-19
 
 ### antimony-theme
@@ -50,7 +52,8 @@
        pydantic class form both set the category.
     5. `README.md` credits Antimony and Matt Keeter with a link, and says the
        look is inspired by it. No Antimony image or code is in the repo.
-- Status: approved 2026-10-19
+- Status: approved 2026-10-19. Its spec (modules, alternatives) is not written
+  or approved yet; see Open questions. Tasks 11 to 15 wait for tasks 1, 2 and 7.
 - Added: 2026-10-19
 
 ## Current state
@@ -59,6 +62,9 @@ Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 5 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
 Next step: task 6, save and load.
+Nothing is uncommitted. The branches `task-4-multi-output` and `task-5-reload`
+are merged into `main` but not deleted (deleting branches needs the user's
+say-so). There is no remote, so nothing is pushed.
 
 ## Baseline
 
@@ -76,19 +82,33 @@ Measured 2026-10-19 after task 5, Apple silicon, Python 3.13:
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 5 are done. Sizes are estimates by analogy with the
-skeleton (about 80 lines of Python, 60 of Rust); there is no measured data
-yet. Every area below is new code, so no existing test pins it; each task
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 5 are done (removed from the
+list below, their detail is in DESIGN.md and git). A task added later needs its
+own approval in words. Sizes are estimates by analogy with the skeleton (about
+80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
 writes its tests first. `element-51-web` is checked by hand in the in-app
 browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ### Goal `skeleton`, Tier 1: walking skeleton
 
+Done: tasks 1 and 2 (node types reach the browser; edits synced with ack and
+rollback).
+
 ### Goal `skeleton`, Tier 2 (ordered by value over risk plus cost)
+
+Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes) and 5
+(reload keeps the graph; no product code was needed).
 
 6. **Save and load.** `store.py`, versioned JSON, `app.save` and `app.load`
    pushing a snapshot. Criterion 6. Risk low. Cost about 120 lines. Verify:
    round-trip pytest; an old version number is rejected with a clear error.
+   Two things to know before starting. (1) `app.load` must reach a browser that
+   is already open, so Python has to push a message to connected websockets
+   (a registry of open connections in `server.py`). That does not exist yet and
+   is the same mechanism as the first known problem below; the user decides
+   whether it is built inside this task or as its own task. (2) The file needs a
+   `format_version` field and a clear error for a version it does not read;
+   task 8 adds per-node values, which will extend the format.
 7. **Pan, zoom, move, select, delete.** Hit-testing and view maths in
    `element-51-core`, input handling in `element-51-web`. Risk low. Cost about 400
    lines Rust. Verify: native tests for hit-testing and zoom maths; by hand.
@@ -138,7 +158,15 @@ browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ## Open questions
 
-None yet.
+Oldest first.
+
+1. (2026-10-19) Python pushing to open browsers: build it inside task 6 (which
+   needs it for `app.load`) or as its own task? It would also fix the known
+   problem that a script's edits, or a second tab's, only show after a reload.
+2. (2026-10-19) The spec for goal `antimony-theme` is not written. Before task
+   11, propose the architecture (a `Theme` in `element-51-core`, all drawing
+   through it, the menu tree) with alternatives, and get approval. The reference
+   material is in DESIGN.md under Specs.
 
 ## Known problems
 
@@ -161,6 +189,9 @@ None yet.
 - A long output value is trimmed with an ellipsis on the node. The full value is
   only available from `app.run()`; there is no hover or tooltip yet.
 - Port colours are placeholders; the nodes still look plain until tasks 11 and 12.
+- A node that returns NaN or infinity as a float is sent as JSON `null` (pydantic's
+  default), so the browser would show `null` for it. Checked 2026-10-19 with
+  `NodeOutcome(node="n1", status="ok", outputs={"out": float("nan")})`. Not handled.
 - The WASM build works around a broken `rust-lld` in the rustup toolchain
   (see CLAUDE.md, things that bite). Not reported upstream.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran

@@ -13,7 +13,8 @@ the ignore list in CLAUDE.md.
   (blank canvas, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes). `a7_script_api.py`: the graph from plain
-  Python, no browser. Each example has `build_app()`; `tests/test_examples.py`
+  Python, no browser. `a0_hello_world.py` is the project template, not an
+  example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
 - Browser: `element_51_web::start()` runs when the page loads, opens `/ws`, and
   wires the canvas, the right-click menu and the window.
@@ -53,7 +54,20 @@ Each is read by a Python test and a Rust test, so the two sides cannot drift:
 `snapshot.json` (the snapshot message), `messages.json` (edit request, ack,
 reject, run, run result), `link_cases.json` (a graph with a multi-output node, candidate links and the expected verdicts).
 
+## Tests
+
+Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
+`test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
+`test_server.py` (a real uvicorn server and the `websockets` client),
+`test_examples.py` (loads every `examples/a1` to `a9` file and runs its graph).
+`sample_nodes.py` holds node functions shared by several test files.
+
+Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
+(the shared fixtures), `replica.rs`, `layout.rs`, `run.rs`; unit tests for
+`can_link` sit in `src/lib.rs`. `element-51-web` has no automated tests.
+
 ## Not built yet
 
-Save and load, node moving and deleting, value editing, undo, the
-theme, the nested menu. The planned layout is in DESIGN.md under Specs.
+Save and load (`store.py`), Python pushing messages to open browsers, node
+moving and deleting, value editing, undo, the theme, the nested menu. The
+planned layout is in DESIGN.md under Specs.

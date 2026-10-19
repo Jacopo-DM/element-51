@@ -43,6 +43,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
 | Serve the editor | `uv run python examples/a1_serve.py` | needs the build first; Ctrl+C stops it |
+| Serve another example | `uv run python examples/a2_arithmetic.py` (a1 to a6, a8, a9 serve on http://127.0.0.1:8765; a7 prints and exits) | same port, so stop one before starting the next |
 
 ## Code rules
 
@@ -54,6 +55,20 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 - No abstraction before there are two real call sites.
 - Clear names over clever one-liners.
 - No options nobody asked for.
+- A feature the user can try gets a runnable example in `examples/` (a docstring
+  that says what to try, a `build_app()`, and a row in `tests/test_examples.py`).
+  When a task is done, tell the user when they can try it, with the exact
+  commands.
+
+## Git and approvals
+
+Differences from the global file only.
+
+- Never publish to PyPI or crates.io (no `uv publish`, no `cargo publish`). The
+  user publishes. The name `element-51` is already registered on both by the
+  user.
+- A task in PLAN.md is approved only where PLAN.md says so. A task added later
+  needs its own approval in words.
 
 ## Ignore list
 
@@ -94,6 +109,18 @@ No tool ignore or deny file exists in this repo, so none was changed.
   the value being checked goes first (`value_fits(value, kind)`).
 - A wrapped bullet in a docstring breaks the 4-space indent rule when the
   continuation is indented by 2. Keep each bullet on one line.
+- Checking the editor in the browser pane: click and drag coordinates are
+  screenshot pixels (the page is about 1.28 times larger in CSS pixels), so read
+  positions off the screenshot. A menu opened by a right-click may not be painted
+  yet in an immediate screenshot; wait one second first.
+- BSD `sed` on macOS has no `\b`. Use Python `re` for whole-word replacements.
+- `ls` and `mv` read a name starting with `-` as an option. Claude's history
+  folders under `~/.claude/projects/` start with one; prefix `./`.
+- `uv sync` with no flags uninstalls the `docs` group. Use `uv sync --group docs`
+  before building the docs.
+- After moving the repo folder, run `uv sync --reinstall` and `uv run
+  pre-commit install`: the virtual environment and the installed git hook both
+  hold the old absolute path.
 - `cargo fmt` rewraps struct literals, so a scripted text replacement in a Rust
   file that ran after formatting silently matched nothing twice. Check that a
   replacement applied, or use a regex.
