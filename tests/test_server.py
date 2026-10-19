@@ -173,6 +173,60 @@ def test_every_new_connection_gets_the_current_graph(web_dir: Path) -> None:
     assert len(after.graph.nodes) == 1
 
 
+def test_edits_made_in_the_browser_are_there_after_a_reload(
+    web_dir: Path,
+) -> None:
+    """The browser builds a graph, goes away, and a new page gets it back."""
+    assert web_dir.exists()
+    app = App([add])
+    requests = [
+        (
+            '{"op": "edit", "id": 1, "edit": {"kind": "add_node", "id": "n1",'
+            ' "node_type": "add", "x": 10.0, "y": 20.0}}'
+        ),
+        (
+            '{"op": "edit", "id": 2, "edit": {"kind": "add_node", "id": "n2",'
+            ' "node_type": "add", "x": 300.0, "y": 40.0}}'
+        ),
+        (
+            '{"op": "edit", "id": 3, "edit": {"kind": "add_link",'
+            ' "source": {"node": "n1", "port": "out"},'
+            ' "target": {"node": "n2", "port": "a"}}}'
+        ),
+    ]
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as before_reload:
+            before_reload.recv()
+            for request in requests:
+                before_reload.send(request)
+                Ack.model_validate_json(before_reload.recv())
+        with connect(url) as after_reload:
+            snapshot = Snapshot.model_validate_json(after_reload.recv())
+    assert [(n.id, n.x, n.y) for n in snapshot.graph.nodes] == [
+        ("n1", 10.0, 20.0),
+        ("n2", 300.0, 40.0),
+    ]
+    assert [
+        (link.source.node, link.target.node, link.target.port)
+        for link in snapshot.graph.links
+    ] == [("n1", "n2", "a")]
+
+
+def test_two_open_pages_each_get_the_whole_graph(web_dir: Path) -> None:
+    """A second tab is a second connection and starts from a full snapshot."""
+    assert web_dir.exists()
+    app = App([add])
+    app.add_node(add, x=1.0, y=2.0)
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as first, connect(url) as second:
+            one = Snapshot.model_validate_json(first.recv())
+            two = Snapshot.model_validate_json(second.recv())
+    assert one == two
+    assert len(one.graph.nodes) == 1
+
+
 def test_an_edit_from_the_browser_is_applied_and_acknowledged(
     web_dir: Path,
 ) -> None:

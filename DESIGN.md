@@ -182,6 +182,9 @@ in-app browser against the running example.
   and a wrong type must not pass as a port value.
 - The internal graph node record is `PlacedNode`, in Python and in Rust, so the
   user-facing base class can be called `Node`.
+- A reload shows the graph Python holds and nothing else: pending edits that
+  were not yet acknowledged are dropped with the old page, and run results are
+  not kept in Python, so values disappear until the next Run (task 5).
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -202,6 +205,7 @@ in-app browser against the running example.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 5: reload keeps the graph | no product code needed: every connection already gets a snapshot (task 1); added tests for edits made through the socket surviving a reconnect and for two open pages; by hand: a node added in the browser survives a reload; 109 Python tests at 100% |
 | 2026-10-19 | task 4: several outputs, class-form nodes | `div_mod` shows `q` and `r` in the browser; class nodes run and list by class name; 107 Python tests at 100%, 43 Rust tests; 3 new link cases for a multi-output node run on both sides |
 | 2026-10-19 | task 3: run the graph | engine runs in dependency order; failed nodes red, downstream skipped, independent branches still run; 86 Python tests at 100% (including all examples), 42 Rust tests; by hand: errors and arithmetic examples in the browser |
 | 2026-10-19 | task 2: edits synced with ack and rollback | add node, drag link, float to str refused in the browser, id conflict rolled back with Python's reason, all by hand in the browser pane; 55 Python tests at 100%, 36 Rust tests; 13 link cases and the message fixture run on both sides |

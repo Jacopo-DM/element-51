@@ -56,26 +56,27 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 4 (Tier 1 is complete, the graph runs, and nodes can have several
-outputs and be written as classes).
-Next step: task 5, which tests from task 2 already cover (every connection gets
-a snapshot); confirm and drop it, then task 6, save and load.
+tasks 1 to 5 (Tier 1 is complete, the graph runs, nodes can have several
+outputs and be written as classes, and a reload keeps the graph).
+Next step: task 6, save and load.
 
 ## Baseline
 
-Measured 2026-10-19 after task 4, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 5, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 107 passed, 100% coverage, about 3 s (includes every example).
+- pytest: 109 passed, 100% coverage, about 3 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 43 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
-  names; a long text value is trimmed with an ellipsis to fit its row.
+  names; a long text value is trimmed with an ellipsis to fit its row; a node
+  added in the browser is still there after a reload, with the run values
+  cleared.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 4 are done. Sizes are estimates by analogy with the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 5 are done. Sizes are estimates by analogy with the
 skeleton (about 80 lines of Python, 60 of Rust); there is no measured data
 yet. Every area below is new code, so no existing test pins it; each task
 writes its tests first. `element-51-web` is checked by hand in the in-app
@@ -85,8 +86,6 @@ browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ### Goal `skeleton`, Tier 2 (ordered by value over risk plus cost)
 
-5. **Reload resends the graph.** Python sends a snapshot on every connect.
-   Risk low. Cost about 60 lines. Verify: pytest with two connections in turn.
 6. **Save and load.** `store.py`, versioned JSON, `app.save` and `app.load`
    pushing a snapshot. Criterion 6. Risk low. Cost about 120 lines. Verify:
    round-trip pytest; an old version number is rejected with a clear error.
