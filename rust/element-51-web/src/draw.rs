@@ -177,7 +177,11 @@ pub fn draw(
         if let (Some(from), Some(to)) = (from, to) {
             let chosen = selected == Some(&Selected::Link(link.clone()));
             let colour = wire_colour(graph, types, &link.source, colours);
-            context.set_stroke_style_str(if chosen { &colours.selected } else { colour });
+            context.set_stroke_style_str(if chosen {
+                &colours.selected_wire
+            } else {
+                colour
+            });
             context.set_line_width(if chosen {
                 metrics.wire_width_selected
             } else {

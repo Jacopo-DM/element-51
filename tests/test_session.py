@@ -173,3 +173,28 @@ def test_apply_is_silent() -> None:
     app.subscribe(heard.append)
     app.apply(AddNode(id="n1", node_type="add", x=0.0, y=0.0))
     assert heard == []
+
+
+def test_the_theme_starts_as_the_default_and_reaches_the_snapshot() -> None:
+    """A new app uses the dark Antimony theme."""
+    app = App([add])
+    assert app.theme == "antimony"
+    assert app.snapshot().theme == "antimony"
+
+
+def test_setting_the_theme_tells_listeners_and_changes_the_snapshot() -> None:
+    """An open page is told at once, in the same way as for an edit."""
+    app = App([add])
+    heard: list[Snapshot] = []
+    app.subscribe(heard.append)
+    app.theme = "antimony-light"
+    assert app.theme == "antimony-light"
+    assert [s.theme for s in heard] == ["antimony-light"]
+
+
+def test_an_unknown_theme_is_refused_and_changes_nothing() -> None:
+    """The message lists the valid names; the old theme stays."""
+    app = App([add])
+    with pytest.raises(ValueError, match="antimony-light"):
+        app.theme = "dark"
+    assert app.theme == "antimony"

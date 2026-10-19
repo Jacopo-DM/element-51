@@ -89,3 +89,23 @@ fn the_scanner_finds_colours_and_skips_ids() {
     assert_eq!(has_hex_colour("#fields input { }"), None);
     assert_eq!(has_hex_colour("#menu, #error, #canvas"), None);
 }
+
+const NAMES: &str = include_str!("../../../tests/fixtures/theme_names.json");
+
+#[test]
+fn rust_and_python_offer_the_same_themes() {
+    let python: Vec<String> = serde_json::from_str(NAMES).unwrap();
+    assert_eq!(python, THEME_NAMES);
+}
+
+#[test]
+fn the_light_theme_has_a_light_canvas_and_a_wire_selection_that_shows_on_it() {
+    let dark = Theme::builtin("antimony").unwrap();
+    let light = Theme::builtin("antimony-light").unwrap();
+    assert_ne!(dark.colours.canvas, light.colours.canvas);
+    assert_ne!(light.colours.selected_wire, light.colours.canvas);
+    assert_ne!(dark.colours.selected_wire, dark.colours.canvas);
+    // Only the look changes between these two: sizes and fonts are shared.
+    assert_eq!(dark.metrics, light.metrics);
+    assert_eq!(dark.fonts, light.fonts);
+}

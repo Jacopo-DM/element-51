@@ -1,6 +1,7 @@
 {
   "op": "snapshot",
-  "version": 1,
+  "version": 2,
+  "theme": "antimony-light",
   "node_types": [
     {
       "name": "add",

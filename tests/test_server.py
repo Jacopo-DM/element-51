@@ -532,3 +532,52 @@ def test_a_value_set_in_the_browser_is_applied_and_pushed(
             pushed = Snapshot.model_validate_json(watcher.recv(timeout=5))
     assert app.graph.nodes[0].values == {"a": 4.5}
     assert pushed.graph.nodes[0].values == {"a": 4.5}
+
+
+def _do_not_run(server_: uvicorn.Server) -> None:
+    """Stand in for `uvicorn.Server.run`, which would block."""
+    assert server_ is not None
+
+
+def test_serve_chooses_the_theme_and_every_snapshot_names_it(
+    web_dir: Path,
+) -> None:
+    """`serve(theme=...)` sets it; a page that connects is told which."""
+    assert web_dir.exists()
+    app = App([add])
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(uvicorn.Server, "run", _do_not_run)
+        server.serve(app, port=9000, theme="antimony-light")
+    assert app.theme == "antimony-light"
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        snapshot = Snapshot.model_validate_json(websocket.recv())
+    assert snapshot.theme == "antimony-light"
+
+
+def test_serve_with_an_unknown_theme_raises_before_starting(
+    web_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The error names the valid themes, and no server starts."""
+    assert web_dir.exists()
+    started: list[bool] = []
+
+    def record_run(
+        self: uvicorn.Server,
+    ) -> None:  # pragma: no cover  # serve must refuse first
+        started.append(self is not None)
+
+    monkeypatch.setattr(uvicorn.Server, "run", record_run)
+    with pytest.raises(ValueError, match="antimony-light"):
+        server.serve(App([add]), theme="nope")
+    assert started == []
+
+
+def test_asgi_app_takes_the_theme_too(web_dir: Path) -> None:
+    """A mounted app picks its theme the same way."""
+    assert web_dir.exists()
+    app = App([add])
+    server.asgi_app(app, theme="antimony-light")
+    assert app.theme == "antimony-light"

@@ -14,6 +14,7 @@
     "placeholder": "#505050",
     "icon": "#9e9e9e",
     "selected": "#e0e0e0",
+    "selected_wire": "#e0e0e0",
     "allowed": "#6fcf6f",
     "refused": "#e06060",
     "port_number": "#edc27b",

@@ -359,6 +359,18 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
             Ok(Message::Snapshot(snapshot)) => {
                 state.run = None;
                 state.selected = None;
+                if snapshot.theme != state.theme.name {
+                    match Theme::builtin(&snapshot.theme) {
+                        Some(theme) => {
+                            apply_theme(&state.document, &theme);
+                            state.theme = theme;
+                        }
+                        None => show_error(
+                            &state.document,
+                            &format!("Python asked for an unknown theme: {}", snapshot.theme),
+                        ),
+                    }
+                }
                 fill_menu(&state.document, &snapshot);
                 match state.replica.as_mut() {
                     Some(replica) => replica.reset(snapshot),

@@ -464,6 +464,21 @@ theme, with the credit in the README.
   `label_pad` and `value_gap`, and gained `title`, `label`, `dot`,
   `card_border`, `icon`, `border_width`, `port_inset`, `port_gap`, `box_gap`,
   `box_pad`, `box_radius`, `icon_*`, `grid_step` and `dot_radius`.
+- Themes by name (task 13). `antimony-light` is the same file as the dark theme
+  with a light canvas (`#eeeeee`), lighter dots and a dark selected wire; the
+  cards, boxes, sizes and fonts are shared, as in the screenshots of the
+  Antimony website. A new colour, `selected_wire`, exists because one
+  selection colour cannot show on both canvases (a pale wire vanishes on a
+  light canvas). Python holds only the names (`element_51.theme`); a shared
+  file `tests/fixtures/theme_names.json` is read by a Python and a Rust test,
+  so the lists cannot differ. `App.theme` is a property: the setter checks the
+  name (a `ValueError` listing the valid ones) and pushes a snapshot, so a
+  running page switches at once; `serve(theme=)` and `asgi_app(theme=)` set
+  it. The snapshot carries `theme` and the protocol version is 2; the page
+  looks the name up in its built-in themes, applies it, and shows an error for
+  a name it does not know. The page starts in the default theme until the
+  first snapshot arrives, so a light page can flash dark for a moment. There
+  is no switcher in the page, by the user's choice.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -491,6 +506,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 13: `antimony-light`, `serve(theme=...)` | pytest: theme names equal on both sides, unknown name lists the valid ones and starts no server, setting the theme pushes a snapshot, every snapshot names the theme; native: both themes parse, share sizes, differ in canvas and selected wire; by eye with `a15_light_theme.py`: light canvas and grid, dark cards, dark selected wire; 181 Python tests at 100%, 79 Rust tests |
 | 2026-10-19 | task 12: the Antimony look | native tests rewritten for stacked rows and inset ports (anchors, hit-testing, link picking, metrics); by eye in the browser pane next to the screenshots: dark cards with a grey title bar, id left, type right, icon, right-aligned names, dark value boxes, greyed hints, ports over wires, dot grid; typed value 5 gives 15.0 on Run and a float to int link is refused with the right hit-testing; 77 Rust tests, 167 Python tests at 100%; the user's acceptance (criterion 1) is pending |
 | 2026-10-19 | task 11: `Theme` | native tests: both themes parse (one so far), css variables, layout follows given metrics, no hex colour in `draw.rs`, `lib.rs` or `index.html`; the page looks the same as before in the browser pane (cards, values, input boxes, menu); 76 Rust tests, 167 Python tests at 100% |
 | 2026-10-19 | task 10: `a1_two_nodes.py`, clean Ctrl+C | `uv run examples/a1_two_nodes.py` run for real with the browser opener stubbed: it logged the page URL as opened, Ctrl+C gave a graceful shutdown and exit 0; pytest runs a real process the same way; 167 Python tests at 100% |

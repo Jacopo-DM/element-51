@@ -88,13 +88,15 @@ pub struct Graph {
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
     pub version: u32,
+    /// The name of the theme to draw in.
+    pub theme: String,
     pub node_types: Vec<NodeType>,
     pub graph: Graph,
 }
 
 impl Snapshot {
     /// The protocol version this build reads.
-    pub const VERSION: u32 = 1;
+    pub const VERSION: u32 = 2;
 
     /// Find a node type by name.
     pub fn node_type(&self, name: &str) -> Option<&NodeType> {

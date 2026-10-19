@@ -14,6 +14,7 @@ fn replica() -> Replica {
     let fixture: Fixture = serde_json::from_str(CASES).unwrap();
     Replica::new(Snapshot {
         version: Snapshot::VERSION,
+        theme: "antimony".into(),
         node_types: fixture.node_types,
         graph: Graph {
             nodes: vec![],
@@ -130,6 +131,7 @@ fn snapshot_with(ids: &[&str]) -> Snapshot {
         .collect();
     Snapshot {
         version: Snapshot::VERSION,
+        theme: "antimony".into(),
         node_types: fixture.node_types,
         graph: Graph {
             nodes,

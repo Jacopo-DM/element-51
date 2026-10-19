@@ -10,7 +10,8 @@ fn shared_fixture_parses() {
     let Message::Snapshot(snapshot) = Message::from_json(FIXTURE).unwrap() else {
         panic!("not a snapshot");
     };
-    assert_eq!(snapshot.version, 1);
+    assert_eq!(snapshot.version, 2);
+    assert_eq!(snapshot.theme, "antimony-light");
     let names: Vec<&str> = snapshot
         .node_types
         .iter()
@@ -48,15 +49,15 @@ fn unknown_op_is_refused() {
 
 #[test]
 fn unknown_field_is_refused() {
-    let broken = FIXTURE.replacen("\"version\": 1,", "\"version\": 1, \"extra\": true,", 1);
+    let broken = FIXTURE.replacen("\"version\": 2,", "\"version\": 2, \"extra\": true,", 1);
     assert!(Message::from_json(&broken).is_err());
 }
 
 #[test]
 fn other_protocol_version_is_refused() {
-    let future = FIXTURE.replacen("\"version\": 1", "\"version\": 2", 1);
-    let error = Message::from_json(&future).unwrap_err();
-    assert!(error.to_string().contains("version 2"), "{error}");
+    let old = FIXTURE.replacen("\"version\": 2", "\"version\": 1", 1);
+    let error = Message::from_json(&old).unwrap_err();
+    assert!(error.to_string().contains("version 1"), "{error}");
 }
 
 #[test]

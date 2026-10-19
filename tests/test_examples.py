@@ -63,6 +63,10 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "ok", {"out": "3 remainder 2"}),
     ],
     "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
+    "a15_light_theme.py": [
+        ("n1", "ok", {"out": 12.0}),
+        ("n2", "ok", {"out": 6.0}),
+    ],
     "a14_undo_redo.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 6.0}),
@@ -197,3 +201,8 @@ def test_the_save_example_gets_back_what_was_saved(tmp_path: Path) -> None:
     first.save(tmp_path / "g.json")
     second = example.build_app(tmp_path / "g.json")
     assert [n.id for n in second.graph.nodes] == ["n1", "n2", "n3"]
+
+
+def test_the_light_theme_example_uses_the_light_theme() -> None:
+    """Building the app already selects the light theme."""
+    assert build("a15_light_theme.py").theme == "antimony-light"

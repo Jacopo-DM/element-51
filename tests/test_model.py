@@ -17,6 +17,7 @@ from element_51.model import (
 from element_51.protocol import Snapshot
 
 FIXTURE = Path(__file__).parent / "fixtures" / "snapshot.json"
+PROTOCOL_VERSION = 2
 
 
 def test_shared_fixture_parses_into_a_snapshot() -> None:
@@ -90,3 +91,10 @@ def test_can_link_rule() -> None:
     assert can_link(PortType.INT, PortType.FLOAT)
     assert not can_link(PortType.FLOAT, PortType.INT)
     assert not can_link(PortType.FLOAT, PortType.STR)
+
+
+def test_the_snapshot_carries_its_theme_and_protocol_version_2() -> None:
+    """The fixture is a version 2 snapshot that names the light theme."""
+    snapshot = Snapshot.model_validate_json(FIXTURE.read_text())
+    assert snapshot.version == PROTOCOL_VERSION
+    assert snapshot.theme == "antimony-light"

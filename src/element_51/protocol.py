@@ -12,7 +12,8 @@ class Snapshot(Model):
     """The whole state, sent when a browser connects."""
 
     op: Literal["snapshot"] = "snapshot"
-    version: Literal[1] = 1
+    version: Literal[2] = 2
+    theme: str
     node_types: tuple[NodeType, ...]
     graph: Graph
 

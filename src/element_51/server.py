@@ -108,7 +108,7 @@ async def reply_to(app: App, text: str) -> Ack | Reject | RunResult | None:
     return Ack(id=message.id)
 
 
-def asgi_app(app: App) -> Starlette:
+def asgi_app(app: App, theme: str | None = None) -> Starlette:
     """Return an ASGI app that serves the editor for `app`.
 
     Mount it in an existing ASGI app, or pass the `App` to `serve`.
@@ -117,6 +117,8 @@ def asgi_app(app: App) -> Starlette:
     ----------
     app
         The session whose graph the browser edits.
+    theme
+        The theme to draw it in, by name, or None to keep the app's own.
 
     Returns
     -------
@@ -124,6 +126,8 @@ def asgi_app(app: App) -> Starlette:
         The ASGI app. It serves the files under `src/element_51/web/`, which
         `tools/build_wasm.py` fills, and a websocket at `/ws`.
     """
+    if theme is not None:
+        app.theme = theme
     hub = Hub()
     app.subscribe(lambda snapshot: hub.broadcast(snapshot.model_dump_json()))
 
@@ -183,7 +187,13 @@ class PageServer(uvicorn.Server):
             webbrowser.open(self._url)
 
 
-def serve(app: App, port: int = 8765, *, open_browser: bool = False) -> None:
+def serve(
+    app: App,
+    port: int = 8765,
+    *,
+    open_browser: bool = False,
+    theme: str | None = None,
+) -> None:
     """Run the editor on this machine only, until interrupted.
 
     Ctrl+C stops it cleanly.
@@ -197,8 +207,11 @@ def serve(app: App, port: int = 8765, *, open_browser: bool = False) -> None:
     open_browser
         Open the editor page in the default browser once the server is
         listening.
+    theme
+        The theme to draw the editor in: `antimony` (dark, the default) or
+        `antimony-light`. An unknown name raises `ValueError` listing them.
     """
-    config = uvicorn.Config(asgi_app(app), host=HOST, port=port)
+    config = uvicorn.Config(asgi_app(app, theme), host=HOST, port=port)
     url = f"http://{HOST}:{port}/" if open_browser else None
     # uvicorn stops gracefully on Ctrl+C, then raises KeyboardInterrupt again
     # so that a caller can tell; for a script, stopping is the normal end.

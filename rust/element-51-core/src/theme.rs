@@ -6,9 +6,10 @@
 use serde::Deserialize;
 
 /// The names of the built-in themes, the default first.
-pub const THEME_NAMES: [&str; 1] = ["antimony"];
+pub const THEME_NAMES: [&str; 2] = ["antimony", "antimony-light"];
 
 const ANTIMONY: &str = include_str!("../themes/antimony.json");
+const ANTIMONY_LIGHT: &str = include_str!("../themes/antimony-light.json");
 
 /// Colours, as CSS colour strings.
 #[derive(Clone, Debug, PartialEq, Deserialize)]
@@ -38,8 +39,10 @@ pub struct Colours {
     pub placeholder: String,
     /// The three-bar icon in a title bar.
     pub icon: String,
-    /// The outline of what is selected, and a selected wire.
+    /// The outline of a selected node.
     pub selected: String,
+    /// A selected wire, which must show on the canvas.
+    pub selected_wire: String,
     /// A port a dragged link may end at.
     pub allowed: String,
     /// A port a dragged link may not end at.
@@ -148,6 +151,7 @@ impl Theme {
     pub fn builtin(name: &str) -> Option<Theme> {
         let text = match name {
             "antimony" => ANTIMONY,
+            "antimony-light" => ANTIMONY_LIGHT,
             _ => return None,
         };
         Some(serde_json::from_str(text).expect("a built-in theme is valid JSON"))

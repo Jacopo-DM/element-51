@@ -9,6 +9,7 @@ from element_51.model import Graph, NodeType, PortRef, PortValue
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot
 from element_51.store import load_graph, save_graph
+from element_51.theme import DEFAULT_THEME, check_theme
 
 
 class App:
@@ -35,6 +36,7 @@ class App:
             self.node_functions[name] = function
         self.graph = Graph(nodes=(), links=())
         self._listeners: list[Callable[[Snapshot], None]] = []
+        self._theme = DEFAULT_THEME
 
     def add_node(self, function: Registered, *, x: float, y: float) -> str:
         """Place a new node of a registered type.
@@ -143,6 +145,20 @@ class App:
             for name, function in self.node_functions.items()
         }
 
+    @property
+    def theme(self) -> str:
+        """The name of the theme the editor is drawn in."""
+        return self._theme
+
+    @theme.setter
+    def theme(self, name: str) -> None:
+        """Change the theme. Open pages are told at once.
+
+        Raises `ValueError`, naming the valid themes, for an unknown name.
+        """
+        self._theme = check_theme(name)
+        self._changed()
+
     def subscribe(self, listener: Callable[[Snapshot], None]) -> None:
         """Call `listener` with a new snapshot after each change made here.
 
@@ -199,6 +215,7 @@ class App:
             Every node type and the current graph.
         """
         return Snapshot(
+            theme=self._theme,
             node_types=tuple(f.node_type for f in self.node_functions.values()),
             graph=self.graph,
         )

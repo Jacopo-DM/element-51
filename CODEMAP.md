@@ -13,7 +13,7 @@ the ignore list in CLAUDE.md.
   (two nodes and a link, which opens the browser, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
-  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo). `a7_script_api.py`: the graph from plain
+  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo), `a15_light_theme.py` (the light theme). `a7_script_api.py`: the graph from plain
   Python, no browser. `a0_hello_world.py` is the project template, not an
   example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
@@ -30,9 +30,10 @@ the ignore list in CLAUDE.md.
 | `nodes` | `@node` and the `Node` base class turn a typed function or a class into a node type, with its defaults and output model | `node`, `Node` (`run`, `call`; `node_type`, `defaults`, `output_model` built per subclass), `NodeFunction` (`call`, `defaults`, `output_model`), `Registered` (protocol), `port_type` |
 | `engine` | runs a graph in dependency order; an input takes its link, then the node's own value, then the default | `run_graph`, `RunResult`, `NodeOutcome` (`outputs` by port) |
 | `protocol` | messages in both directions | `Snapshot`, `EditRequest`, `RunRequest`, `ClientMessage`, `Ack`, `Reject` (and `engine.RunResult`) |
-| `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.subscribe`, `App.save`, `App.load`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
+| `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.theme` (setter validates and pushes), `App.subscribe`, `App.save`, `App.load`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
+| `theme` | the theme names Python offers (the look is in the Rust core) | `THEME_NAMES`, `DEFAULT_THEME`, `check_theme` |
 | `store` | save and load a graph as versioned JSON | `FORMAT_VERSION` (2; reads 1 and 2), `StoreError`, `save_graph`, `load_graph` |
-| `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app)`, `serve(app, port, open_browser)`, `PageServer`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
+| `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app, theme)`, `serve(app, port, open_browser, theme)`, `PageServer`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
 
 Import direction: `server` imports `session`, `protocol`, `edits`, `engine`;
 `session` imports `nodes`, `protocol`, `edits`, `engine`, `store`, `model`; `store` imports `edits`, `model`; `engine`
@@ -61,7 +62,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a14` file and runs its graph).
+`test_examples.py` (loads every `examples/a1` to `a15` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
