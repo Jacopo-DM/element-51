@@ -1,8 +1,11 @@
 """Serve the editor page, its WASM files and the websocket."""
 
 import asyncio
+import contextlib
+import socket
+import webbrowser
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, override
 
 import uvicorn
 from pydantic import ValidationError
@@ -157,8 +160,33 @@ def asgi_app(app: App) -> Starlette:
     )
 
 
-def serve(app: App, port: int = 8765) -> None:
+class PageServer(uvicorn.Server):
+    """A uvicorn server that can open the editor page once it is listening.
+
+    Parameters
+    ----------
+    config
+        The uvicorn settings.
+    url
+        The page to open in the browser at startup, or None to open nothing.
+    """
+
+    def __init__(self, config: uvicorn.Config, *, url: str | None) -> None:
+        super().__init__(config)
+        self._url = url
+
+    @override
+    async def startup(self, sockets: list[socket.socket] | None = None) -> None:
+        """Start listening, then open the page if one was asked for."""
+        await super().startup(sockets)
+        if self._url is not None and self.started:
+            webbrowser.open(self._url)
+
+
+def serve(app: App, port: int = 8765, *, open_browser: bool = False) -> None:
     """Run the editor on this machine only, until interrupted.
+
+    Ctrl+C stops it cleanly.
 
     Parameters
     ----------
@@ -166,5 +194,13 @@ def serve(app: App, port: int = 8765) -> None:
         The session whose graph the browser edits.
     port
         TCP port to listen on.
+    open_browser
+        Open the editor page in the default browser once the server is
+        listening.
     """
-    uvicorn.run(asgi_app(app), host=HOST, port=port)
+    config = uvicorn.Config(asgi_app(app), host=HOST, port=port)
+    url = f"http://{HOST}:{port}/" if open_browser else None
+    # uvicorn stops gracefully on Ctrl+C, then raises KeyboardInterrupt again
+    # so that a caller can tell; for a script, stopping is the normal end.
+    with contextlib.suppress(KeyboardInterrupt):
+        PageServer(config, url=url).run()

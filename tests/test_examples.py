@@ -13,7 +13,10 @@ EXAMPLES = Path(__file__).parent.parent / "examples"
 type Expected = list[tuple[str, str, dict[str, float | int | str | bool]]]
 
 EXPECTED: dict[str, Expected] = {
-    "a1_serve.py": [],
+    "a1_two_nodes.py": [
+        ("n1", "ok", {"out": 21.0}),
+        ("n2", "ok", {"out": 42.0}),
+    ],
     "a2_arithmetic.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 4.0}),

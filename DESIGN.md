@@ -318,6 +318,14 @@ theme, with the credit in the README.
   reason and stops that step. Keys: Cmd or Ctrl with Z, Shift added for redo,
   Ctrl+Y also redoes; no buttons, because none were asked for. Keys typed in
   an input box belong to the box.
+- Serving (task 10). `serve` builds a `PageServer`, a uvicorn server that
+  opens the page with `webbrowser.open` once it is listening, when
+  `open_browser=True` (off by default, so tests and mounted use never open a
+  browser). uvicorn stops gracefully on Ctrl+C and then raises
+  `KeyboardInterrupt` again; `serve` swallows that so a script ends with exit
+  status 0. A test starts a real process, sends SIGINT and checks the status
+  and the absence of a traceback. `a1_two_nodes.py` replaced `a1_serve.py`; it
+  shows one node written as a function and one as a class, linked.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -345,6 +353,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 10: `a1_two_nodes.py`, clean Ctrl+C | `uv run examples/a1_two_nodes.py` run for real with the browser opener stubbed: it logged the page URL as opened, Ctrl+C gave a graceful shutdown and exit 0; pytest runs a real process the same way; 167 Python tests at 100% |
 | 2026-10-19 | task 9: undo and redo | native tests: every accepted edit in the shared cases is undone and redone to the same graph, add node and link, delete with links and values, stack order and redo cleared by a new edit; by hand with `a14_undo_redo.py`: drag, delete and their undo, redo, and a reload keeps the result; 165 Python tests at 100%, 65 Rust tests |
 | 2026-10-19 | task 8: value editing with HTML inputs | by hand with `a13_values.py`: typing 5 gives 15.0 on Run, `abc` is refused with a message and the box restored, a ticked box turns the text to capitals, boxes follow zoom, pan and drag, values survive a reload; set_value, bad values and clearing give identical graphs in Python and Rust on 9 more shared cases; 164 Python tests at 100%, 60 Rust tests |
 | 2026-10-19 | task 7: pan, zoom, move, select, delete | by hand with `a12_big_graph.py`: a node dragged to a new place and deleted, wheel zoom, empty-canvas pan, a wire selected and deleted, Run showing `has no value` after; both survive a reload; the move, delete node and delete link edits give identical graphs in Python and Rust on 7 shared cases; 145 Python tests at 100%, 55 Rust tests |

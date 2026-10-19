@@ -9,8 +9,8 @@ the ignore list in CLAUDE.md.
   until interrupted.
 - `element_51.asgi_app(app)`: an ASGI app to mount in an existing server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
-- `examples/a1_serve.py` to `a6_port_types.py`: served graphs, one idea each
-  (blank canvas, arithmetic, strings, errors, diamond and int to float, all four
+- `examples/a1_two_nodes.py` to `a6_port_types.py`: served graphs, one idea each
+  (two nodes and a link, which opens the browser, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
   graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo). `a7_script_api.py`: the graph from plain
@@ -32,7 +32,7 @@ the ignore list in CLAUDE.md.
 | `protocol` | messages in both directions | `Snapshot`, `EditRequest`, `RunRequest`, `ClientMessage`, `Ack`, `Reject` (and `engine.RunResult`) |
 | `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.subscribe`, `App.save`, `App.load`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
 | `store` | save and load a graph as versioned JSON | `FORMAT_VERSION` (2; reads 1 and 2), `StoreError`, `save_graph`, `load_graph` |
-| `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app)`, `serve(app, port)`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
+| `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app)`, `serve(app, port, open_browser)`, `PageServer`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
 
 Import direction: `server` imports `session`, `protocol`, `edits`, `engine`;
 `session` imports `nodes`, `protocol`, `edits`, `engine`, `store`, `model`; `store` imports `edits`, `model`; `engine`

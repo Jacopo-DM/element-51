@@ -23,10 +23,13 @@
     6. `app.save("g.json")` writes nodes, links and positions with a format
        version field, and `app.load("g.json")` restores the same graph in
        Python and in the browser.
-- Status: approved 2026-10-19; in progress. Criteria 1, 2, 3 and 5 are met by
-  tasks 1 to 4 (tests, and by hand in the browser). Criterion 6 is met by task
-  6 (round-trip tests; the open page getting the loaded graph is a websocket
-  test, not yet looked at by eye). Criterion 4 needs task 10.
+- Status: approved 2026-10-19; all six criteria are met, pending the user's
+  own try-out. Criteria 1, 2, 3 and 5 by tasks 1 to 4 (tests, and by hand in
+  the browser). Criterion 6 by task 6 (round-trip tests; the open page getting
+  the loaded graph is a websocket test, not yet looked at by eye). Criterion 4
+  by task 10 (a real process: the page URL is opened, Ctrl+C ends it with exit
+  0; the browser opener was stubbed in my check, so the user's own browser
+  opening is not yet seen).
 - Added: 2026-10-19
 
 ### antimony-theme
@@ -60,19 +63,20 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 9 (Tier 1 is complete, the graph runs, nodes can have several
+tasks 1 to 10 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 10, `examples/a1_two_nodes.py` (clean Ctrl+C stop).
+Next step: the user's own try-out of goal `skeleton`, then the `antimony-theme`
+spec (open question 1), since tasks 11 to 15 need it.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 9, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 10, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 165 passed, 100% coverage, about 4 s (includes every example).
+- pytest: 167 passed, 100% coverage, about 4 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 65 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
@@ -92,7 +96,7 @@ Measured 2026-10-19 after task 9, Apple silicon, Python 3.13:
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 9 are done (removed from the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 10 are done (removed from the
 list below, their detail is in DESIGN.md and git). A task added later needs its
 own approval in words. Sizes are estimates by analogy with the skeleton (about
 80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
@@ -110,13 +114,11 @@ Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 (reload keeps the graph; no product code was needed) and 6a (Python pushes to
 open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md), 6
 (save and load as versioned JSON), 7 (pan, zoom, move, select, delete), 8
-(value editing with HTML inputs) and 9 (undo and redo). Extra task 17, added at the user's request and
+(value editing with HTML inputs) 9 (undo and redo) and 10
+(`a1_two_nodes.py`, `serve(open_browser=True)`, clean Ctrl+C). Extra task 17, added at the user's request and
 approved in words 2026-10-19: rounded node cards and wire ends (done; the radius
 is a constant that task 11 moves into the Theme).
 
-10. **`examples/a1_two_nodes.py`.** Replaces `a1_serve.py`; Ctrl+C stops the
-    server cleanly. Criterion 4. Risk low. Cost about 40 lines. Verify: run it
-    by hand and check the exit.
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
 
