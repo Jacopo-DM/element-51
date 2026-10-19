@@ -72,7 +72,106 @@ Testing: Python at 100% coverage. `element-51-core` under native `cargo test`.
 `element-51-web` cannot reach 100% automatically; it is checked through the
 in-app browser against the running example.
 
-### antimony-theme (goal approved 2026-10-19; spec not yet written)
+### antimony-theme spec (PROPOSED 2026-10-19, waiting for the user's approval)
+
+Goal and criteria are in PLAN.md (approved). This is the architecture for them.
+Nothing below is built; tasks 11 to 15 wait for this to be approved.
+
+**Measured from the user's Antimony screenshots** (sampled pixel colours; the
+screenshots stay outside the repo): card body `#202020`, header bar `#505050`,
+value box `#303030`, title text `#e0e0e0`, label text `#b0b0b0`, greyed
+placeholder text `#505050`, number port and wire `#edc27b`, other ports and
+wires (olive) `#94a95f`, selected outline light (`#e0e0e0`), website canvas
+`#eeeeee`. Wire colour and thickness are already copied (extra task 17). The
+dark app canvas and its dot grid were not in the screenshots; I pick
+`#1a1a1a` with dots `#2a2a2a` and the user judges it by eye (criterion 1).
+
+**Layout change the look needs.** In Antimony a card is a header plus one row
+per input (port on the left, right-aligned label, dark value box) and then one
+row per output (right-aligned label, value box showing `Output` greyed or the
+value after a run, port on the right). Today we share rows: an input and an
+output sit on the same row. The proposal is to stack them (inputs first, then
+outputs), so a card is `header + (inputs + outputs) rows` tall. A linked input
+shows its box greyed with the name of what feeds it. This changes
+`layout::node_rect`, the anchors and the input-box placement, and their tests.
+
+**Architecture.**
+
+1. `Theme` in `element-51-core` (`theme.rs`, serde, native tests). Three parts:
+   `colours` (canvas, dot, card body, header, header error, header skipped,
+   value box, title text, label text, placeholder text, value text, selection,
+   number port and wire, other port and wire, bool port, allowed, refused),
+   `metrics` (card width, header height, row height, card radius, port size,
+   wire width, selected wire width, field height, spacing) and `fonts` (title,
+   label, value). Layout and hit-testing take the theme's `metrics` as an
+   argument instead of reading constants, so a theme can change sizes and the
+   tests still pass one in. Criterion 2: no colour literal in drawing code,
+   checked by a test that greps `element-51-web/src` for `#` followed by hex.
+2. Built-in themes are two JSON files in `element-51-core/themes/`
+   (`antimony.json` dark and default, `antimony-light.json`), embedded with
+   `include_str!`, parsed by `Theme::builtin(name)`. A native test parses
+   both and checks every field is set.
+3. The page's HTML parts (input boxes, right-click menu, Run button, error
+   banner) read CSS custom properties (`--card`, `--header`, ...) that Rust
+   sets from the theme when it starts. `index.html` holds no colour literals
+   of its own. The canvas is drawn from the theme directly.
+4. Python picks the theme by name: `serve(app, theme="antimony-light")` and
+   `asgi_app(app, theme=...)`. Python holds the list of valid names; an unknown
+   name raises `ValueError` listing them (criterion 3). The server puts the
+   name in every snapshot (`Snapshot.theme`, protocol version 2). A shared
+   fixture lists the theme names, run by a Python and a Rust test so the two
+   lists cannot differ.
+5. Categories: `NodeType.category` is a string, `""` for top level, with `/`
+   between levels (`"Math/Trig"`). `@node(category="Math")` and a `category`
+   class variable on `Node` set it. It travels in the snapshot and the shared
+   fixtures. `node` becomes usable bare or with arguments.
+6. Menu logic in `element-51-core` (`menu.rs`): build the tree from the node
+   types and filter it for a search text (case-insensitive substring on the
+   node name and its whole path; matches show as a flat list with their path).
+   Native tests cover the tree, nesting, empty categories and filtering. The
+   web crate only renders it: a light grey popup, submenus opening to the
+   right on hover, a search box at the top that has focus on open, Enter picks
+   the first match, Escape closes.
+7. README credit: I draft, you review. It names Antimony and Matt Keeter with
+   a link, says the look is inspired by it, and states that no Antimony image
+   or code is in the repo.
+
+**Alternatives considered.**
+
+- A global "current theme" that drawing code reads: less plumbing, but hidden
+  state, and native tests could not run two themes side by side. Rejected.
+- Themes as CSS only (class on the page): the canvas is not styled by CSS, so
+  the drawing still needs its own colours. Rejected for the canvas; used for
+  the HTML parts through custom properties.
+- Themes defined in Python and sent in the snapshot: lets users write their
+  own theme, but then the colour check cannot be a native test and a bad theme
+  fails in the browser. Not needed by the criteria; can be added later without
+  changing the `Theme` type, because it already parses from JSON.
+- Keeping shared rows and only restyling: much less work, but the cards would
+  not look like Antimony's. Proposed above as the default; the user decides.
+- Building the menu in Python and sending HTML: logic would be untestable
+  natively and duplicated for search. Rejected.
+
+**Tasks (revised from PLAN.md, same count and order).**
+
+11. `Theme` and metrics in core, all drawing and layout through it, CSS
+    variables for the HTML parts, the colour-literal test. About 400 lines
+    Rust. Risk low.
+12. The Antimony look: stacked rows and value boxes, header with id left and
+    type right and the menu icon, dot grid, selection outline, input boxes
+    moved onto the new rows. About 600 lines Rust. Risk medium (judged by eye
+    against the screenshots).
+13. `antimony-light`, `serve(theme=...)`, snapshot `theme`, protocol version 2,
+    shared theme-name fixture. About 100 lines Python, 80 Rust. Risk low.
+14. Categories and the nested menu with search (items 5 and 6). About 350
+    lines Rust, 60 Python. Risk medium.
+15. README credit (item 7). About 5 lines. Risk low.
+
+**Verification.** Native tests for theme parsing, metrics-driven layout, menu
+tree and filter. pytest for the theme name check, `category`, protocol
+version 2. By eye, side by side with the screenshots, for criterion 1.
+
+### antimony-theme reference material (goal approved 2026-10-19)
 
 Reference material for the look and feel, not an approved spec. The user loves
 the look of Antimony, the CAD tool by Matt Keeter, and wants it as the default
