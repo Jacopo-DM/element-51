@@ -13,7 +13,7 @@ class NodeOutcome(Model):
 
     node: str
     status: Literal["ok", "error", "skipped"]
-    value: PortValue | None = None
+    outputs: Mapping[str, PortValue] = {}
     error: str | None = None
 
 
@@ -73,7 +73,7 @@ def run_graph(
             )
         )
     outcomes: dict[str, NodeOutcome] = {}
-    values: dict[str, PortValue] = {}
+    outputs_by_node: dict[str, Mapping[str, PortValue]] = {}
     for node in order:
         upstream = (
             link.source.node
@@ -84,7 +84,9 @@ def run_graph(
             outcomes[node.id] = NodeOutcome(node=node.id, status="skipped")
             continue
         try:
-            value = _evaluate(node, graph, functions[node.node_type], values)
+            outputs = _evaluate(
+                node, graph, functions[node.node_type], outputs_by_node
+            )
         except Exception as error:  # node code can raise anything
             if raise_errors:
                 error.add_note(f"in node {node.id} ({node.node_type})")
@@ -95,8 +97,10 @@ def run_graph(
                 error=_describe(error),
             )
             continue
-        values[node.id] = value
-        outcomes[node.id] = NodeOutcome(node=node.id, status="ok", value=value)
+        outputs_by_node[node.id] = outputs
+        outcomes[node.id] = NodeOutcome(
+            node=node.id, status="ok", outputs=outputs
+        )
     return RunResult(outcomes=tuple(outcomes.values()))
 
 
@@ -156,21 +160,19 @@ def _evaluate(
     node: PlacedNode,
     graph: Graph,
     function: Registered,
-    values: Mapping[str, PortValue],
-) -> PortValue:
+    outputs_by_node: Mapping[str, Mapping[str, PortValue]],
+) -> Mapping[str, PortValue]:
     """Call one node's function and check what comes back.
 
     Returns
     -------
-    PortValue
-        The value of the node's output.
+    Mapping[str, PortValue]
+        The value of each of the node's output ports.
 
     Raises
     ------
     _MissingInputError
         If an input has neither a link nor a default.
-    _BadReturnError
-        If the function returns a value its output port cannot carry.
     """
     inputs: dict[str, PortValue] = {}
     for port in function.node_type.inputs:
@@ -183,15 +185,50 @@ def _evaluate(
             None,
         )
         if link is not None:
-            inputs[port.name] = values[link.source.node]
+            inputs[port.name] = outputs_by_node[link.source.node][
+                link.source.port
+            ]
         elif port.name in function.defaults:
             inputs[port.name] = function.defaults[port.name]
         else:
             msg = f"input {port.name!r} has no value"
             raise _MissingInputError(msg)
-    result = function.call(inputs)
-    output = function.node_type.outputs[0]
-    if value_fits(result, output.kind):
-        return result
-    msg = f"returned {type(result).__name__}, expected {output.kind}"
-    raise _BadReturnError(msg)
+    return _collect_outputs(function, function.call(inputs))
+
+
+def _collect_outputs(
+    function: Registered, result: object
+) -> Mapping[str, PortValue]:
+    """Check what a node returned and turn it into a value per output port.
+
+    Returns
+    -------
+    Mapping[str, PortValue]
+        The value of each output port, by port name.
+
+    Raises
+    ------
+    _BadReturnError
+        If the node returned something its output ports cannot carry.
+    """
+    model = function.output_model
+    if model is None:
+        port = function.node_type.outputs[0]
+        if value_fits(result, port.kind):
+            return {port.name: result}
+        msg = f"returned {type(result).__name__}, expected {port.kind}"
+        raise _BadReturnError(msg)
+    if not isinstance(result, model):
+        msg = f"returned {type(result).__name__}, expected {model.__name__}"
+        raise _BadReturnError(msg)
+    outputs: dict[str, PortValue] = {}
+    for port in function.node_type.outputs:
+        value = getattr(result, port.name)
+        if not value_fits(value, port.kind):
+            msg = (
+                f"output {port.name!r} is {type(value).__name__}, "
+                f"expected {port.kind}"
+            )
+            raise _BadReturnError(msg)
+        outputs[port.name] = value
+    return outputs

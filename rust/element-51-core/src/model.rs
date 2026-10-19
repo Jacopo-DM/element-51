@@ -1,5 +1,7 @@
 //! Records for node types, graphs and the messages that carry them.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 /// The type of a port. A link may join two ports only if their types agree.
@@ -154,14 +156,16 @@ pub enum Status {
 pub struct NodeOutcome {
     pub node: String,
     pub status: Status,
-    pub value: Option<serde_json::Value>,
+    /// The value of each output port, by port name. Empty unless `status` is ok.
+    pub outputs: BTreeMap<String, serde_json::Value>,
     pub error: Option<String>,
 }
 
 impl NodeOutcome {
-    /// The value as JSON text, for showing on the node. Strings keep their quotes.
-    pub fn value_text(&self) -> Option<String> {
-        self.value.as_ref().map(ToString::to_string)
+    /// The value of output `port` as JSON text, for showing beside the port.
+    /// Strings keep their quotes. None if the port has no value.
+    pub fn output_text(&self, port: &str) -> Option<String> {
+        self.outputs.get(port).map(ToString::to_string)
     }
 }
 

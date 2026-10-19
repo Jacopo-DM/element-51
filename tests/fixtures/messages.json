@@ -43,19 +43,30 @@
       {
         "node": "n1",
         "status": "ok",
-        "value": 3.0,
+        "outputs": {
+          "out": 3.0
+        },
         "error": null
       },
       {
         "node": "n2",
         "status": "error",
-        "value": null,
+        "outputs": {},
         "error": "ZeroDivisionError: float division by zero"
       },
       {
         "node": "n3",
         "status": "skipped",
-        "value": null,
+        "outputs": {},
+        "error": null
+      },
+      {
+        "node": "n4",
+        "status": "ok",
+        "outputs": {
+          "q": 3,
+          "r": 1
+        },
         "error": null
       }
     ]

@@ -77,7 +77,12 @@ def test_run_request_and_result_round_trip() -> None:
     assert isinstance(round_trip(RunRequest, "run"), RunRequest)
     result = round_trip(RunResult, "run_result")
     assert isinstance(result, RunResult)
-    assert [o.status for o in result.outcomes] == ["ok", "error", "skipped"]
+    assert [o.status for o in result.outcomes] == [
+        "ok",
+        "error",
+        "skipped",
+        "ok",
+    ]
 
 
 def test_client_messages_are_told_apart_by_op() -> None:

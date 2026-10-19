@@ -115,7 +115,7 @@ def test_run_returns_every_nodes_value_by_id() -> None:
     source = app.add_node(one, x=0.0, y=0.0)
     target = app.add_node(show, x=1.0, y=1.0)
     app.add_link(source, "out", target, "value")
-    assert app.run() == {source: 1.0, target: 1.0}
+    assert app.run() == {source: {"out": 1.0}, target: {"out": 1.0}}
 
 
 def test_run_raises_the_nodes_own_error() -> None:

@@ -56,24 +56,26 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 3 (Tier 1 is complete, and the graph runs).
-Next step: task 4, pydantic `Node` class and multiple outputs.
+tasks 1 to 4 (Tier 1 is complete, the graph runs, and nodes can have several
+outputs and be written as classes).
+Next step: task 5, which tests from task 2 already cover (every connection gets
+a snapshot); confirm and drop it, then task 6, save and load.
 
 ## Baseline
 
-Measured 2026-10-19 after task 3, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 4, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 86 passed, 100% coverage, about 3 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 42 tests.
+- pytest: 107 passed, 100% coverage, about 3 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 43 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
-- By hand in the browser pane: Run on the errors example shows values on ok
-  nodes, red on failed ones, dimmed skipped ones and one banner with Dismiss;
-  an edit clears the results; the arithmetic example gives 3, 4, 7, 21, 21.
+- By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
+  the node's rows; the class-form example runs and its menu lists the class
+  names; a long text value is trimmed with an ellipsis to fit its row.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 3 are done. Sizes are estimates by analogy with the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 4 are done. Sizes are estimates by analogy with the
 skeleton (about 80 lines of Python, 60 of Rust); there is no measured data
 yet. Every area below is new code, so no existing test pins it; each task
 writes its tests first. `element-51-web` is checked by hand in the in-app
@@ -83,10 +85,6 @@ browser, and its logic goes into `element-51-core` where `cargo test` covers it.
 
 ### Goal `skeleton`, Tier 2 (ordered by value over risk plus cost)
 
-4. **Pydantic `Node` class and multiple outputs.** One output port per model
-   field, in field order, named after the field; a plain return type gives
-   `out`. Criteria 1 and 5. Risk low. Cost about 150 lines Python. Verify:
-   pytest, including a wrong-type field.
 5. **Reload resends the graph.** Python sends a snapshot on every connect.
    Risk low. Cost about 60 lines. Verify: pytest with two connections in turn.
 6. **Save and load.** `store.py`, versioned JSON, `app.save` and `app.load`
@@ -161,6 +159,8 @@ None yet.
 - Links cannot yet be removed, and a node cannot be moved or deleted (task 7).
 - Every node of a type shares the function's defaults; there is no per-node
   value until task 8, and the browser does not show the defaults.
+- A long output value is trimmed with an ellipsis on the node. The full value is
+  only available from `app.run()`; there is no hover or tooltip yet.
 - Port colours are placeholders; the nodes still look plain until tasks 11 and 12.
 - The WASM build works around a broken `rust-lld` in the rustup toolchain
   (see CLAUDE.md, things that bite). Not reported upstream.

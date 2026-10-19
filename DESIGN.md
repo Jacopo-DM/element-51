@@ -157,6 +157,31 @@ in-app browser against the running example.
   positional-only parameters, because the engine calls by name.
 - The right-click menu is moved back inside the window and scrolls if the list
   is longer than the window (found by trying it near the bottom edge).
+- Class-form nodes (task 4, user's choice of three shapes): fields are the
+  inputs, with their pydantic defaults; a `run` method returns the outputs. A
+  plain return hint gives one output `out`; a pydantic model gives one output
+  per field, in declaration order. The class name is the node type name.
+  Rejected: outputs declared as `Output[T]` fields, because a frozen model
+  cannot be assigned to, so `run` would need a special helper.
+- A node type is built the same way for both forms, from a name, the inputs
+  with their hints and defaults, and a return hint, so the two forms cannot
+  differ. The class form builds it in `Node.__pydantic_init_subclass__`.
+- Both forms refuse unsupported hints, defaults of the wrong type, and (for
+  classes) `default_factory`, with an error that names the node and the field.
+- `app.run()` returns `{node id: {port: value}}` for every node, a single
+  shape whether a node has one output or several (user's choice). It replaces
+  the flat `{node id: value}` of task 3, which had no way to hold two outputs.
+- On the wire, a node outcome carries `outputs` (a value per output port)
+  instead of one `value`.
+- After Run the browser draws each output's value on that output's row, just
+  left of the port name, and trims it with an ellipsis to the room left by the
+  input label on the same row (user's choice). It replaces the single value in
+  the header.
+- The engine checks every output of a model-returning node, not only the
+  model: pydantic can build a model without validation (`model_construct`),
+  and a wrong type must not pass as a port value.
+- The internal graph node record is `PlacedNode`, in Python and in Rust, so the
+  user-facing base class can be called `Node`.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -177,6 +202,7 @@ in-app browser against the running example.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 4: several outputs, class-form nodes | `div_mod` shows `q` and `r` in the browser; class nodes run and list by class name; 107 Python tests at 100%, 43 Rust tests; 3 new link cases for a multi-output node run on both sides |
 | 2026-10-19 | task 3: run the graph | engine runs in dependency order; failed nodes red, downstream skipped, independent branches still run; 86 Python tests at 100% (including all examples), 42 Rust tests; by hand: errors and arithmetic examples in the browser |
 | 2026-10-19 | task 2: edits synced with ack and rollback | add node, drag link, float to str refused in the browser, id conflict rolled back with Python's reason, all by hand in the browser pane; 55 Python tests at 100%, 36 Rust tests; 13 link cases and the message fixture run on both sides |
 | 2026-10-19 | task 1: node types reach the browser | `@node` hints become ports; snapshot over `/ws`; Rust parses it and draws both nodes; 27 Python tests at 100%, 13 Rust tests; one JSON fixture parsed by both sides |

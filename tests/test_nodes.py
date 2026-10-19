@@ -1,12 +1,14 @@
 """Tests for the `@node` decorator."""
 
 from functools import partial
+from typing import override
 
 import pytest
+from pydantic import Field
 from sample_nodes import add, show
 
-from element_51.model import Port, PortType
-from element_51.nodes import node
+from element_51.model import Model, Port, PortType
+from element_51.nodes import Node, node
 
 
 @node
@@ -145,3 +147,135 @@ def test_positional_only_parameters_are_refused() -> None:
 
     with pytest.raises(TypeError, match=r"bad.*positional-only"):
         node(bad)
+
+
+class QuotientAndRemainder(Model):
+    r: int
+    q: int
+
+
+@node
+def div_mod(a: int = 7, b: int = 2) -> QuotientAndRemainder:
+    quotient, remainder = divmod(a, b)
+    return QuotientAndRemainder(q=quotient, r=remainder)
+
+
+def test_a_function_returning_a_model_still_runs_as_a_function() -> None:
+    """Decorating does not change what the function computes."""
+    assert div_mod(17, 5) == QuotientAndRemainder(q=3, r=2)
+
+
+def test_the_base_class_has_no_run_of_its_own() -> None:
+    """A subclass must supply `run`; the placeholder says so when called."""
+    with pytest.raises(NotImplementedError):
+        Node().run()
+
+
+def test_a_function_returning_a_model_has_one_output_per_field() -> None:
+    """The ports are the model's fields, in the order they are declared."""
+    assert div_mod.node_type.outputs == (
+        Port(name="r", kind=PortType.INT),
+        Port(name="q", kind=PortType.INT),
+    )
+    assert div_mod.output_model is QuotientAndRemainder
+    assert add.output_model is None
+
+
+def test_a_model_with_an_unsupported_field_is_refused() -> None:
+    """Every output field must be a float, int, str or bool."""
+
+    class Bad(Model):
+        items: list[int]
+
+    def bad(
+        a: float,
+    ) -> Bad:  # pragma: no cover  # never called; only its hints are read
+        return Bad(items=[int(a)])
+
+    with pytest.raises(TypeError, match=r"bad, return field 'items'"):
+        node(bad)
+
+
+class Add(Node):
+    a: float = 0.0
+    b: float = 0.0
+
+    def run(self) -> float:
+        return self.a + self.b
+
+
+class Split(Node):
+    whole: int
+    parts: int = 2
+
+    def run(self) -> QuotientAndRemainder:
+        quotient, remainder = divmod(self.whole, self.parts)
+        return QuotientAndRemainder(q=quotient, r=remainder)
+
+
+def test_a_class_builds_the_same_node_type_as_a_function() -> None:
+    """Fields are inputs, the class name is the type name, `run` gives `out`."""
+    assert Add.node_type.name == "Add"
+    assert Add.node_type.inputs == add.node_type.inputs
+    assert Add.node_type.outputs == add.node_type.outputs
+    assert Add.defaults == {"a": 0.0, "b": 0.0}
+    assert Add.output_model is None
+
+
+def test_a_class_whose_run_returns_a_model_has_several_outputs() -> None:
+    """A field without a default is an input with no default."""
+    assert [p.name for p in Split.node_type.outputs] == ["r", "q"]
+    assert Split.defaults == {"parts": 2}
+    assert Split.output_model is QuotientAndRemainder
+
+
+def test_calling_a_class_node_validates_and_runs() -> None:
+    """The engine's call builds the model from the inputs, then runs it."""
+    assert Add.call({"a": 1.0, "b": 2.0}) == Add(a=1.0, b=2.0).run()
+    result = Split.call({"whole": 17, "parts": 5})
+    assert result == QuotientAndRemainder(q=3, r=2)
+
+
+def test_a_class_field_of_an_unsupported_type_is_refused() -> None:
+    """The same port types apply to the class form."""
+    with pytest.raises(TypeError, match=r"Bad, field 'items'"):
+
+        class Bad(Node):
+            items: list[int] = []  # ruff: ignore[mutable-class-default]
+
+            @override
+            def run(self) -> float:  # pragma: no cover  # never called
+                return 0.0
+
+
+def test_a_class_default_of_the_wrong_type_is_refused() -> None:
+    """A default must be a value the port can carry."""
+    with pytest.raises(TypeError, match=r"Bad, field 'x': default"):
+
+        class Bad(Node):
+            x: float = "oops"  # type: ignore[assignment]  # ty: ignore[invalid-assignment]  # the point of the test
+
+            def run(self) -> float:  # pragma: no cover  # never called
+                return self.x
+
+
+def test_a_class_default_factory_is_refused() -> None:
+    """A computed default has no single value to show or send."""
+    with pytest.raises(TypeError, match=r"Bad, field 'x': default_factory"):
+
+        class Bad(Node):
+            x: float = Field(default_factory=float)
+
+            def run(self) -> float:  # pragma: no cover  # never called
+                return self.x
+
+
+def test_a_class_run_without_a_return_hint_is_refused() -> None:
+    """`run` must say what it produces."""
+    with pytest.raises(TypeError, match=r"Bad, return"):
+
+        class Bad(Node):
+            x: float = 0.0
+
+            def run(self):  # type: ignore[no-untyped-def]  # ruff: ignore[missing-return-type-private-function]  # pragma: no cover  # never called; the point of the test
+                return self.x

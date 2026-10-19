@@ -94,3 +94,8 @@ No tool ignore or deny file exists in this repo, so none was changed.
   the value being checked goes first (`value_fits(value, kind)`).
 - A wrapped bullet in a docstring breaks the 4-space indent rule when the
   continuation is indented by 2. Keep each bullet on one line.
+- `cargo fmt` rewraps struct literals, so a scripted text replacement in a Rust
+  file that ran after formatting silently matched nothing twice. Check that a
+  replacement applied, or use a regex.
+- An override of `Node.run` takes `@override` (from `typing`), or ruff's
+  `no-self-use` flags every `run` that does not use `self`.

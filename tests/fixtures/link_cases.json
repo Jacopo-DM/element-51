@@ -48,6 +48,29 @@
           "kind": "int"
         }
       ]
+    },
+    {
+      "name": "divmod",
+      "inputs": [
+        {
+          "name": "a",
+          "kind": "int"
+        },
+        {
+          "name": "b",
+          "kind": "int"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "q",
+          "kind": "int"
+        },
+        {
+          "name": "r",
+          "kind": "int"
+        }
+      ]
     }
   ],
   "graph": {
@@ -73,6 +96,12 @@
       {
         "id": "n4",
         "node_type": "count",
+        "x": 0.0,
+        "y": 0.0
+      },
+      {
+        "id": "n5",
+        "node_type": "divmod",
         "x": 0.0,
         "y": 0.0
       }
@@ -244,6 +273,42 @@
       "target": {
         "node": "n2",
         "port": "out"
+      },
+      "result": "unknown_port"
+    },
+    {
+      "name": "the first output of a multi-output node links",
+      "source": {
+        "node": "n5",
+        "port": "q"
+      },
+      "target": {
+        "node": "n2",
+        "port": "b"
+      },
+      "result": "ok"
+    },
+    {
+      "name": "the second output of a multi-output node links too",
+      "source": {
+        "node": "n5",
+        "port": "r"
+      },
+      "target": {
+        "node": "n2",
+        "port": "b"
+      },
+      "result": "ok"
+    },
+    {
+      "name": "a multi-output node has no port called out",
+      "source": {
+        "node": "n5",
+        "port": "out"
+      },
+      "target": {
+        "node": "n2",
+        "port": "b"
       },
       "result": "unknown_port"
     }

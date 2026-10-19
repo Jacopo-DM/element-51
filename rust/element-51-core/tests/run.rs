@@ -1,7 +1,9 @@
 //! Reading what Python reports about a run.
 
+use std::collections::BTreeMap;
+
 use element_51_core::{Message, NodeOutcome, RunResult, Status};
-use serde_json::json;
+use serde_json::{Value, json};
 
 const MESSAGES: &str = include_str!("../../../tests/fixtures/messages.json");
 
@@ -16,10 +18,16 @@ fn fixture_result() -> RunResult {
 }
 
 #[test]
-fn the_fixture_result_has_an_ok_an_error_and_a_skipped_node() {
+fn the_fixture_result_has_ok_error_skipped_and_a_multi_output_node() {
     let result = fixture_result();
     let statuses: Vec<Status> = result.outcomes.iter().map(|o| o.status).collect();
-    assert_eq!(statuses, [Status::Ok, Status::Error, Status::Skipped]);
+    assert_eq!(
+        statuses,
+        [Status::Ok, Status::Error, Status::Skipped, Status::Ok]
+    );
+    let multi = result.outcome_for("n4").unwrap();
+    assert_eq!(multi.outputs.len(), 2);
+    assert_eq!(multi.outputs["q"], json!(3));
 }
 
 #[test]
@@ -45,7 +53,7 @@ fn error_summary_joins_several_errors_and_is_none_without_any() {
     result.outcomes.push(NodeOutcome {
         node: "n4".to_string(),
         status: Status::Error,
-        value: None,
+        outputs: BTreeMap::new(),
         error: Some("input 'a' has no value".to_string()),
     });
     assert_eq!(
@@ -65,25 +73,33 @@ fn outcome_for_finds_a_node_by_id() {
     assert!(result.outcome_for("n9").is_none());
 }
 
-#[test]
-fn value_text_shows_numbers_strings_and_bools_as_json() {
-    let outcome = |value| NodeOutcome {
+fn ok_with(outputs: &[(&str, Value)]) -> NodeOutcome {
+    NodeOutcome {
         node: "n1".to_string(),
         status: Status::Ok,
-        value,
+        outputs: outputs
+            .iter()
+            .map(|(port, value)| (port.to_string(), value.clone()))
+            .collect(),
         error: None,
+    }
+}
+
+#[test]
+fn output_text_shows_numbers_strings_and_bools_as_json() {
+    let outcome = ok_with(&[("a", json!(3.0)), ("b", json!("HI")), ("c", json!(true))]);
+    assert_eq!(outcome.output_text("a").as_deref(), Some("3.0"));
+    assert_eq!(outcome.output_text("b").as_deref(), Some("\"HI\""));
+    assert_eq!(outcome.output_text("c").as_deref(), Some("true"));
+}
+
+#[test]
+fn output_text_is_none_for_a_port_without_a_value() {
+    let outcome = ok_with(&[("q", json!(3))]);
+    assert_eq!(outcome.output_text("r"), None);
+    let none = NodeOutcome {
+        outputs: BTreeMap::new(),
+        ..outcome
     };
-    assert_eq!(
-        outcome(Some(json!(3.0))).value_text().as_deref(),
-        Some("3.0")
-    );
-    assert_eq!(
-        outcome(Some(json!("HI"))).value_text().as_deref(),
-        Some("\"HI\"")
-    );
-    assert_eq!(
-        outcome(Some(json!(true))).value_text().as_deref(),
-        Some("true")
-    );
-    assert_eq!(outcome(None).value_text(), None);
+    assert_eq!(none.output_text("q"), None);
 }

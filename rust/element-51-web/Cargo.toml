@@ -25,6 +25,7 @@ features = [
     "Location",
     "MessageEvent",
     "MouseEvent",
+    "TextMetrics",
     "WebSocket",
     "Window",
 ]

@@ -115,22 +115,20 @@ class App:
         """
         return run_graph(self.graph, self.node_functions, raise_errors=False)
 
-    def run(self) -> dict[str, PortValue]:
-        """Run the graph and return each node's value by node id.
+    def run(self) -> dict[str, dict[str, PortValue]]:
+        """Run the graph and return every node's outputs.
 
         A node that fails raises its own exception, with a note naming the
         node.
 
         Returns
         -------
-        dict[str, PortValue]
-            The value of every node's output.
+        dict[str, dict[str, PortValue]]
+            For each node id, the value of each of its output ports by name.
         """
         result = run_graph(self.graph, self.node_functions, raise_errors=True)
         return {
-            outcome.node: outcome.value
-            for outcome in result.outcomes
-            if outcome.value is not None
+            outcome.node: dict(outcome.outputs) for outcome in result.outcomes
         }
 
     def snapshot(self) -> Snapshot:

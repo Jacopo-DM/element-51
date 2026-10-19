@@ -1,8 +1,8 @@
 """A small sum: (3 + 4) x 3, wired up and ready to run.
 
-Press Run: every node shows its value in its header (7.0, 21.0 and so on).
-Then right-click, add another `add` node, link it in, and run again. Any edit
-clears the old values, so what you see is always from the last run.
+Press Run: every node shows its value beside its output port (7.0, 21.0 and so
+on). Then right-click, add another `add` node, link it in, and run again. Any
+edit clears the old values, so what you see is always from the last run.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
 """

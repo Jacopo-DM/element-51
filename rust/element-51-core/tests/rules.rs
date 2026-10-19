@@ -54,13 +54,13 @@ fn rust_gives_the_verdict_python_gives_on_every_case() {
 fn add_node_places_a_node() {
     let fixture = fixture();
     let edit = Edit::AddNode {
-        id: "n5".into(),
+        id: "n6".into(),
         node_type: "add".into(),
         x: 1.0,
         y: 2.0,
     };
     let graph = apply_edit(&fixture.graph, &fixture.node_types, &edit).unwrap();
-    assert_eq!(graph.nodes.last().unwrap().id, "n5");
+    assert_eq!(graph.nodes.last().unwrap().id, "n6");
     assert_eq!(graph.links, fixture.graph.links);
 }
 
@@ -68,7 +68,7 @@ fn add_node_places_a_node() {
 fn add_node_of_an_unknown_type_is_refused() {
     let fixture = fixture();
     let edit = Edit::AddNode {
-        id: "n5".into(),
+        id: "n6".into(),
         node_type: "nope".into(),
         x: 0.0,
         y: 0.0,
@@ -93,7 +93,7 @@ fn add_node_with_a_used_id_is_refused() {
 #[test]
 fn next_id_is_one_above_the_highest_in_use() {
     let fixture = fixture();
-    assert_eq!(fixture.graph.next_id(), "n5");
+    assert_eq!(fixture.graph.next_id(), "n6");
     let empty = Graph {
         nodes: vec![],
         links: vec![],

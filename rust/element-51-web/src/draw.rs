@@ -19,6 +19,7 @@ const WIRE: &str = "#8fa04f";
 const ALLOWED: &str = "#6fcf6f";
 const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
+const VALUE_GAP: f64 = 8.0;
 
 /// A link being dragged from an output port.
 #[derive(Clone, Debug)]
@@ -97,14 +98,6 @@ pub fn draw(
             rect.x + 8.0,
             rect.y + 18.0,
         )?;
-        if status == Some(Status::Ok)
-            && let Some(value) = outcome.and_then(|outcome| outcome.value_text())
-        {
-            context.set_fill_style_str(VALUE);
-            context.set_text_align("right");
-            context.fill_text(&value, rect.x + rect.w - 8.0, rect.y + 18.0)?;
-            context.set_text_align("left");
-        }
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row);
             context.set_fill_style_str(text);
@@ -116,6 +109,22 @@ pub fn draw(
             let (x, y) = output_anchor(&rect, row);
             context.set_fill_style_str(text);
             context.fill_text(&port.name, x - 10.0, y + 4.0)?;
+            if status == Some(Status::Ok)
+                && let Some(value) = outcome.and_then(|outcome| outcome.output_text(&port.name))
+            {
+                // The value sits just left of the port's name, in whatever
+                // room the input label on the same row leaves free.
+                let name_width = context.measure_text(&port.name)?.width();
+                let right = x - 10.0 - name_width - VALUE_GAP;
+                let input_width = match node_type.inputs.get(row) {
+                    Some(input) => context.measure_text(&input.name)?.width() + 10.0,
+                    None => 0.0,
+                };
+                let room = right - (rect.x + input_width + 2.0 * VALUE_GAP);
+                let shown = fit_text(context, &value, room)?;
+                context.set_fill_style_str(VALUE);
+                context.fill_text(&shown, right, y + 4.0)?;
+            }
             square(context, x, y, port_colour(port.kind));
         }
     }
@@ -155,4 +164,21 @@ fn wire(context: &CanvasRenderingContext2d, from: (f64, f64), to: (f64, f64)) {
     context.move_to(from.0, from.1);
     context.bezier_curve_to(from.0 + reach, from.1, to.0 - reach, to.1, to.0, to.1);
     context.stroke();
+}
+
+/// `text`, shortened with an ellipsis until it is at most `room` pixels wide.
+/// Empty if even the ellipsis does not fit.
+fn fit_text(context: &CanvasRenderingContext2d, text: &str, room: f64) -> Result<String, JsValue> {
+    if context.measure_text(text)?.width() <= room {
+        return Ok(text.to_string());
+    }
+    let mut chars: Vec<char> = text.chars().collect();
+    while !chars.is_empty() {
+        chars.pop();
+        let candidate = format!("{}\u{2026}", chars.iter().collect::<String>());
+        if context.measure_text(&candidate)?.width() <= room {
+            return Ok(candidate);
+        }
+    }
+    Ok(String::new())
 }

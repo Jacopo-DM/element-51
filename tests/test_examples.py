@@ -9,54 +9,66 @@ from element_51.session import App
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 
-type Expected = list[tuple[str, str, float | int | str | bool | None]]
+type Expected = list[tuple[str, str, dict[str, float | int | str | bool]]]
 
 EXPECTED: dict[str, Expected] = {
     "a1_serve.py": [],
     "a2_arithmetic.py": [
-        ("n1", "ok", 3.0),
-        ("n2", "ok", 4.0),
-        ("n3", "ok", 7.0),
-        ("n4", "ok", 21.0),
-        ("n5", "ok", 21.0),
+        ("n1", "ok", {"out": 3.0}),
+        ("n2", "ok", {"out": 4.0}),
+        ("n3", "ok", {"out": 7.0}),
+        ("n4", "ok", {"out": 21.0}),
+        ("n5", "ok", {"out": 21.0}),
     ],
     "a3_strings.py": [
-        ("n1", "ok", "hello"),
-        ("n2", "ok", "world"),
-        ("n3", "ok", 3.0),
-        ("n4", "ok", "hello world"),
-        ("n5", "ok", "HELLO WORLD"),
-        ("n6", "ok", "HELLO WORLD / HELLO WORLD"),
+        ("n1", "ok", {"out": "hello"}),
+        ("n2", "ok", {"out": "world"}),
+        ("n3", "ok", {"out": 3.0}),
+        ("n4", "ok", {"out": "hello world"}),
+        ("n5", "ok", {"out": "HELLO WORLD"}),
+        ("n6", "ok", {"out": "HELLO WORLD / HELLO WORLD"}),
     ],
     "a4_errors.py": [
-        ("n1", "ok", 10.0),
-        ("n2", "ok", 0.0),
-        ("n3", "error", None),
-        ("n4", "skipped", None),
-        ("n5", "ok", 20.0),
-        ("n6", "error", None),
-        ("n7", "error", None),
+        ("n1", "ok", {"out": 10.0}),
+        ("n2", "ok", {"out": 0.0}),
+        ("n3", "error", {}),
+        ("n4", "skipped", {}),
+        ("n5", "ok", {"out": 20.0}),
+        ("n6", "error", {}),
+        ("n7", "error", {}),
     ],
     "a5_diamond.py": [
-        ("n1", "ok", 2.0),
-        ("n2", "ok", 4.0),
-        ("n3", "ok", -2.0),
-        ("n4", "ok", 2.0),
-        ("n5", "ok", 5),
-        ("n6", "ok", 2.5),
+        ("n1", "ok", {"out": 2.0}),
+        ("n2", "ok", {"out": 4.0}),
+        ("n3", "ok", {"out": -2.0}),
+        ("n4", "ok", {"out": 2.0}),
+        ("n5", "ok", {"out": 5}),
+        ("n6", "ok", {"out": 2.5}),
     ],
     "a6_port_types.py": [
-        ("n1", "ok", True),
-        ("n2", "ok", 4),
-        ("n3", "ok", 0.5),
-        ("n4", "ok", "items"),
-        ("n5", "ok", "4 items, ratio 0.5, flag no"),
+        ("n1", "ok", {"out": True}),
+        ("n2", "ok", {"out": 4}),
+        ("n3", "ok", {"out": 0.5}),
+        ("n4", "ok", {"out": "items"}),
+        ("n5", "ok", {"out": "4 items, ratio 0.5, flag no"}),
+    ],
+    "a8_multiple_outputs.py": [
+        ("n1", "ok", {"out": 17}),
+        ("n2", "ok", {"out": 5}),
+        ("n3", "ok", {"q": 3, "r": 2}),
+        ("n4", "ok", {"out": "3 remainder 2"}),
+    ],
+    "a9_class_nodes.py": [
+        ("n1", "ok", {"out": "hello, world!"}),
+        ("n2", "ok", {"out": "HELLO, WORLD!"}),
+        ("n3", "ok", {"a": 3.0, "b": 4.5}),
+        ("n4", "ok", {"total": 7.5, "mean": 3.75}),
     ],
     "a7_script_api.py": [
-        ("n1", "ok", 19.99),
-        ("n2", "ok", 3),
-        ("n3", "ok", 59.97),
-        ("n4", "error", None),
+        ("n1", "ok", {"out": 19.99}),
+        ("n2", "ok", {"out": 3}),
+        ("n3", "ok", {"out": 59.97}),
+        ("n4", "error", {}),
     ],
 }
 
@@ -89,7 +101,7 @@ def test_every_example_has_an_expected_outcome() -> None:
 def test_example_runs_to_the_outcome_it_describes(name: str) -> None:
     """The statuses and values in each example's docstring are the real ones."""
     result = build(name).execute()
-    actual = {o.node: (o.status, o.value) for o in result.outcomes}
+    actual = {o.node: (o.status, dict(o.outputs)) for o in result.outcomes}
     expected = {node: (status, value) for node, status, value in EXPECTED[name]}
     assert actual == expected
 

@@ -1,12 +1,12 @@
 """Tests for running a graph."""
 
-from typing import cast
+from typing import cast, override
 
 import pytest
 
 from element_51.engine import run_graph
-from element_51.model import Graph, Link, PlacedNode, PortRef
-from element_51.nodes import node
+from element_51.model import Graph, Link, Model, PlacedNode, PortRef
+from element_51.nodes import Node, node
 
 
 @node
@@ -54,6 +54,44 @@ def int_for_float(n: int = 3) -> float:
     return cast("float", n)
 
 
+class DivModResult(Model):
+    q: int
+    r: int
+
+
+@node
+def div_mod(a: int = 7, b: int = 2) -> DivModResult:
+    quotient, remainder = divmod(a, b)
+    return DivModResult(q=quotient, r=remainder)
+
+
+@node
+def not_a_model(a: int = 1) -> DivModResult:
+    return cast("DivModResult", {"q": a, "r": a})
+
+
+class Triple(Node):
+    x: float = 1.0
+
+    @override
+    def run(self) -> float:
+        return self.x * 3
+
+
+class Explode(Node):
+    x: float = 1.0
+
+    @override
+    def run(self) -> float:
+        msg = "boom"
+        raise RuntimeError(msg)
+
+
+@node
+def wrong_field(a: int = 1) -> DivModResult:
+    return DivModResult.model_construct(q=cast("int", "bad"), r=a)
+
+
 FUNCTIONS = {
     f.node_type.name: f
     for f in (
@@ -66,6 +104,11 @@ FUNCTIONS = {
         wrong_type,
         bool_for_int,
         int_for_float,
+        div_mod,
+        not_a_model,
+        wrong_field,
+        Triple,
+        Explode,
     )
 }
 
@@ -102,10 +145,10 @@ def test_values_flow_along_links_in_dependency_order() -> None:
         [("n1", "out", "n3", "a"), ("n2", "out", "n3", "b")],
     )
     result = run_graph(graph, FUNCTIONS, raise_errors=False)
-    assert [(o.node, o.status, o.value) for o in result.outcomes] == [
-        ("n1", "ok", 1.0),
-        ("n2", "ok", 2.0),
-        ("n3", "ok", 3.0),
+    assert [(o.node, o.status, dict(o.outputs)) for o in result.outcomes] == [
+        ("n1", "ok", {"out": 1.0}),
+        ("n2", "ok", {"out": 2.0}),
+        ("n3", "ok", {"out": 3.0}),
     ]
 
 
@@ -114,7 +157,7 @@ def test_an_unlinked_input_uses_the_functions_default() -> None:
     result = run_graph(
         graph_of({"n1": "double"}, []), FUNCTIONS, raise_errors=False
     )
-    assert result.outcomes[0].value == pytest.approx(0.0)
+    assert result.outcomes[0].outputs["out"] == pytest.approx(0.0)
 
 
 def test_an_unlinked_input_without_a_default_is_an_error() -> None:
@@ -124,7 +167,7 @@ def test_an_unlinked_input_without_a_default_is_an_error() -> None:
     assert first.status == "error"
     assert first.error == "input 'a' has no value"
     assert second.status == "skipped"
-    assert second.value is None
+    assert second.outputs == {}
 
 
 def test_a_node_that_raises_is_marked_and_its_dependents_are_skipped() -> None:
@@ -144,7 +187,7 @@ def test_a_node_that_raises_is_marked_and_its_dependents_are_skipped() -> None:
     assert by_id["n3"].status == "skipped"
     assert by_id["n4"].status == "ok"
     expected = 2.0
-    assert by_id["n4"].value == expected
+    assert by_id["n4"].outputs == {"out": expected}
 
 
 def test_skipping_passes_down_a_chain() -> None:
@@ -177,7 +220,7 @@ def test_bool_is_not_an_int_but_an_int_may_be_a_float() -> None:
     assert first.error == "returned bool, expected int"
     assert second.status == "ok"
     expected = 3
-    assert second.value == expected
+    assert second.outputs == {"out": expected}
 
 
 def test_string_values_pass_through() -> None:
@@ -185,7 +228,7 @@ def test_string_values_pass_through() -> None:
     result = run_graph(
         graph_of({"n1": "shout"}, []), FUNCTIONS, raise_errors=False
     )
-    assert result.outcomes[0].value == "HI"
+    assert result.outcomes[0].outputs == {"out": "HI"}
 
 
 def test_raise_mode_raises_the_nodes_own_exception_with_a_note() -> None:
@@ -219,3 +262,56 @@ def test_a_cycle_that_got_into_the_graph_is_reported_not_looped() -> None:
     ]
     with pytest.raises(ValueError, match="cycle"):
         run_graph(graph, FUNCTIONS, raise_errors=True)
+
+
+def test_each_output_of_a_multi_output_node_can_feed_a_different_node() -> None:
+    """`q` and `r` are separate ports with separate values."""
+    graph = graph_of(
+        {"n1": "div_mod", "n2": "double", "n3": "double"},
+        [("n1", "q", "n2", "x"), ("n1", "r", "n3", "x")],
+    )
+    outcomes = run_graph(graph, FUNCTIONS, raise_errors=False).outcomes
+    by_id = {o.node: dict(o.outputs) for o in outcomes}
+    assert by_id == {
+        "n1": {"q": 3, "r": 1},
+        "n2": {"out": 6.0},
+        "n3": {"out": 2.0},
+    }
+
+
+def test_a_multi_output_node_must_return_its_model() -> None:
+    """Returning a dict where the model was declared is an error."""
+    result = run_graph(
+        graph_of({"n1": "not_a_model"}, []), FUNCTIONS, raise_errors=False
+    )
+    assert result.outcomes[0].error == "returned dict, expected DivModResult"
+    assert result.outcomes[0].outputs == {}
+
+
+def test_a_class_node_runs_with_its_defaults_and_its_links() -> None:
+    """The class form takes inputs from fields and gives `out` from `run`."""
+    graph = graph_of(
+        {"n1": "Triple", "n2": "Triple"}, [("n1", "out", "n2", "x")]
+    )
+    result = run_graph(graph, FUNCTIONS, raise_errors=False)
+    assert [dict(o.outputs) for o in result.outcomes] == [
+        {"out": 3.0},
+        {"out": 9.0},
+    ]
+
+
+def test_a_class_node_that_raises_is_marked_like_any_other() -> None:
+    """The class form gets the same error handling as the function form."""
+    result = run_graph(
+        graph_of({"n1": "Explode"}, []), FUNCTIONS, raise_errors=False
+    )
+    assert result.outcomes[0].status == "error"
+    assert result.outcomes[0].error == "RuntimeError: boom"
+
+
+def test_a_field_value_that_skips_validation_is_still_checked() -> None:
+    """A model built without validation cannot smuggle a wrong type through."""
+    result = run_graph(
+        graph_of({"n1": "wrong_field"}, []), FUNCTIONS, raise_errors=False
+    )
+    assert result.outcomes[0].error == "output 'q' is str, expected int"

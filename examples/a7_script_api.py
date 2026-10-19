@@ -53,7 +53,7 @@ def main() -> None:
     app = build_app()
     result = app.execute()
     for outcome in result.outcomes:
-        detail = outcome.error if outcome.status == "error" else outcome.value
+        detail = outcome.error if outcome.status == "error" else outcome.outputs
         print(f"{outcome.node}: {outcome.status} {detail}")  # ruff: ignore[print]
     try:
         app.run()
