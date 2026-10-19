@@ -712,7 +712,7 @@ fn sync_fields(shared: &Shared) {
             let id = format!("field-{}-{}", node.id, port.name);
             wanted.push(id.clone());
             let Ok((x, y, width, height)) =
-                field_box(&state.context, &rect, row, &port.name, metrics)
+                field_box(&state.context, node_type, &rect, row, metrics)
             else {
                 continue;
             };
@@ -721,13 +721,27 @@ fn sync_fields(shared: &Shared) {
             else {
                 continue;
             };
+            // A bool is a small checkbox at the start of its box; any other
+            // kind of input fills the whole box.
+            let (left, width, height) = if port.kind == PortType::Bool {
+                let side = height * 0.8;
+                (left + metrics.box_pad * zoom, side * zoom, side * zoom)
+            } else {
+                (left, width * zoom, height * zoom)
+            };
+            let top = if port.kind == PortType::Bool {
+                top + (metrics.field_height * 0.1) * zoom
+            } else {
+                top
+            };
             let _ = field.set_attribute(
                 "style",
                 &format!(
-                    "left: {left}px; top: {top}px; width: {}px; height: {}px; font-size: {}px",
-                    width * zoom,
-                    height * zoom,
-                    state.theme.fonts.field_px * zoom
+                    "left: {left}px; top: {top}px; width: {width}px; height: {height}px; \
+                     font-size: {}px; padding: 0 {}px; border-radius: {}px",
+                    state.theme.fonts.field_px * zoom,
+                    metrics.box_pad * zoom,
+                    metrics.box_radius * zoom,
                 ),
             );
             let own = node.values.get(&port.name);

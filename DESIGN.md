@@ -444,6 +444,26 @@ theme, with the credit in the README.
   the browser pane, including the right-click menu); the Antimony values come
   in task 12. Interaction constants that are not part of a look (menu margin,
   wheel zoom rate, link pick distance) stay as constants in the web crate.
+- The Antimony look (task 12). Cards are stacked rows: header, one row per
+  input, one per output (`layout::output_row`). A row is a right-aligned name
+  and a dark rounded value box; ports sit inside the card (`port_inset`) and
+  are drawn over the wires, which are drawn over the cards, as in the
+  screenshots. A linked input's box shows its source (`n2.out`) greyed; an
+  output's box shows `output` greyed, then the value after a run; the page's
+  input boxes sit over unlinked inputs' boxes and a bool is a small checkbox
+  at the start of its box. The title bar has the id bold on the left, the type
+  name bold on the right and a three-bar icon (decoration until task 18 gives
+  it a menu). Cards have a 2-unit border in the header grey and a light
+  selection outline. The canvas has a dot grid (every 24 units, left out when
+  the dots would be under 8 pixels apart). Colours are the sampled ones where
+  we have them (card `#202020`, header and border `#505050`, value box
+  `#303030`, title `#e0e0e0`, names `#b0b0b0`, hints `#505050`) and judgement
+  where we do not (canvas `#1a1a1a`, dots `#2c2c2c`, typed text `#e0e0e0`).
+  The hint colour is faithful and low in contrast; the user may want it
+  lighter. The theme lost `text`, `value`, `field_width`, `field_gap`,
+  `label_pad` and `value_gap`, and gained `title`, `label`, `dot`,
+  `card_border`, `icon`, `border_width`, `port_inset`, `port_gap`, `box_gap`,
+  `box_pad`, `box_radius`, `icon_*`, `grid_step` and `dot_radius`.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -471,6 +491,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 12: the Antimony look | native tests rewritten for stacked rows and inset ports (anchors, hit-testing, link picking, metrics); by eye in the browser pane next to the screenshots: dark cards with a grey title bar, id left, type right, icon, right-aligned names, dark value boxes, greyed hints, ports over wires, dot grid; typed value 5 gives 15.0 on Run and a float to int link is refused with the right hit-testing; 77 Rust tests, 167 Python tests at 100%; the user's acceptance (criterion 1) is pending |
 | 2026-10-19 | task 11: `Theme` | native tests: both themes parse (one so far), css variables, layout follows given metrics, no hex colour in `draw.rs`, `lib.rs` or `index.html`; the page looks the same as before in the browser pane (cards, values, input boxes, menu); 76 Rust tests, 167 Python tests at 100% |
 | 2026-10-19 | task 10: `a1_two_nodes.py`, clean Ctrl+C | `uv run examples/a1_two_nodes.py` run for real with the browser opener stubbed: it logged the page URL as opened, Ctrl+C gave a graceful shutdown and exit 0; pytest runs a real process the same way; 167 Python tests at 100% |
 | 2026-10-19 | task 9: undo and redo | native tests: every accepted edit in the shared cases is undone and redone to the same graph, add node and link, delete with links and values, stack order and redo cleared by a new edit; by hand with `a14_undo_redo.py`: drag, delete and their undo, redo, and a reload keeps the result; 165 Python tests at 100%, 65 Rust tests |

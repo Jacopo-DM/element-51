@@ -16,20 +16,28 @@ const ANTIMONY: &str = include_str!("../themes/antimony.json");
 pub struct Colours {
     /// The canvas behind the graph.
     pub canvas: String,
+    /// The dots of the grid on the canvas.
+    pub dot: String,
     /// A node card's body.
     pub card: String,
+    /// The line round a node card.
+    pub card_border: String,
     /// A node card's title bar.
     pub header: String,
     /// The title bar of a node that failed.
     pub header_error: String,
     /// The title bar of a node that was skipped.
     pub header_skipped: String,
-    /// Text on a card.
-    pub text: String,
+    /// The id and type name in a title bar.
+    pub title: String,
+    /// Port names, and the values shown after a run.
+    pub label: String,
     /// Faded text, for a node that was skipped.
     pub text_dim: String,
-    /// A value shown after a run.
-    pub value: String,
+    /// A greyed hint in a value box: a default, a source, `output`.
+    pub placeholder: String,
+    /// The three-bar icon in a title bar.
+    pub icon: String,
     /// The outline of what is selected, and a selected wire.
     pub selected: String,
     /// A port a dragged link may end at.
@@ -42,14 +50,12 @@ pub struct Colours {
     pub port_text: String,
     /// Bool ports and the wires that leave them.
     pub port_bool: String,
-    /// The background of an input box.
+    /// The background of a value box.
     pub field: String,
-    /// Text in an input box.
+    /// Text typed in a value box.
     pub field_text: String,
     /// The border of an input box.
     pub field_border: String,
-    /// The default shown in an empty input box.
-    pub placeholder: String,
     /// The right-click menu's background.
     pub menu: String,
     /// Text in the right-click menu.
@@ -74,7 +80,11 @@ pub struct Metrics {
     pub header_height: f64,
     pub row_height: f64,
     pub card_radius: f64,
+    /// Thickness of the line round a card.
+    pub border_width: f64,
     pub port_size: f64,
+    /// How far a port's centre sits inside the card's edge.
+    pub port_inset: f64,
     /// How close a press must be to a port's anchor to hit it.
     pub port_hit_radius: f64,
     pub wire_width: f64,
@@ -85,28 +95,38 @@ pub struct Metrics {
     pub wire_min_reach: f64,
     /// The most a wire's curve swings out when its ends are in one column.
     pub wire_max_swing: f64,
-    pub field_width: f64,
+    /// Height of a value box.
     pub field_height: f64,
-    /// Space between an input's label and its box.
-    pub field_gap: f64,
-    /// Space between a card's edge and a port's label.
-    pub label_pad: f64,
+    pub box_radius: f64,
+    /// Space between a port and its label.
+    pub port_gap: f64,
+    /// Space between the labels and the value boxes.
+    pub box_gap: f64,
     /// Space between a card's edge and its title.
     pub title_pad: f64,
-    /// How far below the top of the card the title's baseline sits.
-    pub title_baseline: f64,
-    /// How far below a row's centre a label's baseline sits.
+    /// Space between text and the edge of its value box.
+    pub box_pad: f64,
+    /// How far below a row's or the header's centre a text baseline sits.
     pub text_baseline: f64,
-    /// Space between a value and the label beside it.
-    pub value_gap: f64,
+    /// Width of the three-bar icon.
+    pub icon_width: f64,
+    /// Thickness of one bar of the icon.
+    pub icon_bar: f64,
+    /// Space between the bars of the icon.
+    pub icon_gap: f64,
+    /// Distance between grid dots.
+    pub grid_step: f64,
+    pub dot_radius: f64,
 }
 
 /// Fonts.
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Fonts {
-    /// The canvas font for everything on a card, as a CSS font string.
+    /// The canvas font for port names and values, as a CSS font string.
     pub card: String,
+    /// The canvas font for the id and type name in a title bar.
+    pub title: String,
     /// The family for the page's own parts: input boxes, menu, banner.
     pub family: String,
     /// The size of text in an input box at zoom 1, in pixels.

@@ -59,7 +59,8 @@
 - Status: approved 2026-10-19. Spec approved 2026-10-19 (DESIGN.md, under
   "antimony-theme spec"), with these choices: rows stacked like Antimony, the
   header icon opens a small menu (task 18), the theme is chosen only by
-  `serve(theme=...)`. In progress: task 11 is done, next is task 12.
+  `serve(theme=...)`. In progress: tasks 11 and 12 are done (criterion 1 waits for the user's eye),
+  next is task 13.
 - Added: 2026-10-19
 
 ## Current state
@@ -67,19 +68,20 @@
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 10 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 12 (the Antimony look), goal `antimony-theme`. The user's own
-try-out of goal `skeleton` is still pending.
+Next step: the user looks at the new look (criterion 1 is a judgement), then
+task 13 (`antimony-light`, `serve(theme=...)`). The user's own try-out of goal
+`skeleton` is still pending.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 11, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 12, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 167 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 76 tests.
+- cargo fmt, clippy (`-D warnings`), test: pass, 77 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -124,12 +126,6 @@ is a constant that task 11 moves into the Theme).
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
 
-12. **The Antimony look.** Stacked rows (inputs, then outputs), right-aligned
-    labels, dark value boxes, greyed placeholder on a linked input, header with
-    id left, type right and the three-bar icon, dot grid, selection outline,
-    input boxes moved onto the new rows. Criterion 1. Risk medium: judged by
-    eye. Cost about 600 lines Rust. Verify: you accept it side by side with
-    the reference screenshots.
 13. **`antimony-light`, `serve(theme=...)`, snapshot `theme`.** Protocol
     version 2; unknown name lists the valid ones; shared theme-name fixture.
     Criterion 3. Risk low. Cost about 100 lines Python, 80 Rust. Verify:
@@ -186,7 +182,6 @@ None.
   with `SetValue` works but does not push to open pages).
 - A long output value is trimmed with an ellipsis on the node. The full value is
   only available from `app.run()`; there is no hover or tooltip yet.
-- Port colours are placeholders; the nodes still look plain until tasks 11 and 12.
 - A node that returns NaN or infinity as a float is sent as JSON `null` (pydantic's
   default), so the browser would show `null` for it. Checked 2026-10-19 with
   `NodeOutcome(node="n1", status="ok", outputs={"out": float("nan")})`. Not handled.

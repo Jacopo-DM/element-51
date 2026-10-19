@@ -12,9 +12,10 @@ pub struct Rect {
     pub h: f64,
 }
 
-/// The box for `node`: a header plus one row per port on the busier side.
+/// The box for `node`: a header, then one row per input, then one row per
+/// output.
 pub fn node_rect(node: &PlacedNode, node_type: &NodeType, metrics: &Metrics) -> Rect {
-    let rows = node_type.inputs.len().max(node_type.outputs.len());
+    let rows = node_type.inputs.len() + node_type.outputs.len();
     Rect {
         x: node.x,
         y: node.y,
@@ -38,14 +39,22 @@ pub struct PortHit {
     pub side: Side,
 }
 
-/// Where input row `row` meets the left edge of `rect`.
+/// Where the port of row `row` sits on the left, just inside the card.
 pub fn input_anchor(rect: &Rect, row: usize, metrics: &Metrics) -> (f64, f64) {
-    (rect.x, row_centre(rect, row, metrics))
+    (rect.x + metrics.port_inset, row_centre(rect, row, metrics))
 }
 
-/// Where output row `row` meets the right edge of `rect`.
+/// Where the port of row `row` sits on the right, just inside the card.
 pub fn output_anchor(rect: &Rect, row: usize, metrics: &Metrics) -> (f64, f64) {
-    (rect.x + rect.w, row_centre(rect, row, metrics))
+    (
+        rect.x + rect.w - metrics.port_inset,
+        row_centre(rect, row, metrics),
+    )
+}
+
+/// The row of output number `index`: outputs come after all the inputs.
+pub fn output_row(node_type: &NodeType, index: usize) -> usize {
+    node_type.inputs.len() + index
 }
 
 fn row_centre(rect: &Rect, row: usize, metrics: &Metrics) -> f64 {
@@ -72,7 +81,11 @@ pub fn port_at(
             (Side::Output, &node_type.outputs),
         ];
         for (side, ports) in sides {
-            for (row, port) in ports.iter().enumerate() {
+            for (index, port) in ports.iter().enumerate() {
+                let row = match side {
+                    Side::Input => index,
+                    Side::Output => output_row(node_type, index),
+                };
                 let (anchor_x, anchor_y) = match side {
                     Side::Input => input_anchor(&rect, row, metrics),
                     Side::Output => output_anchor(&rect, row, metrics),
@@ -117,7 +130,7 @@ pub fn anchor_of(
                 .outputs
                 .iter()
                 .position(|port| port.name == reference.port)?;
-            Some(output_anchor(&rect, row, metrics))
+            Some(output_anchor(&rect, output_row(node_type, row), metrics))
         }
     }
 }

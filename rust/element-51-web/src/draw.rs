@@ -1,15 +1,22 @@
 //! Drawing: a frame from the replica and the state of the pointer.
+//!
+//! Every colour, size and font comes from the `Theme` in the frame.
 
 use element_51_core::layout::{
-    PortHit, Rect, Side, anchor_of, input_anchor, node_rect, output_anchor, wire_controls,
+    PortHit, Rect, Side, anchor_of, input_anchor, node_rect, output_anchor, output_row,
+    wire_controls,
 };
 use element_51_core::theme::{Colours, Metrics, Theme};
 use element_51_core::view::View;
 use element_51_core::{
-    Edit, Graph, Link, NodeType, PortRef, PortType, RunResult, Status, apply_edit,
+    Edit, Graph, Link, NodeType, PlacedNode, PortRef, PortType, RunResult, Status, apply_edit,
 };
+use std::f64::consts::TAU;
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
+
+/// The grid is left out when its dots would be closer than this on screen.
+const MIN_GRID_PIXELS: f64 = 8.0;
 
 /// A link being dragged from an output port. `x` and `y` are graph
 /// coordinates.
@@ -70,6 +77,55 @@ fn port_colour(kind: PortType, colours: &Colours) -> &str {
     }
 }
 
+/// Where a card's columns sit: port names are right-aligned against
+/// `label_right`, and the value boxes run from `box_left` to `box_right`.
+#[derive(Clone, Copy, Debug)]
+pub struct Columns {
+    pub label_right: f64,
+    pub box_left: f64,
+    pub box_right: f64,
+}
+
+/// The columns of the card for `node_type`. The context's font must already be
+/// the theme's card font.
+pub fn columns(
+    context: &CanvasRenderingContext2d,
+    node_type: &NodeType,
+    rect: &Rect,
+    metrics: &Metrics,
+) -> Result<Columns, JsValue> {
+    let mut widest: f64 = 0.0;
+    for port in node_type.inputs.iter().chain(&node_type.outputs) {
+        widest = widest.max(context.measure_text(&port.name)?.width());
+    }
+    let edge = metrics.port_inset + metrics.port_size / 2.0 + metrics.port_gap;
+    let label_right = rect.x + edge + widest;
+    Ok(Columns {
+        label_right,
+        box_left: label_right + metrics.box_gap,
+        box_right: rect.x + rect.w - edge,
+    })
+}
+
+/// Where the value box of row `row` sits, as `(x, y, width, height)` in graph
+/// units. The context's font must already be the theme's card font.
+pub fn field_box(
+    context: &CanvasRenderingContext2d,
+    node_type: &NodeType,
+    rect: &Rect,
+    row: usize,
+    metrics: &Metrics,
+) -> Result<(f64, f64, f64, f64), JsValue> {
+    let columns = columns(context, node_type, rect, metrics)?;
+    let (_, centre) = input_anchor(rect, row, metrics);
+    Ok((
+        columns.box_left,
+        centre - metrics.field_height / 2.0,
+        columns.box_right - columns.box_left,
+        metrics.field_height,
+    ))
+}
+
 /// Draw `frame`.
 pub fn draw(
     canvas: &HtmlCanvasElement,
@@ -86,18 +142,11 @@ pub fn draw(
         hover,
         run,
     } = *frame;
-    context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
     let (colours, metrics) = (&theme.colours, &theme.metrics);
+    context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
     context.set_fill_style_str(&colours.canvas);
-    context.fill_rect(
-        0.0,
-        0.0,
-        f64::from(canvas.width()),
-        f64::from(canvas.height()),
-    );
-    let Some(graph) = graph else {
-        return Ok(());
-    };
+    let (width, height) = (f64::from(canvas.width()), f64::from(canvas.height()));
+    context.fill_rect(0.0, 0.0, width, height);
     context.set_transform(
         view.zoom(),
         0.0,
@@ -106,10 +155,22 @@ pub fn draw(
         view.pan_x(),
         view.pan_y(),
     )?;
+    grid(context, (width, height), view, theme)?;
+    let Some(graph) = graph else {
+        context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
+        return Ok(());
+    };
+
+    for node in &graph.nodes {
+        let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
+            continue;
+        };
+        let is_selected = selected == Some(&Selected::Node(node.id.clone()));
+        card(context, theme, graph, (node, node_type), run, is_selected)?;
+    }
 
     context.set_line_cap("round");
     context.set_line_join("round");
-    context.set_line_width(metrics.wire_width);
     for link in &graph.links {
         let from = anchor_of(graph, types, &link.source, Side::Output, metrics);
         let to = anchor_of(graph, types, &link.target, Side::Input, metrics);
@@ -133,76 +194,18 @@ pub fn draw(
         wire(context, from, (drag.x, drag.y), metrics);
     }
 
-    context.set_font(&theme.fonts.card);
+    // Ports go over the wires, so a wire ends at the port's square.
     for node in &graph.nodes {
         let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
             continue;
         };
         let rect = node_rect(node, node_type, metrics);
-        context.set_fill_style_str(&colours.card);
-        card_path(context, &rect, metrics.card_radius);
-        context.fill();
-        let outcome = run.and_then(|result| result.outcome_for(&node.id));
-        let status = outcome.map(|outcome| outcome.status);
-        let (header, text) = match status {
-            Some(Status::Error) => (&colours.header_error, &colours.text),
-            Some(Status::Skipped) => (&colours.header_skipped, &colours.text_dim),
-            _ => (&colours.header, &colours.text),
-        };
-        context.set_fill_style_str(header);
-        // The header takes the card's rounded top corners by clipping to it.
-        context.save();
-        card_path(context, &rect, metrics.card_radius);
-        context.clip();
-        context.fill_rect(rect.x, rect.y, rect.w, metrics.header_height);
-        context.restore();
-        if selected == Some(&Selected::Node(node.id.clone())) {
-            context.set_stroke_style_str(&colours.selected);
-            context.set_line_width(metrics.selection_width);
-            card_path(context, &rect, metrics.card_radius);
-            context.stroke();
-        }
-        context.set_fill_style_str(text);
-        context.set_text_align("left");
-        context.fill_text(
-            &format!("{}  {}", node.id, node_type.name),
-            rect.x + metrics.title_pad,
-            rect.y + metrics.title_baseline,
-        )?;
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row, metrics);
-            context.set_fill_style_str(text);
-            context.fill_text(&port.name, x + metrics.label_pad, y + metrics.text_baseline)?;
             square(context, x, y, port_colour(port.kind, colours), metrics);
         }
-        context.set_text_align("right");
-        for (row, port) in node_type.outputs.iter().enumerate() {
-            let (x, y) = output_anchor(&rect, row, metrics);
-            context.set_fill_style_str(text);
-            context.fill_text(&port.name, x - metrics.label_pad, y + metrics.text_baseline)?;
-            if status == Some(Status::Ok)
-                && let Some(value) = outcome.and_then(|outcome| outcome.output_text(&port.name))
-            {
-                // The value sits just left of the port's name, in whatever
-                // room the input label on the same row leaves free.
-                let name_width = context.measure_text(&port.name)?.width();
-                let right = x - metrics.label_pad - name_width - metrics.value_gap;
-                let input_width = match node_type.inputs.get(row) {
-                    Some(input) => {
-                        let label = context.measure_text(&input.name)?.width() + metrics.label_pad;
-                        if graph.is_linked(&node.id, &input.name) {
-                            label
-                        } else {
-                            label + metrics.field_gap + metrics.field_width
-                        }
-                    }
-                    None => 0.0,
-                };
-                let room = right - (rect.x + input_width + 2.0 * metrics.value_gap);
-                let shown = fit_text(context, &value, room)?;
-                context.set_fill_style_str(&colours.value);
-                context.fill_text(&shown, right, y + 4.0)?;
-            }
+        for (index, port) in node_type.outputs.iter().enumerate() {
+            let (x, y) = output_anchor(&rect, output_row(node_type, index), metrics);
             square(context, x, y, port_colour(port.kind, colours), metrics);
         }
     }
@@ -231,28 +234,180 @@ pub fn draw(
     Ok(())
 }
 
-/// Where the input box for input row `row` sits: just right of its label.
-/// Returns `(x, y, width, height)` in graph units. The context's font must
-/// already be the theme's card font.
-pub fn field_box(
+/// The dot grid over the visible part of the canvas. The transform is the
+/// view's, so the grid pans and zooms with the graph.
+fn grid(
     context: &CanvasRenderingContext2d,
-    rect: &Rect,
-    row: usize,
-    label: &str,
-    metrics: &Metrics,
-) -> Result<(f64, f64, f64, f64), JsValue> {
-    let (_, centre) = input_anchor(rect, row, metrics);
-    let label_width = context.measure_text(label)?.width();
-    Ok((
-        rect.x + metrics.label_pad + label_width + metrics.field_gap,
-        centre - metrics.field_height / 2.0,
-        metrics.field_width,
-        metrics.field_height,
-    ))
+    size: (f64, f64),
+    view: &View,
+    theme: &Theme,
+) -> Result<(), JsValue> {
+    let metrics = &theme.metrics;
+    let step = metrics.grid_step;
+    if step * view.zoom() < MIN_GRID_PIXELS {
+        return Ok(());
+    }
+    let (left, top) = view.to_graph(0.0, 0.0);
+    let (right, bottom) = view.to_graph(size.0, size.1);
+    context.set_fill_style_str(&theme.colours.dot);
+    let mut y = (top / step).floor() * step;
+    while y <= bottom {
+        let mut x = (left / step).floor() * step;
+        while x <= right {
+            context.begin_path();
+            context.arc(x, y, metrics.dot_radius, 0.0, TAU)?;
+            context.fill();
+            x += step;
+        }
+        y += step;
+    }
+    Ok(())
+}
+
+/// One node card: body, title bar, rows and value boxes. Ports and wires are
+/// drawn afterwards, over it.
+fn card(
+    context: &CanvasRenderingContext2d,
+    theme: &Theme,
+    graph: &Graph,
+    (node, node_type): (&PlacedNode, &NodeType),
+    run: Option<&RunResult>,
+    selected: bool,
+) -> Result<(), JsValue> {
+    let (colours, metrics) = (&theme.colours, &theme.metrics);
+    let rect = node_rect(node, node_type, metrics);
+    let outcome = run.and_then(|result| result.outcome_for(&node.id));
+    let status = outcome.map(|outcome| outcome.status);
+    let (header, title, label) = match status {
+        Some(Status::Error) => (&colours.header_error, &colours.title, &colours.label),
+        Some(Status::Skipped) => (
+            &colours.header_skipped,
+            &colours.text_dim,
+            &colours.text_dim,
+        ),
+        _ => (&colours.header, &colours.title, &colours.label),
+    };
+
+    context.set_fill_style_str(&colours.card);
+    card_path(context, &rect, metrics.card_radius);
+    context.fill();
+    // The title bar takes the card's rounded top corners by clipping to it.
+    context.set_fill_style_str(header);
+    context.save();
+    card_path(context, &rect, metrics.card_radius);
+    context.clip();
+    context.fill_rect(rect.x, rect.y, rect.w, metrics.header_height);
+    context.restore();
+    context.set_stroke_style_str(&colours.card_border);
+    context.set_line_width(metrics.border_width);
+    card_path(context, &rect, metrics.card_radius);
+    context.stroke();
+    if selected {
+        context.set_stroke_style_str(&colours.selected);
+        context.set_line_width(metrics.selection_width);
+        card_path(context, &rect, metrics.card_radius);
+        context.stroke();
+    }
+
+    // Title bar: the id on the left, the type name and the icon on the right.
+    let middle = rect.y + metrics.header_height / 2.0;
+    context.set_font(&theme.fonts.title);
+    context.set_fill_style_str(title);
+    context.set_text_align("left");
+    context.fill_text(
+        &node.id,
+        rect.x + metrics.title_pad,
+        middle + metrics.text_baseline,
+    )?;
+    let icon_left = rect.x + rect.w - metrics.title_pad - metrics.icon_width;
+    context.set_text_align("right");
+    context.fill_text(
+        &node_type.name,
+        icon_left - metrics.title_pad,
+        middle + metrics.text_baseline,
+    )?;
+    context.set_fill_style_str(&colours.icon);
+    let bars = 3.0;
+    let stack = bars * metrics.icon_bar + (bars - 1.0) * metrics.icon_gap;
+    for bar in 0..3 {
+        let top = middle - stack / 2.0 + f64::from(bar) * (metrics.icon_bar + metrics.icon_gap);
+        context.fill_rect(icon_left, top, metrics.icon_width, metrics.icon_bar);
+    }
+
+    // Rows: inputs first, then outputs. Each has a right-aligned name and a
+    // value box; the page's own input boxes go over the unlinked inputs.
+    context.set_font(&theme.fonts.card);
+    let columns = columns(context, node_type, &rect, metrics)?;
+    let box_width = columns.box_right - columns.box_left;
+    let rows = node_type
+        .inputs
+        .iter()
+        .enumerate()
+        .map(|(row, port)| (row, port, true))
+        .chain(
+            node_type
+                .outputs
+                .iter()
+                .enumerate()
+                .map(|(index, port)| (output_row(node_type, index), port, false)),
+        );
+    for (row, port, is_input) in rows {
+        let (_, centre) = input_anchor(&rect, row, metrics);
+        let baseline = centre + metrics.text_baseline;
+        context.set_fill_style_str(label);
+        context.set_text_align("right");
+        context.fill_text(&port.name, columns.label_right, baseline)?;
+        context.set_fill_style_str(&colours.field);
+        round_rect_path(
+            context,
+            &Rect {
+                x: columns.box_left,
+                y: centre - metrics.field_height / 2.0,
+                w: box_width,
+                h: metrics.field_height,
+            },
+            metrics.box_radius,
+        );
+        context.fill();
+        context.set_text_align("left");
+        let room = box_width - 2.0 * metrics.box_pad;
+        let text_x = columns.box_left + metrics.box_pad;
+        if is_input {
+            if let Some(source) = graph
+                .links
+                .iter()
+                .find(|link| link.target.node == node.id && link.target.port == port.name)
+            {
+                context.set_fill_style_str(&colours.placeholder);
+                let from = format!("{}.{}", source.source.node, source.source.port);
+                context.fill_text(&fit_text(context, &from, room)?, text_x, baseline)?;
+            }
+        } else {
+            let value = outcome
+                .filter(|_| status == Some(Status::Ok))
+                .and_then(|outcome| outcome.output_text(&port.name));
+            match value {
+                Some(value) => {
+                    context.set_fill_style_str(&colours.field_text);
+                    context.fill_text(&fit_text(context, &value, room)?, text_x, baseline)?;
+                }
+                None => {
+                    context.set_fill_style_str(&colours.placeholder);
+                    context.fill_text("output", text_x, baseline)?;
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Trace the outline of a node card with rounded corners.
 fn card_path(context: &CanvasRenderingContext2d, rect: &Rect, radius: f64) {
+    round_rect_path(context, rect, radius);
+}
+
+/// Trace a rectangle with rounded corners.
+fn round_rect_path(context: &CanvasRenderingContext2d, rect: &Rect, radius: f64) {
     let (left, top) = (rect.x, rect.y);
     let (right, bottom) = (rect.x + rect.w, rect.y + rect.h);
     context.begin_path();
