@@ -2,7 +2,7 @@
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import ClassVar, Protocol, cast, get_type_hints
+from typing import ClassVar, Protocol, cast, get_type_hints, overload
 
 from pydantic import BaseModel
 
@@ -133,6 +133,7 @@ class Node(Model):
     """
 
     node_type: ClassVar[NodeType]
+    category: ClassVar[str] = ""
     defaults: ClassVar[Mapping[str, PortValue]]
     output_model: ClassVar[type[BaseModel] | None]
 
@@ -174,6 +175,7 @@ class Node(Model):
             inputs=tuple(inputs),
             outputs=outputs,
             defaults=defaults,
+            category=_check_category(cls.category, name),
         )
         cls.defaults = defaults
         cls.output_model = output_model
@@ -284,7 +286,9 @@ def _output_ports(
     ), None
 
 
-def node[**P, R](func: Callable[P, R]) -> NodeFunction[P, R]:
+def _build_node[**P, R](
+    func: Callable[P, R], category: str
+) -> NodeFunction[P, R]:
     """Build a node type from a typed function.
 
     Each parameter becomes an input port. A plain return type becomes one
@@ -297,6 +301,8 @@ def node[**P, R](func: Callable[P, R]) -> NodeFunction[P, R]:
         A function whose parameters and return value are annotated with
         float, int, str or bool, or whose return value is a pydantic model of
         such fields.
+    category
+        Where the node type goes in the add-node menu.
 
     Returns
     -------
@@ -344,5 +350,100 @@ def node[**P, R](func: Callable[P, R]) -> NodeFunction[P, R]:
         inputs=tuple(inputs),
         outputs=outputs,
         defaults=defaults,
+        category=_check_category(category, name),
     )
     return NodeFunction(func, node_type, defaults, output_model)
+
+
+class _Decorate:
+    """The decorator `node(category=...)` hands back."""
+
+    def __init__(self, category: str) -> None:
+        self._category = category
+
+    def __call__[**P, R](self, func: Callable[P, R], /) -> NodeFunction[P, R]:
+        """Build the node type from `func`.
+
+        Parameters
+        ----------
+        func
+            The function to turn into a node.
+
+        Returns
+        -------
+        NodeFunction[P, R]
+            The function, with its node type attached.
+        """
+        return _build_node(func, self._category)
+
+
+class NodeDecorator(Protocol):
+    """What `node(category=...)` returns: a decorator for a typed function."""
+
+    def __call__[**P, R](self, func: Callable[P, R], /) -> NodeFunction[P, R]:
+        """Build the node type from `func`.
+
+        Parameters
+        ----------
+        func
+            The function to turn into a node.
+        """
+        ...
+
+
+@overload
+def node[**P, R](func: Callable[P, R], /) -> NodeFunction[P, R]: ...
+
+
+@overload
+def node(*, category: str = "") -> NodeDecorator: ...
+
+
+def node[**P, R](
+    func: Callable[P, R] | None = None, /, *, category: str = ""
+) -> NodeFunction[P, R] | NodeDecorator:
+    """Turn a typed function into a node type, bare or with a category.
+
+    `@node` and `@node()` give a top-level node; `@node(category="Math")`
+    puts it in the `Math` menu, and `"Math/Trig"` in `Trig` inside `Math`.
+    See `_build_node` for how the ports come from the hints.
+
+    Parameters
+    ----------
+    func
+        The function, when used as plain `@node`.
+    category
+        Where the node goes in the add-node menu.
+
+    Returns
+    -------
+    NodeFunction[P, R] | NodeDecorator
+        The function with its node type, or a decorator that makes one.
+    """
+    if func is None:
+        return _Decorate(category)
+    return _build_node(func, category)
+
+
+def _check_category(category: str, where: str) -> str:
+    """Return `category` if it is well formed.
+
+    Returns
+    -------
+    str
+        The same category.
+
+    Raises
+    ------
+    ValueError
+        If a level is empty or has a space at either end.
+    """
+    if category and any(
+        not level or level != level.strip() for level in category.split("/")
+    ):
+        msg = (
+            f"{where}: category {category!r} must be levels separated by '/', "
+            "none empty and none with spaces at the ends"
+        )
+        raise ValueError(msg)
+    return category

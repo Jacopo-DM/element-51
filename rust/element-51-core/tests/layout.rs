@@ -34,6 +34,7 @@ fn node_type(inputs: &[&str], outputs: &[&str]) -> NodeType {
         inputs: inputs.iter().map(|n| port(n)).collect(),
         outputs: outputs.iter().map(|n| port(n)).collect(),
         defaults: Default::default(),
+        category: String::new(),
     }
 }
 

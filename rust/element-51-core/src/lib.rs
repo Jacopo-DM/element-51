@@ -8,6 +8,7 @@ mod edit;
 pub mod fields;
 pub mod history;
 pub mod layout;
+pub mod menu;
 mod model;
 mod replica;
 pub mod theme;

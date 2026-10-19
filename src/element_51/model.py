@@ -92,13 +92,16 @@ class NodeType(Model):
     """The shape of a node: its name and its ports, in drawing order.
 
     `defaults` holds the value an unlinked input takes when the node has no
-    value of its own; an input with no default must be given one.
+    value of its own; an input with no default must be given one. `category`
+    places the type in the add-node menu: `""` for the top level, with `/`
+    between levels (`"Math/Trig"` is `Trig` inside `Math`).
     """
 
     name: str
     inputs: tuple[Port, ...]
     outputs: tuple[Port, ...]
     defaults: Mapping[str, PortValue] = {}
+    category: str = ""
 
 
 class PortRef(Model):

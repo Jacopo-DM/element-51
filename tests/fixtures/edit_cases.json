@@ -18,7 +18,8 @@
           "kind": "float"
         }
       ],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     },
     {
       "name": "label",
@@ -34,7 +35,8 @@
           "kind": "str"
         }
       ],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     }
   ],
   "graph": {

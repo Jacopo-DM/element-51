@@ -18,7 +18,8 @@
           "kind": "float"
         }
       ],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     },
     {
       "name": "label",
@@ -34,7 +35,8 @@
           "kind": "str"
         }
       ],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     },
     {
       "name": "count",
@@ -50,7 +52,8 @@
           "kind": "int"
         }
       ],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     },
     {
       "name": "divmod",
@@ -74,7 +77,8 @@
           "kind": "int"
         }
       ],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     }
   ],
   "graph": {

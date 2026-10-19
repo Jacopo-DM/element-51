@@ -479,6 +479,21 @@ theme, with the credit in the README.
   a name it does not know. The page starts in the default theme until the
   first snapshot arrives, so a light page can flash dark for a moment. There
   is no switcher in the page, by the user's choice.
+- Categories and the menu (task 14). A node type has `category`, a string with
+  `/` between levels (`Math/Trig`), empty for the top level. `@node` works bare
+  or as `@node(category="Math")`; a `Node` subclass sets a `category` class
+  variable. A level with an empty name or spaces at its ends is a `ValueError`
+  at definition time. The menu logic is in `element-51-core::menu`: a level
+  lists its categories first (in order of first appearance), then its nodes in
+  registration order, and `search` matches case-insensitively on the node name
+  or its whole path, in registration order, showing each match with its path;
+  empty text matches nothing. The web crate only renders: nested flyout panels
+  opened by hovering (CSS), a search box that takes focus when the menu opens,
+  Enter adding the first match, Escape closing, and the flyouts flipping to the
+  left when the menu is near the right edge. Flyouts rule out scrolling the
+  tree, so a menu with more top-level entries than fit in the window would
+  run off the bottom; search results do scroll. The search box colour is a new
+  theme colour, `menu_field`.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -506,6 +521,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 14: categories and the nested menu with search | native tests: tree nesting and order, search by name, path and case, empty results; pytest: bare and called decorator, class variable, badly formed categories refused, fixtures carry `category`; by hand with `a16_menu.py`: Math > Trig > sine adds a node at the click, `math` lists three matches with paths, Enter adds the first, Escape closes, flyouts flip left near the right edge; 193 Python tests at 100%, 86 Rust tests |
 | 2026-10-19 | task 13: `antimony-light`, `serve(theme=...)` | pytest: theme names equal on both sides, unknown name lists the valid ones and starts no server, setting the theme pushes a snapshot, every snapshot names the theme; native: both themes parse, share sizes, differ in canvas and selected wire; by eye with `a15_light_theme.py`: light canvas and grid, dark cards, dark selected wire; 181 Python tests at 100%, 79 Rust tests |
 | 2026-10-19 | task 12: the Antimony look | native tests rewritten for stacked rows and inset ports (anchors, hit-testing, link picking, metrics); by eye in the browser pane next to the screenshots: dark cards with a grey title bar, id left, type right, icon, right-aligned names, dark value boxes, greyed hints, ports over wires, dot grid; typed value 5 gives 15.0 on Run and a float to int link is refused with the right hit-testing; 77 Rust tests, 167 Python tests at 100%; the user's acceptance (criterion 1) is pending |
 | 2026-10-19 | task 11: `Theme` | native tests: both themes parse (one so far), css variables, layout follows given metrics, no hex colour in `draw.rs`, `lib.rs` or `index.html`; the page looks the same as before in the browser pane (cards, values, input boxes, menu); 76 Rust tests, 167 Python tests at 100% |

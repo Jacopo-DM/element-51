@@ -8,6 +8,7 @@ use std::rc::Rc;
 use element_51_core::fields::{format_value, parse_input};
 use element_51_core::history::History;
 use element_51_core::layout::{PortHit, Side, link_at, node_at, node_rect, port_at};
+use element_51_core::menu::{Entry, build_menu, search as search_node_types};
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
 use element_51_core::{
@@ -71,6 +72,8 @@ type Shared = Rc<RefCell<State>>;
 
 /// The least gap between the right-click menu and the window edge, in pixels.
 const MENU_MARGIN: f64 = 8.0;
+/// How much room a submenu needs to open to the right of its parent.
+const MENU_FLYOUT_WIDTH: f64 = 180.0;
 
 /// Connect to `/ws`, draw the graph Python sends, and send the user's edits.
 #[wasm_bindgen(start)]
@@ -169,6 +172,16 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&menu, "click", move |event: MouseEvent| {
             on_menu_click(&shared, &event)
+        })?;
+    }
+    if let Some(search) = document.get_element_by_id("menu-search") {
+        let shared = state.clone();
+        listen(&search, "input", move |_event: web_sys::Event| {
+            on_menu_search(&shared)
+        })?;
+        let shared = state.clone();
+        listen(&search, "keydown", move |event: KeyboardEvent| {
+            on_menu_search_key(&shared, &event)
         })?;
     }
     let shared = state.clone();
@@ -413,20 +426,114 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
     redraw(shared);
 }
 
-/// One button per node type, each carrying its type name.
+/// Build the menu's tree: a button for each node type, and a submenu for each
+/// category, nested as the node types' categories say.
 fn fill_menu(document: &Document, snapshot: &element_51_core::Snapshot) {
-    let Some(menu) = document.get_element_by_id("menu") else {
+    let Some(tree) = document.get_element_by_id("menu-tree") else {
         return;
     };
-    menu.set_text_content(None);
-    for node_type in &snapshot.node_types {
-        let Ok(button) = document.create_element("button") else {
-            continue;
-        };
-        let _ = button.set_attribute("type", "button");
-        let _ = button.set_attribute("data-node-type", &node_type.name);
-        button.set_text_content(Some(&node_type.name));
-        let _ = menu.append_child(&button);
+    tree.set_text_content(None);
+    append_entries(document, &tree, &build_menu(&snapshot.node_types));
+}
+
+fn append_entries(document: &Document, parent: &Element, entries: &[Entry]) {
+    for entry in entries {
+        match entry {
+            Entry::Node(name) => {
+                if let Some(button) = node_button(document, name, name) {
+                    let _ = parent.append_child(&button);
+                }
+            }
+            Entry::Category { name, entries } => {
+                let (Ok(submenu), Ok(label), Ok(panel)) = (
+                    document.create_element("div"),
+                    document.create_element("button"),
+                    document.create_element("div"),
+                ) else {
+                    continue;
+                };
+                submenu.set_class_name("submenu");
+                panel.set_class_name("panel");
+                label.set_class_name("category");
+                let _ = label.set_attribute("type", "button");
+                let _ = label.set_attribute("data-category", name);
+                label.set_text_content(Some(name));
+                append_entries(document, &panel, entries);
+                let _ = submenu.append_child(&label);
+                let _ = submenu.append_child(&panel);
+                let _ = parent.append_child(&submenu);
+            }
+        }
+    }
+}
+
+/// A menu button that adds node type `name`, showing `label`.
+fn node_button(document: &Document, name: &str, label: &str) -> Option<Element> {
+    let button = document.create_element("button").ok()?;
+    let _ = button.set_attribute("type", "button");
+    let _ = button.set_attribute("data-node-type", name);
+    button.set_text_content(Some(label));
+    Some(button)
+}
+
+/// Show the node types that match what was typed in the search box, instead of
+/// the tree; with nothing typed, show the tree again.
+fn on_menu_search(shared: &Shared) {
+    let state = shared.borrow();
+    let document = &state.document;
+    let (Some(search), Some(tree), Some(results), Some(replica)) = (
+        document.get_element_by_id("menu-search"),
+        document.get_element_by_id("menu-tree"),
+        document.get_element_by_id("menu-results"),
+        state.replica.as_ref(),
+    ) else {
+        return;
+    };
+    let text = search
+        .dyn_into::<HtmlInputElement>()
+        .map(|input| input.value())
+        .unwrap_or_default();
+    results.set_text_content(None);
+    if text.trim().is_empty() {
+        let _ = tree.remove_attribute("hidden");
+        let _ = results.set_attribute("hidden", "");
+        return;
+    }
+    let _ = tree.set_attribute("hidden", "");
+    let _ = results.remove_attribute("hidden");
+    let found = search_node_types(replica.node_types(), &text);
+    if found.is_empty() {
+        if let Ok(none) = document.create_element("div") {
+            none.set_class_name("none");
+            none.set_text_content(Some("No matching node"));
+            let _ = results.append_child(&none);
+        }
+        return;
+    }
+    for entry in found {
+        if let Some(button) = node_button(document, &entry.name, &entry.path) {
+            let _ = results.append_child(&button);
+        }
+    }
+}
+
+/// Enter in the search box adds the first match; Escape closes the menu.
+fn on_menu_search_key(shared: &Shared, event: &KeyboardEvent) {
+    match event.key().as_str() {
+        "Enter" => {
+            event.prevent_default();
+            let first = shared
+                .borrow()
+                .document
+                .get_element_by_id("menu-results")
+                .and_then(|results| results.query_selector("button").ok().flatten())
+                .and_then(|button| button.get_attribute("data-node-type"));
+            if let Some(name) = first {
+                add_from_menu(shared, &name);
+            }
+        }
+        "Escape" => hide_menu(&shared.borrow()),
+        _ => {}
     }
 }
 
@@ -456,6 +563,7 @@ fn on_context_menu(shared: &Shared, event: &MouseEvent) {
     let (left, top) = (f64::from(event.client_x()), f64::from(event.client_y()));
     let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
     let _ = menu.remove_attribute("hidden");
+    reset_menu_search(&state.document);
     // Now that it is laid out, move it back inside the window if it hangs out.
     let Some(window) = web_sys::window() else {
         return;
@@ -470,6 +578,26 @@ fn on_context_menu(shared: &Shared, event: &MouseEvent) {
         .min(height - rect.height() - MENU_MARGIN)
         .max(MENU_MARGIN);
     let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
+    // Submenus open to the right unless that would leave the window.
+    let flip = rect.right() + MENU_FLYOUT_WIDTH > width;
+    menu.set_class_name(if flip { "flip" } else { "" });
+}
+
+/// Empty the search box, show the tree, and put the cursor in the box.
+fn reset_menu_search(document: &Document) {
+    if let Some(input) = document
+        .get_element_by_id("menu-search")
+        .and_then(|element| element.dyn_into::<HtmlInputElement>().ok())
+    {
+        input.set_value("");
+        let _ = input.focus();
+    }
+    if let Some(tree) = document.get_element_by_id("menu-tree") {
+        let _ = tree.remove_attribute("hidden");
+    }
+    if let Some(results) = document.get_element_by_id("menu-results") {
+        let _ = results.set_attribute("hidden", "");
+    }
 }
 
 fn hide_menu(state: &State) {
@@ -479,19 +607,33 @@ fn hide_menu(state: &State) {
 }
 
 fn on_menu_click(shared: &Shared, event: &MouseEvent) {
+    let target = event
+        .target()
+        .and_then(|target| target.dyn_into::<Element>().ok());
+    let Some(target) = target else {
+        return;
+    };
+    // A category label and the search box open or filter; they do not close.
+    if target.has_attribute("data-category") || target.id() == "menu-search" {
+        return;
+    }
+    match target.get_attribute("data-node-type") {
+        Some(name) => add_from_menu(shared, &name),
+        None => hide_menu(&shared.borrow()),
+    }
+}
+
+/// Close the menu and add a node of type `name` where it was opened.
+fn add_from_menu(shared: &Shared, name: &str) {
     let edit = {
         let state = shared.borrow();
-        let name = event
-            .target()
-            .and_then(|target| target.dyn_into::<Element>().ok())
-            .and_then(|element| element.get_attribute("data-node-type"));
         hide_menu(&state);
-        let (Some(name), Some(replica)) = (name, state.replica.as_ref()) else {
+        let Some(replica) = state.replica.as_ref() else {
             return;
         };
         Edit::AddNode {
             id: replica.next_node_id(),
-            node_type: name,
+            node_type: name.to_string(),
             x: state.menu_at.0,
             y: state.menu_at.1,
         }

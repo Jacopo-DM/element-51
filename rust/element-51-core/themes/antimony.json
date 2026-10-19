@@ -25,6 +25,7 @@
     "field_border": "#303030",
     "menu": "#ececec",
     "menu_text": "#222222",
+    "menu_field": "#ffffff",
     "menu_shadow": "rgba(0, 0, 0, 0.5)",
     "menu_hover": "#4a90d9",
     "menu_hover_text": "#ffffff",

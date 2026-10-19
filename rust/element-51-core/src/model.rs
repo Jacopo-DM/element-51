@@ -44,6 +44,10 @@ pub struct NodeType {
     /// What an unlinked input takes when the node has no value of its own.
     #[serde(default)]
     pub defaults: BTreeMap<String, serde_json::Value>,
+    /// Where the type goes in the add-node menu: empty for the top level, with
+    /// `/` between levels.
+    #[serde(default)]
+    pub category: String,
 }
 
 /// One end of a link: a port on a node in the graph.

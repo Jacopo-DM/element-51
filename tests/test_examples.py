@@ -63,6 +63,7 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "ok", {"out": "3 remainder 2"}),
     ],
     "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
+    "a16_menu.py": [("n1", "ok", {"out": 3.0})],
     "a15_light_theme.py": [
         ("n1", "ok", {"out": 12.0}),
         ("n2", "ok", {"out": 6.0}),
@@ -206,3 +207,20 @@ def test_the_save_example_gets_back_what_was_saved(tmp_path: Path) -> None:
 def test_the_light_theme_example_uses_the_light_theme() -> None:
     """Building the app already selects the light theme."""
     assert build("a15_light_theme.py").theme == "antimony-light"
+
+
+def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
+    """The categories of the example's node types, in menu order."""
+    app = build("a16_menu.py")
+    categories = {
+        name: function.node_type.category
+        for name, function in app.node_functions.items()
+    }
+    assert categories == {
+        "sine": "Math/Trig",
+        "cosine": "Math/Trig",
+        "square_root": "Math",
+        "Shout": "Text",
+        "add": "",
+        "show": "",
+    }

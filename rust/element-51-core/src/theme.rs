@@ -63,6 +63,8 @@ pub struct Colours {
     pub menu: String,
     /// Text in the right-click menu.
     pub menu_text: String,
+    /// The search box in the right-click menu.
+    pub menu_field: String,
     /// The shadow under the right-click menu.
     pub menu_shadow: String,
     /// The menu entry under the pointer.
@@ -169,6 +171,7 @@ impl Theme {
             ("--placeholder", &colours.placeholder),
             ("--menu-bg", &colours.menu),
             ("--menu-text", &colours.menu_text),
+            ("--menu-field-bg", &colours.menu_field),
             ("--menu-shadow", &colours.menu_shadow),
             ("--menu-hover-bg", &colours.menu_hover),
             ("--menu-hover-text", &colours.menu_hover_text),

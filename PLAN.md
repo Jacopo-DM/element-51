@@ -59,8 +59,8 @@
 - Status: approved 2026-10-19. Spec approved 2026-10-19 (DESIGN.md, under
   "antimony-theme spec"), with these choices: rows stacked like Antimony, the
   header icon opens a small menu (task 18), the theme is chosen only by
-  `serve(theme=...)`. In progress: tasks 11 to 13 are done (the user accepted the look, so
-  criteria 1 to 3 are met), next is task 14.
+  `serve(theme=...)`. In progress: tasks 11 to 14 are done (the user accepted the look, so
+  criteria 1 to 4 are met), next are tasks 15 and 18.
 - Added: 2026-10-19
 
 ## Current state
@@ -68,19 +68,20 @@
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 10 (Tier 1 is complete, the graph runs, nodes can have several
 outputs and be written as classes, and a reload keeps the graph).
-Next step: task 14 (categories and the nested menu with search), goal
-`antimony-theme`. The user's own try-out of goal `skeleton` is still pending.
+Next step: task 15 (README credit, a draft for the user's review), then task
+18 (the header icon menu). The user's own try-out of goal `skeleton` is still
+pending.
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
 extension added a setting; the user chose to leave it. There is no remote, so
 nothing is pushed.
 
 ## Baseline
 
-Measured 2026-10-19 after task 13, Apple silicon, Python 3.13:
+Measured 2026-10-19 after task 14, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 181 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 79 tests.
+- pytest: 193 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 86 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -125,11 +126,6 @@ is a constant that task 11 moves into the Theme).
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
 
-14. **Categories and the nested menu with search.** `@node(category=...)` and
-    the class form set the category (`/` between levels); menu tree and search
-    in `element-51-core`, rendered by the web crate. Criterion 4. Risk medium.
-    Cost about 350 lines Rust, 60 Python. Verify: native tests for the tree
-    and filtering; pytest for `category`.
 15. **README credit.** I draft the Antimony and Matt Keeter credit for your
     review; no Antimony asset in the repo. Criterion 5. Risk low. Cost about 5
     lines.

@@ -291,3 +291,71 @@ def test_the_node_type_carries_the_python_defaults() -> None:
         return value * factor
 
     assert scale.node_type.defaults == {"factor": 2.0}
+
+
+def test_a_node_has_no_category_unless_one_is_given() -> None:
+    """Top level is the empty string."""
+    assert not add.node_type.category
+
+
+def test_the_decorator_takes_a_category_and_still_works_bare() -> None:
+    """`@node(category=...)` and plain `@node` build the same kind of node."""
+
+    @node(category="Math")
+    def half(value: float) -> float:
+        return value / 2
+
+    @node()
+    def same(value: float) -> float:
+        return value
+
+    assert half.node_type.category == "Math"
+    assert not same.node_type.category
+    assert half(8.0) == pytest.approx(4.0)
+    assert same.call({"value": 3.0}) == pytest.approx(3.0)
+
+
+def test_a_class_form_node_sets_its_category_as_a_class_variable() -> None:
+    """Nesting uses a slash: `Math/Trig` is `Trig` inside `Math`."""
+
+    class Sine(Node):
+        category = "Math/Trig"
+        angle: float = 0.0
+
+        @override
+        def run(self) -> float:  # pragma: no cover  # only its hints are read
+            return self.angle
+
+    class Plain(Node):
+        angle: float = 0.0
+
+        @override
+        def run(self) -> float:  # pragma: no cover  # only its hints are read
+            return self.angle
+
+    assert Sine.node_type.category == "Math/Trig"
+    assert not Plain.node_type.category
+
+
+@pytest.mark.parametrize(
+    "category", ["/", "Math/", "/Math", "Math//Trig", " Math", "Math /Trig"]
+)
+def test_a_badly_formed_category_is_refused(category: str) -> None:
+    """No empty levels and no spaces at the edge of a level."""
+    with pytest.raises(ValueError, match="category"):
+
+        @node(category=category)
+        def bad(value: float) -> float:  # pragma: no cover  # never runs
+            return value
+
+
+def test_a_badly_formed_class_category_is_refused() -> None:
+    """The same rule applies to the class form."""
+    with pytest.raises(ValueError, match="category"):
+
+        class Bad(Node):
+            category = "Math/"
+
+            @override
+            def run(self) -> float:  # pragma: no cover  # never runs
+                return 0.0

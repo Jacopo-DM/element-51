@@ -23,7 +23,8 @@
       ],
       "defaults": {
         "b": 2.5
-      }
+      },
+      "category": "Math/Basic"
     },
     {
       "name": "show",
@@ -34,7 +35,8 @@
         }
       ],
       "outputs": [],
-      "defaults": {}
+      "defaults": {},
+      "category": ""
     }
   ],
   "graph": {
