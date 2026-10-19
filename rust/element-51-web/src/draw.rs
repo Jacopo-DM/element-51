@@ -25,8 +25,6 @@ const REFUSED: &str = "#e06060";
 const PORT_SIZE: f64 = 8.0;
 /// How round the corners of a node card are, in graph units.
 const CARD_RADIUS: f64 = 8.0;
-/// How round the corners of a port marker are, in graph units.
-const PORT_RADIUS: f64 = 3.0;
 const VALUE_GAP: f64 = 8.0;
 /// The font every label on a node is set in.
 pub const FONT: &str = "13px sans-serif";
@@ -254,17 +252,13 @@ fn card_path(context: &CanvasRenderingContext2d, rect: &element_51_core::layout:
 }
 
 fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str) {
-    let half = PORT_SIZE / 2.0;
-    let (left, top, right, bottom) = (x - half, y - half, x + half, y + half);
     context.set_fill_style_str(colour);
-    context.begin_path();
-    context.move_to(left + PORT_RADIUS, top);
-    let _ = context.arc_to(right, top, right, bottom, PORT_RADIUS);
-    let _ = context.arc_to(right, bottom, left, bottom, PORT_RADIUS);
-    let _ = context.arc_to(left, bottom, left, top, PORT_RADIUS);
-    let _ = context.arc_to(left, top, right, top, PORT_RADIUS);
-    context.close_path();
-    context.fill();
+    context.fill_rect(
+        x - PORT_SIZE / 2.0,
+        y - PORT_SIZE / 2.0,
+        PORT_SIZE,
+        PORT_SIZE,
+    );
 }
 
 /// A smooth curve that leaves `from` and arrives at `to` horizontally.

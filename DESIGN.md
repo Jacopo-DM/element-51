@@ -292,9 +292,8 @@ theme, with the credit in the README.
 - Rounded look (extra task 17, the user's request): node cards have corners
   of radius 8 (graph units), the header takes them by clipping to the card
   path, the selection outline follows the rounded path, and wires have round
-  caps and joins. Port markers were rounded in a second step at the user's request:
-  still 8 units across, corner radius 3 (nearly round); they keep the name
-  `square`. Input boxes were left as they were by the user's choice. The radius is a constant in `draw.rs` until the Theme exists.
+  caps and joins. Port squares and input boxes were left as they were by the
+  user's choice. The radius is a constant in `draw.rs` until the Theme exists.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
