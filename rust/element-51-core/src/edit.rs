@@ -24,6 +24,7 @@ pub enum EditError {
     },
     InputTaken(PortRef),
     Cycle,
+    UnknownLink,
 }
 
 impl EditError {
@@ -37,6 +38,7 @@ impl EditError {
             EditError::TypeMismatch { .. } => "type_mismatch",
             EditError::InputTaken(_) => "input_taken",
             EditError::Cycle => "cycle",
+            EditError::UnknownLink => "unknown_link",
         }
     }
 }
@@ -62,6 +64,7 @@ impl fmt::Display for EditError {
                 )
             }
             EditError::Cycle => write!(formatter, "that link would make a cycle"),
+            EditError::UnknownLink => write!(formatter, "there is no such link"),
         }
     }
 }
@@ -112,6 +115,37 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 source: source.clone(),
                 target: target.clone(),
             });
+            Ok(next)
+        }
+        Edit::MoveNode { id, x, y } => {
+            let mut next = graph.clone();
+            let node = next
+                .nodes
+                .iter_mut()
+                .find(|node| node.id == *id)
+                .ok_or_else(|| EditError::UnknownNode(id.clone()))?;
+            node.x = *x;
+            node.y = *y;
+            Ok(next)
+        }
+        Edit::DeleteNode { id } => {
+            if !graph.nodes.iter().any(|node| node.id == *id) {
+                return Err(EditError::UnknownNode(id.clone()));
+            }
+            let mut next = graph.clone();
+            next.nodes.retain(|node| node.id != *id);
+            next.links
+                .retain(|link| link.source.node != *id && link.target.node != *id);
+            Ok(next)
+        }
+        Edit::DeleteLink { source, target } => {
+            let position = graph
+                .links
+                .iter()
+                .position(|link| link.source == *source && link.target == *target)
+                .ok_or(EditError::UnknownLink)?;
+            let mut next = graph.clone();
+            next.links.remove(position);
             Ok(next)
         }
     }

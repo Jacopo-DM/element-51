@@ -111,6 +111,12 @@ pub enum Edit {
     },
     /// Link an output port to an input port.
     AddLink { source: PortRef, target: PortRef },
+    /// Put a node at a new position.
+    MoveNode { id: String, x: f64, y: f64 },
+    /// Remove a node, and every link that touches it.
+    DeleteNode { id: String },
+    /// Remove one link.
+    DeleteLink { source: PortRef, target: PortRef },
 }
 
 /// The browser asks Python to confirm an edit it already applied.

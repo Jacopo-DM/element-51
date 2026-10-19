@@ -100,3 +100,35 @@ fn next_id_is_one_above_the_highest_in_use() {
     };
     assert_eq!(empty.next_id(), "n1");
 }
+
+const EDIT_CASES: &str = include_str!("../../../tests/fixtures/edit_cases.json");
+
+#[derive(Deserialize)]
+struct EditCase {
+    name: String,
+    edit: Edit,
+    result: String,
+    graph: Option<Graph>,
+}
+
+#[derive(Deserialize)]
+struct EditCases {
+    node_types: Vec<NodeType>,
+    graph: Graph,
+    cases: Vec<EditCase>,
+}
+
+#[test]
+fn move_and_delete_give_the_graph_or_refusal_python_gives() {
+    let fixture: EditCases = serde_json::from_str(EDIT_CASES).unwrap();
+    assert!(fixture.cases.len() >= 7);
+    for case in &fixture.cases {
+        let outcome = apply_edit(&fixture.graph, &fixture.node_types, &case.edit);
+        match (case.result.as_str(), outcome) {
+            ("ok", Ok(graph)) => assert_eq!(Some(graph), case.graph, "{}", case.name),
+            ("ok", Err(error)) => panic!("{}: expected ok, got {error}", case.name),
+            (expected, Ok(_)) => panic!("{}: expected {expected}, got ok", case.name),
+            (expected, Err(error)) => assert_eq!(error.kind(), expected, "{}", case.name),
+        }
+    }
+}

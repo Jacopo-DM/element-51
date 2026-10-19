@@ -1,10 +1,10 @@
 //! Size and position of a node box.
 
 use element_51_core::layout::{
-    HEADER_HEIGHT, NODE_WIDTH, PORT_RADIUS, ROW_HEIGHT, Side, anchor_of, input_anchor, node_rect,
-    output_anchor, port_at,
+    HEADER_HEIGHT, NODE_WIDTH, PORT_RADIUS, ROW_HEIGHT, Side, anchor_of, input_anchor, link_at,
+    node_at as pick_node, node_rect, output_anchor, port_at,
 };
-use element_51_core::{Graph, NodeType, PlacedNode, Port, PortRef, PortType};
+use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
 
 fn port(name: &str) -> Port {
     Port {
@@ -138,4 +138,79 @@ fn anchor_of_finds_a_named_port_on_either_side() {
         anchor_of(&graph, &types, &named("nope"), Side::Output),
         None
     );
+}
+
+#[test]
+fn node_at_finds_the_node_under_a_point_and_the_topmost_when_they_overlap() {
+    let types = [node_type(&["a"], &["out"])];
+    let graph = Graph {
+        nodes: vec![
+            PlacedNode {
+                id: "n1".into(),
+                node_type: "t".into(),
+                x: 0.0,
+                y: 0.0,
+            },
+            PlacedNode {
+                id: "n2".into(),
+                node_type: "t".into(),
+                x: 100.0,
+                y: 10.0,
+            },
+        ],
+        links: vec![],
+    };
+    assert_eq!(pick_node(&graph, &types, 10.0, 10.0).as_deref(), Some("n1"));
+    assert_eq!(
+        pick_node(&graph, &types, 120.0, 20.0).as_deref(),
+        Some("n2")
+    );
+    assert_eq!(
+        pick_node(&graph, &types, 130.0, 20.0).as_deref(),
+        Some("n2")
+    );
+    assert_eq!(pick_node(&graph, &types, 400.0, 400.0), None);
+}
+
+#[test]
+fn a_node_of_an_unknown_type_cannot_be_picked() {
+    let graph = graph_of(node_at(0.0, 0.0));
+    assert_eq!(pick_node(&graph, &[], 5.0, 5.0), None);
+}
+
+#[test]
+fn link_at_finds_a_link_near_its_curve_and_nothing_far_from_it() {
+    let types = [node_type(&["a"], &["out"])];
+    let graph = Graph {
+        nodes: vec![
+            PlacedNode {
+                id: "n1".into(),
+                node_type: "t".into(),
+                x: 0.0,
+                y: 0.0,
+            },
+            PlacedNode {
+                id: "n2".into(),
+                node_type: "t".into(),
+                x: 400.0,
+                y: 0.0,
+            },
+        ],
+        links: vec![Link {
+            source: PortRef {
+                node: "n1".into(),
+                port: "out".into(),
+            },
+            target: PortRef {
+                node: "n2".into(),
+                port: "a".into(),
+            },
+        }],
+    };
+    // Same height at both ends: the curve is a straight line between anchors,
+    // 160 to 400 at the row centre (28 + 11 = 39).
+    let hit = link_at(&graph, &types, 280.0, 40.0, 6.0).unwrap();
+    assert_eq!(hit.target.node, "n2");
+    assert!(link_at(&graph, &types, 280.0, 60.0, 6.0).is_none());
+    assert!(link_at(&graph, &types, 0.0, 40.0, 6.0).is_none());
 }

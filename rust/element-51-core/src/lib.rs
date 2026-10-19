@@ -8,6 +8,7 @@ mod edit;
 pub mod layout;
 mod model;
 mod replica;
+pub mod view;
 
 pub use edit::{EditError, apply_edit};
 pub use model::{

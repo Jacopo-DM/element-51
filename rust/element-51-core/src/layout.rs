@@ -1,6 +1,6 @@
 //! Where a node box sits and how big it is.
 
-use crate::{Graph, NodeType, PlacedNode, PortRef};
+use crate::{Graph, Link, NodeType, PlacedNode, PortRef};
 
 /// Width of every node box.
 pub const NODE_WIDTH: f64 = 160.0;
@@ -122,4 +122,86 @@ pub fn anchor_of(
             Some(output_anchor(&rect, row))
         }
     }
+}
+
+/// The topmost node whose box holds `(x, y)`, if any. Later nodes are drawn
+/// over earlier ones. A node whose type is not in `node_types` cannot be picked.
+pub fn node_at(graph: &Graph, node_types: &[NodeType], x: f64, y: f64) -> Option<String> {
+    graph
+        .nodes
+        .iter()
+        .rev()
+        .find(|node| {
+            let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type)
+            else {
+                return false;
+            };
+            let rect = node_rect(node, node_type);
+            x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
+        })
+        .map(|node| node.id.clone())
+}
+
+/// The four control points of the curve a link is drawn along: it leaves
+/// `from` and arrives at `to` horizontally.
+pub fn wire_controls(from: (f64, f64), to: (f64, f64)) -> [(f64, f64); 4] {
+    let reach = ((to.0 - from.0).abs() / 2.0).max(40.0);
+    [from, (from.0 + reach, from.1), (to.0 - reach, to.1), to]
+}
+
+/// How many straight pieces stand in for a curve when testing a click.
+const WIRE_STEPS: usize = 32;
+
+fn wire_point(controls: &[(f64, f64); 4], t: f64) -> (f64, f64) {
+    let u = 1.0 - t;
+    let weights = [u * u * u, 3.0 * u * u * t, 3.0 * u * t * t, t * t * t];
+    let mut point = (0.0, 0.0);
+    for (weight, control) in weights.iter().zip(controls) {
+        point.0 += weight * control.0;
+        point.1 += weight * control.1;
+    }
+    point
+}
+
+/// How far `(x, y)` is from the segment `a` to `b`.
+fn distance_to_segment(x: f64, y: f64, a: (f64, f64), b: (f64, f64)) -> f64 {
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let length_squared = dx * dx + dy * dy;
+    let t = if length_squared == 0.0 {
+        0.0
+    } else {
+        (((x - a.0) * dx + (y - a.1) * dy) / length_squared).clamp(0.0, 1.0)
+    };
+    (x - (a.0 + t * dx)).hypot(y - (a.1 + t * dy))
+}
+
+/// The link whose curve passes within `tolerance` of `(x, y)`, if any. When
+/// several do, the one added last.
+pub fn link_at(
+    graph: &Graph,
+    node_types: &[NodeType],
+    x: f64,
+    y: f64,
+    tolerance: f64,
+) -> Option<Link> {
+    graph
+        .links
+        .iter()
+        .rev()
+        .find(|link| {
+            let from = anchor_of(graph, node_types, &link.source, Side::Output);
+            let to = anchor_of(graph, node_types, &link.target, Side::Input);
+            let (Some(from), Some(to)) = (from, to) else {
+                return false;
+            };
+            let controls = wire_controls(from, to);
+            let mut previous = from;
+            (1..=WIRE_STEPS).any(|step| {
+                let next = wire_point(&controls, step as f64 / WIRE_STEPS as f64);
+                let near = distance_to_segment(x, y, previous, next) <= tolerance;
+                previous = next;
+                near
+            })
+        })
+        .cloned()
 }
