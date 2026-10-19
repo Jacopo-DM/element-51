@@ -43,7 +43,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
 | Serve the editor | `uv run examples/a1_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
-| Serve another example | `uv run python examples/a2_arithmetic.py` (a2 to a6, a8, a9 to a14 serve on http://127.0.0.1:8765; a7 prints and exits) | same port, so stop one before starting the next |
+| Serve another example | `uv run python examples/a2_arithmetic.py` (a2 to a6, a8, a9 to a16 serve on http://127.0.0.1:8765; a7 prints and exits) | same port, so stop one before starting the next |
 
 ## Code rules
 
@@ -55,6 +55,12 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 - No abstraction before there are two real call sites.
 - Clear names over clever one-liners.
 - No options nobody asked for.
+- Colours, sizes and fonts come from the `Theme` (`rust/element-51-core/themes/*.json`);
+  the web crate and `index.html` hold no hex colour (a native test in
+  `rust/element-51-core/tests/theme.rs` fails if one appears). The page's own
+  parts use CSS custom properties such as `var(--menu-bg)`.
+- A change to a wire record (snapshot, edit, node type) changes the shared files in
+  `tests/fixtures/` too; both test suites read them.
 - A feature the user can try gets a runnable example in `examples/` (a docstring
   that says what to try, a `build_app()`, and a row in `tests/test_examples.py`).
   When a task is done, tell the user when they can try it, with the exact
@@ -124,5 +130,14 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - `cargo fmt` rewraps struct literals, so a scripted text replacement in a Rust
   file that ran after formatting silently matched nothing twice. Check that a
   replacement applied, or use a regex.
+- The browser pane may refuse `navigate` to `http://127.0.0.1:8765` the first
+  time; `preview_start` with that `url` opens it, after which `navigate` works.
+  Rebuild with `tools/build_wasm.py` and reload the page after any Rust change;
+  restart the example only after a Python change.
+- To run an example that opens a browser without opening the user's own browser,
+  set `BROWSER="echo OPENED %s"`: Python's `webbrowser` then prints the URL
+  instead (`BROWSER="echo OPENED %s" uv run examples/a1_two_nodes.py`).
+- zsh stops on an unquoted `--include=*.rs` ("no matches found"); quote it or use
+  `rg -g '*.rs'`.
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's
   `no-self-use` flags every `run` that does not use `self`.

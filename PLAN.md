@@ -66,14 +66,18 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 10 (Tier 1 is complete, the graph runs, nodes can have several
-outputs and be written as classes, and a reload keeps the graph).
-Next step: task 15 (README credit, a draft for the user's review), then task
-18 (the header icon menu). The user's own try-out of goal `skeleton` is still
-pending.
+tasks 1 to 14 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+goal is complete and the antimony-theme goal has criteria 1 to 4 met (the graph
+runs, saves, undoes and has the Antimony look, a light theme and a nested menu).
+Next step: task 15 (README credit, a draft for the user's review; the user has
+said "start task 15" and it is not started), then task 18 (the header icon
+menu; confirm its entries with the user first). The user's own try-out of goal
+`skeleton` is still pending, and so is their look at the menu (task 14).
 Nothing is uncommitted except `.vscode/settings.json`, where an editor
-extension added a setting; the user chose to leave it. There is no remote, so
-nothing is pushed.
+extension added a setting; the user chose to leave it. All merged branches are
+deleted except the notes branch from this pass. There is no remote, so nothing
+is pushed. The user approves each task start and each branch deletion in one
+reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
 
@@ -96,11 +100,15 @@ Measured 2026-10-19 after task 14, Apple silicon, Python 3.13:
   and the box restored, the boxes follow pan, zoom and drag, and the values and
   a ticked box survive a reload; with `a14_undo_redo.py` Ctrl+Z undid a drag and
   a node delete (the node came back with its links) and Ctrl+Shift+Z redid a
-  move, and the result survived a reload.
+  move, and the result survived a reload; with `a15_light_theme.py` the canvas is
+  light grey with a dot grid, the cards stay dark and a selected wire is dark;
+  with `a16_menu.py` the right-click menu has Math > Trig > sine flyouts, the
+  search box lists matches with their paths, Enter adds the first and Escape
+  closes, and the flyouts flip left near the right edge.
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 10 are done (removed from the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 14 are done (removed from the
 list below, their detail is in DESIGN.md and git). A task added later needs its
 own approval in words. Sizes are estimates by analogy with the skeleton (about
 80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
@@ -118,10 +126,20 @@ Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 (reload keeps the graph; no product code was needed) and 6a (Python pushes to
 open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md), 6
 (save and load as versioned JSON), 7 (pan, zoom, move, select, delete), 8
-(value editing with HTML inputs) 9 (undo and redo) and 10
-(`a1_two_nodes.py`, `serve(open_browser=True)`, clean Ctrl+C). Extra task 17, added at the user's request and
-approved in words 2026-10-19: rounded node cards and wire ends (done; the radius
-is a constant that task 11 moves into the Theme).
+(value editing with HTML inputs), 9 (undo and redo), 10
+(`a1_two_nodes.py`, `serve(open_browser=True)`, clean Ctrl+C). Extra task 17,
+added at the user's request and approved in words 2026-10-19: rounded node cards
+and wire ends (done; the radius is `card_radius` in the Theme's metrics). Rounded
+port markers were tried at the user's request and reverted because they did not
+like them. At the user's request the wires were also thickened and then copied
+from the Antimony screenshots (colour by source port, thickness, curve), and the
+wire curve was changed to stop it hugging a card's edge; details in DESIGN.md.
+
+### Goal `antimony-theme`: done
+
+Tasks 11 (`Theme`), 12 (the Antimony look; the user accepted it), 13
+(`antimony-light`, `serve(theme=...)`) and 14 (categories and the nested menu
+with search) are done; detail in DESIGN.md. Open, below: 15 and 18.
 
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
@@ -133,7 +151,7 @@ is a constant that task 11 moves into the Theme).
     choice while approving the spec). Clicking the three-bar icon on a card
     opens a small popup with one entry, Delete node, in the theme's menu
     style. The user gave "for example Delete node"; I will confirm the entries
-    before starting. After task 12. Risk low. Cost about 120 lines Rust.
+    before starting. After task 12 (done). Risk low. Cost about 120 lines Rust.
     Verify: native test for the entry list; by hand.
 
 ### Tier 3: listed, not executed
@@ -152,7 +170,8 @@ is a constant that task 11 moves into the Theme).
 
 Oldest first.
 
-None.
+1. (2026-10-19) Task 18: which entries should the header icon's menu hold?
+   The user said "for example Delete node"; the task assumes that one entry.
 
 ## Known problems
 
@@ -181,3 +200,15 @@ None.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran
   first (checked 2026-10-19: the wheel held the WASM). Nothing stops a build
   without it, which would ship a package whose `asgi_app()` fails.
+- The add-node menu's tree does not scroll (a scrolling panel would clip the
+  flyout submenus), so a menu with more top-level entries than fit in the window
+  runs off its bottom. Search results do scroll.
+- The page starts in the dark theme and switches when the first snapshot names
+  another one, so a light-theme page can flash dark for a moment.
+- A bool input is the browser's own white checkbox, which does not match the
+  theme.
+- Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
+  which is faint. The user may want it lighter (a theme colour, `placeholder`).
+- The three-bar icon on a card is decoration until task 18.
+- The undo history is per page: a reload empties it, and edits made by other
+  pages or scripts are not in it (see DESIGN.md, undo and redo).

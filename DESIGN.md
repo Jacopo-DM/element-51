@@ -403,8 +403,9 @@ theme, with the credit in the README.
   the ends are nearly in one column a sideways swing of a third of the height
   between them (at most 70), so a wire to a port above or below does not run
   along the card's edge (the user spotted that overlap). The port
-  markers take the same two colours. Port squares and input boxes were left as they were by the
-  user's choice. The radius is a constant in `draw.rs` until the Theme exists.
+  markers take the same two colours. Port squares and input boxes were left as
+  they were by the user's choice. The card radius is `card_radius` in the
+  theme's metrics (moved there in task 11).
 - Undo and redo (task 9). The history lives in `element-51-core`
   (`History`). For each edit the user makes, it records the edit and the edits
   that undo it, worked out from the graph before the edit: a move goes back to
@@ -514,6 +515,9 @@ theme, with the credit in the README.
   `~/.cargo`. The prebuilt tarball is kept in git-ignored `tools/bin/`.
 - `wasm-pack`, `trunk` and `console_error_panic_hook`: not needed for the
   skeleton, so not added.
+- Rounded port markers (corner radius 3, so small pills): tried at the user's
+  request after the cards and wires were rounded; the user did not like them and
+  they were reverted (commit `abc27f7`). Ports stay plain squares.
 - starlette's `TestClient`: needs `httpx` as a new dev dependency; tests use a
   real uvicorn server and the `websockets` client instead (see Decisions).
 

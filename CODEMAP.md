@@ -5,9 +5,10 @@ the ignore list in CLAUDE.md.
 
 ## Entry points
 
-- `element_51.serve(app, port=8765)`: run the editor for an `App` on 127.0.0.1
-  until interrupted.
-- `element_51.asgi_app(app)`: an ASGI app to mount in an existing server.
+- `element_51.serve(app, port=8765, *, open_browser=False, theme=None)`: run the
+  editor for an `App` on 127.0.0.1 until interrupted; Ctrl+C ends it with exit 0.
+- `element_51.asgi_app(app, theme=None)`: an ASGI app to mount in an existing
+  server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
 - `examples/a1_two_nodes.py` to `a6_port_types.py`: served graphs, one idea each
   (two nodes and a link, which opens the browser, arithmetic, strings, errors, diamond and int to float, all four
@@ -55,21 +56,24 @@ happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`
 
 Each is read by a Python test and a Rust test, so the two sides cannot drift:
 `snapshot.json` (the snapshot message), `messages.json` (edit request, ack,
-reject, run, run result), `link_cases.json` (a graph with a multi-output node, candidate links and the expected verdicts), `edit_cases.json` (move, delete and set-value edits with the expected graphs).
+reject, run, run result), `link_cases.json` (a graph with a multi-output node, candidate links and the expected verdicts), `edit_cases.json` (move, delete and set-value edits with the expected graphs),
+`theme_names.json` (the theme names both sides offer).
 
 ## Tests
 
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
-`test_server.py` (a real uvicorn server and the `websockets` client),
+`test_store.py`, `test_theme.py`, `test_server.py` (a real uvicorn server and the `websockets` client),
 `test_examples.py` (loads every `examples/a1` to `a16` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
-(the shared fixtures), `replica.rs`, `layout.rs`, `run.rs`; unit tests for
+(the shared fixtures), `replica.rs`, `layout.rs`, `run.rs`, `view.rs`, `fields.rs`,
+`history.rs`, `menu.rs`, `theme.rs` (includes the no-hex-colour scan of the web
+crate); unit tests for
 `can_link` sit in `src/lib.rs`. `element-51-web` has no automated tests.
 
 ## Not built yet
 
-The theme, the nested menu. The
+The header icon's menu (task 18). The
 planned layout is in DESIGN.md under Specs.
