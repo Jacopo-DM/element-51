@@ -147,6 +147,27 @@ browser, and its logic goes into `patchbay-core` where `cargo test` covers it.
     review; no Antimony asset in the repo. Criterion 5. Risk low. Cost about 5
     lines.
 
+### Rename to `element-51` (task 16, requested by the user 2026-10-19)
+
+16. **Rename `patchbay` to `element-51`.** The name `patchbay` is taken on PyPI
+    and crates.io. Run it before task 1, because every later task adds code
+    that would need renaming. PyPI name `element-51`, import `element_51`,
+    folder `src/element_51/`; crates `element-51-core` and `element-51-web`;
+    WASM files `element_51_web*`; Apache-2.0 in `pyproject.toml` and the Rust
+    manifests plus a `LICENSE` file (the copyright line wording is the user's
+    to give). Four commits on branch `rename-element-51`, checks run before
+    each: (a) Python package, `pyproject.toml`, imports, `uv lock`; gate ruff,
+    mypy, pytest at 100%. (b) Rust crates, workspace, `index.html`, `server.py`
+    and `tools/build_wasm.py` names; gate `cargo test`, the build, the example
+    loaded in the browser pane. (c) CLAUDE.md, CODEMAP.md, DESIGN.md, PLAN.md,
+    `.gitignore`, one DESIGN.md decision entry, and a README title draft for
+    review (no README prose). (d) `grep -ri patchbay` over tracked files must
+    match only the DESIGN.md note, then the full gate, build and browser run.
+    Risk low. Cost: about 100 changed lines, no new dependency. Not in scope:
+    renaming the repo folder (it would break this project's session history;
+    the user decides), publishing anything, rewriting history. Status: draft,
+    awaiting approval.
+
 ### Tier 3: listed, not executed
 
 - CI builds the WASM and runs the Rust checks: outside the acceptance
