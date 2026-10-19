@@ -1,4 +1,4 @@
-# patchbay
+# element-51
 
 This file adds to `~/.claude/CLAUDE.md`; it does not repeat it.
 
@@ -41,7 +41,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust format check | `R cargo fmt --all --check --manifest-path rust/Cargo.toml` | under 1 s; `cargo fmt --all` rewrites |
 | Rust lint | `R cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings` | about 1 s warm |
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
-| Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/patchbay/web/` |
+| Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
 | Serve the editor | `uv run python examples/a1_serve.py` | needs the build first; Ctrl+C stops it |
 
 ## Code rules
@@ -61,7 +61,7 @@ Do not edit, search or commit these.
 
 | Path | Generated or hand-written | What makes it |
 | --- | --- | --- |
-| `src/patchbay/web/` | generated, git-ignored | `tools/build_wasm.py` |
+| `src/element_51/web/` | generated, git-ignored | `tools/build_wasm.py` |
 | `rust/target/` | generated, git-ignored, about 440 MB | cargo |
 | `tools/bin/wasm-bindgen` | downloaded, git-ignored | prebuilt 0.2.129 release, sha256 checked |
 | `rust/Cargo.lock`, `uv.lock` | generated, committed | cargo, uv |

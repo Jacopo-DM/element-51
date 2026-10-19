@@ -49,25 +49,25 @@ Behaviour:
 
 Architecture:
 
-- Python package `src/patchbay/`: `model` (Graph, Node, Port, Link, PortType;
+- Python package `src/element_51/`: `model` (Graph, Node, Port, Link, PortType;
   pydantic, frozen), `nodes`, `engine`, `protocol`, `session`, `server`,
   `store`, and `web/` (built WASM, glue JS, index.html; git-ignored output).
   Import direction: `server` imports `session`, `store`, `protocol`; `session`
   imports `engine`, `model`; `engine`, `store`, `nodes` import only `model`.
   Nothing imports `server`.
-- Rust workspace `rust/`: `patchbay-core` (graph, port types, link rules,
+- Rust workspace `rust/`: `element-51-core` (graph, port types, link rules,
   message types, undo log, layout, hit-testing, theme; plain `cargo test`) and
-  `patchbay-web` (wasm-bindgen layer: canvas drawing, DOM inputs, websocket).
-  `patchbay-web` imports `patchbay-core`, never the reverse.
+  `element-51-web` (wasm-bindgen layer: canvas drawing, DOM inputs, websocket).
+  `element-51-web` imports `element-51-core`, never the reverse.
 - Build: `tools/build_wasm.py` calls `rustup run stable cargo build --target
   wasm32-unknown-unknown --release`, then `wasm-bindgen`, and copies the output
-  into `src/patchbay/web/`. The wheel bundles the output; users need no Rust.
+  into `src/element_51/web/`. The wheel bundles the output; users need no Rust.
 - Browser side: Rust draws everything except text boxes and dropdowns, which
   are real HTML elements Rust places and reads. A small loader in JS and no
   framework, no npm.
 
-Testing: Python at 100% coverage. `patchbay-core` under native `cargo test`.
-`patchbay-web` cannot reach 100% automatically; it is checked through the
+Testing: Python at 100% coverage. `element-51-core` under native `cargo test`.
+`element-51-web` cannot reach 100% automatically; it is checked through the
 in-app browser against the running example.
 
 ## Decisions
@@ -93,6 +93,13 @@ in-app browser against the running example.
   (0.2.129): the two must match exactly.
 - Servers tested with a real uvicorn server and the websockets client, to avoid
   adding httpx as a dev dependency.
+- Renamed from `patchbay` to `element-51` on 2026-10-19: `patchbay` is taken on
+  PyPI and crates.io, and `element-51` is free on both. PyPI name `element-51`,
+  import `element_51`, crates `element-51-core` and `element-51-web`, licence
+  Apache-2.0 (copyright 2026 jmdm). The repo folder is still named `patchbay`:
+  renaming it would break the link to this project's Claude session history, so
+  that is the user's call. Earlier entries in this file were corrected to the
+  new names, not left as history.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
