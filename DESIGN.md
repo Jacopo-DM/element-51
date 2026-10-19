@@ -98,10 +98,10 @@ in-app browser against the running example.
 - Renamed from `patchbay` to `element-51` on 2026-10-19: `patchbay` is taken on
   PyPI and crates.io, and `element-51` is free on both. PyPI name `element-51`,
   import `element_51`, crates `element-51-core` and `element-51-web`, licence
-  Apache-2.0 (copyright 2026 jmdm). The repo folder is still named `patchbay`:
-  renaming it would break the link to this project's Claude session history, so
-  that is the user's call. Earlier entries in this file were corrected to the
-  new names, not left as history.
+  Apache-2.0 (copyright 2026 jmdm). The repo folder was renamed to `element-51`
+  later the same day, together with Claude's history folder for the project.
+  Earlier entries in this file were corrected to the new names, not left as
+  history.
 - JSON field names (task 1): ports carry `kind`, nodes carry `node_type`,
   messages carry `op` and `version`. Avoids `type`, which shadows a Python
   builtin, and keeps `op` for message kinds. Links are `source` and `target`
