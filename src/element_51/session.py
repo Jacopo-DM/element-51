@@ -1,12 +1,14 @@
 """The live session: node types and the graph being edited."""
 
 from collections.abc import Callable, Iterable
+from pathlib import Path
 
 from element_51.edits import AddLink, AddNode, apply_edit
 from element_51.engine import RunResult, run_graph
-from element_51.model import Graph, PortRef, PortValue
+from element_51.model import Graph, NodeType, PortRef, PortValue
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot
+from element_51.store import load_graph, save_graph
 
 
 class App:
@@ -76,11 +78,7 @@ class App:
         edit
             The edit to apply.
         """
-        node_types = {
-            name: function.node_type
-            for name, function in self.node_functions.items()
-        }
-        self.graph = apply_edit(self.graph, node_types, edit)
+        self.graph = apply_edit(self.graph, self._node_types(), edit)
 
     def add_link(
         self, source: str, source_port: str, target: str, target_port: str
@@ -107,6 +105,43 @@ class App:
             )
         )
         self._changed()
+
+    def save(self, path: Path | str) -> None:
+        """Write the graph to a JSON file, replacing any file there.
+
+        Parameters
+        ----------
+        path
+            The file to write.
+        """
+        save_graph(self.graph, Path(path))
+
+    def load(self, path: Path | str) -> None:
+        """Replace the graph with one read from a JSON file.
+
+        Open pages show the new graph at once. If the file cannot be loaded,
+        `StoreError` is raised and the current graph stays as it is.
+
+        Parameters
+        ----------
+        path
+            The file to read.
+        """
+        self.graph = load_graph(Path(path), self._node_types())
+        self._changed()
+
+    def _node_types(self) -> dict[str, NodeType]:
+        """Return every node type by name.
+
+        Returns
+        -------
+        dict[str, NodeType]
+            The node types this app offers.
+        """
+        return {
+            name: function.node_type
+            for name, function in self.node_functions.items()
+        }
 
     def subscribe(self, listener: Callable[[Snapshot], None]) -> None:
         """Call `listener` with a new snapshot after each change made here.

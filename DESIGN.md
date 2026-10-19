@@ -53,7 +53,7 @@ Architecture:
 
 - Python package `src/element_51/`: `model` (Graph, PlacedNode, Port, Link,
   PortType; pydantic, frozen), `edits`, `nodes`, `engine`, `protocol`,
-  `session`, `server`, `store` (not built yet, task 6), and `web/` (built WASM,
+  `session`, `server`, `store`, and `web/` (built WASM,
   glue JS, index.html; git-ignored output). Import direction as built is in
   CODEMAP.md; the rule is that nothing imports `server` except the package
   `__init__`, and `session` never imports `server`.
@@ -249,6 +249,14 @@ theme, with the credit in the README.
   what the user just did. `App` itself is not thread-safe: a script that
   edits while the server runs should do so from one thread, and a browser
   edit racing a script edit with the same id is refused with a reason.
+- Save and load (task 6): the file is `{"format_version": 1, "nodes": [...],
+  "links": [...]}`, pretty-printed JSON, positions included. Loading reads the
+  version first and refuses any other with a message naming both versions,
+  then replays every node and link through `apply_edit`, so a file whose
+  node type is missing, or whose links break the rules, is refused and the
+  app keeps its old graph. A missing file raises `FileNotFoundError` as is.
+  Task 8 adds per-node values; it must raise `FORMAT_VERSION` and decide
+  whether to read version 1 files.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
   redistribute.
 
@@ -276,6 +284,7 @@ theme, with the credit in the README.
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-19 | task 6: save and load | round trip, version refusal, five kinds of damaged file, rule-breaking file, and a real websocket test that an open page receives the loaded graph; `a11_save_load.py` saves on Ctrl+C and loads on the next start (run for real); 133 Python tests at 100% |
 | 2026-10-19 | task 6a: Python pushes to open pages | `a10_live_push.py` adds nodes every two seconds and an already-open page shows each at once, no reload; Run then gives 2.0 to 6.0; 119 Python tests at 100%, 45 Rust tests; two-client pytest (script edit reaches an open page; a browser edit reaches the other page only) |
 | 2026-10-19 | task 5: reload keeps the graph | no product code needed: every connection already gets a snapshot (task 1); added tests for edits made through the socket surviving a reconnect and for two open pages; by hand: a node added in the browser survives a reload; 109 Python tests at 100% |
 | 2026-10-19 | task 4: several outputs, class-form nodes | `div_mod` shows `q` and `r` in the browser; class nodes run and list by class name; 107 Python tests at 100%, 43 Rust tests; 3 new link cases for a multi-output node run on both sides |

@@ -13,7 +13,7 @@ the ignore list in CLAUDE.md.
   (blank canvas, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
-  graph while the page is open). `a7_script_api.py`: the graph from plain
+  graph while the page is open), `a11_save_load.py` (save and load a file). `a7_script_api.py`: the graph from plain
   Python, no browser. `a0_hello_world.py` is the project template, not an
   example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
@@ -24,17 +24,18 @@ the ignore list in CLAUDE.md.
 
 | Module | Purpose | Public interface |
 | --- | --- | --- |
-| `__init__` | package surface | `App`, `Model`, `Node`, `NodeFunction`, `node`, `asgi_app`, `serve` |
+| `__init__` | package surface | `App`, `Model`, `Node`, `NodeFunction`, `node`, `asgi_app`, `serve`, `StoreError` |
 | `model` | immutable records for node types and graphs | `Model`, `PortType`, `PortValue`, `value_fits`, `can_link`, `NodeId`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (with `next_id()`) |
 | `edits` | edits and the rules that allow or refuse them | `AddNode`, `AddLink`, `Edit`, `apply_edit`, `EditError`, `EditErrorKind` |
 | `nodes` | `@node` and the `Node` base class turn a typed function or a class into a node type, with its defaults and output model | `node`, `Node` (`run`, `call`; `node_type`, `defaults`, `output_model` built per subclass), `NodeFunction` (`call`, `defaults`, `output_model`), `Registered` (protocol), `port_type` |
 | `engine` | runs a graph in dependency order | `run_graph`, `RunResult`, `NodeOutcome` (`outputs` by port) |
 | `protocol` | messages in both directions | `Snapshot`, `EditRequest`, `RunRequest`, `ClientMessage`, `Ack`, `Reject` (and `engine.RunResult`) |
-| `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.subscribe`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
+| `session` | the live graph and the node types | `App(node_functions)`, `App.add_node`, `App.add_link`, `App.subscribe`, `App.save`, `App.load`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
+| `store` | save and load a graph as versioned JSON | `FORMAT_VERSION`, `StoreError`, `save_graph`, `load_graph` |
 | `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app)`, `serve(app, port)`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
 
 Import direction: `server` imports `session`, `protocol`, `edits`, `engine`;
-`session` imports `nodes`, `protocol`, `edits`, `engine`, `model`; `engine`
+`session` imports `nodes`, `protocol`, `edits`, `engine`, `store`, `model`; `store` imports `edits`, `model`; `engine`
 imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 `nodes` import `model`. Nothing imports
 `server` except `__init__`. `web/` holds the built page and WASM (generated).
@@ -60,7 +61,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a10` file and runs its graph).
+`test_examples.py` (loads every `examples/a1` to `a11` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
@@ -69,6 +70,6 @@ Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
 
 ## Not built yet
 
-Save and load (`store.py`), node
+Node
 moving and deleting, value editing, undo, the theme, the nested menu. The
 planned layout is in DESIGN.md under Specs.

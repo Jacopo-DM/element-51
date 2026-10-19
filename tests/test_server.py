@@ -392,3 +392,24 @@ def test_the_sender_task_ends_quietly_when_the_page_is_gone(
         await connection.pump(_GoneSender(error))
 
     asyncio.run(scenario())
+
+
+def test_loading_a_file_updates_a_page_that_is_already_open(
+    web_dir: Path, tmp_path: Path
+) -> None:
+    """`app.load` after the page connected: the page gets the loaded graph."""
+    assert web_dir.exists()
+    source = App([add, show])
+    first = source.add_node(add, x=1.0, y=2.0)
+    second = source.add_node(show, x=3.0, y=4.0)
+    source.add_link(first, "out", second, "value")
+    source.save(tmp_path / "g.json")
+    app = App([add, show])
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        app.load(tmp_path / "g.json")
+        pushed = Snapshot.model_validate_json(websocket.recv(timeout=5))
+    assert pushed.graph == source.graph

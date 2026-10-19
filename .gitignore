@@ -467,3 +467,5 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+# written by examples/a11_save_load.py
+examples/a11_graph.json

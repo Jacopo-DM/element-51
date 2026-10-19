@@ -60,6 +60,10 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "ok", {"out": "3 remainder 2"}),
     ],
     "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
+    "a11_save_load.py": [
+        ("n1", "ok", {"out": 4.0}),
+        ("n2", "ok", {"out": 8.0}),
+    ],
     "a9_class_nodes.py": [
         ("n1", "ok", {"out": "hello, world!"}),
         ("n2", "ok", {"out": "HELLO, WORLD!"}),
@@ -144,3 +148,13 @@ def test_the_push_example_grows_a_running_total() -> None:
         "n4": 1.0,
         "n5": 3.0,
     }
+
+
+def test_the_save_example_gets_back_what_was_saved(tmp_path: Path) -> None:
+    """A second run loads the file the first run saved."""
+    example = load("a11_save_load.py")
+    first = example.build_app(tmp_path / "g.json")
+    first.add_node(example.number, x=1.0, y=1.0)
+    first.save(tmp_path / "g.json")
+    second = example.build_app(tmp_path / "g.json")
+    assert [n.id for n in second.graph.nodes] == ["n1", "n2", "n3"]
