@@ -1,16 +1,79 @@
-# [.](https://LINK.com/)
+# element-51
 
-Python library to ...
+Design node-editor GUIs from Python. You write nodes as typed functions or small
+classes. element-51 serves an editor in the browser where people wire them
+together, and Python keeps the graph, runs it and can change it while the page
+is open.
+
+- **Nodes from type hints.** Put `@element_51.node` on a function, or subclass
+    `element_51.Node`. Parameters become inputs and the return type becomes the
+    output (a pydantic model gives one output per field).
+- **A fast editor.** The canvas is drawn by a Rust and WebAssembly module: pan,
+    zoom, drag, link, undo and redo, typed values in the node, a nested
+    add-node menu with search, and refused links between ports of different
+    types.
+- **Python is in charge.** The graph lives in your process. Read it, run it,
+    save and load it as JSON, or add nodes from a script and watch an open page
+    update.
+- **Yours to restyle.** Two themes ship, and a small JSON file changes any colour,
+    size, font or port shape.
+- **Embeddable.** It is an ASGI app, so it mounts inside FastAPI, NiceGUI or any
+    other ASGI host.
 
 ## Installation
 
-- from: [Installation Guide](https://LINK.com/)
+```bash
+uv add element-51
+```
 
-### `uv`
+To work on it from a clone, you also need Rust (the `stable` toolchain from
+rustup, with the `wasm32-unknown-unknown` target) to build the browser layer:
 
 ```bash
-uv add ...
+uv sync
+uv run python tools/build_wasm.py
 ```
+
+## Example
+
+Two nodes and a link. `number` is a function, `Double` is a class.
+
+```python
+import element_51
+
+
+@element_51.node
+def number() -> float:
+    return 21.0
+
+
+class Double(element_51.Node):
+    value: float = 0.0
+
+    def run(self) -> float:
+        return self.value * 2
+
+
+app = element_51.App([number, Double])
+first = app.add_node(number, x=60, y=80)
+second = app.add_node(Double, x=320, y=80)
+app.add_link(first, "out", second, "value")
+element_51.serve(app, open_browser=True)
+```
+
+Run it and your browser opens on the editor. Press Run: `number` shows 21.0 and
+`Double` shows 42.0. Right-click the canvas to add more nodes. Stop the server
+with Ctrl+C.
+
+More examples, grouped by topic, are in
+[`examples/`](examples): the basics, node types, using the graph from plain
+Python, editor features, themes, and embedding the editor in FastAPI or NiceGUI.
+
+## Documentation
+
+The [documentation](docs/index.md) has the guides and the API reference. To
+build it, run `uv sync --group docs` and then
+`uv run sphinx-build -b html docs docs/_build/html`.
 
 ## Credits
 
