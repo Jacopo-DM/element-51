@@ -78,16 +78,14 @@ the restructure pass (2026-10-20), tasks 1 to 15 and 18 to 26 plus 6a (push), 16
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the user's review of the README and docs drafts, which sit on the
-unmerged branch `docs-draft` (README.md, docs/index.md, docs/embedding.md; commit
-`git log main..docs-draft`). Merge them after the user's edits; then remove the
-template-text known problem below.
+Next step: the user's own try-out (below), then publishing, which the user does.
+The README and docs drafts were reviewed and merged on 2026-10-20.
 Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
 Nothing is uncommitted in this repo (checked 2026-10-20 after task 26). All
 merged branches are deleted (`notes-before-compact-4` too, 2026-10-20); the only
-other branch is `main` and the unmerged `docs-draft`.
+other branch is `main`.
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. There is no remote, so nothing
@@ -216,9 +214,7 @@ Oldest first.
 
 ## Known problems
 
-- `README.md` and `docs/index.md` on `main` are still template text (the
-    `pyproject.toml` description is written); drafts are on branch `docs-draft`.
-    The draft's install line, `uv add element-51`, is true only after the user
+- The README says `uv add element-51`, which is true only after the user
     publishes the package.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
     the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not

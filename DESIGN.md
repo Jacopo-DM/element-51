@@ -764,8 +764,8 @@ with the lock. Rejected: a lock for `run` (it would block edits for as long as t
 slowest node), and an `asyncio` lock (scripts run in plain threads). Still true:
 one `App` per process, so several server workers would each hold their own graph.
 
-README and docs drafts (2026-10-20, the user asked for them; branch `docs-draft`,
-unmerged until reviewed): the README says what the library is, lists what it
+README and docs drafts (2026-10-20, the user asked for them; reviewed and merged
+by the user's word the same day): the README says what the library is, lists what it
 gives, installs with `uv add element-51` and from a clone (needs Rust and the
 `wasm32-unknown-unknown` target), shows the two-node example (the same code as
 `a_basics/a2_two_nodes.py`, run to confirm it gives 21.0 and 42.0), and links
