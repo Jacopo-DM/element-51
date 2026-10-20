@@ -794,6 +794,7 @@ have to go through `tools/compress_images.py`).
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | speed-up task 1: links indexed in `engine.py` | `tools/bench_python.py`, 2000-node chain, 11 runs: `run` median 489.8 ms (range 480.6 to 585.2) before, 5.9 ms (5.7 to 6.7) after, 83 times faster; build 1969 ms (1945 to 2091) and snapshot 1.9 ms unchanged within the spread; 220 Python tests at 100%, unchanged |
 | 2026-10-20 | task 26: thread-safe `App` | pytest: 8 threads adding 60 nodes each through `add_node` (distinct ids, none lost), through `apply` (none lost), and listener snapshots arriving in order; the three failed without the lock (stashed the change to check) and pass 5 of 5 runs with it; 220 Python tests at 100%, 122 Rust tests |
 | 2026-10-20 | task 25: no dark flash on the light theme | native test: the page has the hiding rule, `mark_ready` exists and `show_error` calls it; by hand: with the light example the root has class `ready` and a `#eeeeee` body, and without the class its visibility is hidden; the flash itself was not observed; 217 Python tests at 100%, 122 Rust tests |
 | 2026-10-20 | task 24: scrolling add-node menu | native tests: `clamp_into` (inside, hanging out, too tall) and `flyout_at` (right, flipped left, lifted near the bottom, kept below the top); by hand with 30 categories and with three nesting levels: the tree scrolls and resets on open, flyouts sit level with their entry, flip at the right edge and stay open on the way from the entry; 217 Python tests at 100%, 121 Rust tests |

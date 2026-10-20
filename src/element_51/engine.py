@@ -1,10 +1,17 @@
 """Run a graph: call each node's function in dependency order."""
 
 from collections import deque
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Literal
 
-from element_51.model import Graph, Model, PlacedNode, PortValue, value_fits
+from element_51.model import (
+    Graph,
+    Link,
+    Model,
+    PlacedNode,
+    PortValue,
+    value_fits,
+)
 from element_51.nodes import Registered
 
 
@@ -75,18 +82,19 @@ def run_graph(
         )
     outcomes: dict[str, NodeOutcome] = {}
     outputs_by_node: dict[str, Mapping[str, PortValue]] = {}
+    # Indexed once, so each node finds its links without scanning them all.
+    into: dict[str, list[Link]] = {}
+    for link in graph.links:
+        into.setdefault(link.target.node, []).append(link)
     for node in order:
-        upstream = (
-            link.source.node
-            for link in graph.links
-            if link.target.node == node.id
-        )
+        incoming = into.get(node.id, ())
+        upstream = (link.source.node for link in incoming)
         if any(outcomes[source].status != "ok" for source in upstream):
             outcomes[node.id] = NodeOutcome(node=node.id, status="skipped")
             continue
         try:
             outputs = _evaluate(
-                node, graph, functions[node.node_type], outputs_by_node
+                node, incoming, functions[node.node_type], outputs_by_node
             )
         except Exception as error:  # node code can raise anything
             if raise_errors:
@@ -141,25 +149,26 @@ def _order(graph: Graph) -> list[PlacedNode]:
         The nodes that can run, in running order.
     """
     waiting = {node.id: 0 for node in graph.nodes}
+    leaving: dict[str, list[Link]] = {}
     for link in graph.links:
         waiting[link.target.node] += 1
+        leaving.setdefault(link.source.node, []).append(link)
     by_id = {node.id: node for node in graph.nodes}
     ready = deque(node for node in graph.nodes if waiting[node.id] == 0)
     order: list[PlacedNode] = []
     while ready:
         node = ready.popleft()
         order.append(node)
-        for link in graph.links:
-            if link.source.node == node.id:
-                waiting[link.target.node] -= 1
-                if waiting[link.target.node] == 0:
-                    ready.append(by_id[link.target.node])
+        for link in leaving.get(node.id, ()):
+            waiting[link.target.node] -= 1
+            if waiting[link.target.node] == 0:
+                ready.append(by_id[link.target.node])
     return order
 
 
 def _evaluate(
     node: PlacedNode,
-    graph: Graph,
+    incoming: Sequence[Link],
     function: Registered,
     outputs_by_node: Mapping[str, Mapping[str, PortValue]],
 ) -> Mapping[str, PortValue]:
@@ -178,11 +187,7 @@ def _evaluate(
     inputs: dict[str, PortValue] = {}
     for port in function.node_type.inputs:
         link = next(
-            (
-                link
-                for link in graph.links
-                if link.target.node == node.id and link.target.port == port.name
-            ),
+            (link for link in incoming if link.target.port == port.name),
             None,
         )
         if link is not None:

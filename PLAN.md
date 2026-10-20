@@ -248,7 +248,8 @@ Proposed tasks. None is started.
 
 Tier 1:
 
-1. **Index the links in `engine.py`** (goal `speed-up`, workload (c) run; touches
+1. **Done 2026-10-20** (`run` 490 to 5.9 ms, 83 times faster; DESIGN.md Results).
+    **Index the links in `engine.py`** (goal `speed-up`, workload (c) run; touches
     100% of `run`; 76 times faster, 490 to 6.4 ms, measured by experiment). Build
     one dictionary of links by target node and one by source node, and pass them
     to `_order`, `run_graph` and `_evaluate`. About 15 lines, no new concept, no
