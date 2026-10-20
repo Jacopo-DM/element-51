@@ -129,6 +129,125 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
     me.
 - Added: 2026-10-21
 
+### Experiment goals (draft, added 2026-10-21)
+
+The user wants to set up a simple experiment visually, for example MNIST
+classification: a node that shows a sample image, a node that starts a training
+run, and a node that plots the live results. Four goals, in this build order.
+They start after `canvas-accessibility` tasks 27 to 33 are done (the user's
+choice, 2026-10-21: every new part is then written to be reachable by keyboard
+and screen reader from the start; they touch the same files: `draw.rs`,
+`a11y_ui.rs`, `index.html`, `layout.rs`). Constraints for all four: no new
+runtime dependency (numpy and anything else the example needs go in the `examples`
+group, each package approved by name, source and size before it is installed);
+the `examples` group is a default group, so it installs on every `uv sync` and in CI,
+which keeps it light (numpy only); tests and CI never download; a user's own
+data is never touched; every new page part is labelled, operable by keyboard, AA
+in all themes, and described in the hidden tree.
+Non-goals for all four: a GPU or a distributed run, resuming a run from a
+checkpoint, zoom or pan inside a chart, editing images, a dataset catalogue in
+the library (datasets live in examples), and running two jobs of one node at once.
+
+### visual-ports
+
+- Goal: nodes can pass pictures and time series, a card shows a picture, a Plot
+    node draws live lines, and either can be saved as a PNG. Depends on `skeleton`
+    and `antimony-theme`.
+- Kind: new behaviour.
+- Success measure (each is a test, a pure-function test where the code runs on
+    the canvas, or a recorded walk-through in the browser pane):
+    1. Two new port kinds, `image` and `series`, exist in Python (`element_51.Image`,
+        `element_51.Series`, pydantic models) and in Rust, pinned by shared fixtures;
+        a link joins only equal kinds; all three themes give each kind a colour and a
+        shape, and the contrast tests pass for every theme and palette.
+    2. After a run, a card with an `Image` output shows the picture below its ports,
+        scaled up with crisp pixels; a native test covers the picture area's size and
+        position.
+    3. `element_51.PlotNode` shows each series it receives as a named line on one
+        chart with a scale on both axes and the last value as text; it starts with
+        one empty series input, linking it adds a fresh empty row below, and every
+        linked row is one line named after the port it comes from; native tests
+        cover the rows rule and the chart scaling.
+    4. A node's series show up as output ports named by the node (`loss`,
+        `accuracy`), as any output does.
+    5. The card menu has `Save as PNG` on a node with a picture or a chart.
+    6. The hidden tree describes each display (for example "Plot, 2 lines, loss
+        last 0.31, accuracy last 0.92"); axe-core reports 0 violations in every
+        new state in all three themes.
+    7. Nothing that works today changes: both suites pass apart from the new tests,
+        and redraw time at 200 nodes stays within its recorded spread.
+- Status: draft, added 2026-10-21.
+- Added: 2026-10-21
+
+### job-nodes
+
+- Goal: a node that you start and stop by hand, works in the background and
+    reports as it goes, so a long task can drive live displays. The class is
+    `element_51.JobNode` (the user's choice; names weighed: `ExecutorNode` clashes
+    with `concurrent.futures`, `TaskNode` with this repo's tasks). Depends on
+    `visual-ports`.
+- Kind: new behaviour.
+- Success measure (each is a test or a recorded walk-through):
+    1. A `JobNode` subclass declares inputs and outputs like `Node` and does its
+        work in a method that calls `report(...)` with partial outputs; its card has
+        Start and Stop buttons and shows its state (idle, running, finished,
+        stopped, failed).
+    2. Run and `Run automatically` never start a `JobNode`; Start does, with the
+        node's current input values; Start while it is running is refused with a
+        reason.
+    3. Each report reaches open pages at most 20 times a second; display nodes
+        (Plot, Image) after the job redraw on every report; every other node after
+        it runs once, when the job ends. Measured: a report reaches the page within
+        100 ms on localhost.
+    4. Stop ends the job within 1 s; a job that raises shows its error on the card
+        and in the banner (with Dismiss) and leaves the editor working; a page
+        reload shows the job's current state and data.
+    5. The Run button has a running state while a plain run is in progress (this
+        clears the known problem in this file).
+    6. Python tests with a fake job (no sleeping longer than a few milliseconds);
+        the existing 226 Python tests and all Rust tests pass unchanged.
+- Status: draft, added 2026-10-21.
+- Added: 2026-10-21
+
+### auto-run
+
+- Goal: a `Run automatically` checkbox next to Run, so results refresh as you edit.
+    Independent of the other three goals.
+- Kind: new behaviour.
+- Success measure:
+    1. The checkbox is unticked at every page load and is not saved.
+    2. Ticked, a change that alters a result (add or delete a node, link or unlink,
+        typing a value, undo or redo, a change pushed from Python) runs the graph
+        once, 300 ms after the last change; moving a node does not.
+    3. It never starts a `JobNode`.
+    4. It is labelled, operable by keyboard, AA in all themes, and axe reports 0
+        violations; a native test covers the debounce rule.
+- Status: draft, added 2026-10-21.
+- Added: 2026-10-21
+
+### mnist-experiment
+
+- Goal: the example that proves the other three: sample an MNIST digit, train a
+    small network live, watch the curves. Depends on `visual-ports`, `job-nodes`
+    (and uses `auto-run` for the sample node).
+- Kind: new behaviour (an example, plus its tests and docs page).
+- Success measure:
+    1. `examples/g_experiments/g1_mnist.py` builds three linked nodes: `MnistSample`
+        (an `index` box; outputs the image and its label), `Train` (a `JobNode`;
+        inputs for hidden size, learning rate and epochs; outputs the `loss` and
+        `accuracy` series) and a `PlotNode`.
+    2. numpy only; no new dependency. The data are fetched once into
+        `__data__/mnist/` (git-ignored) from a source the user approves by name,
+        with a sha256 check; tests use a tiny fake dataset and never download.
+    3. Pressing Start fills the plot live, and the default settings reach at least
+        95% test accuracy (measured here, with the time it takes, before the
+        example is called done).
+    4. A `dataset` choice also offers Fashion-MNIST, with its own checked download.
+    5. The docstring lists what to try; a row in `tests/test_examples.py` (with the
+        fake data); a docs page.
+- Status: draft, added 2026-10-21.
+- Added: 2026-10-21
+
 ### palette-try: done (2026-10-20)
 
 Pasting a Coolors link in the page (menu button at the top right, Load palette from Coolors link) applies
