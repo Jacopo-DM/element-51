@@ -78,7 +78,8 @@ Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
 Nothing is uncommitted in this repo (checked 2026-10-20 after task 26). All
-merged branches are deleted; the only other branch is the unmerged `docs-draft`.
+merged branches are deleted (`notes-before-compact-4` too, 2026-10-20); the only
+other branch is `main` and the unmerged `docs-draft`.
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. There is no remote, so nothing
@@ -189,10 +190,12 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 Oldest first.
 
-1. (2026-10-20) Does text now look sharp on the user's screen, and is zoom fast
-    enough? Three fixes were made on their report (device-pixel canvas, opaque
-    context, Verdana and Monaco; wheel and pinch rates) and I could only check
-    them in the built-in browser. The user has not said.
+1. (2026-10-20) Text is still blurry on the user's screen (their answer in
+    housekeeping 2026-10-20; zoom speed was not reported as a problem). Three
+    fixes were already made (device-pixel canvas, opaque context, Verdana and
+    Monaco). Options not yet tried: a larger card font, or snapping text
+    positions to whole device pixels. Needs a task approved in words, and a
+    screenshot from the user showing what looks blurry (which text, which zoom).
 
 ## Known problems
 
