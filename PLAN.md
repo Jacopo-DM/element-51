@@ -123,18 +123,33 @@ Waiting on the user: their own try-out of goal
 `skeleton`, a look at the menus (examples `d4_menu` and `d5_card_menu`), the new
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
-Nothing is uncommitted in this repo (checked 2026-10-20 after the palette goal). All
-merged branches are deleted (`notes-before-compact-4` too, 2026-10-20); the only
-other branch is `main`.
+Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
+`main` equals `origin/main` (`3b658e0`). Thirteen merged local branches are not
+deleted yet, waiting for the user's say-so: `docs-commands`, `github-remote`,
+`notes-before-compact-6`, `notes-readme-images`, `purple-synthwave`,
+`readme-badges`, `readme-docs-link`, `readme-header-synthwave`, `readme-visuals`,
+`record-0-1-1`, `record-release`, `record-release-hold`, `release-0-1-1` (all
+merged into `main`).
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. The repo was pushed on
-2026-10-21 to https://github.com/Jacopo-DM/element-51 (public, `main` and the tag
-`v0.1.0`); every later push needs the user's say-so. New commits in this repo use
+2026-10-21 to https://github.com/Jacopo-DM/element-51 (public; `main` and the tags
+`v0.1.0` and `v0.1.1`); every later push needs the user's say-so. New commits in this repo use
 GitHub's noreply address (`git config user.email`, set locally); the first 116 keep
 the user's own address, which is already public in `ci-group/ariel`, so no rewrite
 was done (user's choice). The user approves each task start and each branch deletion in one
 reply ("Yes, start task N, and delete the merged branch ...").
+On GitHub (2026-10-21, all at the user's say-so): GitHub Pages is on (build type
+`workflow`) and the docs are live at https://jacopo-dm.github.io/element-51/; the
+repo's About homepage is that address; Dependabot (`.github/dependabot.yml`: weekly
+for github-actions, uv and cargo in `/rust`) is running; the workflows `CI`, `Rust
+and WASM` and `Docs` ran for the first time and passed (the first Docs run failed
+only because Pages was off, then passed after the user enabled it). The README has
+seven badges, a header screenshot (the `purple-synthwave` theme) and a Looks section;
+its Python badge is a fixed `python 3.13+` image until 0.1.2, because the live one
+reads classifiers that the published releases do not have. The next release (0.1.2 or
+0.2.0) carries the classifiers, the `purple-synthwave` theme and the README on the
+PyPI page; PyPI's page for 0.1.1 shows the old README.
 
 ## Baseline
 
@@ -208,6 +223,10 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 221 passed, 100% coverage, about 8 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 153 tests.
+- After the `purple-synthwave` theme (2026-10-21): pytest 225 passed at 100% (about 8 s
+    alone; 14 to 22 s while the machine was busy), cargo fmt, clippy and 153 tests pass
+    (the new theme runs through the existing loops over `THEME_NAMES`), ruff, mypy and ty
+    pass, the docs build with `-W` has 0 warnings; axe was not re-run on the new theme.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
     the node's rows; the class-form example runs and its menu lists the class
@@ -314,6 +333,10 @@ Oldest first.
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
     Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
     fix and touch support.
+3. (2026-10-21) Dependabot opened pull request #1 on GitHub, "Bump astral-sh/setup-uv
+    from 9.0.0 to 10.3.0" (a major version; `ci.yml`, `docs.yml` and `rust.yml` pin
+    9.0.0 by SHA). Not looked at. Merging changes `main` on GitHub, so the user decides;
+    more Dependabot pull requests may follow for uv and cargo.
 ## Known problems
 
 - `.pre-commit-config.yaml` lacks the template's notebook hooks (`run-notebooks`,

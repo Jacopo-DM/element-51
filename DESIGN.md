@@ -599,6 +599,16 @@ theme, with the credit in the README.
     AA test, the no-hex test and the palette test run over it too; `docs/themes.md`
     has a third column in the colours table; example `e_look/e4_purple_synthwave.py`.
     Rejected: a pink and cyan neon palette, since the user asked for this one.
+- Publishing and the public repo (2026-10-21, the user's choices): 0.1.0 went to PyPI on
+    2026-10-20 and 0.1.1 on 2026-10-21, only to add `[project.urls]` (a published
+    release's metadata cannot be edited). The repo went public on GitHub with the full
+    history and the user's own commit email, with no rewrite: the same address is
+    already public in `ci-group/ariel` (228 commits found with a read-only API search),
+    so hiding it here would protect nothing, and a rewrite would change 116 hashes, the
+    tag, and about 22 hashes quoted in the notes. New commits use the GitHub noreply
+    address (`git config user.email`, local to this clone). A release is a version bump
+    in `pyproject.toml` and `uv.lock`, `tools/check_wheel.py`, the user's upload, then an
+    annotated tag `v<version>` on the release commit; the tags are pushed too.
 
 ## Rejected approaches
 
@@ -904,10 +914,17 @@ have to go through `tools/compress_images.py`).
     library (nothing in the page needs one); a "running" state for the Run button
     (the page does not learn when a run ends, so it needs a protocol change).
 
+- Rewriting the 116 commits to the GitHub noreply address before the first push
+    (offered 2026-10-21, with a backup bundle first): the user chose to push as is once
+    it was clear that the address is already public in `ci-group/ariel`; the cost would
+    have been new hashes everywhere (tag `v0.1.0`, about 22 hashes in PLAN.md and
+    DESIGN.md).
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-21 | first push to GitHub, Pages, Dependabot | `CI` (ruff, mypy, pytest through uv with `--locked`) passed; `Rust and WASM` (fmt, clippy, tests, wasm build, `tools/check_wheel.py`) passed on `a22a269`; `Docs` built with `-W` and 0 warnings but its deploy step failed with "Get Pages site failed" until the user enabled Pages (build type `workflow`), then passed; Dependabot ran at once for github-actions, uv and cargo and opened pull request #1 (setup-uv 9.0.0 to 10.3.0); the site answers 200 at https://jacopo-dm.github.io/element-51/; 225 Python tests at 100% and 153 Rust tests locally |
 | 2026-10-20 | goal palette-try: paste a Coolors link, the editor takes its colours | native tests (9 in `tests/palette.rs`, 3 more for the page, 3 for `contrast_failures`): the link parser (the example, five other written forms, eight bad links each with its reason), the mapping for the example (canvas `#000500`, text `#acadbc`, accent `#473bf0`, cards and headers dark, menus take the card colour), two colours are enough, the order in the link does not matter, six palettes (the example, all light, all dark, one hue, near-grey, ten colours) leave both base themes with 0 AA failures, a palette changes colours only (not metrics, page, fonts or port shapes), a bad link leaves the theme as it was, the page has the menu button after Run, the `Try palette` entry and the box, focus and press styles for them, and the page code never sends a palette to Python; by hand in the browser pane: the menu button opens a menu with Try palette, the box takes the link, Enter applies it at once (near-black canvas, blue-violet cards, violet Run), `hello` shows "That is not a Coolors link" in the banner and leaves the box open, a reload brings back `#1a1a1a`, the page made no request to coolors.co, and axe-core reported 0 violations with the menu closed, the menu open, the box open and after applying; screenshots `docs/ui-baseline/palette-1-menu-beside-run.jpg` to `palette-4-bad-link-banner.jpg`; example `examples/e_look/e3_palette.py`; 153 Rust tests, 221 Python tests at 100% |
 | 2026-10-20 | ui-design-pass task 4: the soft modern look for the page parts | native tests: the page font is the system UI font, menu and banner radii 8, new `menu_border` colour and `menu_item_radius` page key reach the page and are used by it, the focus ring is the theme's focus colour in menus too, every colour pair still at AA (including the focus ring on the menu and its search box); the old test pinning the previous page values now pins only what did not change; by hand in both themes: violet Run button, dark rounded menu with an inset hover row and flyout, 8 px banner with a styled Dismiss, violet checkbox tick; axe-core 0 violations in both themes in the default state, after Run, and the search with and without a match; before `docs/ui-baseline/dark-1280-default.jpg`, `-menu.jpg`, `-run-and-banner.jpg`, after `docs/ui-baseline/task4-dark-1280-default.jpg`, `task4-dark-1280-menu-flyout.jpg`, `task4-dark-1280-run-and-banner.jpg`, `task4-light-1280-menu-flyout.jpg`, `task4-light-1280-run-and-banner.jpg`; 140 Rust tests, 220 Python tests at 100% |
 | 2026-10-20 | ui-design-pass task 3: page structure and names | native tests: the page has `<main>`, a visually hidden `<h1>`, `role="alert"` on the banner and an `aria-label` on the search box; `field_label` names each value box "port of node id" (the checkbox included); axe-core in both themes, in the default state, after Run (with the banner), the search with matches, with no match and the tree: all five rules gone, 0 violations (before: `label` 1, `landmark-one-main` 1, `page-has-heading-one` 1, `region` 2 to 5, and after task 1 a `scrollable-region-focusable` that did not come back once the lists sat inside `<main>`); the page looks the same (the heading is hidden); 138 Rust tests, 220 Python tests at 100% |
@@ -944,6 +961,25 @@ have to go through `tools/compress_images.py`).
 
 ## Gotchas
 
+- `uv publish` asks for the username first. Type `__token__`, then paste the token at
+    the password prompt (nothing is echoed). A token pasted at the username prompt is
+    echoed on screen and refused (happened 2026-10-21; that token had to be revoked).
+    The safe form is `read -rs UV_PUBLISH_TOKEN && export UV_PUBLISH_TOKEN && uv run
+    python tools/check_wheel.py && uv publish; unset UV_PUBLISH_TOKEN`, which asks for no
+    username. A token scoped to the project can be made once a first version (the 0.0.1
+    placeholder) exists. The PyPI JSON listing can lag the upload by seconds.
+- PyPI shows what a release carried: the README as it was when built, its
+    `[project.urls]` and its classifiers. A shields.io `pypi/pyversions` badge reads
+    classifiers, so it said "python missing" until the package had some (added after
+    0.1.1). README images need absolute `raw.githubusercontent.com` addresses to show on
+    PyPI. None of this can be fixed on a published version, only by a new one.
+- The Docs workflow (`.github/workflows/docs.yml`) fails at "Set up Pages" until GitHub
+    Pages is on for the repo: `gh api -X POST repos/Jacopo-DM/element-51/pages -f
+    build_type=workflow`, or Settings, Pages, Source "GitHub Actions". The user did it
+    on 2026-10-21.
+- `uv_build` has no build hooks, and `src/element_51/web/` is generated and
+    git-ignored, so `uv build` in a fresh clone makes a wheel without the editor;
+    `tools/check_wheel.py` is the guard (a clean clone fails it, as it should).
 - The README images (`docs/images/dark.jpg`, `light.jpg`, `palette.jpg`) are the
     editor's canvas exported with `canvas.toDataURL` (2560 by 1440 at 2x, cropped to
     2400 by 1200 and resized to 1600 by 800), not browser-pane screenshots: the pane's

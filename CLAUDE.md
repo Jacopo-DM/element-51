@@ -50,6 +50,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Build the docs | `uv-docs build` (or `uv run --locked --group docs sphinx-build -W --keep-going -b html docs docs/_build/html`) | about 5 s; warnings are errors, as in CI (`docs.yml`); needs `uv sync --group docs` first; writes only `docs/_build/` and `docs/api/`, both ignored |
 | Preview the docs | `uv-docs` | live preview in the browser; rebuilds when `docs/` or `src/` change; Ctrl+C stops it |
 | Check the wheel before publishing | `uv run python tools/check_wheel.py` | about 3 s; builds a wheel in a temp folder and exits 1 if `src/element_51/web/` was not built first (run `tools/build_wasm.py`) |
+| Publish a release (the user runs it, never Claude) | `read -rs UV_PUBLISH_TOKEN && export UV_PUBLISH_TOKEN && uv run python tools/check_wheel.py && uv publish; unset UV_PUBLISH_TOKEN` | after `uv run python tools/build_wasm.py` and `uv build`, and a version bump in `pyproject.toml` and `uv.lock`; paste a PyPI token scoped to the project at the silent prompt, never at a username prompt, never in chat; then tag `v<version>` on the release commit |
 | Serve the editor | `uv run examples/a_basics/a2_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
 | Serve another example | `uv run python examples/a_basics/a3_arithmetic.py` (every example except `c1_script_api.py`, which prints and exits, and `a1_hello_world.py`, the template, serves on http://127.0.0.1:8765) | same port, so stop one before starting the next |
 
@@ -96,6 +97,11 @@ Differences from the global file only.
     user.
 - A task in PLAN.md is approved only where PLAN.md says so. A task added later
     needs its own approval in words.
+- The repo is public on GitHub (`origin`, https://github.com/Jacopo-DM/element-51):
+    nothing private goes into a commit, and every push (and tag push) needs the
+    user's say-so, each time. Commits here use GitHub's noreply address
+    (`30981226+Jacopo-DM@users.noreply.github.com`, set with `git config user.email`
+    in this clone); the first 116 commits carry the user's own address on purpose.
 
 ## Ignore list
 
