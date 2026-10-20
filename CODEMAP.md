@@ -6,26 +6,26 @@ the ignore list in CLAUDE.md.
 ## Entry points
 
 - `element_51.serve(app, port=8765, *, open_browser=False, theme=None)`: run the
-  editor for an `App` on 127.0.0.1 until interrupted; Ctrl+C ends it with exit 0.
-  `theme` is a built-in name or the path of a theme file.
+    editor for an `App` on 127.0.0.1 until interrupted; Ctrl+C ends it with exit 0.
+    `theme` is a built-in name or the path of a theme file.
 - `element_51.asgi_app(app, theme=None)`: an ASGI app to mount in an existing
-  server.
+    server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
 - `examples/`, in group folders; the file name starts with the folder's letter and
-  a number. `a_basics`: `a1_hello_world.py` (the project template, not an example
-  of the library), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
-  `a4_strings.py`. `b_node_types`: `b1_port_types.py`, `b2_multiple_outputs.py`,
-  `b3_class_nodes.py`, `b4_diamond.py`, `b5_errors.py`. `c_python_api`:
-  `c1_script_api.py` (the graph from plain Python, no browser), `c2_live_push.py`
-  (a script edits the graph while the page is open), `c3_save_load.py`.
-  `d_editor`: `d1_big_graph.py` (pan, zoom, move, select, delete),
-  `d2_values.py`, `d3_undo_redo.py`, `d4_menu.py`, `d5_card_menu.py`. `e_look`:
-  `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`. `f_embedding`:
-  `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
-  in a FastAPI or NiceGUI host, with a side panel). Each example has
-  `build_app()`; `tests/test_examples.py` runs every one except the template.
+    a number. `a_basics`: `a1_hello_world.py` (the project template, not an example
+    of the library), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
+    `a4_strings.py`. `b_node_types`: `b1_port_types.py`, `b2_multiple_outputs.py`,
+    `b3_class_nodes.py`, `b4_diamond.py`, `b5_errors.py`. `c_python_api`:
+    `c1_script_api.py` (the graph from plain Python, no browser), `c2_live_push.py`
+    (a script edits the graph while the page is open), `c3_save_load.py`.
+    `d_editor`: `d1_big_graph.py` (pan, zoom, move, select, delete),
+    `d2_values.py`, `d3_undo_redo.py`, `d4_menu.py`, `d5_card_menu.py`. `e_look`:
+    `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`. `f_embedding`:
+    `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
+    in a FastAPI or NiceGUI host, with a side panel). Each example has
+    `build_app()`; `tests/test_examples.py` runs every one except the template.
 - Browser: `element_51_web::start()` runs when the page loads, opens `/ws`, and
-  wires the canvas, the right-click menu and the window.
+    wires the canvas, the right-click menu and the window.
 
 ## Python, `src/element_51/`
 

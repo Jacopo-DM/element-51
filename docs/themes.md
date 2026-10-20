@@ -46,15 +46,15 @@ every open page.
 ## What goes wrong
 
 - A path that is not a file, a file that is not JSON, a member other than the
-  four above, a colour that is not text, or a size that is not a number makes
-  `serve` raise `ValueError` before anything starts.
+    four above, a colour that is not text, or a size that is not a number makes
+    `serve` raise `ValueError` before anything starts.
 - A key that does not exist (`"canvass"`) cannot be checked in Python, because
-  the keys live in the browser's code. The page shows a banner that names the
-  section and the key and lists the valid keys, and it keeps the previous theme.
+    the keys live in the browser's code. The page shows a banner that names the
+    section and the key and lists the valid keys, and it keeps the previous theme.
 - A value of the right kind but a bad content, such as `"colours": {"canvas":
-  "banana"}` or a font that is not installed, is handled by the browser: an
-  invalid colour is ignored and a missing font falls back to the next family in
-  the list.
+    "banana"}` or a font that is not installed, is handled by the browser: an
+    invalid colour is ignored and a missing font falls back to the next family in
+    the list.
 
 ## Every key you can change
 
