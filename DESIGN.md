@@ -564,10 +564,27 @@ pixels, uses `exp(0.01)` per pixel. The time to draw was not the cause: 60
 wheel events took 89 ms in the browser pane, about 1.5 ms each, so redraws are
 not batched.
 
+Theme files, task 19 (2026-10-20, the user chose the file option): `serve(theme=...)`
+and `App.theme` take a built-in name or the path of a JSON file that lists only
+the values to change, in `colours`, `metrics` and `fonts`, on top of a `base`
+built-in theme. Python reads and shapes the file (`ThemeFile`, pydantic) and
+the snapshot carries the base name plus the changes (`theme_changes`, optional
+on read, so the protocol version stays 2). The browser applies them with
+`Theme::with_changes`, which owns the list of valid keys, because Python does
+not know them; a wrong key or a value of the wrong kind shows the error banner
+with the section, the key and the valid keys, and the page keeps the previous
+theme. Rejected: a Python `Theme` record (the key list would live in two
+places) and merging in Python (it would need the base theme's data). The
+reference in `docs/themes.md` lists every key with its doc comment from
+`theme.rs`; a native test fails if a key has no row, and another that the
+example file uses only real keys. Checking a key in Python at `serve` time
+would be possible by exporting the key list into a shared fixture; not done.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 19: theme files | native tests: no changes, partial changes, base, unknown base, key, section, wrong kind, non-objects; the example file and every key in the docs; pytest: file shapes, name and path, errors, session and snapshot, `serve` with a file, example `a18`; by hand: `a18_theme_file.py` shows the blue theme, a file with `canvass` shows the banner naming the key and listing the keys; 210 Python tests at 100%, 100 Rust tests |
 | 2026-10-20 | task 18: the header icon opens a Delete node menu | native tests: icon box position and size, icon hit-test (inside, header height, title text and body excluded, under another card refused), the entry list and its edit; by hand with `a17_card_menu.py`: the click opens the popup and selects the card, Delete node removes the node and its links, Cmd+Z restores them, Escape and a click on empty canvas close the popup; 194 Python tests at 100%, 90 Rust tests |
 | 2026-10-19 | task 14: categories and the nested menu with search | native tests: tree nesting and order, search by name, path and case, empty results; pytest: bare and called decorator, class variable, badly formed categories refused, fixtures carry `category`; by hand with `a16_menu.py`: Math > Trig > sine adds a node at the click, `math` lists three matches with paths, Enter adds the first, Escape closes, flyouts flip left near the right edge; 193 Python tests at 100%, 86 Rust tests |
 | 2026-10-19 | task 13: `antimony-light`, `serve(theme=...)` | pytest: theme names equal on both sides, unknown name lists the valid ones and starts no server, setting the theme pushes a snapshot, every snapshot names the theme; native: both themes parse, share sizes, differ in canvas and selected wire; by eye with `a15_light_theme.py`: light canvas and grid, dark cards, dark selected wire; 181 Python tests at 100%, 79 Rust tests |
