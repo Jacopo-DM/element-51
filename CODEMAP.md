@@ -23,7 +23,7 @@ the ignore list in CLAUDE.md.
 - `examples/template.py`: the project template for a script (not an example of the
     library; the example tests do not load it).
 - `examples/`, in group folders; the file name starts with the folder's letter and
-    a number. `a_basics`: `a1_hello_world.py` (one node, opens the browser), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
+    a number. `a_basics`: `a1_hello_world.py` (one node, runs uvicorn itself on a `HOST` you can change, no browser opened), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
     `a4_strings.py`. `b_node_types`: `b1_port_types.py`, `b2_multiple_outputs.py`,
     `b3_class_nodes.py`, `b4_diamond.py`, `b5_errors.py`. `c_python_api`:
     `c1_script_api.py` (the graph from plain Python, no browser), `c2_live_push.py`

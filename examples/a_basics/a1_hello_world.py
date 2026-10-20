@@ -1,8 +1,7 @@
-"""One node: the smallest editor, opened in your browser.
+"""One node: the smallest editor, served on an address you choose.
 
-Run it: `uv run examples/a_basics/a1_hello_world.py`. The page opens by
-itself. Stop it with Ctrl+C in the terminal; it shuts down and the command
-ends.
+Run it: `uv run examples/a_basics/a1_hello_world.py`, then open
+http://127.0.0.1:8765 yourself. Stop it with Ctrl+C in the terminal.
 
 The graph holds a single `hello` node, written as a function.
 
@@ -12,11 +11,15 @@ Notes
 -----
     * Press Run: `hello` gives "hello, world".
     * Right-click the canvas and add another node.
+    * Change `HOST` to `"0.0.0.0"` to reach the editor from other machines on
+        your network. It has no password, so anyone who can reach the address
+        can edit and run the graph. `element_51.serve` always uses `127.0.0.1`.
     * Next, `a2_two_nodes.py` links two nodes.
 
 """
 
 # Third-party libraries
+import uvicorn
 from rich.console import Console
 from rich.traceback import install
 
@@ -24,6 +27,8 @@ from rich.traceback import install
 import element_51
 
 # --- Globals --- #
+HOST = "127.0.0.1"
+PORT = 8765
 
 # --- Warnings --- #
 
@@ -53,8 +58,8 @@ def build_app() -> element_51.App:
 
 
 def main() -> None:
-    """Entry point: serve the editor and open it in the browser."""
-    element_51.serve(build_app(), open_browser=True)
+    """Entry point: serve the editor on `HOST` and `PORT`."""
+    uvicorn.run(element_51.asgi_app(build_app()), host=HOST, port=PORT)
 
 
 if __name__ == "__main__":  # pragma: no cover
