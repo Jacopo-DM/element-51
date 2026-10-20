@@ -177,10 +177,8 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
-`main` equals `origin/main` (`0d73fdc`, task 27). The merged local branch
-`canvas-access-27` is not deleted yet (a side session had it checked out; deleting
-needs the user's say-so). Earlier merged branches were deleted on 2026-10-21 at the
-user's say-so.
+`main` equals `origin/main` (`ed1aed5`). No other local branch is left: every merged
+branch was deleted on 2026-10-21 at the user's say-so.
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. The repo was pushed on
