@@ -169,7 +169,12 @@ def _add_link(
     if not can_link(source.kind, target.kind):
         msg = f"cannot link {source.kind} to {target.kind}"
         raise EditError(EditErrorKind.TYPE_MISMATCH, msg)
-    if any(link.target == edit.target for link in graph.links):
+    # Field by field: comparing the two pydantic records is far slower.
+    if any(
+        link.target.node == edit.target.node
+        and link.target.port == edit.target.port
+        for link in graph.links
+    ):
         msg = f"{edit.target.node}.{edit.target.port} already has a link"
         raise EditError(EditErrorKind.INPUT_TAKEN, msg)
     if _reaches(graph, edit.target.node, edit.source.node):

@@ -256,7 +256,8 @@ Tier 1:
     dependency, risk low. Verify: `tests/test_engine.py`, `test_session.py` and
     `test_examples.py` (65 tests passed with the experiment) and
     `bench_python.py`.
-2. **Compare link targets by field in `edits._add_link`** (workload (c) build; 76%
+2. **Done 2026-10-20** (build 1969 to 795 ms, 2.5 times faster; DESIGN.md Results).
+    **Compare link targets by field in `edits._add_link`** (workload (c) build; 76%
     of build time; 2.5 times faster, 2059 to 823 ms, measured). Replace
     `link.target == edit.target` with a node and port comparison; 3 lines, risk
     low. Verify: `tests/test_edits.py` and `bench_python.py`. The same pydantic
