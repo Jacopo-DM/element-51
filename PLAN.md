@@ -123,7 +123,7 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
     cannot run one here; it stays listed as not verified until the user tries
     VoiceOver), keyboard shortcuts that can be rebound, and any change to the look.
 - Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
-    "canvas-accessibility spec"); the task list awaits approval. The user's answers (2026-10-21): everything the
+    "canvas-accessibility spec"); the task list (tasks 27 to 33) approved 2026-10-21; task 27 is done. The user's answers (2026-10-21): everything the
     mouse does by keyboard; a hidden list beside the canvas for the screen
     reader; a live status line; checked with axe plus a keyboard walk-through by
     me.
@@ -351,7 +351,7 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
 
-### Goal `canvas-accessibility` (draft task list, proposed 2026-10-21, awaiting the user's approval)
+### Goal `canvas-accessibility` (task list approved 2026-10-21)
 
 No test covers the web crate (`element-51-web`), so each task puts its logic in
 `element-51-core/src/access.rs` with native tests written first, and checks the
@@ -362,22 +362,15 @@ of Rust and 60 of CSS and HTML per task of this size); nothing is measured yet.
 
 #### Tier 1: walking skeleton (criteria 2, 4, 5)
 
-27. **The hidden tree, focus and status line, read only.** What changes: `access.rs`
-    with `describe_node`, `describe_port`, `neighbour` and the status texts; `a11y_ui.rs`
-    builds the tree and the `role="status"` line; the canvas draws the focus ring and
-    pans to keep the focus in view; arrows move node to node, Right and Left enter and
-    leave ports; the status says what is focused. Files: `rust/element-51-core/src/access.rs`,
-    `lib.rs`, `tests/access.rs`, `rust/element-51-web/src/a11y_ui.rs`, `lib.rs`, `draw.rs`,
-    `static/index.html`, `tools/ui_keys.js`, `tools/ui_states.js` (a `tree` state),
-    CODEMAP.md. Serves criteria 2, 4, 5 and the first part of 1. Risk: medium (a second
-    copy of the graph in the page). Cost: about 450 lines, no new dependency. Verify:
-    native tests for every branch, the described list equals the snapshot, axe-core 0
-    violations in three themes, the 50 ms budget on the 2000-node chain, redraw median
-    within spread.
+Done: task 27 (2026-10-21), the hidden tree, the focus ring and the pan to keep
+focus in view. Detail, numbers and the changes from the spec are in DESIGN.md
+(Results, and the spec's "Task 27 outcome").
 
 #### Tier 2 (ordered by value over risk plus cost)
 
-28. **Select, delete and undo by keyboard, with announcements.** Enter or Space
+28. **Select, delete and undo by keyboard, with announcements.** Adds the
+    `role="status"` line (hidden, beside `#graph-tree`; it moved here from task 27,
+    because focus is announced by the focused item itself). Enter or Space
     selects; Delete deletes a node or the link on an input port; Escape; Ctrl+Z and
     Ctrl+Y announce what they undid; every ack and reject goes to the status line
     (a refusal also shows in the banner with Dismiss). Files: `access.rs`, `a11y_ui.rs`,

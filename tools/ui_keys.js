@@ -1,8 +1,11 @@
 // Walk the editor's hidden tree by keyboard and check what it says. Run it in
 // the page of tools/ui_states.py (or any example) with the browser pane's
-// javascript tool, then read the table it returns: `await uiKeys()`.
-// Each row is [step, passed, what was seen]. The focus ring on the canvas is not
-// in the DOM, so look at it in a screenshot after `uiKeys()` stops on a port.
+// javascript tool: paste the function, then `await uiKeys()`.
+// Each row is [step, passed, what was seen]. The page's window must have the
+// focus, or the browser sends no focus events and the canvas ring never moves:
+// click the empty canvas first (take a screenshot before a click by coordinate).
+// The ring is not in the DOM, so look at it in a screenshot after `uiKeys()`,
+// which stops on a port of the first node.
 async function uiKeys() {
     const rows = [];
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,6 +22,7 @@ async function uiKeys() {
 
     check("the tree exists and shows", tree && !tree.hidden && tree.getAttribute("role") === "tree", tree && tree.hidden);
     check("one item per node", nodes().length > 0 && nodes().every((li) => li.dataset.node), nodes().length);
+    check("ports are not built until entered", tree.querySelectorAll("ul").length === 0, tree.querySelectorAll("ul").length);
     check(
         "exactly one tab stop",
         tree.querySelectorAll('[tabindex="0"]').length === 1,
@@ -56,6 +60,11 @@ async function uiKeys() {
     const first = nodes()[0];
     await press("PageDown");
     check("PageDown goes to the next node in reading order", nodes().length < 2 || active() === first.nextElementSibling, active().id);
+    check(
+        "leaving a node closes its ports",
+        first.getAttribute("aria-expanded") === "false" && first.querySelector("ul").hidden,
+        first.getAttribute("aria-expanded"),
+    );
     await press("End");
     check("End goes to the last node", active() === nodes().at(-1), active().id);
     await press("Home");

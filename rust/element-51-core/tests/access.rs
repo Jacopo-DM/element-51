@@ -1,7 +1,9 @@
 //! What a screen reader is told about the graph, and how the keyboard moves
 //! around it.
 
-use element_51_core::access::{Direction, describe_graph, neighbour, pan_to_show};
+use element_51_core::access::{
+    Direction, describe_graph, describe_ports, list_nodes, neighbour, pan_to_show,
+};
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::view::View;
@@ -313,4 +315,36 @@ fn a_node_bigger_than_the_window_lines_up_with_the_top_left_margin() {
     };
     let delta = pan_to_show(&View::default(), &big, (800.0, 600.0), 20.0);
     assert_eq!(delta, (-30.0, -30.0));
+}
+
+#[test]
+fn the_cheap_list_has_the_labels_and_port_counts_but_no_ports() {
+    let (graph, types) = (graph(), types());
+    let cheap = list_nodes(&graph, &types);
+    let full = describe_graph(&graph, &types);
+    assert_eq!(cheap.len(), full.len());
+    for (cheap, full) in cheap.iter().zip(&full) {
+        assert_eq!((&cheap.id, &cheap.label), (&full.id, &full.label));
+        assert!(cheap.ports.is_empty());
+        assert_eq!(cheap.port_count, full.ports.len());
+    }
+}
+
+#[test]
+fn ports_are_described_for_one_node_by_id() {
+    let (graph, types) = (graph(), types());
+    let full = describe_graph(&graph, &types);
+    let n3 = full.iter().find(|item| item.id == "n3").unwrap();
+    assert_eq!(describe_ports(&graph, &types, "n3"), n3.ports);
+}
+
+#[test]
+fn a_missing_node_or_type_has_no_ports() {
+    let (graph, types) = (graph(), types());
+    assert!(describe_ports(&graph, &types, "nope").is_empty());
+    let lone = Graph {
+        nodes: vec![node("n1", "gone", 0.0, 0.0)],
+        links: vec![],
+    };
+    assert!(describe_ports(&lone, &types, "n1").is_empty());
 }

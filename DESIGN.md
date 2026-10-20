@@ -271,6 +271,25 @@ theme, with the credit in the README.
     takes 50 ms or less per edit on the 2000-node chain, otherwise the tree is limited
     to the focused node's neighbourhood.
 
+- Task 27 outcome (2026-10-21), changes from the spec above: (a) Right on a node
+    enters its ports, as the key table says, so the node to the right is reached with
+    PageDown (reading order) and Home, End and PageUp go with it; Up, Down and Left on a
+    node are spatial. (b) The focus is announced by the browser itself, because the
+    tree items take real DOM focus and carry their `aria-label`; a status line that
+    also said what is focused would be read twice, so the `role="status"` line moved to
+    task 28, where it carries results. (c) The focus ring is two-tone (the canvas colour
+    under the theme's `focus` colour, 2 px wide in screen pixels at any zoom), so it
+    reads on a card as well as on the canvas and needed no new colour pair; the
+    existing "focus on canvas" pair covers it for every theme and palette. (d) A node's
+    port items are built the first time the keyboard enters it, not in the rebuild: at
+    2000 nodes the full tree (5,900 items) made an edit take 70 to 77 ms, the lazy one
+    36 to 42 ms. (e) The tree is rebuilt only when the replica changed (a flag set on
+    snapshot, submit and reject), not compared on every redraw: comparing the graph on
+    each redraw cost about 0.3 ms of a 1.4 ms redraw at 200 nodes. (f) The tree is
+    `hidden` while the graph is empty, because axe flags a `role="tree"` with no items.
+    (g) Focus events only fire while the page's window has focus, so the browser-pane
+    walk-through needs a click on the page first (CLAUDE.md, Commands).
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1032,6 +1051,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-19 | task 2: edits synced with ack and rollback | add node, drag link, float to str refused in the browser, id conflict rolled back with Python's reason, all by hand in the browser pane; 55 Python tests at 100%, 36 Rust tests; 13 link cases and the message fixture run on both sides |
 | 2026-10-19 | task 1: node types reach the browser | `@node` hints become ports; snapshot over `/ws`; Rust parses it and draws both nodes; 27 Python tests at 100%, 13 Rust tests; one JSON fixture parsed by both sides |
 | 2026-10-19 | skeleton: Python serves, WASM draws, core logic runs | page shows `float to str link allowed: false`; 4 Python tests at 100%, 4 Rust tests; WASM 706 KB unoptimised |
+| 2026-10-21 | canvas-accessibility task 27: the hidden tree, focus ring and pan-to-focus | native tests: 21 in `rust/element-51-core/tests/access.rs` (reading order, labels, port lists with their links, the cheap list equals the full one, nearest node in each direction with ties by id, the pan to bring a box into view at any zoom and pan); by hand in the browser pane on `tools/ui_states.py`: `tools/ui_keys.js` 18 of 18 rows pass (tree shown, ports built only when entered, one tab stop, Right enters ports, Down and Left move, PageDown, End and Home, leaving a node closes its ports), the ring seen on a node and on a port in the dark and light themes; axe-core 4.14.0 (the copy from the ui-design-pass download): 0 violations in default, node focused, port focused and after Run, in all three themes (one transient `color-contrast` hit in the light theme 300 ms after a theme switch did not come back at 800 ms; the page has a 120 ms colour transition); timing at 2000 nodes (`tools/bench_page.py` with 100 rows): an edit that rebuilds the tree took 36 to 42 ms in the page (a wheel redraw 14 to 18 ms), under the 50 ms budget; at 200 nodes a wheel redraw is 1.37 ms median (range 1.02 to 1.69) with the tree and 1.34 without it, the two builds timed side by side because today's pane gave 1.3 ms where the recorded baseline says 0.21 to 0.22 ms; 226 Python tests at 100% |
 
 ## Gotchas
 

@@ -2,7 +2,9 @@
 //! the graph. Its items take the keyboard focus, the canvas draws a ring on the
 //! focused node or port, and the view pans to keep it in sight.
 
-use element_51_core::access::{Direction, NodeItem, describe_graph, neighbour, pan_to_show};
+use element_51_core::access::{
+    Direction, NodeItem, describe_ports, list_nodes, neighbour, pan_to_show,
+};
 use element_51_core::layout::{Side, node_rect};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, FocusEvent, HtmlElement, KeyboardEvent};
@@ -40,12 +42,9 @@ fn element(document: &Document, tag: &str, attributes: &[(&str, &str)]) -> Optio
     Some(element)
 }
 
+/// The tree item of a node. Its ports are added by `ensure_ports` when the
+/// keyboard first enters it, so rebuilding a big graph's tree stays cheap.
 fn node_element(document: &Document, item: &NodeItem) -> Option<Element> {
-    let expandable = if item.ports.is_empty() {
-        Vec::new()
-    } else {
-        vec![("aria-expanded", "false")]
-    };
     let li = element(
         document,
         "li",
@@ -57,33 +56,52 @@ fn node_element(document: &Document, item: &NodeItem) -> Option<Element> {
             ("tabindex", "-1"),
         ],
     )?;
-    for (name, value) in expandable {
-        li.set_attribute(name, value).ok()?;
-    }
-    if !item.ports.is_empty() {
-        let group = element(document, "ul", &[("role", "group"), ("hidden", "")])?;
-        for port in &item.ports {
-            let entry = element(
-                document,
-                "li",
-                &[
-                    ("role", "treeitem"),
-                    ("id", &port_element_id(&item.id, &port.port, port.side)),
-                    ("data-node", &item.id),
-                    ("data-port", &port.port),
-                    ("data-side", side_name(port.side)),
-                    ("aria-label", &port.label),
-                    ("tabindex", "-1"),
-                ],
-            )?;
-            group.append_child(&entry).ok()?;
-        }
-        li.append_child(&group).ok()?;
+    if item.port_count > 0 {
+        li.set_attribute("aria-expanded", "false").ok()?;
     }
     Some(li)
 }
 
-/// Rebuild the hidden tree if the graph is not the one it was built from. The
+/// The list of port items under the node item `node`, built the first time it
+/// is wanted. It starts hidden; `expand_for` shows it.
+fn ensure_ports(shared: &Shared, node: &Element) -> Option<Element> {
+    if let Ok(Some(group)) = node.query_selector("ul") {
+        return Some(group);
+    }
+    let id = node.get_attribute("data-node")?;
+    let (document, ports) = {
+        let state = shared.borrow();
+        let replica = state.replica.as_ref()?;
+        (
+            state.document.clone(),
+            describe_ports(replica.graph(), replica.node_types(), &id),
+        )
+    };
+    if ports.is_empty() {
+        return None;
+    }
+    let group = element(&document, "ul", &[("role", "group"), ("hidden", "")])?;
+    for port in &ports {
+        let entry = element(
+            &document,
+            "li",
+            &[
+                ("role", "treeitem"),
+                ("id", &port_element_id(&id, &port.port, port.side)),
+                ("data-node", &id),
+                ("data-port", &port.port),
+                ("data-side", side_name(port.side)),
+                ("aria-label", &port.label),
+                ("tabindex", "-1"),
+            ],
+        )?;
+        group.append_child(&entry).ok()?;
+    }
+    node.append_child(&group).ok()?;
+    Some(group)
+}
+
+/// Rebuild the hidden tree if the replica changed since it was built. The
 /// tree is hidden outright while the graph is empty, because a tree with no
 /// items is not valid.
 pub(crate) fn sync_tree(shared: &Shared) {
@@ -92,12 +110,12 @@ pub(crate) fn sync_tree(shared: &Shared) {
         let Some(replica) = state.replica.as_ref() else {
             return;
         };
-        if state.tree_graph.as_ref() == Some(replica.graph()) {
+        if !state.tree_stale {
             return;
         }
         (
             state.document.clone(),
-            describe_graph(replica.graph(), replica.node_types()),
+            list_nodes(replica.graph(), replica.node_types()),
         )
     };
     let Some(tree) = document.get_element_by_id("graph-tree") else {
@@ -119,12 +137,16 @@ pub(crate) fn sync_tree(shared: &Shared) {
     } else {
         let _ = tree.remove_attribute("hidden");
     }
+    // A focused port needs its node's port list, which the rebuild dropped.
+    let focused = shared.borrow().focus.clone();
+    if let Some(Focus::Port { node, .. }) = &focused
+        && let Some(item) = document.get_element_by_id(&node_element_id(node))
+    {
+        ensure_ports(shared, &item);
+    }
     let wanted = {
         let mut state = shared.borrow_mut();
-        state.tree_graph = state
-            .replica
-            .as_ref()
-            .map(|replica| replica.graph().clone());
+        state.tree_stale = false;
         state.focus.as_ref().map(focus_element_id)
     };
     // One tab stop: the focused item if it survived, else the first node.
@@ -278,7 +300,7 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
     };
     let next = match (&focus_now, event.key().as_str()) {
         (Focus::Node(id), "ArrowRight") => {
-            first_port(&item).or_else(|| spatial(shared, id, Direction::Right))
+            first_port(shared, &item).or_else(|| spatial(shared, id, Direction::Right))
         }
         (Focus::Node(id), "ArrowLeft") => spatial(shared, id, Direction::Left),
         (Focus::Node(id), "ArrowUp") => spatial(shared, id, Direction::Up),
@@ -301,9 +323,8 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
 }
 
 /// The tree item of the first port of the node item `node`, if it has ports.
-fn first_port(node: &Element) -> Option<Element> {
-    let group = node.query_selector("ul").ok().flatten()?;
-    group.first_element_child()
+fn first_port(shared: &Shared, node: &Element) -> Option<Element> {
+    ensure_ports(shared, node)?.first_element_child()
 }
 
 /// The tree item of the node nearest to `from` in `direction`.

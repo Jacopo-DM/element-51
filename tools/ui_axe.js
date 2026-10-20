@@ -22,6 +22,15 @@
     };
     const canvas = document.getElementById("canvas");
     const found = { default: await scan() };
+    // Keyboard focus inside the hidden tree: a node, then one of its ports.
+    const tree = document.getElementById("graph-tree");
+    tree.children[0].focus();
+    await wait(200);
+    found.treeNode = await scan();
+    tree.children[0].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+    await wait(200);
+    found.treePort = await scan();
+    document.getElementById("run").focus();
     document.getElementById("run").click();
     await wait(600);
     found.run = await scan();

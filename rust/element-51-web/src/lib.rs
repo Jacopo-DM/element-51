@@ -19,7 +19,7 @@ use element_51_core::layout::PortHit;
 use element_51_core::menu::card_actions;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{Edit, EditRequest, Graph, Message, Replica, RunRequest, RunResult};
+use element_51_core::{Edit, EditRequest, Message, Replica, RunRequest, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -52,8 +52,8 @@ struct State {
     selected: Option<Selected>,
     /// The hidden tree's item that has the keyboard focus, if any.
     focus: Option<Focus>,
-    /// The graph the hidden tree was built from; `None` means build it again.
-    tree_graph: Option<Graph>,
+    /// Whether the replica changed since the hidden tree was built.
+    tree_stale: bool,
     gesture: Gesture,
     hover: Option<PortHit>,
     /// The last run's outcome. Cleared when the graph changes.
@@ -109,7 +109,7 @@ pub fn start() -> Result<(), JsValue> {
         history: History::default(),
         selected: None,
         focus: None,
-        tree_graph: None,
+        tree_stale: true,
         gesture: Gesture::None,
         hover: None,
         run: None,
@@ -398,6 +398,7 @@ fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
                     state.history.record(&before, &edit);
                 }
                 send(&state, request);
+                state.tree_stale = true;
                 if !keeps_results {
                     state.run = None;
                 }
@@ -444,7 +445,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
             Ok(Message::Snapshot(snapshot)) => {
                 state.run = None;
                 state.selected = None;
-                state.tree_graph = None;
+                state.tree_stale = true;
                 let theme_key = format!("{} {}", snapshot.theme, snapshot.theme_changes);
                 if theme_key != state.theme_key {
                     match Theme::with_changes(&snapshot.theme, &snapshot.theme_changes) {
@@ -477,6 +478,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                     .as_mut()
                     .is_some_and(|replica| replica.reject(reject.id));
                 if known {
+                    state.tree_stale = true;
                     state.run = None;
                     show_error(
                         &state.document,

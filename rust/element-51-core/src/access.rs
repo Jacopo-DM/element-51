@@ -41,13 +41,29 @@ pub struct NodeItem {
     pub id: String,
     /// For example `n3, add. 2 inputs, 1 output.`
     pub label: String,
-    /// The inputs, then the outputs.
+    /// How many ports the node has.
+    pub port_count: usize,
+    /// The inputs, then the outputs. Empty from `list_nodes`, which leaves the
+    /// ports to `describe_ports`.
     pub ports: Vec<PortItem>,
 }
 
 /// The hidden list: one item per node in reading order (top to bottom, then
 /// left to right, then by id), each with its ports.
 pub fn describe_graph(graph: &Graph, node_types: &[NodeType]) -> Vec<NodeItem> {
+    list_nodes(graph, node_types)
+        .into_iter()
+        .map(|item| NodeItem {
+            ports: describe_ports(graph, node_types, &item.id),
+            ..item
+        })
+        .collect()
+}
+
+/// The same list without the ports, which is cheap enough to rebuild after
+/// every edit of a big graph; `describe_ports` gives a node's ports when the
+/// keyboard enters it.
+pub fn list_nodes(graph: &Graph, node_types: &[NodeType]) -> Vec<NodeItem> {
     let mut nodes: Vec<&PlacedNode> = graph.nodes.iter().collect();
     nodes.sort_by(|a, b| {
         a.y.total_cmp(&b.y)
@@ -56,15 +72,16 @@ pub fn describe_graph(graph: &Graph, node_types: &[NodeType]) -> Vec<NodeItem> {
     });
     nodes
         .into_iter()
-        .map(|node| describe_node(graph, node_types, node))
+        .map(|node| describe_node(node_types, node))
         .collect()
 }
 
-fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> NodeItem {
+fn describe_node(node_types: &[NodeType], node: &PlacedNode) -> NodeItem {
     let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type) else {
         return NodeItem {
             id: node.id.clone(),
             label: format!("{}, unknown type {}.", node.id, node.node_type),
+            port_count: 0,
             ports: Vec::new(),
         };
     };
@@ -77,6 +94,23 @@ fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> N
         node_type.outputs.len(),
         plural(node_type.outputs.len(), "output"),
     );
+    NodeItem {
+        id: node.id.clone(),
+        label,
+        port_count: node_type.inputs.len() + node_type.outputs.len(),
+        ports: Vec::new(),
+    }
+}
+
+/// The ports of node `id`: the inputs, then the outputs, each with its links.
+/// A node that is not in the graph or has an unknown type has none.
+pub fn describe_ports(graph: &Graph, node_types: &[NodeType], id: &str) -> Vec<PortItem> {
+    let Some(node) = graph.nodes.iter().find(|node| node.id == id) else {
+        return Vec::new();
+    };
+    let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type) else {
+        return Vec::new();
+    };
     let inputs = node_type.inputs.iter().map(|port| {
         let source = graph
             .links
@@ -111,11 +145,7 @@ fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> N
             label: format!("Output {}, {}, {state}", port.name, port.kind),
         }
     });
-    NodeItem {
-        id: node.id.clone(),
-        label,
-        ports: inputs.chain(outputs).collect(),
-    }
+    inputs.chain(outputs).collect()
 }
 
 fn plural(count: usize, word: &str) -> String {
