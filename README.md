@@ -1,5 +1,13 @@
 # element-51
 
+[![PyPI](https://img.shields.io/pypi/v/element-51)](https://pypi.org/project/element-51/)
+[![Python](https://img.shields.io/pypi/pyversions/element-51)](https://pypi.org/project/element-51/)
+[![License](https://img.shields.io/pypi/l/element-51)](LICENSE)
+[![CI](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml)
+[![Rust and WASM](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 Design node-editor GUIs from Python. You write nodes as typed functions or small
 classes. element-51 serves an editor in the browser where people wire them
 together, and Python keeps the graph, runs it and can change it while the page
