@@ -71,20 +71,13 @@ over 400 lines 7 to 5, modules over five imports 2 to 2 (the web `lib.rs` went
 from 7 to 6, `session.py` stays at 7 by design), clones 0 to 0; left alone on
 purpose, with reasons, in DESIGN.md. Tests unchanged: 220 Python, 122 Rust.
 
-### speed-up
+### speed-up: done (2026-10-20)
 
-- Goal: the editor and the Python side are faster on three workloads, with
-    behaviour unchanged.
-- Kind: improvement (behaviour unchanged).
-- Success measure (the user chose all three metrics, 2026-10-20): (a) redraw time
-    on a 200-node graph, `tools/bench_page.js` run against `tools/bench_page.py`;
-    (b) page load time, the same script; (c) `App` build, run and snapshot time
-    for a 2000-node chain, `uv run python tools/bench_python.py`. A gain counts
-    only if it is larger than the spread under Baseline. Budgets are not set; none
-    was asked for.
-- Status: in progress (measured, profiled and proposed 2026-10-20; the task list
-    below waits for the user's approval in words).
-- Added: 2026-10-20
+Commits `6f2aacc..HEAD` on branch `speed-up` (benchmarks `30634e3`, engine
+`b49e16b`, edits `6fc7183`, drawing `e258928`, and the closing notes). Python
+`run` on a 2000-node chain 490 to 5.9 ms, build 2059 to 795 ms; redraw of a
+200-node page 3.4 to 0.21 ms; page load unchanged. The numbers, the decisions and
+the Tier 3 items left alone on purpose are in DESIGN.md.
 
 ## Current state
 
@@ -120,22 +113,20 @@ Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
     five others (`session.py` 7, web `lib.rs` 6; before 7 and 7); jscpd 5.4.2
     (`--min-lines 8 --min-tokens 70`): 0 clones, 0.00% duplicated, before and
     after.
-- Speed baseline, measured 2026-10-20, Apple silicon (arm64), macOS 27.0,
-    Python 3.13 under uv, WASM built with the release profile, the page in the
-    built-in browser pane:
+- Speed, measured 2026-10-20 after the speed-up pass (Apple silicon arm64, macOS
+    27.0, Python 3.13 under uv, WASM built with the release profile, the page in
+    the built-in browser pane; before in brackets):
     - Python, 2000-node chain, 11 runs each (`tools/bench_python.py`): build
-        (`add_node` and `add_link`) median 2059 ms, range 1942 to 2825; `run`
-        median 490 ms, range 481 to 585; snapshot JSON median 1.8 ms, range 1.8
-        to 2.9. Build and run grow four times per doubling of the node count
-        (500 nodes: 137 and 36 ms; 4000: 9255 and 2249 ms), so both are quadratic.
-    - Page, 200 nodes (10 rows of 20), 11 batches of 100 wheel events
-        (`tools/bench_page.js`): redraw median 3.3 to 3.5 ms per event over four
-        sets, range 3.26 to 4.06 (the recording work, not the browser's paint).
-        With the browser painting between batches the median was 14 ms (range 3
-        to 33), which is the figure to watch against a 16.7 ms frame.
-    - Page load of a fresh copy of the page to the `ready` class, warm cache, 11
-        loads: median 22 ms, range 21 to 47 (an earlier set gave 14.8, range 14
-        to 40). Local server; a first, cold load was not measured.
+        median 795 ms, range 783 to 889 [2059, 1942 to 2825]; `run` median 5.7 ms,
+        range 5.6 to 6.1 [490, 481 to 585]; snapshot JSON median 1.8 ms, range 1.8
+        to 2.0 [1.8]. Build is still quadratic (the immutable graph copies its
+        tuples on every edit), 4000 nodes was not re-measured.
+    - Page, 200 nodes (`tools/bench_page.js`): redraw median 0.21 to 0.22 ms per
+        wheel event over four sets, range 0.207 to 0.520 [3.3 to 3.5, 3.26 to
+        4.06]; page load median 13.3 ms, range 10.6 to 21.1 [22.3, 20.6 to 46.8;
+        14.8 in another set]: the load did not change, and the sets differ by more
+        than their own ranges, so load numbers need a same-session before and
+        after.
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 220 passed, 100% coverage, about 4 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 122 tests.
@@ -219,81 +210,6 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 19. **Theme files** (the user chose the option and asked for the docs). Done:
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
-
-### Goal `speed-up`: profile and proposed tasks (waiting for approval)
-
-Profiles (how to reproduce):
-
-- Python: `uv run python tools/bench_python.py --profile` (cProfile, 2000-node
-    chain, build then run then snapshot, 6.6 s under the profiler). Build: 76% in
-    `edits._add_link`, of which 3.6 s of 6.6 is pydantic's `__eq__` called 2
-    million times by `any(link.target == edit.target ...)`; then `Graph.next_id`
-    (0.9 s, parses every node id) and `_add_node`'s id scan. Run: 100% in
-    `engine.run_graph`, which scans every link for every node (`run_graph`,
-    `_evaluate`, `_order`). The snapshot is linear and takes 1.8 ms.
-- Page: no sampling profiler reaches the WASM from here, so I switched parts of
-    `draw` off with a throwaway attribute (reverted): per redraw of 200 nodes the
-    cards take 91% of the time, wires 12%, port markers 11%, the dot grid 8%. The
-    default view shows about 12 of the 200 nodes, and `draw` draws all of them.
-- Page load: 22 ms warm for a 706 KB WASM on localhost; no hotspot to chase.
-
-Experiments (throwaway patches, reverted; the numbers are the estimates below):
-
-- Engine, links indexed by target and source: `run` 490 ms to 6.4 ms.
-- `_add_link`, targets compared by field: build 2059 ms to 823 ms.
-- `draw`, skip cards and port markers whose box is off screen: redraw with
-    painting 15.4 ms to 0.7 ms (the default view of the 200-node graph).
-
-Proposed tasks. None is started.
-
-Tier 1:
-
-1. **Done 2026-10-20** (`run` 490 to 5.9 ms, 83 times faster; DESIGN.md Results).
-    **Index the links in `engine.py`** (goal `speed-up`, workload (c) run; touches
-    100% of `run`; 76 times faster, 490 to 6.4 ms, measured by experiment). Build
-    one dictionary of links by target node and one by source node, and pass them
-    to `_order`, `run_graph` and `_evaluate`. About 15 lines, no new concept, no
-    dependency, risk low. Verify: `tests/test_engine.py`, `test_session.py` and
-    `test_examples.py` (65 tests passed with the experiment) and
-    `bench_python.py`.
-2. **Done 2026-10-20** (build 1969 to 795 ms, 2.5 times faster; DESIGN.md Results).
-    **Compare link targets by field in `edits._add_link`** (workload (c) build; 76%
-    of build time; 2.5 times faster, 2059 to 823 ms, measured). Replace
-    `link.target == edit.target` with a node and port comparison; 3 lines, risk
-    low. Verify: `tests/test_edits.py` and `bench_python.py`. The same pydantic
-    comparison is in `_delete_link` (`gone not in graph.links`); it runs once per
-    delete, not per link, so it is left alone.
-
-Tier 2:
-
-3. **Done 2026-10-20** (redraw 3.4 to 0.21 ms, 16 times faster; DESIGN.md Results).
-    **Draw only the nodes on screen** (workload (a); cards and ports are 100% of
-    the nodes drawn; 15.4 to 0.7 ms measured when 12 of 200 are visible, no gain
-    when all are; it falls to nothing for a graph that fits the window). Add
-    `Rect::overlaps` to `element-51-core` with a native test, and skip a card and
-    its ports when its rectangle is outside the view in `draw`; wires follow in a
-    later step. About 20 lines, risk medium: the web crate has no automated test,
-    and the rectangle must include the selection outline so an edge node does not
-    flicker. Verify: the native test, `bench_page.js` before and after (same 11
-    batches), and by hand in the browser (pan to a node at each edge, zoom out
-    until everything is visible, select an edge node).
-
-Tier 3, not executed (reason):
-
-- Cull wires and the dot grid too: they are 12% and 8% of the redraw before task
-    3, and I have not measured what remains after it. Revisit after task 3.
-- `Graph.next_id` (0.9 s of the 2.2 s that build still takes after task 2): it
-    scans every node id. A faster version needs a cached counter, and a counter
-    changes which id is reused after the newest node is deleted, which is a
-    behaviour change. Leave.
-- `_add_node`'s id-in-use scan: the same order as `next_id` and about 14% of
-    build; a set of ids needs invalidation rules for no gain a user feels.
-- Snapshot JSON: linear, 1.8 ms for 2000 nodes.
-- Page load: 22 ms warm. `wasm-opt` could shrink the 706 KB file, but no size
-    budget exists and the cold load was not measured; revisit if the user wants
-    one.
-- The browser's own paint of a visible, large graph (14 ms): task 3 is the part of
-    it the page controls.
 
 ### Tier 3: listed, not executed
 
