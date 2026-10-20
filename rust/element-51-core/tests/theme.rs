@@ -547,6 +547,11 @@ fn graphic_pairs(theme: &Theme) -> Vec<(String, String, String)> {
             c.canvas.clone(),
         ),
         (
+            "focus on canvas".to_string(),
+            c.focus.clone(),
+            c.canvas.clone(),
+        ),
+        (
             "refused on canvas".to_string(),
             c.refused.clone(),
             c.canvas.clone(),
@@ -596,4 +601,56 @@ fn every_graphic_pair_of_every_theme_meets_aa() {
             );
         }
     }
+}
+
+#[test]
+fn every_page_control_has_a_visible_focus_style() {
+    for selector in [
+        "#run:focus-visible",
+        "#menu button:focus-visible",
+        "#card-menu button:focus-visible",
+        "#menu-search:focus-visible",
+        "#error button:focus-visible",
+        "#fields input:focus-visible",
+    ] {
+        assert!(PAGE.contains(selector), "no focus style for {selector}");
+    }
+    assert!(
+        PAGE.contains("var(--focus)"),
+        "the focus ring does not use the theme's focus colour"
+    );
+}
+
+#[test]
+fn the_page_has_press_states_and_respects_reduced_motion() {
+    for selector in [
+        "#run:active",
+        "#menu button:active",
+        "#card-menu button:active",
+    ] {
+        assert!(PAGE.contains(selector), "no press style for {selector}");
+    }
+    let motion = PAGE
+        .find("prefers-reduced-motion")
+        .expect("no prefers-reduced-motion rule");
+    let first_transition = PAGE.find("transition:").expect("no transition at all");
+    assert!(
+        first_transition < motion,
+        "the rule must come after the transitions"
+    );
+    assert!(
+        PAGE[motion..].contains("transition: none"),
+        "reduced motion keeps transitions"
+    );
+}
+
+#[test]
+fn the_focus_colour_reaches_the_page_as_a_variable() {
+    let theme = Theme::default();
+    let variables = theme.css_variables();
+    let focus = variables
+        .iter()
+        .find(|(name, _)| name == "--focus")
+        .map(|(_, value)| value);
+    assert_eq!(focus, Some(&theme.colours.focus));
 }

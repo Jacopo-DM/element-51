@@ -79,6 +79,8 @@ pub struct Colours {
     pub run_hover: String,
     /// The Run button's text under the pointer.
     pub run_hover_text: String,
+    /// The ring round the control that has the keyboard focus.
+    pub focus: String,
     /// The tint of a ticked checkbox in a value box.
     pub accent: String,
     /// The error banner's background.
@@ -353,6 +355,7 @@ impl Theme {
             ("--run-hover-bg", &colours.run_hover),
             ("--run-hover-text", &colours.run_hover_text),
             ("--accent", &colours.accent),
+            ("--focus", &colours.focus),
         ]
         .into_iter()
         .map(|(name, value)| (name.to_string(), value.clone()))

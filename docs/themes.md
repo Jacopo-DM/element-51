@@ -99,6 +99,7 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `run_border` | The line round the Run button. | `#303030` | `#303030` |
 | `run_hover` | The Run button's background under the pointer. | `#2f6db5` | `#2f6db5` |
 | `run_hover_text` | The Run button's text under the pointer. | `#ffffff` | `#ffffff` |
+| `focus` | The ring round the control that has the keyboard focus. | `#7c86f0` | `#4f46e5` |
 | `accent` | The tint of a ticked checkbox in a value box. | `#4a90d9` | `#4a90d9` |
 | `error` | The error banner's background. | `#5a2d2d` | `#5a2d2d` |
 | `error_text` | Text in the error banner. | `#f0d0d0` | `#f0d0d0` |

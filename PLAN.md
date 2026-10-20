@@ -353,7 +353,8 @@ Tier 1, foundations:
     lighter, so the canvas screenshots change on purpose. Verify: the new test,
     the existing theme tests, axe on both themes, screenshots of default, run and
     search-none.
-2. **Visible focus and press states on every page control** (finding 5, 6). One
+2. **Done 2026-10-20** (DESIGN.md Results).
+    **Visible focus and press states on every page control** (finding 5, 6). One
     focus ring token (`focus` page key, `#7c86f0` dark) used by Run, the menu
     buttons, card menu buttons, search box, Dismiss and the value boxes; `:active`
     for buttons; 120 ms transitions off under `prefers-reduced-motion`. Files:
