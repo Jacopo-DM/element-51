@@ -59,22 +59,20 @@
 - Status: approved 2026-10-19. Spec approved 2026-10-19 (DESIGN.md, under
   "antimony-theme spec"), with these choices: rows stacked like Antimony, the
   header icon opens a small menu (task 18), the theme is chosen only by
-  `serve(theme=...)`. In progress: tasks 11 to 14 are done (the user accepted the look, so
-  criteria 1 to 4 are met), next are tasks 15 and 18.
+  `serve(theme=...)`. In progress: tasks 11 to 15 are done (the user accepted the look, so
+  criteria 1 to 5 are met), next is task 18.
 - Added: 2026-10-19
 
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
 tasks 1 to 14 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
-goal is complete and the antimony-theme goal has criteria 1 to 4 met (the graph
-runs, saves, undoes and has the Antimony look, a light theme and a nested menu).
-Next step: task 15 (README credit, a draft for the user's review; the user has
-said "start task 15" and it is not started), then task 18 (the header icon
-menu; one entry, Delete node, confirmed). The user's own try-out of goal
+goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
+runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
+the README credit).
+Next step: task 18 (the header icon menu; one entry, Delete node, confirmed). The user's own try-out of goal
 `skeleton` is still pending, and so is their look at the menu (task 14).
-Nothing is uncommitted except `.vscode/settings.json`, where an editor
-extension added a setting; the user chose to leave it. All merged branches are
+Nothing is uncommitted. All merged branches are
 deleted. There is no remote, so nothing
 is pushed. The user approves each task start and each branch deletion in one
 reply ("Yes, start task N, and delete the merged branch ...").
@@ -108,7 +106,7 @@ Measured 2026-10-19 after task 14, Apple silicon, Python 3.13:
 
 ## Tasks
 
-Tasks 1 to 15 approved 2026-10-19; tasks 1 to 14 are done (removed from the
+Tasks 1 to 15 approved 2026-10-19; tasks 1 to 15 are done (removed from the
 list below, their detail is in DESIGN.md and git). A task added later needs its
 own approval in words. Sizes are estimates by analogy with the skeleton (about
 80 lines of Python, 60 of Rust); there is no measured data yet. Every area below is new code, so no existing test pins it; each task
@@ -139,14 +137,11 @@ wire curve was changed to stop it hugging a card's edge; details in DESIGN.md.
 
 Tasks 11 (`Theme`), 12 (the Antimony look; the user accepted it), 13
 (`antimony-light`, `serve(theme=...)`) and 14 (categories and the nested menu
-with search) are done; detail in DESIGN.md. Open, below: 15 and 18.
+with search) are done, and 15 (README credit); detail in DESIGN.md. Open, below: 18.
 
 
 ### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
 
-15. **README credit.** I draft the Antimony and Matt Keeter credit for your
-    review; no Antimony asset in the repo. Criterion 5. Risk low. Cost about 5
-    lines.
 18. **The header icon opens a small menu** (added 2026-10-19 by the user's
     choice while approving the spec). Clicking the three-bar icon on a card
     opens a small popup with one entry, Delete node, in the theme's menu
@@ -175,8 +170,7 @@ None.
 ## Known problems
 
 - `README.md`, `docs/index.md` and the `pyproject.toml` description are still
-  template text. The README credit for Antimony is part of goal
-  `antimony-theme`.
+  template text. Only its Credits section is written.
 - CI (`.github/workflows/ci.yml`) runs Python checks only. It does not build
   the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
   start (the `web/` folder is missing); the tests avoid this with a fake folder.
