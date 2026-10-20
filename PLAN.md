@@ -102,9 +102,10 @@ the restructure, speed-up and ui-design-pass passes and the `palette-try` goal (
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the user's own try-out (below), then finishing the upload of 0.1.0
-(`uv run python tools/check_wheel.py`, `uv build`, `uv publish` with username
-`__token__`), which the user does.
+Next step: the user's own try-out (below). Publishing 0.1.0 is on hold by the
+user's choice (2026-10-20): they will publish when the code is in a much better
+state (a version number cannot be reused on PyPI). When they do: `uv run python
+tools/check_wheel.py`, `uv build`, `uv publish` with username `__token__`.
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
 the menu button beside Run, choose Try palette and paste
@@ -321,8 +322,9 @@ Oldest first.
 - The README says `uv add element-51`, which is true only after the user
     publishes 0.1.0. On 2026-10-20 (23:10) PyPI held only the placeholder 0.0.1
     (1.5 KiB); the user's `uv publish` stopped at the credentials prompt (they typed
-    `jmdm`, but PyPI wants the username `__token__` and an API token). Until it
-    succeeds, `uv add element-51` installs the empty placeholder.
+    `jmdm`, but PyPI wants the username `__token__` and an API token), and they
+    then chose to hold the release. Until it is published, `uv add element-51`
+    installs the empty placeholder.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
     the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
     run on GitHub yet, since there is no remote; its commands were run by hand.
