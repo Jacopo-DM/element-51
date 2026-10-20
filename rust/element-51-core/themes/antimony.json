@@ -62,7 +62,9 @@
   "fonts": {
     "card": "12px Verdana, sans-serif",
     "title": "bold 12px Verdana, sans-serif",
+    "value": "12px Monaco, Menlo, monospace",
     "family": "Verdana, sans-serif",
+    "value_family": "Monaco, Menlo, monospace",
     "field_px": 12.0
   }
 }

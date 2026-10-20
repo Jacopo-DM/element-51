@@ -49,6 +49,10 @@ fn the_html_parts_get_named_css_values_from_the_theme() {
     assert_eq!(value("--field-bg"), Some(theme.colours.field.as_str()));
     assert_eq!(value("--menu-bg"), Some(theme.colours.menu.as_str()));
     assert_eq!(value("--font"), Some(theme.fonts.family.as_str()));
+    assert_eq!(
+        value("--value-font"),
+        Some(theme.fonts.value_family.as_str())
+    );
     assert!(value("--nope").is_none());
 }
 

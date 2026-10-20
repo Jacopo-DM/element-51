@@ -544,6 +544,12 @@ sans-serif still looked soft). Verdana is wide and drawn for small sizes, and it
 ships with macOS and Windows; `sans-serif` is the fallback. The font strings are
 in the theme files, and the card layout measures text, so nothing else changed.
 
+Values use Monaco (2026-10-20, the user's request): `Fonts.value` is the canvas
+font for the text in value boxes (numbers, strings, run outputs, link hints) and
+`Fonts.value_family` is the family for the input boxes laid over them, shown to
+the page as `--value-font`. Menlo and `monospace` are the fallbacks. Port names,
+titles, menus and buttons stay in Verdana.
+
 ## Results
 
 | Date | Change | Result |

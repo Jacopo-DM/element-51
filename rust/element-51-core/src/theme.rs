@@ -132,8 +132,12 @@ pub struct Fonts {
     pub card: String,
     /// The canvas font for the id and type name in a title bar.
     pub title: String,
-    /// The family for the page's own parts: input boxes, menu, banner.
+    /// The canvas font for what sits in a value box: numbers, text, links.
+    pub value: String,
+    /// The family for the page's own parts: menu, banner, buttons.
     pub family: String,
+    /// The family for the text typed into an input box.
+    pub value_family: String,
     /// The size of text in an input box at zoom 1, in pixels.
     pub field_px: f64,
 }
@@ -178,6 +182,7 @@ impl Theme {
             ("--error-bg", &colours.error),
             ("--error-text", &colours.error_text),
             ("--font", &self.fonts.family),
+            ("--value-font", &self.fonts.value_family),
         ]
         .into_iter()
         .map(|(name, value)| (name.to_string(), value.clone()))

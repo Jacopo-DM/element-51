@@ -360,6 +360,7 @@ fn card(
     for (row, port, is_input) in rows {
         let (_, centre) = input_anchor(&rect, row, metrics);
         let baseline = centre + metrics.text_baseline;
+        context.set_font(&theme.fonts.card);
         context.set_fill_style_str(label);
         context.set_text_align("right");
         context.fill_text(&port.name, columns.label_right, baseline)?;
@@ -376,6 +377,7 @@ fn card(
         );
         context.fill();
         context.set_text_align("left");
+        context.set_font(&theme.fonts.value);
         let room = box_width - 2.0 * metrics.box_pad;
         let text_x = columns.box_left + metrics.box_pad;
         if is_input {
