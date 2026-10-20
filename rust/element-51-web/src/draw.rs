@@ -17,6 +17,11 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
 /// The grid is left out when its dots would be closer than this on screen.
 const MIN_GRID_PIXELS: f64 = 8.0;
+/// The focus ring's width, its dark halo on each side, and its gap from what it
+/// rings, all in screen pixels.
+const FOCUS_WIDTH: f64 = 2.0;
+const FOCUS_HALO: f64 = 1.0;
+const FOCUS_GAP: f64 = 3.0;
 /// How far a diamond marker reaches from its centre, as a fraction of the port
 /// size: 0.7 gives it about the area of a box of that size.
 const DIAMOND_REACH: f64 = 0.7;
@@ -37,6 +42,17 @@ pub enum Selected {
     Link(Link),
 }
 
+/// What has the keyboard focus, as the hidden tree reports it.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Focus {
+    Node(String),
+    Port {
+        node: String,
+        port: String,
+        side: Side,
+    },
+}
+
 /// Everything one frame shows. With no graph yet, only the background.
 pub struct Frame<'a> {
     pub theme: &'a Theme,
@@ -46,6 +62,7 @@ pub struct Frame<'a> {
     pub selected: Option<&'a Selected>,
     pub drag: Option<&'a Drag>,
     pub hover: Option<&'a PortHit>,
+    pub focus: Option<&'a Focus>,
     pub run: Option<&'a RunResult>,
 }
 
@@ -134,6 +151,7 @@ pub fn draw(
         selected,
         drag,
         hover,
+        focus,
         run,
     } = *frame;
     let (colours, metrics) = (&theme.colours, &theme.metrics);
@@ -258,7 +276,64 @@ pub fn draw(
             marker(context, (x, y), &style, metrics);
         }
     }
+    if let Some(focus) = focus {
+        focus_ring(context, (graph, types), theme, view, focus)?;
+    }
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
+    Ok(())
+}
+
+/// The ring on the node or port that has the keyboard focus. It is two-tone,
+/// the canvas colour under the theme's focus colour, so it shows on a card as
+/// well as on the canvas. Its widths are in screen pixels, whatever the zoom.
+fn focus_ring(
+    context: &CanvasRenderingContext2d,
+    (graph, types): (&Graph, &[NodeType]),
+    theme: &Theme,
+    view: &View,
+    focus: &Focus,
+) -> Result<(), JsValue> {
+    let (colours, metrics) = (&theme.colours, &theme.metrics);
+    let pixel = 1.0 / view.zoom();
+    let node_id = match focus {
+        Focus::Node(id) | Focus::Port { node: id, .. } => id,
+    };
+    let Some(node) = graph.nodes.iter().find(|node| &node.id == node_id) else {
+        return Ok(());
+    };
+    let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
+        return Ok(());
+    };
+    let rect = node_rect(node, node_type, metrics).grown(FOCUS_GAP * pixel);
+    let radius = metrics.card_radius + FOCUS_GAP * pixel;
+    for (colour, width) in [
+        (&colours.canvas, (FOCUS_WIDTH + 2.0 * FOCUS_HALO) * pixel),
+        (&colours.focus, FOCUS_WIDTH * pixel),
+    ] {
+        context.set_stroke_style_str(colour);
+        context.set_line_width(width);
+        card_path(context, &rect, radius);
+        context.stroke();
+    }
+    if let Focus::Port { port, side, .. } = focus {
+        let target = PortRef {
+            node: node.id.clone(),
+            port: port.clone(),
+        };
+        if let Some((x, y)) = anchor_of(graph, types, &target, *side, metrics) {
+            let reach = metrics.port_size / 2.0 + FOCUS_GAP * pixel;
+            for (colour, width) in [
+                (&colours.canvas, (FOCUS_WIDTH + 2.0 * FOCUS_HALO) * pixel),
+                (&colours.focus, FOCUS_WIDTH * pixel),
+            ] {
+                context.set_stroke_style_str(colour);
+                context.set_line_width(width);
+                context.begin_path();
+                context.arc(x, y, reach, 0.0, TAU)?;
+                context.stroke();
+            }
+        }
+    }
     Ok(())
 }
 

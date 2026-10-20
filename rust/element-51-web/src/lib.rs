@@ -4,6 +4,7 @@
 //! flow. The canvas gestures are in `input`, the menus in `menu_ui` and the
 //! value boxes in `fields_ui`.
 
+mod a11y_ui;
 mod draw;
 mod fields_ui;
 mod input;
@@ -18,7 +19,7 @@ use element_51_core::layout::PortHit;
 use element_51_core::menu::card_actions;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{Edit, EditRequest, Message, Replica, RunRequest, RunResult};
+use element_51_core::{Edit, EditRequest, Graph, Message, Replica, RunRequest, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -26,7 +27,8 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use draw::{Frame, Selected, draw};
+use a11y_ui::{on_tree_focus_in, on_tree_focus_out, on_tree_key, sync_tree};
+use draw::{Focus, Frame, Selected, draw};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
@@ -48,6 +50,10 @@ struct State {
     view: View,
     history: History,
     selected: Option<Selected>,
+    /// The hidden tree's item that has the keyboard focus, if any.
+    focus: Option<Focus>,
+    /// The graph the hidden tree was built from; `None` means build it again.
+    tree_graph: Option<Graph>,
     gesture: Gesture,
     hover: Option<PortHit>,
     /// The last run's outcome. Cleared when the graph changes.
@@ -102,6 +108,8 @@ pub fn start() -> Result<(), JsValue> {
         theme,
         history: History::default(),
         selected: None,
+        focus: None,
+        tree_graph: None,
         gesture: Gesture::None,
         hover: None,
         run: None,
@@ -160,6 +168,20 @@ pub fn start() -> Result<(), JsValue> {
     listen(&window, "keydown", move |event: KeyboardEvent| {
         on_key_down(&shared, &event)
     })?;
+    if let Some(tree) = document.get_element_by_id("graph-tree") {
+        let shared = state.clone();
+        listen(&tree, "keydown", move |event: KeyboardEvent| {
+            on_tree_key(&shared, &event)
+        })?;
+        let shared = state.clone();
+        listen(&tree, "focusin", move |event: web_sys::FocusEvent| {
+            on_tree_focus_in(&shared, &event)
+        })?;
+        let shared = state.clone();
+        listen(&tree, "focusout", move |event: web_sys::FocusEvent| {
+            on_tree_focus_out(&shared, &event)
+        })?;
+    }
     if let Some(button) = document.get_element_by_id("run") {
         let shared = state.clone();
         listen(&button, "click", move |_event: MouseEvent| on_run(&shared))?;
@@ -290,6 +312,7 @@ fn fit_canvas(state: &Shared, window: &web_sys::Window) {
 }
 
 fn redraw(shared: &Shared) {
+    sync_tree(shared);
     draw_canvas(shared);
     sync_fields(shared);
 }
@@ -313,6 +336,7 @@ fn draw_canvas(state: &Shared) {
             _ => None,
         },
         hover: state.hover.as_ref(),
+        focus: state.focus.as_ref(),
         run: state.run.as_ref(),
     };
     let result = draw(&state.canvas, &state.context, &frame);
@@ -420,6 +444,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
             Ok(Message::Snapshot(snapshot)) => {
                 state.run = None;
                 state.selected = None;
+                state.tree_graph = None;
                 let theme_key = format!("{} {}", snapshot.theme, snapshot.theme_changes);
                 if theme_key != state.theme_key {
                     match Theme::with_changes(&snapshot.theme, &snapshot.theme_changes) {
