@@ -98,18 +98,22 @@ whatever the palette. Tests, behaviour and the mapping rule are in DESIGN.md
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-the restructure pass (2026-10-20), tasks 1 to 15 and 18 to 26 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+the restructure, speed-up and ui-design-pass passes and the `palette-try` goal (all 2026-10-20), tasks 1 to 15 and 18 to 26 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
 Next step: the user's own try-out (below), then publishing, which the user does.
-The design pass and the palette box are merged to `main` once the user has looked
-at them (branch `ui-design-pass`).
+To try the newest work: `uv run python tools/build_wasm.py`, then
+`uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
+the menu button beside Run, choose Try palette and paste
+`https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500` (stop any example already
+on port 8765 first).
 The README and docs drafts were reviewed and merged on 2026-10-20.
 Waiting on the user: their own try-out of goal
-`skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
-have looked at `a2_two_nodes` and said it looks good.
-Nothing is uncommitted in this repo (checked 2026-10-20 after task 26). All
+`skeleton`, a look at the menus (examples `d4_menu` and `d5_card_menu`), the new
+page look and the palette box; they have looked at `a2_two_nodes` and said it
+looks good. The sharpness question below needs their screenshot.
+Nothing is uncommitted in this repo (checked 2026-10-20 after the palette goal). All
 merged branches are deleted (`notes-before-compact-4` too, 2026-10-20); the only
 other branch is `main`.
 In `~/Functions`, the VS Code profile settings and the project template
@@ -120,7 +124,7 @@ reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
 
-Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
+Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
 
 - Structure, measured 2026-10-20 after the restructure pass
     (`tools/measure_structure.py`): 80 tracked Python, Rust and HTML files,
@@ -183,8 +187,8 @@ Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
         theme were not captured (the matrix is cut because the page has one screen
         whose states differ only in the page parts).
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 220 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 122 tests.
+- pytest: 221 passed, 100% coverage, about 8 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 153 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
     the node's rows; the class-form example runs and its menu lists the class
@@ -288,8 +292,8 @@ Oldest first.
     Monaco). Options not yet tried: a larger card font, or snapping text
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
-2. (2026-10-20) Canvas accessibility (finding 11 under goal `ui-design-pass`): the
-    user asked for WCAG 2.2 AA including the canvas. It is new behaviour and large
+2. (2026-10-20) Canvas accessibility: the user asked for WCAG 2.2 AA including the
+    canvas (nodes, wires, ports) when the design pass started. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
 ## Known problems

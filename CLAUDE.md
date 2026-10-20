@@ -66,6 +66,11 @@ has no WASM target and is not used. Every Rust command below is prefixed with
     parts use CSS custom properties such as `var(--menu-bg)`.
 - A change to a wire record (snapshot, edit, node type) changes the shared files in
     `tests/fixtures/` too; both test suites read them.
+- A new theme colour or a new colour pair needs: its key in `Colours` and in both
+    theme JSON files, a row in `docs/themes.md` (a native test fails without it),
+    a `--name` in `Theme::css_variables` if the page uses it, and a pair in
+    `Theme::contrast_pairs` so the native AA test covers it (4.5:1 for text, 3:1
+    for graphics); `tests/palette.rs` then checks it for every palette too.
 - A feature the user can try gets a runnable example in `examples/`, in the group
     folder it belongs to (`a_basics`, `b_node_types`, `c_python_api`, `d_editor`,
     `e_look`, `f_embedding`; the file is named with the folder's letter and the next
@@ -124,6 +129,19 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - Test dummies whose body never runs (functions built only to read their hints)
     take `# pragma: no cover  # reason` on the `def` line; everything else is
     called, so coverage stays at 100%.
+- The browser pane's page is a background page while the Claude window is not in
+    view: `requestAnimationFrame` never fires, timers slow to about one a second,
+    and `javascript_tool` calls with many `await`s time out after 45 s. Measure
+    with synchronous loops, call `tabs_select`, and check `document.hidden`;
+    `mcp__ccd_view__show_pane` only helps while the window is on screen.
+- `npm` and `npx` fail here with `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`; `curl` works.
+    Fetch a package tarball from `registry.npmjs.org` with `curl`, check its sha1
+    against the registry's `dist.shasum`, and unpack it into the scratchpad (only
+    after the user approves the download by name, source and size).
+- `cargo test` can pass while `cargo clippy ... -D warnings` fails (a redundant
+    closure in new code); run both before committing. A `sed '/x/,+2d'` over a
+    multi-line Rust struct literal left a dangling `(`: edit such lists with Python
+    and re-run the tests.
 - `typing.TypeGuard` narrows only the first argument of the guard function, so
     the value being checked goes first (`value_fits(value, kind)`).
 - Every indent in every file you write is a multiple of 4: Python, docstrings, strings that hold HTML, CSS or JS, the page, JSON (`json.dumps(..., indent=4)`) and Markdown outside code blocks. The YAML

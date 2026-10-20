@@ -932,6 +932,15 @@ have to go through `tools/compress_images.py`).
     new text. Say so when a file the user has open is rewritten.
 - The 22 transitive Rust crates come from wasm-bindgen (`futures-*`, `slab`,
     `bumpalo`, `syn` 3.0.9 and friends) and serde (`serde_derive`).
+- A page measurement is only comparable with another taken in the same state of
+    the browser pane (visible or hidden): the same 200-node redraw measured 3.4 ms
+    in a hidden pane, 15 ms visible with painting, and 14 ms when each batch
+    yielded to the browser. `tools/bench_page.js` therefore runs its batches back
+    to back, without yielding, and times the recording work only (3.3 to 3.5 ms
+    before the culling, 0.21 ms after).
+- `axe-core` reported a `scrollable-region-focusable` (serious) once, on the
+    add-node menu's results list with no match; it did not return after the page
+    was wrapped in `<main>` and the cause was not found.
 - jscpd (the clone detector for the restructure pass) is not a dependency and
     `npx` cannot fetch it here: node fails with `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`
     while `curl` reaches the registry. The user approved the download on
