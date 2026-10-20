@@ -157,6 +157,17 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - `uv add` has no `--dry-run`, and the hook blocks `uv pip`. `uv sync --group docs
     --offline` works from the cache. `uv venv --clear` then `uv sync` recreates the
     environment (its `pyvenv.cfg` prompt takes the project name).
+- The user may be running an example in their own terminal (they tried
+    `a_basics/a2_two_nodes.py` while I worked), which holds port 8765. Check
+    `ps aux | rg examples/` first and never kill their process; for my own checks
+    use a throwaway script in the scratchpad that calls `serve(app, port=8766)`.
+- A browser-pane tab can disappear between calls ("Preview not found"), and a
+    resized pane asks for a fresh screenshot before a click by coordinate; call
+    `preview_start` with the URL again, then take a screenshot.
+- When a script edits several state files, apply the edits only if every
+    replacement matched, then check that `git diff --stat` lists every file before
+    committing. The task 24 commit once carried only PLAN.md because the other
+    edits failed and I committed anyway.
 - zsh stops on an unquoted `--include=*.rs` ("no matches found"); quote it or use
     `rg -g '*.rs'`.
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's

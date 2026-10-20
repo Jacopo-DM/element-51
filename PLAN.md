@@ -77,15 +77,17 @@ template-text known problem below.
 Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
-Nothing is uncommitted in this repo (checked 2026-10-20 after task 22). All
-merged branches are deleted. In `~/Functions`, the profile settings were committed
-and its leftover branch deleted at the user's say-so. There is no remote, so nothing
+Nothing is uncommitted in this repo (checked 2026-10-20 after task 26). All
+merged branches are deleted; the only other branch is the unmerged `docs-draft`.
+In `~/Functions`, the VS Code profile settings and the project template
+settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
+merged branches deleted, all at the user's say-so. There is no remote, so nothing
 is pushed. The user approves each task start and each branch deletion in one
 reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
 
-Measured 2026-10-20 after task 22, Apple silicon, Python 3.13:
+Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 220 passed, 100% coverage, about 4 s (includes every example).
@@ -191,11 +193,6 @@ Oldest first.
     enough? Three fixes were made on their report (device-pixel canvas, opaque
     context, Verdana and Monaco; wheel and pinch rates) and I could only check
     them in the built-in browser. The user has not said.
-2. (2026-10-20) `~/Functions/_rsync/vscode/settings.json`, the template that
-    `rsync-sync` copies into new projects, is modified in the working tree and not
-    committed: most hidden-file excludes flipped to `false` and `.github` hidden. It
-    looks like the explorer-exclude extension saving its toggle state, so I left it.
-    Commit it or restore it? Also three untracked `.bak` files there.
 
 ## Known problems
 

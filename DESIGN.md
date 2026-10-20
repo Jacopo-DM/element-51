@@ -748,6 +748,19 @@ with the lock. Rejected: a lock for `run` (it would block edits for as long as t
 slowest node), and an `asyncio` lock (scripts run in plain threads). Still true:
 one `App` per process, so several server workers would each hold their own graph.
 
+README and docs drafts (2026-10-20, the user asked for them; branch `docs-draft`,
+unmerged until reviewed): the README says what the library is, lists what it
+gives, installs with `uv add element-51` and from a clone (needs Rust and the
+`wasm32-unknown-unknown` target), shows the two-node example (the same code as
+`a_basics/a2_two_nodes.py`, run to confirm it gives 21.0 and 42.0), and links
+the examples, the docs and the Antimony credit. `docs/index.md` repeats the
+description and example and points to the themes, embedding and reference pages;
+`docs/embedding.md` is new and holds the FastAPI and NiceGUI recipes and the
+limits (one process and one worker, a lock in `App`, the editor works under any
+prefix). Two assumptions to check at review: the install line is true only after
+the user publishes the package, and the drafts contain no images (any image would
+have to go through `tools/compress_images.py`).
+
 ## Results
 
 | Date | Change | Result |
