@@ -155,9 +155,8 @@ classifiers.
 The menu was reworked on 2026-10-21 at the user's request (branch `menu-and-default-theme`):
 the menu button sits at the top right, `Try palette` is `Load palette from Coolors link`,
 a new `Select theme` entry lists the three built-in themes and switches at once, and
-the default theme is now `purple-synthwave`. Not decided by the user: the end of their
-second point (it stopped at "and there should be"); a hint in the link box already
-exists (its placeholder), nothing was added.
+the default theme is now `purple-synthwave`. The user closed their unfinished second
+point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
 Next step: the user asked (2026-10-21, mid task 27) for `/zz-02-project-plan` on a new
 feature, experiment nodes (open question 4); run it first, then continue with task 28 of
 `canvas-accessibility` (approved) unless the user reorders them. The user's own try-out
@@ -462,7 +461,9 @@ Oldest first.
     `run-notebooks-all`, a pre-push stage). Left on purpose (2026-10-20): the repo has no
     `tests/functional/` and no `tools/run_notebooks.py`; the pre-push hook would fail
     without the runner. Adopt it together with the first notebooks.
-- The editor's canvas has no keyboard or screen-reader access (open question 2).
+- The canvas has keyboard and screen-reader access only for moving the focus between
+    nodes and ports (task 27); select, delete, link, move, menus, value boxes and the run
+    result are tasks 28 to 33 of the goal `canvas-accessibility`.
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
     fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
