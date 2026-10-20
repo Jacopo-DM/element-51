@@ -96,6 +96,41 @@ the Tier 3 items left alone on purpose are in DESIGN.md.
     user 2026-10-20, recorded in DESIGN.md; the task list waits for approval).
 - Added: 2026-10-20
 
+### palette-try
+
+- Goal: the user can paste a Coolors palette link into the page and see the whole
+    editor take its colours at once, to try palettes, without restarting.
+- Kind: new behaviour.
+- Success measure (each is a test, unless marked by hand):
+    1. A hamburger button beside Run opens a small menu with one entry, "Try
+        palette", which opens a box for a link (by hand, and a native test that the
+        page has the button, the menu and the box).
+    2. A Coolors link such as `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`
+        gives its colours (2 to 10, any case, with or without `https://`, `www.` or
+        `/palette/`); anything else gives an error in the banner that names what is
+        wrong (native tests on the parser: good links and five bad ones).
+    3. The colours map to theme colours by lightness and colour, with no input
+        order needed: darkest to the canvas, the next to cards and menus, mid tones
+        to headers and borders, the lightest to the text, the most saturated to the
+        accent (a native test pins the result for the example link and for a
+        two-colour link).
+    4. Every text and graphic pair of the resulting theme meets WCAG AA (4.5 for
+        text, 3 for graphics): text and hint colours are nudged lighter or darker
+        until they do (a native test over the example, an all-light palette, an
+        all-dark one and a one-hue one).
+    5. The page applies it at once; a reload shows the theme Python holds, and
+        Python is not told (no wire change; a native test that the palette changes
+        only the page's `Theme`, a by-hand reload check).
+    6. No network request is made: the colours come from the link text (by hand,
+        in the network log).
+- Status: draft, 2026-10-20; needs the user's approval in words. Specified from
+    the user's answers of 2026-10-20 (by lightness and colour; a hamburger menu
+    beside Run; kept until reload; text adjusted to stay readable).
+- Order: after goal `ui-design-pass` tasks 1 to 4, because it reuses their contrast
+    test, the accent and focus colours, and the page keys, and edits the same
+    files (`index.html`, `theme.rs`, the theme files, `docs/themes.md`).
+- Added: 2026-10-20
+
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
@@ -376,12 +411,9 @@ Oldest first.
     user asked for WCAG 2.2 AA including the canvas. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
-3. (2026-10-20) A palette box in the UI: the user wants to paste a Coolors palette
-    link (for example `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`) and
-    hot-reload it as the theme to try colours. New behaviour, so a new goal for
-    `/zz-02-project-plan`, not part of the design pass; the questions to settle are
-    in the conversation of 2026-10-20 (how the five colours map to theme colours,
-    where the control sits, whether it is kept, what happens to contrast).
+3. (2026-10-20) Goal `palette-try` (draft) and goal `ui-design-pass` edit the same
+    files. Proposed order: the four design tasks first. Needs the user's answer
+    with the approval of both.
 
 ## Known problems
 
