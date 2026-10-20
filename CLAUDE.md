@@ -42,6 +42,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust lint | `R cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings` | about 1 s warm |
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
+| Structure numbers | `uv run python tools/measure_structure.py [--jscpd <binary>]` | under 1 s; files and lines, files over 400 lines, modules over 5 imports; jscpd is not a dependency (downloaded by hand, see DESIGN.md) |
 | Serve the editor | `uv run examples/a_basics/a2_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
 | Serve another example | `uv run python examples/a_basics/a3_arithmetic.py` (every example except `c1_script_api.py`, which prints and exits, and `a1_hello_world.py`, the template, serves on http://127.0.0.1:8765) | same port, so stop one before starting the next |
 

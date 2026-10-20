@@ -798,3 +798,12 @@ have to go through `tools/compress_images.py`).
     new text. Say so when a file the user has open is rewritten.
 - The 22 transitive Rust crates come from wasm-bindgen (`futures-*`, `slab`,
     `bumpalo`, `syn` 3.0.9 and friends) and serde (`serde_derive`).
+- jscpd (the clone detector for the restructure pass) is not a dependency and
+    `npx` cannot fetch it here: node fails with `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`
+    while `curl` reaches the registry. The user approved the download on
+    2026-10-20. I fetched `jscpd-5.4.2.tgz` (5 KB, a launcher) and
+    `jscpd-darwin-arm64-5.4.2.tgz` (8.8 MB packed, 43 MB unpacked) with `curl`
+    from `registry.npmjs.org`, checked both against the registry's sha1, unpacked
+    them into the scratchpad and ran `package/bin/jscpd` directly. Nothing was
+    installed and nothing was added to the repo. Redo it the same way; do not
+    turn off certificate checks.

@@ -11,6 +11,9 @@ the ignore list in CLAUDE.md.
 - `element_51.asgi_app(app, theme=None)`: an ASGI app to mount in an existing
     server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
+- `uv run python tools/measure_structure.py [--jscpd <binary>]`: print the
+    structure numbers (files, lines, files over 400 lines, modules over five
+    imports, clones).
 - `examples/`, in group folders; the file name starts with the folder's letter and
     a number. `a_basics`: `a1_hello_world.py` (the project template, not an example
     of the library), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
@@ -63,6 +66,20 @@ imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never
 happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`.
+
+## Boundaries between languages
+
+- Python and the browser: JSON messages over the websocket `/ws`. Python side:
+    pydantic models in `protocol.py` (`Snapshot`, `EditRequest`, `Ack`, `Reject`,
+    `RunRequest`, `RunResult`); browser side: the serde types in
+    `element-51-core` (`Message::from_json`, `to_json`). `tests/fixtures/` pins
+    both.
+- Rust and the page: `element-51-web` is compiled to WASM and bound with
+    `wasm-bindgen` and `web_sys` (canvas, DOM, websocket). `element_51_web::start()`
+    is the one exported entry. `tools/build_wasm.py` copies the output into
+    `src/element_51/web/`.
+- Python and Rust share no process: `element-51-core` is also built natively for
+    its tests, and Python never loads it.
 
 ## Shared fixtures, `tests/fixtures/`
 

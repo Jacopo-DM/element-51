@@ -63,6 +63,20 @@
     criteria 1 to 5 are met); the goal waits only for the user's look at task 18.
 - Added: 2026-10-19
 
+### restructure
+
+- Goal: any one feature can be understood and changed with a few files in
+    context, with behaviour unchanged.
+- Kind: improvement (behaviour unchanged).
+- Success measure: fewer files over 400 lines, fewer modules importing more than
+    five others, a lower duplicated-lines percentage, every module reached through
+    one entry point, all tests passing unchanged. Thresholds are the defaults (400
+    lines, five imports), confirmed by the user 2026-10-20. Measured with
+    `uv run python tools/measure_structure.py --jscpd <binary>`.
+- Status: in progress (measured and proposed 2026-10-20; the task list below
+    waits for the user's approval in words).
+- Added: 2026-10-20
+
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
@@ -90,6 +104,15 @@ reply ("Yes, start task N, and delete the merged branch ...").
 
 Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
 
+- Structure, measured 2026-10-20 (`tools/measure_structure.py`): 71 tracked
+    Python, Rust and HTML files, 12,459 lines; 7 files over 400 lines
+    (`rust/element-51-web/src/lib.rs` 1147, `tests/test_server.py` 649,
+    `rust/element-51-web/src/draw.rs` 497, `tools/compress_images.py` 470,
+    `rust/element-51-core/tests/theme.rs` 462, `src/element_51/nodes.py` 449,
+    `rust/element-51-core/src/theme.rs` 427); 2 modules importing more than five
+    others (`element-51-web` `lib.rs` 7, `session.py` 7); jscpd 5.4.2
+    (`--min-lines 8 --min-tokens 70`, over `src` and both crates' `src`, 22 files,
+    5,363 lines): 0 clones, 0.00% duplicated.
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 220 passed, 100% coverage, about 4 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 122 tests.
@@ -173,6 +196,65 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 19. **Theme files** (the user chose the option and asked for the docs). Done:
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
+
+### Goal `restructure`: findings and proposed tasks (waiting for approval)
+
+Findings (file, what I saw):
+
+- `rust/element-51-web/src/lib.rs` (1147 lines, 7 core modules imported): holds
+    five concerns in one file. Start-up and wiring (`start`, `State`, 97 to 236),
+    the websocket and edits (`send`, `submit_edit`, `step_history`, `on_message`,
+    346 to 483), the add-node and card menus in the DOM (`fill_menu` to
+    `add_from_menu`, 483 to 775), mouse, wheel and key gestures (`port_under` to
+    `on_key_down`, 775 to 981) and the value boxes (`sync_fields` to
+    `on_field_change`, 981 to 1147). It is the one place where a feature (for
+    example the card menu) is spread over a 1000-line file.
+- `src/element_51/session.py` (250 lines, 7 imports): it is the facade that ties
+    edits, engine, store, theme and protocol together; each import is used once
+    for a call it must make. Splitting it would add a layer with one call site.
+- `src/element_51/nodes.py` (449 lines): the `Node` and `NodeFunction` classes
+    and the decorator share the port-type inference (`port_type`, `_input_port`,
+    `_output_ports`, about 85 lines); that part is separable.
+- `tests/test_server.py` (649 lines): page and process tests, websocket tests,
+    theme tests and the FastAPI host test in one file.
+- `rust/element-51-web/src/draw.rs` (497), `rust/element-51-core/src/theme.rs`
+    (427, one struct per theme section plus the merge code),
+    `rust/element-51-core/tests/theme.rs` (462, key tables) and
+    `tools/compress_images.py` (470, copied from the template): large, but each
+    holds one concern.
+- Duplicated logic: none found (jscpd 0 clones). Dead code: none found (clippy
+    with `-D warnings` and 100% Python branch coverage; no commented-out code).
+    Cross-module access to internals: none found (no `_name` imported across
+    modules). Cycles: none (import direction in CODEMAP.md).
+- Language boundaries: Python and the browser exchange JSON over `/ws`, mirrored
+    by pydantic models in `protocol.py` and serde types in `element-51-core`,
+    pinned by `tests/fixtures/`. The web crate reaches the page through
+    `wasm-bindgen` and `web_sys`. No code is a candidate to move between
+    languages (nothing is CPU-bound, and the browser side is already Rust).
+
+Proposed tasks, ranked by benefit over risk. None is started.
+
+1. **Split the web crate's `lib.rs` by concern** (risk medium: no automated
+    test). Move the menu code to `menu_ui.rs`, the gestures to `input.rs` and the
+    value boxes to `fields_ui.rs`; `lib.rs` keeps `start`, `State`, drawing and
+    the websocket (about 500 lines). A pure move of functions, each `pub(crate)`
+    with `State` shared as it is. Verify: `cargo clippy -D warnings`, `cargo
+    test`, `build_wasm.py`, and by hand in the browser (add node, card menu, drag,
+    zoom, type a value, undo) because the web crate has no tests.
+2. **Split `tests/test_server.py`** (risk low): `test_server.py` (page, process,
+    websocket) and `test_server_host.py` (theme and FastAPI host), sharing the
+    helpers through a `tests/server_helpers.py` or a conftest fixture. Verify:
+    the same 220 tests pass, coverage stays 100%.
+3. **Move port-type inference out of `nodes.py`** into `ports.py` (risk low,
+    about 85 lines move; `nodes` imports `ports`). Verify: `tests/test_nodes.py`
+    unchanged and green.
+
+Skipped, with the reason (confirm and I record them in DESIGN.md):
+
+- Splitting `session.py` (one call site per import).
+- `draw.rs`, core `theme.rs`, `rust/element-51-core/tests/theme.rs`: one concern
+    each; a split adds files without making a feature easier to hold.
+- `tools/compress_images.py`: a template copy that a project does not edit.
 
 ### Tier 3: listed, not executed
 
