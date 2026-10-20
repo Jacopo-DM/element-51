@@ -217,6 +217,60 @@ theme, with the credit in the README.
 - Users and density: not stated; the product is a dense node editor for people
     who write Python (see the goal `antimony-theme`).
 
+### canvas-accessibility spec (approved 2026-10-21)
+
+- Users: a person who uses only a keyboard, and a person who uses a screen reader
+    (VoiceOver on macOS is the one to try). Target: WCAG 2.2 AA for the canvas.
+- Answers of 2026-10-21: everything the mouse does is available by keyboard; the
+    screen reader reads a hidden list that mirrors the graph; a live status line
+    announces results; checked with axe-core plus a keyboard walk-through by Claude
+    (a real screen reader is not available here, so it stays "not verified" until the
+    user tries VoiceOver).
+- Acceptance criteria and non-goals: PLAN.md, goal `canvas-accessibility`.
+- Integration points: all hit-testing and layout is in `element-51-core::layout`
+    (native-tested); the page's key handling is `on_key_down` in
+    `element-51-web/src/input.rs` (Delete, Backspace, Escape, Ctrl+Z, Ctrl+Y today,
+    and it returns early when the target is an input box); the page receives
+    `RunResult` in `on_message` in `lib.rs` (it only redraws today); the menus are
+    `menu_ui.rs` (hover and right-click only); the theme already has a `focus`
+    colour at AA and `selection_width`. Must not regress: every mouse gesture, the
+    existing key shortcuts, redraw time (200-node baseline in Results).
+- Architecture:
+    1. `element-51-core/src/access.rs` (new, pure, native-tested): `describe_node`
+        and `describe_port` (text such as "n1, hello. Output out, float, linked to n3
+        value"), `neighbour` (the nearest node in a direction), `LinkMode` (idle, or
+        "from port X"; `choose(port)` gives an `Edit` or the refusal reason), the
+        status texts (linked, refused with its reason, deleted, moved, added, run
+        result), and the move step (the theme's `grid_step`, 24; four times that with
+        Alt held).
+    2. `element-51-web/src/a11y_ui.rs` (new): a visually hidden tree (`role="tree"`,
+        a `treeitem` per node with its ports as children), rebuilt from the replica after
+        every change; one tab stop (roving `tabindex`), arrows move inside it; a
+        `role="status"` live region; the canvas draws a 2 px ring in the theme's
+        `focus` colour on the focused node or port, and the view pans to keep it in
+        view (WCAG 2.4.7 and 2.4.11).
+    3. Menus: arrow-key navigation in `#menu`, its flyouts and `#card-menu` (Down and
+        Up move, Right opens a flyout, Left closes it, Enter picks, Escape closes).
+- Keys (inside the tree; Delete, Backspace, Escape, Ctrl+Z, Ctrl+Y keep their meaning):
+    Arrows move to the nearest node in that direction; Right enters a node's ports
+    (Up and Down move between ports, Left goes back to the node); Enter or Space
+    selects a node, and on an output port starts a link, on an input port with a link
+    pending finishes it, on an input port with none focuses its value box (the view
+    pans to it first and the status says so); Shift+Arrows move the node by 24 (Alt+
+    Shift+Arrows by 96); Delete deletes a node, or the link on a focused input port;
+    Escape closes menus, clears the selection and cancels a pending link; Shift+F10
+    or the Menu key opens the node's card menu; `N` opens the add-node menu at the
+    canvas centre; `+`, `-` and `0` zoom in, out and reset; Alt+Arrows pan.
+- Status text names ports as the cards do (`out`, `value`): the user accepted the
+    Python names by approving the table.
+- Measurements: native tests cover `access.rs` fully and check that the described
+    list equals the snapshot; `tools/ui_keys.js` (new, like `ui_states.js`) dispatches
+    key sequences in the browser pane and checks the live region and the graph; axe-core
+    4.14.0 on every new state in all three themes; redraw median at 200 nodes
+    (`tools/bench_page.js`) stays within its recorded spread; building the hidden tree
+    takes 50 ms or less per edit on the 2000-node chain, otherwise the tree is limited
+    to the focused node's neighbourhood.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -934,6 +988,11 @@ have to go through `tools/compress_images.py`).
     it was clear that the address is already public in `ci-group/ariel`; the cost would
     have been new hashes everywhere (tag `v0.1.0`, about 22 hashes in PLAN.md and
     DESIGN.md).
+- For `canvas-accessibility` (2026-10-21), rejected: fallback content inside
+    `<canvas>` (poor VoiceOver support, no real focus handling); drawing every node as
+    DOM (a rewrite, and it loses the speed measured at 2000 nodes); a live region
+    only (a blind user could not learn which nodes exist); a link mode on its own
+    key (the Enter rule on ports needs fewer keys and no modes to remember).
 
 ## Results
 

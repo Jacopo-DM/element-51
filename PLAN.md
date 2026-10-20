@@ -122,7 +122,8 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
     known problems), voice control, a tested run with a real screen reader (I
     cannot run one here; it stays listed as not verified until the user tries
     VoiceOver), keyboard shortcuts that can be rebound, and any change to the look.
-- Status: draft, added 2026-10-21. The user's answers (2026-10-21): everything the
+- Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
+    "canvas-accessibility spec"); the task list awaits approval. The user's answers (2026-10-21): everything the
     mouse does by keyboard; a hidden list beside the canvas for the screen
     reader; a live status line; checked with axe plus a keyboard walk-through by
     me.
@@ -349,6 +350,70 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 19. **Theme files** (the user chose the option and asked for the docs). Done:
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
+
+### Goal `canvas-accessibility` (draft task list, proposed 2026-10-21, awaiting the user's approval)
+
+No test covers the web crate (`element-51-web`), so each task puts its logic in
+`element-51-core/src/access.rs` with native tests written first, and checks the
+page by `tools/ui_keys.js` and axe-core. Existing behaviour near the change is pinned
+by the core suites (`layout.rs`, `history.rs`, `replica.rs`, `menu.rs`); no characterisation
+tests are needed first. Estimates are by analogy with the menu work (about 300 lines
+of Rust and 60 of CSS and HTML per task of this size); nothing is measured yet.
+
+#### Tier 1: walking skeleton (criteria 2, 4, 5)
+
+27. **The hidden tree, focus and status line, read only.** What changes: `access.rs`
+    with `describe_node`, `describe_port`, `neighbour` and the status texts; `a11y_ui.rs`
+    builds the tree and the `role="status"` line; the canvas draws the focus ring and
+    pans to keep the focus in view; arrows move node to node, Right and Left enter and
+    leave ports; the status says what is focused. Files: `rust/element-51-core/src/access.rs`,
+    `lib.rs`, `tests/access.rs`, `rust/element-51-web/src/a11y_ui.rs`, `lib.rs`, `draw.rs`,
+    `static/index.html`, `tools/ui_keys.js`, `tools/ui_states.js` (a `tree` state),
+    CODEMAP.md. Serves criteria 2, 4, 5 and the first part of 1. Risk: medium (a second
+    copy of the graph in the page). Cost: about 450 lines, no new dependency. Verify:
+    native tests for every branch, the described list equals the snapshot, axe-core 0
+    violations in three themes, the 50 ms budget on the 2000-node chain, redraw median
+    within spread.
+
+#### Tier 2 (ordered by value over risk plus cost)
+
+28. **Select, delete and undo by keyboard, with announcements.** Enter or Space
+    selects; Delete deletes a node or the link on an input port; Escape; Ctrl+Z and
+    Ctrl+Y announce what they undid; every ack and reject goes to the status line
+    (a refusal also shows in the banner with Dismiss). Files: `access.rs`, `a11y_ui.rs`,
+    `input.rs`, `lib.rs`. Criteria 1 and 3. Risk: low. Cost: about 150 lines. Verify: native
+    tests for the texts, `ui_keys.js` sequences, axe.
+29. **Link by keyboard.** `LinkMode`, Enter on an output port then on an input port;
+    a refusal says why (the same reason the engine gives); Escape cancels. Files:
+    `access.rs`, `a11y_ui.rs`. Criterion 1. Risk: medium (the refusal rules must match
+    the mouse path; a native test runs both through `can_link`). Cost: about 200
+    lines. Verify: tests over the shared `link_cases.json`, `ui_keys.js`.
+30. **Move, pan and zoom by keyboard.** Shift+Arrows (Alt+Shift+Arrows), Alt+Arrows,
+    `+`, `-`, `0`; each move is one edit (one undo step) and announced. Files:
+    `access.rs`, `a11y_ui.rs`, `input.rs`. Criterion 1. Risk: low. Cost: about 120
+    lines. Verify: native tests for the step sizes and the clamping, `ui_keys.js`.
+31. **Keyboard menus.** `N` and Shift+F10 or the Menu key open the add-node and
+    card menus; arrow keys, flyouts, Enter and Escape work inside them; focus returns
+    to where it was. Files: `menu_ui.rs`, `a11y_ui.rs`, `static/index.html`. Criterion
+    1. Risk: medium (the flyouts are placed by hover code). Cost: about 250 lines.
+    Verify: `ui_keys.js`, axe on the open states (new `ui_states.js` states).
+32. **Value boxes by keyboard.** Enter on an unlinked input port pans to its box and
+    focuses it; Enter in the box returns focus to the port (the box already blurs on
+    Enter). Files: `a11y_ui.rs`, `fields_ui.rs`. Criterion 1. Risk: low. Cost: about
+    80 lines. Verify: `ui_keys.js`, axe.
+33. **Run result announced.** The end of a run (ok, error and skipped counts, the
+    first error) goes to the status line; the Run button keeps its look. Files:
+    `a11y_ui.rs`, `lib.rs`, `access.rs`. Criterion 3. Risk: low. Cost: about 60 lines.
+    Verify: native test of the text, `ui_keys.js`, axe after Run.
+
+#### Tier 3: listed, not executed
+
+- Limiting the tree to the focused node's neighbourhood: only if task 27 misses the
+    50 ms budget at 2000 nodes.
+- A recorded VoiceOver session: not available here; the user may try it (steps will
+    be given when the goal is done).
+- Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
+- Rebinding shortcuts: a non-goal.
 
 ### Tier 3: listed, not executed
 
