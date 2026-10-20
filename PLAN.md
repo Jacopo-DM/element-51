@@ -300,6 +300,8 @@ Oldest first.
     canvas (nodes, wires, ports) when the design pass started. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
+    Priority (user, 2026-10-20): first work after publishing 0.1.0, ahead of the blur
+    fix and touch support.
 ## Known problems
 
 - `.pre-commit-config.yaml` lacks the template's notebook hooks (`run-notebooks`,
