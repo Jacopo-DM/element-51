@@ -90,7 +90,7 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
 
 ### palette-try: done (2026-10-20)
 
-Pasting a Coolors link in the page (menu button beside Run, Try palette) applies
+Pasting a Coolors link in the page (menu button at the top right, Load palette from Coolors link) applies
 the palette to the page's colours at once; kept until reload; text readable at AA
 whatever the palette. Tests, behaviour and the mapping rule are in DESIGN.md
 (Results and Decisions); example `examples/e_look/e3_palette.py`.
@@ -111,11 +111,17 @@ tools/check_wheel.py`, then the user publishes).
 The third built-in theme `purple-synthwave` (the user's favourite Coolors palette) was
 added on 2026-10-21; it ships with the next release (0.1.2 or 0.2.0), together with the
 classifiers.
+The menu was reworked on 2026-10-21 at the user's request (branch `menu-and-default-theme`):
+the menu button sits at the top right, `Try palette` is `Load palette from Coolors link`,
+a new `Select theme` entry lists the three built-in themes and switches at once, and
+the default theme is now `purple-synthwave`. Not decided by the user: the end of their
+second point (it stopped at "and there should be"); a hint in the link box already
+exists (its placeholder), nothing was added.
 Next step: the user's own try-out (below), then `/zz-02-project-plan` for canvas
 accessibility.
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
-the menu button beside Run, choose Try palette and paste
+the menu button at the top right, choose Load palette from Coolors link and paste
 `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500` (stop any example already
 on port 8765 first).
 The README and docs drafts were reviewed and merged on 2026-10-20.

@@ -610,6 +610,19 @@ theme, with the credit in the README.
     in `pyproject.toml` and `uv.lock`, `tools/check_wheel.py`, the user's upload, then an
     annotated tag `v<version>` on the release commit; the tags are pushed too.
 
+- Default theme and the in-page theme list (2026-10-21, the user asked for both): the
+    default is `purple-synthwave` (`DEFAULT_THEME` in `theme.py`, `DEFAULT_THEME` in
+    `theme.rs`), no longer the first name in `THEME_NAMES`, so the list and the docs
+    table keep their order. The menu button's `Select theme` opens `#theme-menu`; a click
+    swaps in `Theme::builtin(name)` at once and tells nobody, like the palette box
+    (a reload brings back the theme Python holds), and the choice is not stored in the
+    browser. Reason: the user asked for the list and gave no wish to keep it, and
+    storing it would be a new setting nobody asked for. The user did not answer
+    the question about remembering it, so the smaller choice was made; say so if
+    they want it kept. Tests that need the old dark look use `Theme::builtin("antimony")`
+    (the palette test cannot use the default as its base: the default is the
+    palette of its example link).
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a

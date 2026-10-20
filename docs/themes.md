@@ -1,8 +1,10 @@
 # Themes
 
-The editor ships with three themes: `antimony` (dark, the default),
-`antimony-light` and `purple-synthwave` (a near-black canvas with blue-violet
-cards, made from a Coolors palette). Pick one by name:
+The editor ships with three themes: `purple-synthwave` (the default: a near-black
+canvas with blue-violet cards, made from a Coolors palette), `antimony` (dark)
+and `antimony-light`. Pick one by name in Python, or in the page: the menu button
+at the top right has `Select theme`, which switches at once (a reload brings back
+the theme Python holds). In Python:
 
 ```python
 element_51.serve(app, theme="antimony-light")
@@ -34,7 +36,7 @@ The file has six members, all optional:
 
 | Member | Meaning |
 | --- | --- |
-| `base` | The built-in theme to start from: `antimony` (the default), `antimony-light` or `purple-synthwave`. |
+| `base` | The built-in theme to start from: `purple-synthwave` (the default), `antimony` or `antimony-light`. |
 | `colours` | Colours to replace, by key. |
 | `ports` | The colour and shape of port markers, by type and side. |
 | `metrics` | Sizes on the canvas to replace, by key. |
@@ -195,7 +197,7 @@ Numbers, in CSS pixels, for the page's own parts: the menus, the Run button, the
 
 ## Trying a Coolors palette
 
-The menu button beside Run has one entry, `Try palette`. Paste a Coolors link
+The menu button at the top right has two entries, `Select theme` and `Load palette from Coolors link`. For the second, paste a Coolors link
 such as `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500` and press Enter:
 the whole editor takes the palette's colours at once. The link carries the
 colours, so nothing is fetched, and Python is not told: reload the page to get

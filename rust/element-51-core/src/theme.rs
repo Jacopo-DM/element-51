@@ -11,6 +11,9 @@ use serde_json::{Map, Value};
 /// The names of the built-in themes, the default first.
 pub const THEME_NAMES: [&str; 3] = ["antimony", "antimony-light", "purple-synthwave"];
 
+/// The theme the editor starts in when nothing picks another.
+pub const DEFAULT_THEME: &str = "purple-synthwave";
+
 const ANTIMONY: &str = include_str!("../themes/antimony.json");
 const ANTIMONY_LIGHT: &str = include_str!("../themes/antimony-light.json");
 const PURPLE_SYNTHWAVE: &str = include_str!("../themes/purple-synthwave.json");
@@ -490,9 +493,9 @@ impl Theme {
 }
 
 impl Default for Theme {
-    /// The dark Antimony theme.
+    /// The `purple-synthwave` theme.
     fn default() -> Theme {
-        Theme::builtin(THEME_NAMES[0]).expect("the default theme exists")
+        Theme::builtin(DEFAULT_THEME).expect("the default theme exists")
     }
 }
 

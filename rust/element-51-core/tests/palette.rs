@@ -112,7 +112,7 @@ fn every_palette_ends_up_readable_whatever_it_is_and_whichever_theme_it_starts_f
 
 #[test]
 fn a_palette_changes_colours_only() {
-    let base = Theme::default();
+    let base = Theme::builtin("antimony").unwrap();
     let theme = with_palette(&base, EXAMPLE).unwrap();
     let section = |theme: &Theme, name: &str| serde_json::to_value(theme).unwrap()[name].clone();
     for name in ["metrics", "page", "fonts"] {

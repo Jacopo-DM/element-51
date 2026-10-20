@@ -209,10 +209,10 @@ def serve(
         Open the editor page in the default browser once the server is
         listening.
     theme
-        The theme to draw the editor in: `antimony` (dark, the default),
-        `antimony-light`, or the path of a JSON theme file that changes some
-        of their values (see `docs/themes.md`). Anything else raises
-        `ValueError`.
+        The theme to draw the editor in: `purple-synthwave` (the default),
+        `antimony` (dark), `antimony-light`, or the path of a JSON theme file
+        that changes some of their values (see `docs/themes.md`). Anything
+        else raises `ValueError`.
     """
     config = uvicorn.Config(asgi_app(app, theme), host=HOST, port=port)
     url = f"http://{HOST}:{port}/" if open_browser else None

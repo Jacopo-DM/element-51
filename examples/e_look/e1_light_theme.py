@@ -1,6 +1,6 @@
 """The light theme: the same editor on a light grey canvas.
 
-Run it, open http://127.0.0.1:8765 and compare with the dark default. The
+Run it, open http://127.0.0.1:8765 and compare with the default. The
 cards stay dark and the canvas, grid and selection colour change.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
@@ -9,7 +9,8 @@ Notes
 -----
     * Click a wire: it turns dark, so it shows on the light canvas.
     * Click a node: it gets a light outline.
-    * In `main`, use `theme="antimony"` (or no `theme`) for the dark default.
+    * In `main`, use `theme="purple-synthwave"` (or no `theme`) for the
+        default, or `theme="antimony"` for the dark Antimony look.
     * A name that does not exist raises an error listing the valid ones.
 
 References

@@ -180,10 +180,10 @@ def test_apply_is_silent() -> None:
 
 
 def test_the_theme_starts_as_the_default_and_reaches_the_snapshot() -> None:
-    """A new app uses the dark Antimony theme."""
+    """A new app uses the purple-synthwave theme."""
     app = App([add])
-    assert app.theme == "antimony"
-    assert app.snapshot().theme == "antimony"
+    assert app.theme == "purple-synthwave"
+    assert app.snapshot().theme == "purple-synthwave"
 
 
 def test_setting_the_theme_tells_listeners_and_changes_the_snapshot() -> None:
@@ -201,7 +201,7 @@ def test_an_unknown_theme_is_refused_and_changes_nothing() -> None:
     app = App([add])
     with pytest.raises(ValueError, match="antimony-light"):
         app.theme = "dark"
-    assert app.theme == "antimony"
+    assert app.theme == "purple-synthwave"
 
 
 def test_a_theme_file_changes_reach_the_snapshot(tmp_path: Path) -> None:
@@ -212,7 +212,7 @@ def test_a_theme_file_changes_reach_the_snapshot(tmp_path: Path) -> None:
     heard: list[Snapshot] = []
     app.subscribe(heard.append)
     app.theme = path
-    assert app.theme == "antimony"
+    assert app.theme == "purple-synthwave"
     assert heard[0].theme_changes.fonts == {"value": "14px Menlo"}
     assert app.snapshot().theme_changes.fonts == {"value": "14px Menlo"}
     app.theme = "antimony-light"

@@ -20,9 +20,10 @@ def test_python_and_rust_offer_the_same_themes() -> None:
     assert list(THEME_NAMES) == json.loads(FIXTURE.read_text())
 
 
-def test_the_default_is_the_first_name() -> None:
-    """The dark Antimony theme is the default."""
-    assert DEFAULT_THEME == THEME_NAMES[0] == "antimony"
+def test_the_default_is_purple_synthwave() -> None:
+    """The purple-synthwave theme is the default."""
+    assert DEFAULT_THEME == "purple-synthwave"
+    assert DEFAULT_THEME in THEME_NAMES
 
 
 @pytest.mark.parametrize("name", THEME_NAMES)

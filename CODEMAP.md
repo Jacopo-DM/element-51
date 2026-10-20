@@ -91,7 +91,7 @@ happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`
 One screen: the editor (`element-51-web/static/index.html` and the canvas). Page
 parts, all styled by `var(--...)` from the `Theme`: `#run` (the Run button),
 `#menu` (the add-node menu with `#menu-search`, `#menu-tree`, `#menu-results`),
-`#app-menu-button` and `#app-menu` (the menu beside Run, with `#try-palette`), `#palette-box`, `#card-menu`, `#error` (the banner with Dismiss), and the value boxes in
+`#app-menu-button` (fixed at the top right) and `#app-menu` (with `#select-theme` and `#try-palette`), `#theme-menu` (the built-in themes, each a `data-theme` button), `#palette-box`, `#card-menu`, `#error` (the banner with Dismiss), and the value boxes in
 `#fields`. States: nothing open, the add-node menu (tree, a flyout, search with
 results, search with none), the card menu, a run with ok, error and skipped
 nodes, the banner. Styles and tokens: the `<style>` block in `index.html`, the

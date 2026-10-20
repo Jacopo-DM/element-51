@@ -82,10 +82,10 @@ Python, editor features, themes, and embedding the editor in FastAPI or NiceGUI.
 
 ## Looks
 
-The header shows the `purple-synthwave` theme (`serve(app, theme="purple-synthwave")`).
-The default is the dark `antimony` theme:
+The header shows the `purple-synthwave` theme, the default. The dark `antimony` theme
+is one argument away (`serve(app, theme="antimony")`):
 
-![The same graph in the default dark theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/dark.jpg)
+![The same graph in the dark antimony theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/dark.jpg)
 
 The light theme is one argument away (`serve(app, theme="antimony-light")`):
 

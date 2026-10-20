@@ -34,7 +34,7 @@ use input::{
 use menu_ui::{
     fill_menu, on_app_menu_button, on_card_menu_click, on_context_menu, on_menu_click,
     on_menu_hover, on_menu_search, on_menu_search_key, on_palette_key, on_palette_submit,
-    on_try_palette,
+    on_select_theme, on_theme_click, on_try_palette,
 };
 
 /// Everything the event handlers share.
@@ -203,6 +203,18 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&button, "click", move |_event: MouseEvent| {
             on_app_menu_button(&shared)
+        })?;
+    }
+    if let Some(item) = document.get_element_by_id("select-theme") {
+        let shared = state.clone();
+        listen(&item, "click", move |_event: MouseEvent| {
+            on_select_theme(&shared)
+        })?;
+    }
+    if let Some(list) = document.get_element_by_id("theme-menu") {
+        let shared = state.clone();
+        listen(&list, "click", move |event: MouseEvent| {
+            on_theme_click(&shared, &event)
         })?;
     }
     if let Some(item) = document.get_element_by_id("try-palette") {

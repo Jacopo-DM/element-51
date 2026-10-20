@@ -4,6 +4,7 @@ use element_51_core::menu::{
     Entry, build_menu, card_actions, clamp_into, flyout_at, search as search_node_types,
 };
 use element_51_core::palette::with_palette;
+use element_51_core::theme::Theme;
 use element_51_core::{Edit, Snapshot};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, HtmlInputElement, KeyboardEvent, MouseEvent};
@@ -207,7 +208,7 @@ pub(crate) fn on_menu_hover(shared: &Shared, event: &MouseEvent) {
 }
 
 pub(crate) fn hide_menu(state: &State) {
-    for id in ["menu", "card-menu", "app-menu", "palette-box"] {
+    for id in ["menu", "card-menu", "app-menu", "theme-menu", "palette-box"] {
         if let Some(menu) = state.document.get_element_by_id(id) {
             let _ = menu.set_attribute("hidden", "");
         }
@@ -259,7 +260,40 @@ pub(crate) fn on_app_menu_button(shared: &Shared) {
     }
 }
 
-/// `Try palette`: open the box for a Coolors link, empty and with the cursor in
+/// `Select theme`: open the list of built-in themes under the menu button.
+pub(crate) fn on_select_theme(shared: &Shared) {
+    let state = shared.borrow();
+    hide_menu(&state);
+    let (Some(button), Some(list)) = (
+        state.document.get_element_by_id("app-menu-button"),
+        state.document.get_element_by_id("theme-menu"),
+    ) else {
+        return;
+    };
+    let rect = button.get_bounding_client_rect();
+    show_at(&list, rect.left(), rect.bottom() + MENU_MARGIN / 2.0);
+}
+
+/// A click in the theme list: the page takes that built-in theme at once.
+/// Nothing is sent to Python; a reload brings back the theme Python holds.
+pub(crate) fn on_theme_click(shared: &Shared, event: &MouseEvent) {
+    let name = event
+        .target()
+        .and_then(|target| target.dyn_into::<Element>().ok())
+        .and_then(|target| target.get_attribute("data-theme"));
+    let Some(theme) = name.and_then(|name| Theme::builtin(&name)) else {
+        return;
+    };
+    {
+        let mut state = shared.borrow_mut();
+        apply_theme(&state.document, &theme);
+        state.theme = theme;
+        hide_menu(&state);
+    }
+    redraw(shared);
+}
+
+/// `Load palette from Coolors link`: open the box for a Coolors link, empty and with the cursor in
 /// it.
 pub(crate) fn on_try_palette(shared: &Shared) {
     let state = shared.borrow();

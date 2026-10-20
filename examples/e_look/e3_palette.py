@@ -1,7 +1,7 @@
 """Try a Coolors palette: paste a link and the editor takes its colours.
 
-Run it, open http://127.0.0.1:8765, press the menu button beside Run, choose
-Try palette and paste a link such as
+Run it, open http://127.0.0.1:8765, press the menu button at the top right,
+choose Load palette from Coolors link and paste a link such as
 `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.

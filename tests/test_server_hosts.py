@@ -80,7 +80,7 @@ def test_serve_takes_a_theme_file_and_the_page_is_sent_its_changes(
         connect(f"ws://{server.HOST}:{port}/ws") as websocket,
     ):
         snapshot = Snapshot.model_validate_json(websocket.recv())
-    assert snapshot.theme == "antimony"
+    assert snapshot.theme == "purple-synthwave"
     assert snapshot.theme_changes.colours == {"canvas": "#101010"}
 
 

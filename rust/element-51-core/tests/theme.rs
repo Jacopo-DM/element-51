@@ -24,8 +24,8 @@ fn an_unknown_theme_name_gives_nothing() {
 }
 
 #[test]
-fn the_default_theme_is_the_dark_antimony_one() {
-    assert_eq!(Theme::default().name, "antimony");
+fn the_default_theme_is_purple_synthwave() {
+    assert_eq!(Theme::default().name, "purple-synthwave");
 }
 
 #[test]
@@ -602,27 +602,31 @@ fn the_focus_ring_is_the_themes_focus_colour_everywhere() {
 }
 
 #[test]
-fn the_page_has_a_menu_button_beside_run_with_a_try_palette_box() {
+fn the_page_has_a_menu_button_with_a_palette_box_and_a_theme_list() {
     for needle in [
         "id=\"app-menu-button\"",
         "aria-label=\"Menu\"",
         "aria-haspopup=\"menu\"",
         "id=\"app-menu\"",
         "id=\"try-palette\"",
-        ">Try palette<",
+        ">Load palette from Coolors link<",
+        "id=\"select-theme\"",
+        ">Select theme<",
+        "id=\"theme-menu\"",
         "id=\"palette-box\"",
         "id=\"palette-input\"",
         "aria-label=\"Coolors palette link\"",
     ] {
         assert!(PAGE.contains(needle), "the page has no {needle}");
     }
-    let toolbar = PAGE.find("id=\"toolbar\"").expect("no toolbar");
-    let run = PAGE.find("id=\"run\"").unwrap();
-    let button = PAGE.find("id=\"app-menu-button\"").unwrap();
     assert!(
-        toolbar < run && run < button,
-        "the menu button comes after Run"
+        PAGE.contains("#app-menu-button { position: fixed; right: var(--button-x)"),
+        "the menu button sits at the right edge"
     );
+    for name in THEME_NAMES {
+        let item = format!("data-theme=\"{name}\"");
+        assert!(PAGE.contains(&item), "the theme list has no {name}");
+    }
 }
 
 #[test]
@@ -630,6 +634,7 @@ fn the_new_controls_have_focus_and_press_styles() {
     for selector in [
         "#app-menu-button:focus-visible",
         "#app-menu button:focus-visible",
+        "#theme-menu button:focus-visible",
         "#palette-input:focus-visible",
         "#palette-box button:focus-visible",
         "#app-menu-button:active",
