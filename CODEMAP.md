@@ -11,6 +11,8 @@ the ignore list in CLAUDE.md.
 - `element_51.asgi_app(app, theme=None)`: an ASGI app to mount in an existing
     server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
+- `tools/ui_states.py` and `tools/ui_states.js`: serve a fixed graph and put the page in
+    each state, for screenshots and accessibility scans (commands in CLAUDE.md).
 - `tools/bench_python.py`, `tools/bench_page.py` and `tools/bench_page.js`: the speed
     benchmarks (see the commands in CLAUDE.md).
 - `uv run python tools/measure_structure.py [--jscpd <binary>]`: print the
@@ -77,6 +79,18 @@ Sizes in lines. `element-51-core/src`: `address` 13, `edit` 266, `fields` 43, `h
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never
 happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`.
+
+## Screens and states
+
+One screen: the editor (`element-51-web/static/index.html` and the canvas). Page
+parts, all styled by `var(--...)` from the `Theme`: `#run` (the Run button),
+`#menu` (the add-node menu with `#menu-search`, `#menu-tree`, `#menu-results`),
+`#card-menu`, `#error` (the banner with Dismiss), and the value boxes in
+`#fields`. States: nothing open, the add-node menu (tree, a flyout, search with
+results, search with none), the card menu, a run with ok, error and skipped
+nodes, the banner. Styles and tokens: the `<style>` block in `index.html`, the
+`page` and `colours` sections of `rust/element-51-core/themes/*.json`, and
+`Theme::css_variables` in `rust/element-51-core/src/theme.rs`.
 
 ## Boundaries between languages
 

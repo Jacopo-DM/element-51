@@ -198,6 +198,25 @@ theme, with the credit in the README.
     and it has a 3D viewport; neither is in scope here.
 - Not to be copied: Antimony's code or images. Only the look is replicated.
 
+### ui-design-pass spec (answers of 2026-10-20)
+
+- Scope: "Also polish the look", not only fix gaps. The look is shown as mock
+    renderings of each candidate direction before any code changes (the user's
+    request).
+- Accessibility target: WCAG 2.2 AA. The user chose to include the canvas; the
+    canvas part is a separate goal because it adds behaviour (PLAN.md, open
+    question 2). This pass covers the page parts and the theme colours.
+- Checker: axe-core 4.14.0, downloaded with approval: `axe-core-4.14.0.tgz`
+    (707 KB, sha1 `a9819d39...cfbcf31d` checked against the registry) from
+    `registry.npmjs.org` with `curl`, because `npm` fails here on a certificate
+    error; only `package/axe.min.js` (652 KB) was extracted, into the scratchpad,
+    and served to the page by `python3 -m http.server 8769` for the scan. Nothing
+    was added to the repo.
+- Feel: the user wants renderings of Antimony, a Blender or Houdini feel, and a
+    Figma or Linear feel side by side before choosing.
+- Users and density: not stated; the product is a dense node editor for people
+    who write Python (see the goal `antimony-theme`).
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,

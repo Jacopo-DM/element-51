@@ -79,6 +79,23 @@ Commits `971fb48..29d5f57` (benchmarks `30634e3`, engine
 200-node page 3.4 to 0.21 ms; page load unchanged. The numbers, the decisions and
 the Tier 3 items left alone on purpose are in DESIGN.md.
 
+### ui-design-pass
+
+- Goal: the page parts of the editor (Run button, add-node menu, card menu,
+    error banner, value boxes) and the theme colours meet WCAG 2.2 AA and look
+    polished and consistent, without changing what the editor does.
+- Kind: improvement (behaviour unchanged).
+- Success measure: axe-core violations on the page parts from 5 rules to 0 in both
+    themes (Baseline); every theme text and graphic colour pair at its AA ratio
+    (4.5:1 text, 3:1 graphics; Baseline lists the 4 that fail); every interactive
+    page part with hover, focus-visible and active states; no screen slower or
+    more prone to layout shift (the page has no shift: the canvas and boxes are
+    positioned absolutely; bundle size is the WASM 706 KB plus a 3 KB page, to be
+    re-measured after each task).
+- Status: in progress (Phase 0 and 1 done 2026-10-20; the design direction waits
+    for the user's choice).
+- Added: 2026-10-20
+
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
@@ -127,6 +144,38 @@ Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
         14.8 in another set]: the load did not change, and the sets differ by more
         than their own ranges, so load numbers need a same-session before and
         after.
+- UI baseline, measured 2026-10-20 (dark and light, `tools/ui_states.py`, axe-core
+    4.14.0 with the wcag2a, wcag2aa, wcag21aa, wcag22aa and best-practice tags,
+    in the built-in browser pane at 1280 wide). Screenshots in
+    `docs/ui-baseline/`: `dark-1280-default`, `-menu`, `-search`, `-card-menu`,
+    `-run-and-banner`, `dark-375-default`, `light-1280-search-none-and-banner`.
+    - axe violations, rule (impact): nodes. Default state, both themes: `label`
+        (critical) 1, `landmark-one-main` (moderate) 1, `page-has-heading-one`
+        (moderate) 1, `region` (moderate) 2. After Run, `region` 3. With the menu
+        showing "No matching node", `color-contrast` (serious) 1 (4.01:1) and
+        `region` 5. Card menu, banner: nothing beyond these.
+    - Theme colour pairs below AA (computed from the theme files, WCAG ratio):
+        `placeholder` on `field` 1.64:1 (both themes); `text_dim` on
+        `header_skipped` 2.88:1; `run_hover_text` on `run_hover` 3.34:1; in
+        `antimony-light` the `selected` outline on the canvas 1.14:1. Passing:
+        title 6.11, label 7.51, field text 10.00, Run 13.47, card icon 3.01
+        (a graphic, needs 3).
+    - Raw values in `static/index.html` (81 lines): 0 hex colours; 12 distinct
+        pixel values (1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 90), 2 font families
+        (both variables), 5 border radii, 2 box shadows, 2 z-indexes, 0
+        transitions, 0 media queries. Everything else is `var(--...)` from the
+        theme: 33 colours, 4 port types by 2 sides, 25 metrics, 21 page keys and
+        6 fonts, in each of the two themes.
+    - Components: 1 button kind (Run) plus the banner's Dismiss, 2 menus (add-node
+        and card) of one button style, 1 search box, value boxes (text, checkbox).
+        No near-duplicates.
+    - The harness is semi-automatic: `uv run python tools/ui_states.py
+        [--theme antimony-light]` serves a fixed graph on port 8768 and
+        `tools/ui_states.js` sets a state; Claude then takes the screenshot in the
+        browser pane. The pane scales a 1280 wide viewport to an 800 by 500 image,
+        so fine detail is lost; 768 and 1920 wide and the card menu in the light
+        theme were not captured (the matrix is cut because the page has one screen
+        whose states differ only in the page parts).
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 220 passed, 100% coverage, about 4 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 122 tests.
@@ -211,6 +260,44 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
 
+### Goal `ui-design-pass`: audit findings (waiting for the design direction)
+
+Each with the screen and state, the evidence, and who it affects.
+
+1. Bool inputs have no accessible name: `#field-n6-loud` fails axe `label`
+    (critical). Default state; screenshot `dark-1280-default`. Every user with a
+    bool input and a screen reader.
+2. The page has no landmarks or heading (`landmark-one-main`,
+    `page-has-heading-one`, `region`): the Run button, boxes and menus sit outside
+    any landmark. Every state; every screen-reader user.
+3. "No matching node" is 4.01:1 on the menu (axe `color-contrast`, serious).
+    Search with no match; `light-1280-search-none-and-banner`. Anyone who searches.
+4. Theme colours below AA (see Baseline): hints in value boxes 1.64:1 (the most
+    visible: every unlinked input shows one; `dark-1280-default`), skipped nodes'
+    title 2.88:1 (`dark-1280-run-and-banner`), the Run button's hover text 3.34:1,
+    and the light theme's selection outline 1.14:1 against its canvas.
+5. Focus: only `#run` has a `:focus-visible` style. The menu buttons, the card
+    menu buttons, the search box, Dismiss and the checkbox use the browser's
+    default ring, which the dark canvas hides in places. All keyboard users.
+6. States: hover only; no `:active`, no `:disabled`, no transitions, no
+    `prefers-reduced-motion` (no motion exists to reduce). The Run button has no
+    "running" state; it does not know when a run finishes.
+7. The error banner has no `role="alert"`, so a failure is not announced; it
+    stays until Dismiss (correct) and joins several messages with "; ". Screenshot
+    `dark-1280-run-and-banner`. Every run with an error.
+8. The add-node and card menus open only by right-click and the flyouts only by
+    `:hover`: no keyboard or touch way to reach them. Behaviour change if fixed.
+9. At 375 wide the page shows a clipped part of the graph with no fit-to-view,
+    and touch input is not handled (mouse and wheel only);
+    `dark-375-default`. An edge screen today.
+10. Copy: the empty output placeholder is "output", the same word as the port
+    name; "No matching node" is the only empty-state message.
+11. The canvas (nodes, wires, ports) has no keyboard access or accessible
+    description at all. The user chose "AA including the canvas" on 2026-10-20.
+    That adds behaviour (keyboard selection, moving and linking, names for
+    screen readers), so it is a new goal for `/zz-02-project-plan`, not part of
+    this pass; see Open questions.
+
 ### Tier 3: listed, not executed
 
 - A release guard that fails `uv build` itself when `web/` is missing: CI now
@@ -233,6 +320,10 @@ Oldest first.
     Monaco). Options not yet tried: a larger card font, or snapping text
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
+2. (2026-10-20) Canvas accessibility (finding 11 under goal `ui-design-pass`): the
+    user asked for WCAG 2.2 AA including the canvas. It is new behaviour and large
+    (keyboard selection, move and link, screen-reader names and live updates).
+    Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
 
 ## Known problems
 
