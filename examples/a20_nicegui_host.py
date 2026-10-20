@@ -3,25 +3,40 @@
 NiceGUI runs inside a FastAPI app, and the editor is mounted on the same app
 at `/editor`, so everything is one process and one `App`. The page is a
 splitter: the editor in an iframe on the left, NiceGUI widgets on the right.
-Try these:
-
-* Run the script and open http://127.0.0.1:8765 if it does not open for you.
-* Click `Run`: the outputs appear in the panel as a NiceGUI label.
-* Click `Add node`: a node appears in the editor at once.
-* Drag the splitter bar to resize the editor.
 
 Run it with one worker only: the `App` lives in this process.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Run the script and open http://127.0.0.1:8765 if it does not open for you.
+    * Click `Run`: the outputs appear in the panel as a NiceGUI label.
+    * Click `Add node`: a node appears in the editor at once.
+    * Drag the splitter bar to resize the editor.
+
 """
 
+# Third-party libraries
 import uvicorn
 from fastapi import FastAPI
 from nicegui import ui
+from rich.console import Console
+from rich.traceback import install
 
+# Local libraries
 import element_51
 
+# --- Globals --- #
 PORT = 8765
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

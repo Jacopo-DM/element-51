@@ -8,13 +8,29 @@ exit. Delete that file to start over. Open it in a text editor to see the
 format: a `format_version`, the nodes with their positions, and the links.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
 """
 
+# Standard library
 from pathlib import Path
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
 
+# --- Globals --- #
 FILE = Path(__file__).with_name("a11_graph.json")
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

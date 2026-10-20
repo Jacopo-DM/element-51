@@ -615,6 +615,14 @@ tested automatically (a real server, the websocket and both endpoints); the
 NiceGUI one is checked by hand, because `ui.run_with` changes NiceGUI's global
 state and a second call in one test process is not safe.
 
+Example layout (2026-10-20, the user: every example follows
+`a0_hello_world.py`): each example has a docstring with the description, a
+`Notes` section holding what to try, and `References` only where a docs page
+exists; the comment headers; the rich traceback and console; `main()` and the
+guard. The random generator, the data folder and the `Todo` section are left
+out, because no example needs them. `a7` prints through the rich console.
+`a0` itself stays as the template and is not run by the tests.
+
 ## Results
 
 | Date | Change | Result |

@@ -2,21 +2,41 @@
 
 Press Run. One graph, four outcomes:
 
-* `divide` raises ZeroDivisionError: its header turns red.
-* `double` sits after it and is skipped (dimmed): it never runs.
-* `needs_input` has no link and no Python default: red, "has no value".
-* `broken` returns a str from a float output: red, "returned str".
-* The `ten` -> `double` branch is independent, so it still runs and shows 20.0.
-
 The red messages appear in a banner at the bottom that stays until you press
 Dismiss. Link a node into `needs_input` and run again to fix that one.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * `divide` raises ZeroDivisionError: its header turns red.
+    * `double` sits after it and is skipped (dimmed): it never runs.
+    * `needs_input` has no link and no Python default: red, "has no value".
+    * `broken` returns a str from a float output: red, "returned str".
+    * The `ten` -> `double` branch is independent, so it still runs and shows
+        20.0.
+
 """
 
+# Standard library
 from typing import cast
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

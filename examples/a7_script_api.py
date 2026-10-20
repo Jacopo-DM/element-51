@@ -4,9 +4,25 @@ Run it: `uv run python examples/a7_script_api.py`. It builds a graph with
 `add_node` and `add_link`, runs it with `app.run()`, and shows what happens
 when a node fails. To look at the same graph in the editor, call
 `element_51.serve(app)` instead.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node
@@ -54,11 +70,11 @@ def main() -> None:
     result = app.execute()
     for outcome in result.outcomes:
         detail = outcome.error if outcome.status == "error" else outcome.outputs
-        print(f"{outcome.node}: {outcome.status} {detail}")  # ruff: ignore[print]
+        console.print(f"{outcome.node}: {outcome.status} {detail}")
     try:
         app.run()
     except ValueError as error:
-        print(f"app.run() raised: {error} ({error.__notes__[0]})")  # ruff: ignore[print]
+        console.print(f"app.run() raised: {error} ({error.__notes__[0]})")
 
 
 if __name__ == "__main__":  # pragma: no cover

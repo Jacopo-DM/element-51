@@ -11,11 +11,28 @@ same output twice. An output may feed several inputs, but an input takes one
 link.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
 """
 
+# Standard library
 from typing import override
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 class QuotientAndRemainder(element_51.Model):

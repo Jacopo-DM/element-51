@@ -9,9 +9,25 @@ The `count` node returns an int. It may feed a float input (`half`), because an
 int can stand in for a float, but a float cannot feed an int input.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

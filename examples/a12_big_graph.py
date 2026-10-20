@@ -1,24 +1,44 @@
 """A graph bigger than the window, to pan, zoom, move and delete in.
 
-Try these, with the mouse:
-
-* Drag empty canvas to pan. Turn the wheel to zoom around the pointer.
-* Drag a node to move it. One drag is one change; Run keeps its values.
-* Click a node to select it, then press Delete. Its links go with it.
-* Click a wire to select it, then press Delete to remove just that link.
-* Press Escape to let go of the selection. Run shows what is now missing.
+, with the mouse:
 
 Reload the page and the moves and deletions are still there: Python holds them.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Drag empty canvas to pan. Turn the wheel to zoom around the pointer.
+    * Drag a node to move it. One drag is one change; Run keeps its values.
+    * Click a node to select it, then press Delete. Its links go with it.
+    * Click a wire to select it, then press Delete to remove just that link.
+    * Press Escape to let go of the selection. Run shows what is now missing.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
 
+# --- Globals --- #
 COLUMNS = 6
+
 ROWS = 4
+
 SPACING_X = 260.0
+
 SPACING_Y = 150.0
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

@@ -9,11 +9,28 @@ the same kind of node. A class gets its input types checked by pydantic, and
 the class name is the name you see in the right-click menu.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
 """
 
+# Standard library
 from typing import override
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 class Pair(element_51.Model):

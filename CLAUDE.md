@@ -61,8 +61,13 @@ has no WASM target and is not used. Every Rust command below is prefixed with
   parts use CSS custom properties such as `var(--menu-bg)`.
 - A change to a wire record (snapshot, edit, node type) changes the shared files in
   `tests/fixtures/` too; both test suites read them.
-- A feature the user can try gets a runnable example in `examples/` (a docstring
-  that says what to try, a `build_app()`, and a row in `tests/test_examples.py`).
+- A feature the user can try gets a runnable example in `examples/`, laid out like
+  `examples/a0_hello_world.py`: a docstring with a `Notes` section that says what
+  to try, the comment headers (Standard library, Third-party libraries, Local
+  libraries, Globals, Warnings, Typing, Terminal output setup), the rich traceback
+  and console, `main()` and the guard. Leave out the random generator and the
+  data folder unless the example needs them. Add a `build_app()` and a row in
+  `tests/test_examples.py`.
   When a task is done, tell the user when they can try it, with the exact
   commands.
 

@@ -3,20 +3,39 @@
 Port colours show the type: orange for numbers, green for text, blue for
 true/false. Press Run, then try these drags:
 
-* `flag` (bool) onto `describe.flag`: allowed, same type.
-* `how_many` (int) onto `describe.count`: allowed.
-* `how_many` (int) onto `describe.ratio` (float): allowed, int may feed float.
-* `ratio` (float) onto `describe.count` (int): refused, float to int.
-* `flag` (bool) onto `describe.count` (int): refused, a bool is not an int.
-* Any output onto `describe.label` (str) other than `label`: refused.
-
 While you drag, the input port under the pointer turns green if the link would
 be accepted and red if it would be refused.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * `flag` (bool) onto `describe.flag`: allowed, same type.
+    * `how_many` (int) onto `describe.count`: allowed.
+    * `how_many` (int) onto `describe.ratio` (float): allowed, int may feed
+        float.
+    * `ratio` (float) onto `describe.count` (int): refused, float to int.
+    * `flag` (bool) onto `describe.count` (int): refused, a bool is not an int.
+    * Any output onto `describe.label` (str) other than `label`: refused.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

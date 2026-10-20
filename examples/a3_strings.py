@@ -6,9 +6,25 @@ because a float cannot feed a str. The `times` input of `repeat` is an int and
 takes its value from its Python default, 2.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

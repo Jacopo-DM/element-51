@@ -7,15 +7,32 @@ total. Nothing needs a reload. Press Run at any point to see the total grow
 tab shows it at once.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
 """
 
+# Standard library
 import threading
 import time
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
 
+# --- Globals --- #
 STEPS = 5
+
 PAUSE_SECONDS = 2.0
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

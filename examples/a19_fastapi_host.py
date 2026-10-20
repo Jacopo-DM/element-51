@@ -1,30 +1,38 @@
 """The editor inside a FastAPI app, with a side panel of your own.
 
 FastAPI hosts the page. The editor is mounted at `/editor`, the side panel is
-plain HTML at `/`, and both talk to one `App` held in this process. Try these:
-
-* Run the script. Your browser opens on the panel, with the editor on the
-    left and a panel on the right.
-* Click `Run` in the panel: FastAPI calls `app.run()` and shows every node's
-    outputs.
-* Click `Add node`: a node appears in the editor at once, with no reload,
-    because the editor listens to the `App`.
-* Drag a node in the editor and click `Run` again: the panel sees the graph
-    you just edited.
+plain HTML at `/`, and both talk to one `App` held in this process.
 
 Run it with one worker only: the `App` lives in this process, and a second
 worker would hold a second, separate graph.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Run the script. Your browser opens on the panel, with the editor on the
+        left and a panel on the right.
+    * Click `Run` in the panel: FastAPI calls `app.run()` and shows every node's
+        outputs.
+    * Click `Add node`: a node appears in the editor at once, with no reload,
+        because the editor listens to the `App`.
+    * Drag a node in the editor and click `Run` again: the panel sees the graph
+        you just edited.
+
 """
 
+# Third-party libraries
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from rich.console import Console
+from rich.traceback import install
 
+# Local libraries
 import element_51
 from element_51.model import PortValue
 
+# --- Globals --- #
 PORT = 8765
 
 PAGE = """<!doctype html>
@@ -64,6 +72,14 @@ PAGE = """<!doctype html>
     document.getElementById("add").onclick = () => call("/api/add-node");
 </script>
 """
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

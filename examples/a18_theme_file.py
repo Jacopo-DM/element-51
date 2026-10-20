@@ -2,29 +2,51 @@
 
 `my_theme.json` next to this script changes a few values of the dark theme: a
 dark blue canvas, blue title bars, number inputs drawn as diamonds and number
-outputs as circles, wider cards and a larger value font. Try these:
-
-* Run the script and look at the editor: it is two linked nodes in the
-    new colours.
-* Open `my_theme.json`, change `"canvas"` to another colour, stop the script
-    with Ctrl+C and run it again to see it.
-* In the `"ports"` entry, change a `"shape"` to `"box"` or `"circle"`, or give
-    `"text"` ports a style of their own (see `docs/themes.md`).
-* Change `"colours"` to `"colors"` and run it: Python refuses the file and
-    names the member that is wrong.
-* Change `"canvas"` to `"canvass"` and run it: the page shows a banner that
-    names the key and lists the valid ones.
+outputs as circles, wider cards and a larger value font.
 
 Every key you can change is listed in `docs/themes.md`.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Run the script and look at the editor: it is two linked nodes in the
+        new colours.
+    * Open `my_theme.json`, change `"canvas"` to another colour, stop the script
+        with Ctrl+C and run it again to see it.
+    * In the `"ports"` entry, change a `"shape"` to `"box"` or `"circle"`, or
+        give `"text"` ports a style of their own (see `docs/themes.md`).
+    * Change `"colours"` to `"colors"` and run it: Python refuses the file and
+        names the member that is wrong.
+    * Change `"canvas"` to `"canvass"` and run it: the page shows a banner that
+        names the key and lists the valid ones.
+
+References
+----------
+    [1] docs/themes.md
+
 """
 
+# Standard library
 from pathlib import Path
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
 
+# --- Globals --- #
 THEME_FILE = Path(__file__).with_name("my_theme.json")
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

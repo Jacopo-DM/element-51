@@ -1,17 +1,39 @@
 """The light theme: the same editor on a light grey canvas.
 
 Run it, open http://127.0.0.1:8765 and compare with the dark default. The
-cards stay dark and the canvas, grid and selection colour change. Try these:
-
-* Click a wire: it turns dark, so it shows on the light canvas.
-* Click a node: it gets a light outline.
-* In `main`, use `theme="antimony"` (or no `theme`) for the dark default.
-* A name that does not exist raises an error listing the valid ones.
+cards stay dark and the canvas, grid and selection colour change.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Click a wire: it turns dark, so it shows on the light canvas.
+    * Click a node: it gets a light outline.
+    * In `main`, use `theme="antimony"` (or no `theme`) for the dark default.
+    * A name that does not exist raises an error listing the valid ones.
+
+References
+----------
+    [1] docs/themes.md
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

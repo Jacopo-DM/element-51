@@ -3,16 +3,34 @@
 Three nodes are linked in a chain: `a` feeds `b`, which feeds `show`. Try
 these:
 
-* Click the three bars at the right end of a card's title bar. A small menu
-    opens with one entry, `Delete node`. The card is selected.
-* Click `Delete node`: the node goes, and so do the links that touched it.
-* Press Ctrl+Z (Cmd+Z on a Mac) to bring it back with its links.
-* Click anywhere else, or press Escape, to close the menu without deleting.
-
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Click the three bars at the right end of a card's title bar. A small menu
+        opens with one entry, `Delete node`. The card is selected.
+    * Click `Delete node`: the node goes, and so do the links that touched it.
+    * Press Ctrl+Z (Cmd+Z on a Mac) to bring it back with its links.
+    * Click anywhere else, or press Escape, to close the menu without deleting.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node

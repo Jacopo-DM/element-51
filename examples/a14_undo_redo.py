@@ -1,21 +1,41 @@
 """Undo and redo every change.
 
-Try these, with the mouse and the keyboard (Cmd on a Mac, Ctrl elsewhere):
-
-* Drag a node elsewhere, then press Cmd+Z: it jumps back. One drag is one step.
-* Cmd+Shift+Z (or Ctrl+Y) does it again: redo.
-* Select a node, press Delete, then Cmd+Z: it returns with links and values.
-* A node you delete comes back drawn on top of the others.
-* Add a node, link two ports, type a value: each is one step to walk back.
-* Make a new change after an undo, and what you undid can no longer be redone.
-* Typing in a box has its own undo. Click outside the box first.
+, with the mouse and the keyboard (Cmd on a Mac, Ctrl elsewhere):
 
 Undo sends its edits to Python like any others, so a reload keeps the result.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Drag a node elsewhere, then press Cmd+Z: it jumps back. One drag is one
+        step.
+    * Cmd+Shift+Z (or Ctrl+Y) does it again: redo.
+    * Select a node, press Delete, then Cmd+Z: it returns with links and values.
+    * A node you delete comes back drawn on top of the others.
+    * Add a node, link two ports, type a value: each is one step to walk back.
+    * Make a new change after an undo, and what you undid can no longer be
+        redone.
+    * Typing in a box has its own undo. Click outside the box first.
+
 """
 
+# Third-party libraries
+from rich.console import Console
+from rich.traceback import install
+
+# Local libraries
 import element_51
+
+# --- Globals --- #
+
+# --- Warnings --- #
+
+# --- Typing --- #
+
+# --- TERMINAL OUTPUT SETUP --- #
+install(show_locals=False)
+console = Console()
 
 
 @element_51.node
