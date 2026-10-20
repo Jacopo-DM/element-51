@@ -533,6 +533,12 @@ its buttons from `card_actions()`. There is one entry, Delete node, as the user
 chose. It goes through the normal edit channel, so undo brings the node back.
 Escape, a click elsewhere and a right-click close the popup.
 
+The page's own parts follow the theme (2026-10-20, at the user's requests): the
+canvas is drawn at one pixel per device pixel (the first version stretched a
+CSS-pixel canvas, which blurred on a Retina screen), and the Run button takes the
+menus' colours, a 6-pixel radius, a shadow and a play triangle, with the menu
+hover colour for hover and focus. No new theme colour was added.
+
 ## Results
 
 | Date | Change | Result |
