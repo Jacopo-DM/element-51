@@ -77,26 +77,27 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `header_skipped` | The title bar of a node that was skipped. | `#3a3a3a` | `#3a3a3a` |
 | `title` | The id and type name in a title bar. | `#e0e0e0` | `#e0e0e0` |
 | `label` | Port names, and the values shown after a run. | `#b0b0b0` | `#b0b0b0` |
-| `text_dim` | Faded text, for a node that was skipped. | `#808080` | `#808080` |
-| `placeholder` | A greyed hint in a value box: a default, a source, `output`. | `#505050` | `#505050` |
+| `text_dim` | Faded text, for a node that was skipped. | `#aaaaaa` | `#aaaaaa` |
+| `placeholder` | A greyed hint in a value box: a default, a source, `output`. | `#9a9a9a` | `#9a9a9a` |
 | `icon` | The three-bar icon in a title bar. | `#9e9e9e` | `#9e9e9e` |
-| `selected` | The outline of a selected node. | `#e0e0e0` | `#e0e0e0` |
+| `selected` | The outline of a selected node. | `#e0e0e0` | `#202020` |
 | `selected_wire` | A selected wire, which must show on the canvas. | `#e0e0e0` | `#202020` |
-| `allowed` | A port a dragged link may end at. | `#6fcf6f` | `#6fcf6f` |
-| `refused` | A port a dragged link may not end at. | `#e06060` | `#e06060` |
+| `allowed` | A port a dragged link may end at. | `#6fcf6f` | `#2e8b45` |
+| `refused` | A port a dragged link may not end at. | `#e06060` | `#c03030` |
 | `field` | The background of a value box. | `#303030` | `#303030` |
 | `field_text` | Text typed in a value box. | `#e0e0e0` | `#e0e0e0` |
 | `field_border` | The border of an input box. | `#303030` | `#303030` |
 | `menu` | The right-click menu's background. | `#ececec` | `#ececec` |
 | `menu_text` | Text in the right-click menu. | `#222222` | `#222222` |
+| `menu_muted` | Muted text in the right-click menu, such as `No matching node`. | `#595959` | `#595959` |
 | `menu_field` | The search box in the right-click menu. | `#ffffff` | `#ffffff` |
 | `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.5)` | `rgba(0, 0, 0, 0.5)` |
-| `menu_hover` | The menu entry under the pointer. | `#4a90d9` | `#4a90d9` |
+| `menu_hover` | The menu entry under the pointer. | `#2f6db5` | `#2f6db5` |
 | `menu_hover_text` | Text of the menu entry under the pointer. | `#ffffff` | `#ffffff` |
 | `run_bg` | The Run button's background. | `#ececec` | `#ececec` |
 | `run_text` | The Run button's text and triangle. | `#222222` | `#222222` |
 | `run_border` | The line round the Run button. | `#303030` | `#303030` |
-| `run_hover` | The Run button's background under the pointer. | `#4a90d9` | `#4a90d9` |
+| `run_hover` | The Run button's background under the pointer. | `#2f6db5` | `#2f6db5` |
 | `run_hover_text` | The Run button's text under the pointer. | `#ffffff` | `#ffffff` |
 | `accent` | The tint of a ticked checkbox in a value box. | `#4a90d9` | `#4a90d9` |
 | `error` | The error banner's background. | `#5a2d2d` | `#5a2d2d` |

@@ -1,5 +1,7 @@
 //! The theme: every colour, size and font in one place.
 
+use element_51_core::PortType;
+use element_51_core::contrast::ratio;
 use element_51_core::theme::{THEME_NAMES, Theme};
 
 const DRAW: &str = include_str!("../../element-51-web/src/draw.rs");
@@ -469,4 +471,129 @@ fn the_page_stays_hidden_until_the_first_snapshot_has_set_the_theme() {
     let show_error = &WEB[WEB.find("fn show_error").unwrap()..];
     let body = &show_error[..show_error.find("\n}\n").unwrap()];
     assert!(body.contains("mark_ready"), "{body}");
+}
+
+/// WCAG 2.2 AA for text.
+const TEXT_RATIO: f64 = 4.5;
+/// WCAG 2.2 AA for icons, outlines and other graphics.
+const GRAPHIC_RATIO: f64 = 3.0;
+
+/// Every pair of colours the editor draws text on, as (text, background).
+fn text_pairs(theme: &Theme) -> Vec<(&'static str, String, String)> {
+    let c = &theme.colours;
+    vec![
+        ("title on header", c.title.clone(), c.header.clone()),
+        (
+            "title on header_error",
+            c.title.clone(),
+            c.header_error.clone(),
+        ),
+        (
+            "text_dim on header_skipped",
+            c.text_dim.clone(),
+            c.header_skipped.clone(),
+        ),
+        ("label on card", c.label.clone(), c.card.clone()),
+        ("field_text on field", c.field_text.clone(), c.field.clone()),
+        (
+            "placeholder on field",
+            c.placeholder.clone(),
+            c.field.clone(),
+        ),
+        ("menu_text on menu", c.menu_text.clone(), c.menu.clone()),
+        ("menu_muted on menu", c.menu_muted.clone(), c.menu.clone()),
+        (
+            "menu_text on menu_field",
+            c.menu_text.clone(),
+            c.menu_field.clone(),
+        ),
+        (
+            "menu_hover_text on menu_hover",
+            c.menu_hover_text.clone(),
+            c.menu_hover.clone(),
+        ),
+        ("run_text on run_bg", c.run_text.clone(), c.run_bg.clone()),
+        (
+            "run_hover_text on run_hover",
+            c.run_hover_text.clone(),
+            c.run_hover.clone(),
+        ),
+        ("error_text on error", c.error_text.clone(), c.error.clone()),
+    ]
+}
+
+/// Every pair of colours a graphic is drawn in, as (graphic, background).
+fn graphic_pairs(theme: &Theme) -> Vec<(String, String, String)> {
+    let c = &theme.colours;
+    let mut pairs = vec![
+        (
+            "icon on header".to_string(),
+            c.icon.clone(),
+            c.header.clone(),
+        ),
+        (
+            "selected on canvas".to_string(),
+            c.selected.clone(),
+            c.canvas.clone(),
+        ),
+        (
+            "selected_wire on canvas".to_string(),
+            c.selected_wire.clone(),
+            c.canvas.clone(),
+        ),
+        (
+            "allowed on canvas".to_string(),
+            c.allowed.clone(),
+            c.canvas.clone(),
+        ),
+        (
+            "refused on canvas".to_string(),
+            c.refused.clone(),
+            c.canvas.clone(),
+        ),
+    ];
+    for kind in [
+        PortType::Int,
+        PortType::Float,
+        PortType::Str,
+        PortType::Bool,
+    ] {
+        for output in [false, true] {
+            let side = if output { "out" } else { "in" };
+            pairs.push((
+                format!("port {kind:?} {side} on card"),
+                theme.port_style(kind, output).colour.clone(),
+                c.card.clone(),
+            ));
+        }
+    }
+    pairs
+}
+
+#[test]
+fn every_text_pair_of_every_theme_meets_aa() {
+    for name in THEME_NAMES {
+        let theme = Theme::builtin(name).unwrap();
+        for (what, text, background) in text_pairs(&theme) {
+            let value = ratio(&text, &background).unwrap_or_else(|| panic!("{name}: {what}"));
+            assert!(
+                value >= TEXT_RATIO,
+                "{name}: {what} is {value:.2}:1, needs {TEXT_RATIO}:1"
+            );
+        }
+    }
+}
+
+#[test]
+fn every_graphic_pair_of_every_theme_meets_aa() {
+    for name in THEME_NAMES {
+        let theme = Theme::builtin(name).unwrap();
+        for (what, graphic, background) in graphic_pairs(&theme) {
+            let value = ratio(&graphic, &background).unwrap_or_else(|| panic!("{name}: {what}"));
+            assert!(
+                value >= GRAPHIC_RATIO,
+                "{name}: {what} is {value:.2}:1, needs {GRAPHIC_RATIO}:1"
+            );
+        }
+    }
 }

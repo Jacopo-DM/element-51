@@ -59,6 +59,8 @@ pub struct Colours {
     pub menu: String,
     /// Text in the right-click menu.
     pub menu_text: String,
+    /// Muted text in the right-click menu, such as `No matching node`.
+    pub menu_muted: String,
     /// The search box in the right-click menu.
     pub menu_field: String,
     /// The shadow under the right-click menu.
@@ -336,6 +338,7 @@ impl Theme {
             ("--placeholder", &colours.placeholder),
             ("--menu-bg", &colours.menu),
             ("--menu-text", &colours.menu_text),
+            ("--menu-muted", &colours.menu_muted),
             ("--menu-field-bg", &colours.menu_field),
             ("--menu-shadow", &colours.menu_shadow),
             ("--menu-hover-bg", &colours.menu_hover),

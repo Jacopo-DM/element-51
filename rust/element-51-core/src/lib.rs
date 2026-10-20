@@ -5,6 +5,7 @@
 //! sides.
 
 pub mod address;
+pub mod contrast;
 mod edit;
 pub mod fields;
 pub mod history;

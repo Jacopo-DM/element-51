@@ -328,6 +328,9 @@ Each with the screen and state, the evidence, and who it affects.
     `dark-375-default`. An edge screen today.
 10. Copy: the empty output placeholder is "output", the same word as the port
     name; "No matching node" is the only empty-state message.
+12. Found while checking task 1: the add-node menu's scrolling lists (`#menu-tree`,
+    `#menu-results`) fail axe `scrollable-region-focusable` (serious) when a search
+    shows no match; to fix in task 3.
 11. The canvas (nodes, wires, ports) has no keyboard access or accessible
     description at all. The user chose "AA including the canvas" on 2026-10-20.
     That adds behaviour (keyboard selection, moving and linking, names for
@@ -338,7 +341,8 @@ Each with the screen and state, the evidence, and who it affects.
 
 Tier 1, foundations:
 
-1. **Contrast test and AA colours in both themes** (findings 3 and 4; axe
+1. **Done 2026-10-20** (DESIGN.md Results; `color-contrast` 1 to 0, all theme pairs at AA).
+    **Contrast test and AA colours in both themes** (findings 3 and 4; axe
     `color-contrast` 1 to 0 and four failing pairs to 0). A native test in
     `rust/element-51-core/tests/theme.rs` computes the WCAG ratio for each text
     pair and graphic pair of both themes (text 4.5, graphics 3) and fails below;
