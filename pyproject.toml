@@ -10,9 +10,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "numpy>=2.5.4",
     "pydantic>=2.14.1",
-    "rich>=15.0.0",
     "starlette>=1.9.0",
     "uvicorn>=0.54.0",
     "websockets>=17.2",
@@ -39,6 +37,8 @@ docs = [
     "sphinx-autobuild>=2025.8.25",
 ]
 examples = [
+    "numpy>=2.5.4",
+    "rich>=15.0.0",
     "fastapi>=0.156.0",
     "nicegui>=3.18.0",
 ]

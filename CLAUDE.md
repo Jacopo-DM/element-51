@@ -153,7 +153,7 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - BSD `sed` on macOS has no `\b`. Use Python `re` for whole-word replacements.
 - `ls` and `mv` read a name starting with `-` as an option. Claude's history
     folders under `~/.claude/projects/` start with one; prefix `./`.
-- `fastapi` and `nicegui` are in the `examples` group, which `[tool.uv] default-groups` installs with `dev`, so mypy can resolve the two host examples. They are not runtime dependencies of the library.
+- `fastapi`, `nicegui`, `numpy` and `rich` are in the `examples` group, which `[tool.uv] default-groups` installs with `dev`, so mypy can resolve the examples' imports. They are not runtime dependencies of the library.
 - `uv sync` with no flags uninstalls the `docs` group. Use `uv sync --group docs`
     before building the docs.
 - After moving the repo folder, run `uv sync --reinstall` and `uv run
