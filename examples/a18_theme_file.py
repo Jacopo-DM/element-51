@@ -1,13 +1,15 @@
 """Your own theme, from a file.
 
 `my_theme.json` next to this script changes a few values of the dark theme: a
-dark blue canvas, blue title bars, orange number ports, wider cards and a
-larger value font. Try these:
+dark blue canvas, blue title bars, number inputs drawn as diamonds and number
+outputs as circles, wider cards and a larger value font. Try these:
 
 * Run the script and look at the editor: it is two linked nodes in the
   new colours.
 * Open `my_theme.json`, change `"canvas"` to another colour, stop the script
   with Ctrl+C and run it again to see it.
+* In the `"ports"` entry, change a `"shape"` to `"box"` or `"circle"`, or give
+  `"text"` ports a style of their own (see `docs/themes.md`).
 * Change `"colours"` to `"colors"` and run it: Python refuses the file and
   names the member that is wrong.
 * Change `"canvas"` to `"canvass"` and run it: the page shows a banner that

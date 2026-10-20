@@ -223,6 +223,18 @@ fn the_example_theme_file_uses_only_keys_that_exist() {
 #[test]
 fn the_theme_docs_list_every_key_a_theme_can_change() {
     let theme = serde_json::to_value(Theme::default()).unwrap();
+    for kind in theme["ports"].as_object().unwrap().keys() {
+        assert!(
+            THEME_DOCS.contains(&format!("| `{kind}` |")),
+            "docs/themes.md has no row for port type {kind}"
+        );
+    }
+    for shape in ["box", "circle", "diamond"] {
+        assert!(
+            THEME_DOCS.contains(&format!("`{shape}`")),
+            "no mention of {shape}"
+        );
+    }
     for section in ["colours", "metrics", "fonts"] {
         for key in theme[section].as_object().unwrap().keys() {
             assert!(
@@ -231,4 +243,114 @@ fn the_theme_docs_list_every_key_a_theme_can_change() {
             );
         }
     }
+}
+
+#[test]
+fn every_port_type_has_a_style_for_each_side_and_by_default_all_are_boxes() {
+    use element_51_core::PortType;
+    use element_51_core::theme::PortShape;
+    for name in THEME_NAMES {
+        let theme = Theme::builtin(name).unwrap();
+        for kind in [
+            PortType::Float,
+            PortType::Int,
+            PortType::Str,
+            PortType::Bool,
+        ] {
+            for output in [false, true] {
+                let style = theme.port_style(kind, output);
+                assert_eq!(style.shape, PortShape::Box, "{name} {kind} {output}");
+                assert!(!style.colour.is_empty());
+            }
+        }
+    }
+}
+
+#[test]
+fn by_default_an_input_and_an_output_of_one_type_share_a_colour() {
+    use element_51_core::PortType;
+    let theme = Theme::default();
+    for kind in [
+        PortType::Float,
+        PortType::Int,
+        PortType::Str,
+        PortType::Bool,
+    ] {
+        assert_eq!(
+            theme.port_style(kind, false).colour,
+            theme.port_style(kind, true).colour
+        );
+    }
+    assert_eq!(
+        theme.port_style(PortType::Int, true),
+        theme.port_style(PortType::Float, true)
+    );
+}
+
+#[test]
+fn a_change_reaches_one_side_of_one_type_and_leaves_the_rest() {
+    use element_51_core::PortType;
+    use element_51_core::theme::PortShape;
+    let base = Theme::default();
+    let theme = changed(
+        "antimony",
+        r##"{"ports": {"float": {"out": {"shape": "circle"},
+                                "in": {"colour": "#ff0000", "shape": "diamond"}}}}"##,
+    )
+    .unwrap();
+    let out = theme.port_style(PortType::Float, true);
+    assert_eq!(out.shape, PortShape::Circle);
+    assert_eq!(out.colour, base.port_style(PortType::Float, true).colour);
+    let input = theme.port_style(PortType::Float, false);
+    assert_eq!(
+        (input.colour.as_str(), input.shape),
+        ("#ff0000", PortShape::Diamond)
+    );
+    assert_eq!(
+        theme.port_style(PortType::Int, false),
+        base.port_style(PortType::Int, false)
+    );
+}
+
+#[test]
+fn a_port_change_with_a_wrong_name_says_where_and_lists_the_names() {
+    let error = changed("antimony", r#"{"ports": {"number": {}}}"#).unwrap_err();
+    assert!(
+        error.contains("ports") && error.contains("number") && error.contains("float"),
+        "{error}"
+    );
+    let error = changed("antimony", r#"{"ports": {"float": {"output": {}}}}"#).unwrap_err();
+    assert!(
+        error.contains("ports.float") && error.contains("output") && error.contains("out"),
+        "{error}"
+    );
+    let error = changed(
+        "antimony",
+        r#"{"ports": {"float": {"in": {"color": "red"}}}}"#,
+    )
+    .unwrap_err();
+    assert!(
+        error.contains("ports.float.in") && error.contains("colour"),
+        "{error}"
+    );
+}
+
+#[test]
+fn a_port_shape_must_be_one_of_the_known_shapes() {
+    let error = changed(
+        "antimony",
+        r#"{"ports": {"bool": {"in": {"shape": "star"}}}}"#,
+    )
+    .unwrap_err();
+    assert!(
+        error.contains("star") && error.contains("diamond"),
+        "{error}"
+    );
+    let error = changed("antimony", r#"{"ports": {"bool": {"in": {"shape": 3}}}}"#).unwrap_err();
+    assert!(error.contains("shape") && error.contains("text"), "{error}");
+    let error = changed("antimony", r#"{"ports": {"bool": {"in": "box"}}}"#).unwrap_err();
+    assert!(
+        error.contains("ports.bool") && error.contains("object"),
+        "{error}"
+    );
 }

@@ -45,10 +45,14 @@ def check_theme(name: str) -> str:
 class ThemeChanges(Model):
     """Values that replace a built-in theme's own, by section and key.
 
+    `ports` nests one level more: port type, `in` or `out`, then `colour` or
+    `shape`.
+
     The keys are those in `rust/element-51-core/themes/antimony.json`.
     """
 
     colours: dict[str, str] = Field(default_factory=dict)
+    ports: dict[str, dict[str, dict[str, str]]] = Field(default_factory=dict)
     metrics: dict[str, float] = Field(default_factory=dict)
     fonts: dict[str, str | float] = Field(default_factory=dict)
 

@@ -17,9 +17,6 @@
     "selected_wire": "#e0e0e0",
     "allowed": "#6fcf6f",
     "refused": "#e06060",
-    "port_number": "#edc27b",
-    "port_text": "#94a95f",
-    "port_bool": "#6fa8dc",
     "field": "#303030",
     "field_text": "#e0e0e0",
     "field_border": "#303030",
@@ -31,6 +28,48 @@
     "menu_hover_text": "#ffffff",
     "error": "#5a2d2d",
     "error_text": "#f0d0d0"
+  },
+  "ports": {
+    "int": {
+      "in": {
+        "colour": "#edc27b",
+        "shape": "box"
+      },
+      "out": {
+        "colour": "#edc27b",
+        "shape": "box"
+      }
+    },
+    "float": {
+      "in": {
+        "colour": "#edc27b",
+        "shape": "box"
+      },
+      "out": {
+        "colour": "#edc27b",
+        "shape": "box"
+      }
+    },
+    "text": {
+      "in": {
+        "colour": "#94a95f",
+        "shape": "box"
+      },
+      "out": {
+        "colour": "#94a95f",
+        "shape": "box"
+      }
+    },
+    "bool": {
+      "in": {
+        "colour": "#6fa8dc",
+        "shape": "box"
+      },
+      "out": {
+        "colour": "#6fa8dc",
+        "shape": "box"
+      }
+    }
   },
   "metrics": {
     "node_width": 220.0,

@@ -6,7 +6,7 @@ use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_controls,
 };
-use element_51_core::theme::{Colours, Metrics, Theme};
+use element_51_core::theme::{Metrics, PortShape, PortStyle, Theme};
 use element_51_core::view::View;
 use element_51_core::{
     Edit, Graph, Link, NodeType, PlacedNode, PortRef, PortType, RunResult, Status, apply_edit,
@@ -17,6 +17,9 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
 /// The grid is left out when its dots would be closer than this on screen.
 const MIN_GRID_PIXELS: f64 = 8.0;
+/// How far a diamond marker reaches from its centre, as a fraction of the port
+/// size: 0.7 gives it about the area of a box of that size.
+const DIAMOND_REACH: f64 = 0.7;
 
 /// A link being dragged from an output port. `x` and `y` are graph
 /// coordinates.
@@ -51,9 +54,9 @@ fn wire_colour<'a>(
     graph: &Graph,
     types: &[NodeType],
     source: &PortRef,
-    colours: &'a Colours,
+    theme: &'a Theme,
 ) -> &'a str {
-    graph
+    let style = graph
         .nodes
         .iter()
         .find(|node| node.id == source.node)
@@ -64,17 +67,8 @@ fn wire_colour<'a>(
                 .iter()
                 .find(|port| port.name == source.port)
         })
-        .map_or(port_colour(PortType::Str, colours), |port| {
-            port_colour(port.kind, colours)
-        })
-}
-
-fn port_colour(kind: PortType, colours: &Colours) -> &str {
-    match kind {
-        PortType::Float | PortType::Int => &colours.port_number,
-        PortType::Str => &colours.port_text,
-        PortType::Bool => &colours.port_bool,
-    }
+        .map_or(PortType::Str, |port| port.kind);
+    &theme.port_style(style, true).colour
 }
 
 /// Where a card's columns sit: port names are right-aligned against
@@ -180,7 +174,7 @@ pub fn draw(
         let to = anchor_of(graph, types, &link.target, Side::Input, metrics);
         if let (Some(from), Some(to)) = (from, to) {
             let chosen = selected == Some(&Selected::Link(link.clone()));
-            let colour = wire_colour(graph, types, &link.source, colours);
+            let colour = wire_colour(graph, types, &link.source, theme);
             context.set_stroke_style_str(if chosen {
                 &colours.selected_wire
             } else {
@@ -198,7 +192,7 @@ pub fn draw(
     if let Some(drag) = drag
         && let Some(from) = anchor_of(graph, types, &drag.source, Side::Output, metrics)
     {
-        context.set_stroke_style_str(wire_colour(graph, types, &drag.source, colours));
+        context.set_stroke_style_str(wire_colour(graph, types, &drag.source, theme));
         wire(context, from, (drag.x, drag.y), metrics);
     }
 
@@ -210,11 +204,11 @@ pub fn draw(
         let rect = node_rect(node, node_type, metrics);
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row, metrics);
-            square(context, x, y, port_colour(port.kind, colours), metrics);
+            marker(context, (x, y), theme.port_style(port.kind, false), metrics);
         }
         for (index, port) in node_type.outputs.iter().enumerate() {
             let (x, y) = output_anchor(&rect, output_row(node_type, index), metrics);
-            square(context, x, y, port_colour(port.kind, colours), metrics);
+            marker(context, (x, y), theme.port_style(port.kind, true), metrics);
         }
     }
     if let (Some(drag), Some(hit)) = (drag, hover)
@@ -235,7 +229,13 @@ pub fn draw(
             } else {
                 &colours.refused
             };
-            square(context, x, y, colour, metrics);
+            let kind = node_port_kind(graph, types, &target).unwrap_or(PortType::Str);
+            let shape = theme.port_style(kind, false).shape;
+            let style = PortStyle {
+                colour: colour.clone(),
+                shape,
+            };
+            marker(context, (x, y), &style, metrics);
         }
     }
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
@@ -427,10 +427,47 @@ fn round_rect_path(context: &CanvasRenderingContext2d, rect: &Rect, radius: f64)
     context.close_path();
 }
 
-fn square(context: &CanvasRenderingContext2d, x: f64, y: f64, colour: &str, metrics: &Metrics) {
+/// The type of the input `target` names, if the node and port exist.
+fn node_port_kind(graph: &Graph, types: &[NodeType], target: &PortRef) -> Option<PortType> {
+    let node = graph.nodes.iter().find(|node| node.id == target.node)?;
+    let node_type = types.iter().find(|known| known.name == node.node_type)?;
+    node_type
+        .inputs
+        .iter()
+        .find(|port| port.name == target.port)
+        .map(|port| port.kind)
+}
+
+/// A port marker centred on `at`, in the style's colour and shape. A circle
+/// has the port size as its diameter, a box as its side, and a diamond is as
+/// tall as a box's diagonal shrunk to look about as big.
+fn marker(
+    context: &CanvasRenderingContext2d,
+    at: (f64, f64),
+    style: &PortStyle,
+    metrics: &Metrics,
+) {
+    let (x, y) = at;
     let size = metrics.port_size;
-    context.set_fill_style_str(colour);
-    context.fill_rect(x - size / 2.0, y - size / 2.0, size, size);
+    context.set_fill_style_str(&style.colour);
+    match style.shape {
+        PortShape::Box => context.fill_rect(x - size / 2.0, y - size / 2.0, size, size),
+        PortShape::Circle => {
+            context.begin_path();
+            let _ = context.arc(x, y, size / 2.0, 0.0, TAU);
+            context.fill();
+        }
+        PortShape::Diamond => {
+            let reach = size * DIAMOND_REACH;
+            context.begin_path();
+            context.move_to(x, y - reach);
+            context.line_to(x + reach, y);
+            context.line_to(x, y + reach);
+            context.line_to(x - reach, y);
+            context.close_path();
+            context.fill();
+        }
+    }
 }
 
 /// A smooth curve that leaves `from` and arrives at `to` horizontally.

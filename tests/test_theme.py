@@ -100,10 +100,21 @@ def test_something_that_is_neither_a_name_nor_a_file_names_both_ways(
         resolve_theme(str(tmp_path / "missing.json"))
 
 
+def test_a_theme_file_may_restyle_the_ports_by_type_and_side(
+    tmp_path: Path,
+) -> None:
+    """`ports` nests type, `in` or `out`, then `colour` or `shape`."""
+    text = '{"ports": {"float": {"out": {"shape": "circle"}}}}'
+    theme = resolve_theme(write(tmp_path / "t.json", text))
+    assert theme.ports == {"float": {"out": {"shape": "circle"}}}
+
+
 @pytest.mark.parametrize(
     "text",
     [
         "not json",
+        '{"ports": {"float": {"out": {"shape": 3}}}}',
+        '{"ports": {"float": "circle"}}',
         "[]",
         '{"colors": {}}',
         '{"colours": {"canvas": 5}}',

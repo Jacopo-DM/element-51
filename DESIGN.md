@@ -580,10 +580,25 @@ reference in `docs/themes.md` lists every key with its doc comment from
 example file uses only real keys. Checking a key in Python at `serve` time
 would be possible by exporting the key list into a shared fixture; not done.
 
+Port styles, task 20 (2026-10-20, from the user's sketch): the theme has a
+`ports` section, by type (`int`, `float`, `text`, `bool`), then side (`in`,
+`out`), then `colour` and `shape` (`box`, `circle`, `diamond`). The user chose
+separate int and float entries, wires that follow the output port's colour (no
+wire key), those three shapes, and no old keys: `port_number`, `port_text` and
+`port_bool` were removed from `colours`, with no shim. `Theme::with_changes`
+now merges nested objects, naming the path of a wrong key (`ports.float.in`),
+and an unknown shape is refused with serde's list of the valid ones. The
+default look is unchanged: all boxes, one colour per type for both sides. A
+dragged link's hover colour (`allowed`, `refused`) is drawn in the hovered
+input's own shape. A circle's diameter is `port_size`; a diamond reaches
+0.7 of it from the centre, about the area of the box. Hit-testing still uses a
+round target for every shape.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 20: port styles by type and side | native tests: every type and side has a style, defaults are boxes with equal in and out colours, a change reaches one side of one type only, wrong names and shapes name the path and the valid values, docs list every type; pytest: a ports file and bad shapes; by hand: `a18` shows diamonds for number inputs and circles for number outputs, `a6` keeps the box look; 213 Python tests at 100%, 105 Rust tests |
 | 2026-10-20 | task 19: theme files | native tests: no changes, partial changes, base, unknown base, key, section, wrong kind, non-objects; the example file and every key in the docs; pytest: file shapes, name and path, errors, session and snapshot, `serve` with a file, example `a18`; by hand: `a18_theme_file.py` shows the blue theme, a file with `canvass` shows the banner naming the key and listing the keys; 210 Python tests at 100%, 100 Rust tests |
 | 2026-10-20 | task 18: the header icon opens a Delete node menu | native tests: icon box position and size, icon hit-test (inside, header height, title text and body excluded, under another card refused), the entry list and its edit; by hand with `a17_card_menu.py`: the click opens the popup and selects the card, Delete node removes the node and its links, Cmd+Z restores them, Escape and a click on empty canvas close the popup; 194 Python tests at 100%, 90 Rust tests |
 | 2026-10-19 | task 14: categories and the nested menu with search | native tests: tree nesting and order, search by name, path and case, empty results; pytest: bare and called decorator, class variable, badly formed categories refused, fixtures carry `category`; by hand with `a16_menu.py`: Math > Trig > sine adds a node at the click, `math` lists three matches with paths, Enter adds the first, Escape closes, flyouts flip left near the right edge; 193 Python tests at 100%, 86 Rust tests |

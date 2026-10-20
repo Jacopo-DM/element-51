@@ -3,8 +3,17 @@
   "colours": {
     "canvas": "#101820",
     "dot": "#1c2a36",
-    "port_number": "#ffb000",
     "header": "#2b4a63"
+  },
+  "ports": {
+    "float": {
+      "in": {"colour": "#ffb000", "shape": "diamond"},
+      "out": {"colour": "#ffb000", "shape": "circle"}
+    },
+    "int": {
+      "in": {"colour": "#ff7a00", "shape": "diamond"},
+      "out": {"colour": "#ff7a00", "shape": "circle"}
+    }
   },
   "metrics": {
     "node_width": 260

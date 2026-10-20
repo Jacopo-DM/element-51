@@ -19,18 +19,20 @@ element_51.serve(app, theme="my_theme.json")
 ```json
 {
   "base": "antimony",
-  "colours": {"canvas": "#101820", "port_number": "#ffb000"},
+  "colours": {"canvas": "#101820"},
+  "ports": {"float": {"out": {"colour": "#ffb000", "shape": "circle"}}},
   "metrics": {"node_width": 260},
   "fonts": {"value": "13px Menlo, monospace", "value_family": "Menlo, monospace"}
 }
 ```
 
-The file has four members, all optional:
+The file has five members, all optional:
 
 | Member | Meaning |
 | --- | --- |
 | `base` | The built-in theme to start from: `antimony` (the default) or `antimony-light`. |
 | `colours` | Colours to replace, by key. |
+| `ports` | The colour and shape of port markers, by type and side. |
 | `metrics` | Sizes to replace, by key. |
 | `fonts` | Fonts to replace, by key. |
 
@@ -53,8 +55,8 @@ every open page.
 
 ## Every key you can change
 
-Each table shows the key, what it affects and the built-in values. The tables
-list every key, so a theme file never needs one that is not here.
+Each table shows the key, what it affects and the built-in values. The tables list every key, so a theme file never needs one that is not here.
+
 
 ### `colours`
 
@@ -78,9 +80,6 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `selected_wire` | A selected wire, which must show on the canvas. | `#e0e0e0` | `#202020` |
 | `allowed` | A port a dragged link may end at. | `#6fcf6f` | `#6fcf6f` |
 | `refused` | A port a dragged link may not end at. | `#e06060` | `#e06060` |
-| `port_number` | Number ports and the wires that leave them. | `#edc27b` | `#edc27b` |
-| `port_text` | Text ports and the wires that leave them. | `#94a95f` | `#94a95f` |
-| `port_bool` | Bool ports and the wires that leave them. | `#6fa8dc` | `#6fa8dc` |
 | `field` | The background of a value box. | `#303030` | `#303030` |
 | `field_text` | Text typed in a value box. | `#e0e0e0` | `#e0e0e0` |
 | `field_border` | The border of an input box. | `#303030` | `#303030` |
@@ -92,6 +91,19 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `menu_hover_text` | Text of the menu entry under the pointer. | `#ffffff` | `#ffffff` |
 | `error` | The error banner's background. | `#5a2d2d` | `#5a2d2d` |
 | `error_text` | Text in the error banner. | `#f0d0d0` | `#f0d0d0` |
+
+### `ports`
+
+Each port type has an `in` style for its inputs and an `out` style for its outputs, and each style has a `colour` and a `shape`. A wire takes the colour of the output port it leaves. You may name only the part you change: `{"float": {"out": {"shape": "circle"}}}` keeps the colour and every other port as it was.
+
+`shape` is one of `box` (the default), `circle` or `diamond`. A dragged link also colours the input it hovers over with `allowed` or `refused` from `colours`, in that input's shape.
+
+| Type | Holds | Default colour (in and out) | Default shape |
+| --- | --- | --- | --- |
+| `int` | whole numbers | `#edc27b` | `box` |
+| `float` | decimal numbers | `#edc27b` | `box` |
+| `text` | text | `#94a95f` | `box` |
+| `bool` | true or false | `#6fa8dc` | `box` |
 
 ### `metrics`
 

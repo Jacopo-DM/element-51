@@ -4,6 +4,7 @@
   "theme": "antimony-light",
   "theme_changes": {
     "colours": {},
+    "ports": {},
     "metrics": {},
     "fonts": {
       "value": "14px Menlo"

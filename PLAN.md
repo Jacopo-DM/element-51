@@ -66,7 +66,7 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 15, 18 and 19 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+tasks 1 to 15, 18, 19 and 20 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
@@ -80,11 +80,11 @@ reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
 
-Measured 2026-10-20 after task 19, Apple silicon, Python 3.13:
+Measured 2026-10-20 after task 20, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 210 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 100 tests.
+- pytest: 213 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 105 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -145,6 +145,9 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Extra task, added by the user 2026-10-20
 
+20. **Port styles** (from the user's sketch, with their answers). Done: the
+    `ports` theme section by type and side, with colour and shape. Detail in
+    DESIGN.md.
 19. **Theme files** (the user chose the option and asked for the docs). Done:
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `a18`. Detail in
     DESIGN.md.

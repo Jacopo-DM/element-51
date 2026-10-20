@@ -3,8 +3,9 @@
 //! A theme is plain data, read from JSON. Drawing and layout take it as an
 //! argument, so nothing else in the program says what a colour or a size is.
 
+use crate::PortType;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 /// The names of the built-in themes, the default first.
 pub const THEME_NAMES: [&str; 2] = ["antimony", "antimony-light"];
@@ -48,12 +49,6 @@ pub struct Colours {
     pub allowed: String,
     /// A port a dragged link may not end at.
     pub refused: String,
-    /// Number ports and the wires that leave them.
-    pub port_number: String,
-    /// Text ports and the wires that leave them.
-    pub port_text: String,
-    /// Bool ports and the wires that leave them.
-    pub port_bool: String,
     /// The background of a value box.
     pub field: String,
     /// Text typed in a value box.
@@ -76,6 +71,51 @@ pub struct Colours {
     pub error: String,
     /// Text in the error banner.
     pub error_text: String,
+}
+
+/// The shape of a port's marker.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PortShape {
+    Box,
+    Circle,
+    Diamond,
+}
+
+/// How one port marker looks.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PortStyle {
+    /// The marker's colour; the wire leaving an output takes it too.
+    pub colour: String,
+    /// The marker's shape: `box`, `circle` or `diamond`.
+    pub shape: PortShape,
+}
+
+/// The styles of the inputs and the outputs of one port type.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PortSides {
+    /// An input of this type.
+    #[serde(rename = "in")]
+    pub input: PortStyle,
+    /// An output of this type.
+    #[serde(rename = "out")]
+    pub output: PortStyle,
+}
+
+/// The port styles, by port type.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Ports {
+    /// Integer ports.
+    pub int: PortSides,
+    /// Floating point ports.
+    pub float: PortSides,
+    /// Text ports.
+    pub text: PortSides,
+    /// Bool ports.
+    pub bool: PortSides,
 }
 
 /// Sizes, in graph units (one unit is one pixel at zoom 1).
@@ -158,6 +198,7 @@ pub struct Fonts {
 pub struct Theme {
     pub name: String,
     pub colours: Colours,
+    pub ports: Ports,
     pub metrics: Metrics,
     pub fonts: Fonts,
 }
@@ -175,8 +216,9 @@ impl Theme {
 
     /// The built-in theme `base` with some of its values replaced.
     ///
-    /// `changes` is an object with up to three members, `colours`, `metrics`
-    /// and `fonts`, each an object of the keys to replace. A value must have the
+    /// `changes` is an object with up to four members, `colours`, `ports`,
+    /// `metrics` and `fonts`, each an object of the keys to replace (`ports`
+    /// nests: type, then `in` or `out`, then `colour` or `shape`). A value must have the
     /// same kind (text or number) as the one it replaces. `null` means no
     /// changes. The error says which name or key is wrong and what would do.
     pub fn with_changes(base: &str, changes: &Value) -> Result<Theme, String> {
@@ -193,32 +235,30 @@ impl Theme {
         };
         let mut whole = serde_json::to_value(&theme).map_err(|error| error.to_string())?;
         for (section, entries) in sections {
-            let known = ["colours", "metrics", "fonts"].contains(&section.as_str());
+            let known = ["colours", "ports", "metrics", "fonts"].contains(&section.as_str());
             let current = whole.get_mut(section).and_then(Value::as_object_mut);
             let (true, Some(current)) = (known, current) else {
                 return Err(format!(
-                    "unknown theme section {section:?}; the sections are: colours, metrics, fonts"
+                    "unknown theme section {section:?}; the sections are: colours, ports, metrics, fonts"
                 ));
             };
             let Value::Object(entries) = entries else {
                 return Err(format!("{section} must be an object of changes"));
             };
-            for (key, value) in entries {
-                let Some(old) = current.get(key) else {
-                    let keys: Vec<&str> = current.keys().map(String::as_str).collect();
-                    return Err(format!(
-                        "unknown {section} key {key:?}; the keys are: {}",
-                        keys.join(", ")
-                    ));
-                };
-                if std::mem::discriminant(old) != std::mem::discriminant(value) {
-                    let kind = if old.is_number() { "a number" } else { "text" };
-                    return Err(format!("{section} key {key:?} must be {kind}"));
-                }
-                current.insert(key.clone(), value.clone());
-            }
+            merge(current, entries, section)?;
         }
         serde_json::from_value(whole).map_err(|error| error.to_string())
+    }
+
+    /// The style of an input (`output` false) or an output port of type `kind`.
+    pub fn port_style(&self, kind: PortType, output: bool) -> &PortStyle {
+        let sides = match kind {
+            PortType::Int => &self.ports.int,
+            PortType::Float => &self.ports.float,
+            PortType::Str => &self.ports.text,
+            PortType::Bool => &self.ports.bool,
+        };
+        if output { &sides.output } else { &sides.input }
     }
 
     /// The values the page's own parts (input boxes, menu, error banner) read
@@ -253,4 +293,34 @@ impl Default for Theme {
     fn default() -> Theme {
         Theme::builtin(THEME_NAMES[0]).expect("the default theme exists")
     }
+}
+
+/// Replace the values in `current` with those in `entries`, level by level.
+/// `path` names the level in an error, such as `ports.float.in`.
+fn merge(
+    current: &mut Map<String, Value>,
+    entries: &Map<String, Value>,
+    path: &str,
+) -> Result<(), String> {
+    for (key, value) in entries {
+        let Some(old) = current.get_mut(key) else {
+            let keys: Vec<&str> = current.keys().map(String::as_str).collect();
+            return Err(format!(
+                "unknown {path} key {key:?}; the keys are: {}",
+                keys.join(", ")
+            ));
+        };
+        if let Some(inner) = old.as_object_mut() {
+            let Value::Object(changes) = value else {
+                return Err(format!("{path}.{key} must be an object of changes"));
+            };
+            merge(inner, changes, &format!("{path}.{key}"))?;
+        } else if std::mem::discriminant(old) == std::mem::discriminant(value) {
+            *old = value.clone();
+        } else {
+            let kind = if old.is_number() { "a number" } else { "text" };
+            return Err(format!("{path} key {key:?} must be {kind}"));
+        }
+    }
+    Ok(())
 }

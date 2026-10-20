@@ -220,6 +220,7 @@ class App:
             theme=self._theme.base,
             theme_changes=ThemeChanges(
                 colours=self._theme.colours,
+                ports=self._theme.ports,
                 metrics=self._theme.metrics,
                 fonts=self._theme.fonts,
             ),
