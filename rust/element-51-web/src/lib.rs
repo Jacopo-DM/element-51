@@ -323,7 +323,16 @@ fn draw_canvas(state: &Shared) {
 }
 
 /// Put `message` in the error banner. It stays until the user presses Dismiss.
+/// Show the page. It stays hidden until the first snapshot has set the theme, so
+/// a light-theme page never shows the default dark one first.
+fn mark_ready(document: &Document) {
+    if let Some(root) = document.document_element() {
+        root.set_class_name("ready");
+    }
+}
+
 fn show_error(document: &Document, message: &str) {
+    mark_ready(document);
     let Some(banner) = document.get_element_by_id("error") else {
         return;
     };
@@ -426,6 +435,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                         ),
                     }
                 }
+                mark_ready(&state.document);
                 fill_menu(&state.document, &snapshot);
                 match state.replica.as_mut() {
                     Some(replica) => replica.reset(snapshot),

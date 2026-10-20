@@ -447,3 +447,16 @@ fn the_default_page_values_are_the_ones_the_page_used_before_it_was_themed() {
     );
     assert_eq!((page.button_x, page.button_y), (16.0, 16.0));
 }
+
+#[test]
+fn the_page_stays_hidden_until_the_first_snapshot_has_set_the_theme() {
+    assert!(
+        PAGE.contains("html:not(.ready)"),
+        "the page paints before its theme is known"
+    );
+    assert!(WEB.contains("fn mark_ready"), "nothing reveals the page");
+    // A failure must also reveal it, or the error banner would stay invisible.
+    let show_error = &WEB[WEB.find("fn show_error").unwrap()..];
+    let body = &show_error[..show_error.find("\n}\n").unwrap()];
+    assert!(body.contains("mark_ready"), "{body}");
+}

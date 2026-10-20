@@ -718,10 +718,24 @@ categories (the tree scrolls, a flyout at the bottom stays level with its entry,
 a menu opened at the right edge flips its flyouts left) and with three levels of
 nesting.
 
+No dark flash, task 25 (2026-10-20, the user approved it): `index.html` has
+`html:not(.ready) { visibility: hidden; }`, and the web layer's `mark_ready` sets
+the class `ready` on the root element after the first snapshot has applied the
+theme, and in `show_error`, so a failure still shows the banner. Before that the
+page keeps the default theme's variables as a fallback but is not painted, so a
+light-theme page no longer shows the dark one first. The browser's own canvas
+colour (`Canvas`) can still show for the moment before the page is ready; it is
+the system colour, not a theme. Checked in the browser pane with the light
+example: the class is `ready` after load, and removing it hides the page. The
+flash itself is too short to see in a screenshot, so it was not observed before or
+after; a native test checks that the rule and `mark_ready` exist and that
+`show_error` calls it.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 25: no dark flash on the light theme | native test: the page has the hiding rule, `mark_ready` exists and `show_error` calls it; by hand: with the light example the root has class `ready` and a `#eeeeee` body, and without the class its visibility is hidden; the flash itself was not observed; 217 Python tests at 100%, 122 Rust tests |
 | 2026-10-20 | task 24: scrolling add-node menu | native tests: `clamp_into` (inside, hanging out, too tall) and `flyout_at` (right, flipped left, lifted near the bottom, kept below the top); by hand with 30 categories and with three nesting levels: the tree scrolls and resets on open, flyouts sit level with their entry, flip at the right edge and stay open on the way from the entry; 217 Python tests at 100%, 121 Rust tests |
 | 2026-10-20 | task 23: CI for the Rust crates and the WASM build | not run on GitHub (no remote); locally: the workflow parses as YAML with the two jobs and 5 and 8 steps, `cargo fmt`, `clippy` and `cargo test` pass, `build_wasm.py` builds, and a wheel built with `uv build --wheel` holds `element_51/web/element_51_web_bg.wasm` |
 | 2026-10-20 | task 22: page theme keys | native tests: the page reads only variables the theme sets, no pixel font sizes or radii in the page, page keys come out as pixel values, a wrong or mistyped page key lists the valid ones, defaults equal the old literals, docs list every key; pytest: a `page` section in a theme file and a bad value; by hand: `e2_theme_file` shows a round blue Run button and rounder menus, and the default theme reads back 16 px, 6 px, 13 px and `#ececec` on the Run button; 217 Python tests at 100%, 115 Rust tests |
