@@ -6,6 +6,7 @@
         "colours": {},
         "ports": {},
         "metrics": {},
+        "page": {},
         "fonts": {
             "value": "14px Menlo"
         }

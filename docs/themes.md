@@ -29,14 +29,15 @@ element_51.serve(app, theme="my_theme.json")
 }
 ```
 
-The file has five members, all optional:
+The file has six members, all optional:
 
 | Member | Meaning |
 | --- | --- |
 | `base` | The built-in theme to start from: `antimony` (the default) or `antimony-light`. |
 | `colours` | Colours to replace, by key. |
 | `ports` | The colour and shape of port markers, by type and side. |
-| `metrics` | Sizes to replace, by key. |
+| `metrics` | Sizes on the canvas to replace, by key. |
+| `page` | Sizes of the menus, the Run button and the other page parts, by key. |
 | `fonts` | Fonts to replace, by key. |
 
 `examples/e_look/e2_theme_file.py` and `examples/my_theme.json` are a working pair.
@@ -92,6 +93,12 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.5)` | `rgba(0, 0, 0, 0.5)` |
 | `menu_hover` | The menu entry under the pointer. | `#4a90d9` | `#4a90d9` |
 | `menu_hover_text` | Text of the menu entry under the pointer. | `#ffffff` | `#ffffff` |
+| `run_bg` | The Run button's background. | `#ececec` | `#ececec` |
+| `run_text` | The Run button's text and triangle. | `#222222` | `#222222` |
+| `run_border` | The line round the Run button. | `#303030` | `#303030` |
+| `run_hover` | The Run button's background under the pointer. | `#4a90d9` | `#4a90d9` |
+| `run_hover_text` | The Run button's text under the pointer. | `#ffffff` | `#ffffff` |
+| `accent` | The tint of a ticked checkbox in a value box. | `#4a90d9` | `#4a90d9` |
 | `error` | The error banner's background. | `#5a2d2d` | `#5a2d2d` |
 | `error_text` | Text in the error banner. | `#f0d0d0` | `#f0d0d0` |
 
@@ -139,6 +146,34 @@ Numbers, in canvas units: one unit is one pixel at zoom 1.
 | `icon_gap` | Space between the bars of the icon. | `2.5` |
 | `grid_step` | Distance between grid dots. | `24.0` |
 | `dot_radius` | Radius of a grid dot. | `1.2` |
+
+### `page`
+
+Numbers, in CSS pixels, for the page's own parts: the menus, the Run button, the input boxes and the error banner. Borders of 1 pixel and a few fixed paddings are not themed. The checkbox for a bool input is the browser's own; `accent` tints it when ticked.
+
+| Key | What it sets | Default |
+| --- | --- | --- |
+| `font_px` | Size of text in the menus, the search box and the error banner. | `14.0` |
+| `button_font_px` | Size of the text on the Run button. | `13.0` |
+| `menu_radius` | Radius of a menu's corners. | `4.0` |
+| `menu_pad` | Space above and below the entries of a menu. | `4.0` |
+| `menu_item_pad_x` | Space left and right of a menu entry's text. | `14.0` |
+| `menu_item_pad_y` | Space above and below a menu entry's text. | `4.0` |
+| `menu_min_width` | Narrowest a menu may be. | `160.0` |
+| `shadow_blur` | How far a menu's shadow spreads. | `8.0` |
+| `shadow_y` | How far a menu's shadow sits below it. | `2.0` |
+| `button_radius` | Radius of the Run button's corners. | `6.0` |
+| `button_pad_x` | Space left and right of the text on the Run button. | `14.0` |
+| `button_pad_y` | Space above and below the text on the Run button. | `6.0` |
+| `button_x` | Distance of the Run button from the left edge of the window. | `16.0` |
+| `button_y` | Distance of the Run button from the top edge of the window. | `16.0` |
+| `button_gap` | Space between the Run button's triangle and its text. | `8.0` |
+| `button_shadow_blur` | How far the Run button's shadow spreads. | `4.0` |
+| `button_shadow_y` | How far the Run button's shadow sits below it. | `1.0` |
+| `field_radius` | Radius of the input boxes' corners. | `2.0` |
+| `search_radius` | Radius of the menu search box's corners. | `3.0` |
+| `banner_radius` | Radius of the error banner's corners. | `6.0` |
+| `banner_margin` | Distance of the error banner from the window's edges. | `16.0` |
 
 ### `fonts`
 

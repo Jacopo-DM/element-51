@@ -66,7 +66,7 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 15 and 18 to 21 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+tasks 1 to 15 and 18 to 22 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
@@ -80,11 +80,11 @@ reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
 
-Measured 2026-10-20 after task 21, Apple silicon, Python 3.13:
+Measured 2026-10-20 after task 22, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 216 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 110 tests.
+- pytest: 217 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 115 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
     the node's rows; the class-form example runs and its menu lists the class
@@ -145,6 +145,8 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Extra task, added by the user 2026-10-20
 
+22. **Page theme keys** (approved by the user 2026-10-20 in housekeeping). Done:
+    the `page` section, six colours, docs. Detail in DESIGN.md.
 21. **FastAPI and NiceGUI examples** (asked by the user 2026-10-20, with the
     page fix and the `examples` group approved in words). Done: `f1_fastapi_host`, `f2_nicegui_host`,
     the websocket address from the page's path. Detail in DESIGN.md.
@@ -203,8 +205,8 @@ None.
     runs off its bottom. Search results do scroll.
 - The page starts in the dark theme and switches when the first snapshot names
     another one, so a light-theme page can flash dark for a moment.
-- A bool input is the browser's own white checkbox, which does not match the
-    theme.
+- A bool input is the browser's own checkbox. A theme can tint it when ticked
+    (`accent`), but the unticked box stays white.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
     which is faint. The user may want it lighter (a theme colour, `placeholder`).
 - The undo history is per page: a reload empties it, and edits made by other

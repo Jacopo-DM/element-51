@@ -655,10 +655,27 @@ Decisions still use, map like this:
 `a1_hello_world.py` is the project template and keeps its numpy and data setup;
 `tests/test_examples.py` skips it by name.
 
+Page theme keys, task 22 (2026-10-20, the user approved starting it): a new
+`page` section holds the sizes of the page's own parts in CSS pixels (21 keys:
+font sizes, menu radius, padding and width, shadows, the Run button's position,
+radius, padding and gap, input and search radius, error banner radius and
+margin), and six new colours (`run_bg`, `run_text`, `run_border`, `run_hover`,
+`run_hover_text`, `accent`). `Theme::css_variables` turns them into CSS custom
+properties and `index.html` reads only those. Defaults equal the old literals,
+checked in the browser pane (Run button at 16 px, 6 px radius, 13 px text,
+`#ececec` background). Two native tests guard it: every `var(--x)` in the page
+is one the theme sets, and no font size or radius is written in pixels in the
+page. Left unthemed on purpose: 1 px borders, a few fixed paddings (banner,
+search box margin), the Run triangle's size, and the letter spacing. The bool
+checkbox is the browser's; `accent` only tints it when ticked, and the
+unticked box stays white. Run's hover and focus colours now have their own
+keys instead of borrowing the menu's.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 22: page theme keys | native tests: the page reads only variables the theme sets, no pixel font sizes or radii in the page, page keys come out as pixel values, a wrong or mistyped page key lists the valid ones, defaults equal the old literals, docs list every key; pytest: a `page` section in a theme file and a bad value; by hand: `e2_theme_file` shows a round blue Run button and rounder menus, and the default theme reads back 16 px, 6 px, 13 px and `#ececec` on the Run button; 217 Python tests at 100%, 115 Rust tests |
 | 2026-10-20 | task 21: FastAPI and NiceGUI examples, editor under a prefix | native tests: websocket address at the root, under prefixes, with a file name, https; pytest: the FastAPI host serves the panel and the editor, the editor's websocket works at `/editor/ws`, a node added through the API reaches the open page, Run through the API; by hand: both examples show the editor, Add node adds a node live, Run shows `{'n1': {'out': 3.0}, 'n2': {'out': 3.0}}`; 216 Python tests at 100%, 110 Rust tests |
 | 2026-10-20 | task 20: port styles by type and side | native tests: every type and side has a style, defaults are boxes with equal in and out colours, a change reaches one side of one type only, wrong names and shapes name the path and the valid values, docs list every type; pytest: a ports file and bad shapes; by hand: `a18` shows diamonds for number inputs and circles for number outputs, `a6` keeps the box look; 213 Python tests at 100%, 105 Rust tests |
 | 2026-10-20 | task 19: theme files | native tests: no changes, partial changes, base, unknown base, key, section, wrong kind, non-objects; the example file and every key in the docs; pytest: file shapes, name and path, errors, session and snapshot, `serve` with a file, example `a18`; by hand: `a18_theme_file.py` shows the blue theme, a file with `canvass` shows the banner naming the key and listing the keys; 210 Python tests at 100%, 100 Rust tests |

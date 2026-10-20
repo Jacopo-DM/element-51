@@ -54,6 +54,7 @@ class ThemeChanges(Model):
     colours: dict[str, str] = Field(default_factory=dict)
     ports: dict[str, dict[str, dict[str, str]]] = Field(default_factory=dict)
     metrics: dict[str, float] = Field(default_factory=dict)
+    page: dict[str, float] = Field(default_factory=dict)
     fonts: dict[str, str | float] = Field(default_factory=dict)
 
 

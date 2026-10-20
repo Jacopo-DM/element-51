@@ -235,7 +235,7 @@ fn the_theme_docs_list_every_key_a_theme_can_change() {
             "no mention of {shape}"
         );
     }
-    for section in ["colours", "metrics", "fonts"] {
+    for section in ["colours", "metrics", "page", "fonts"] {
         for key in theme[section].as_object().unwrap().keys() {
             assert!(
                 THEME_DOCS.contains(&format!("| `{key}` |")),
@@ -353,4 +353,97 @@ fn a_port_shape_must_be_one_of_the_known_shapes() {
         error.contains("ports.bool") && error.contains("object"),
         "{error}"
     );
+}
+
+fn declared(theme: &Theme) -> Vec<String> {
+    theme
+        .css_variables()
+        .into_iter()
+        .map(|(name, _)| name)
+        .collect()
+}
+
+#[test]
+fn every_variable_the_page_reads_is_one_the_theme_provides() {
+    let declared = declared(&Theme::default());
+    let mut rest = PAGE;
+    while let Some(at) = rest.find("var(--") {
+        rest = &rest[at + 4..];
+        let name: String = rest
+            .chars()
+            .take_while(|c| c.is_ascii_lowercase() || *c == '-')
+            .collect();
+        assert!(
+            declared.contains(&name),
+            "the page reads {name}, which no theme sets"
+        );
+    }
+}
+
+#[test]
+fn the_page_has_no_font_size_or_radius_written_in_pixels() {
+    for property in ["font:", "font-size:", "border-radius:"] {
+        let mut rest = PAGE;
+        while let Some(at) = rest.find(property) {
+            rest = &rest[at + property.len()..];
+            let value = &rest[..rest.find(';').unwrap()];
+            let digit_px = value
+                .as_bytes()
+                .windows(3)
+                .any(|w| w[0].is_ascii_digit() && w[1] == b'p' && w[2] == b'x');
+            assert!(
+                !digit_px,
+                "{property} {value} is written in the page, not the theme"
+            );
+        }
+    }
+}
+
+#[test]
+fn the_page_keys_come_out_as_pixel_values() {
+    let theme = changed(
+        "antimony",
+        r#"{"page": {"button_radius": 12, "menu_pad": 2.5}}"#,
+    )
+    .unwrap();
+    let value = |name: &str| {
+        theme
+            .css_variables()
+            .into_iter()
+            .find(|(key, _)| key == name)
+            .map(|(_, value)| value)
+    };
+    assert_eq!(value("--button-radius").as_deref(), Some("12px"));
+    assert_eq!(value("--menu-pad").as_deref(), Some("2.5px"));
+    assert_eq!(value("--font-px").as_deref(), Some("14px"));
+    assert_eq!(value("--run-bg"), Some(theme.colours.run_bg.clone()));
+    assert_eq!(value("--accent"), Some(theme.colours.accent.clone()));
+}
+
+#[test]
+fn a_page_key_that_does_not_exist_lists_the_page_keys() {
+    let error = changed("antimony", r#"{"page": {"button_radious": 3}}"#).unwrap_err();
+    assert!(
+        error.contains("page") && error.contains("button_radious") && error.contains("menu_pad"),
+        "{error}"
+    );
+    assert!(
+        changed("antimony", r#"{"page": {"menu_pad": "big"}}"#)
+            .unwrap_err()
+            .contains("number")
+    );
+}
+
+#[test]
+fn the_default_page_values_are_the_ones_the_page_used_before_it_was_themed() {
+    let page = Theme::default().page;
+    assert_eq!(
+        (page.font_px, page.button_font_px, page.menu_radius),
+        (14.0, 13.0, 4.0)
+    );
+    assert_eq!(
+        (page.button_radius, page.field_radius, page.search_radius),
+        (6.0, 2.0, 3.0)
+    );
+    assert_eq!((page.button_x, page.button_y), (16.0, 16.0));
 }

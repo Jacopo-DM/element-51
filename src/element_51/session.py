@@ -222,6 +222,7 @@ class App:
                 colours=self._theme.colours,
                 ports=self._theme.ports,
                 metrics=self._theme.metrics,
+                page=self._theme.page,
                 fonts=self._theme.fonts,
             ),
             node_types=tuple(f.node_type for f in self.node_functions.values()),

@@ -67,12 +67,14 @@ def test_a_theme_file_may_name_another_base_and_change_all_sections(
     """Colours are text, metrics are numbers, and `field_px` is a number."""
     text = (
         '{"base": "antimony-light", "colours": {"canvas": "#fff"},'
-        ' "metrics": {"node_width": 260}, "fonts": {"field_px": 14}}'
+        ' "metrics": {"node_width": 260}, "page": {"button_radius": 12},'
+        ' "fonts": {"field_px": 14}}'
     )
     theme = resolve_theme(write(tmp_path / "t.json", text))
     assert theme.base == "antimony-light"
     assert theme.colours == {"canvas": "#fff"}
     assert theme.metrics == {"node_width": 260.0}
+    assert theme.page == {"button_radius": 12.0}
     assert theme.fonts == {"field_px": 14}
 
 
@@ -119,6 +121,7 @@ def test_a_theme_file_may_restyle_the_ports_by_type_and_side(
         '{"colors": {}}',
         '{"colours": {"canvas": 5}}',
         '{"metrics": {"node_width": "wide"}}',
+        '{"page": {"menu_pad": "big"}}',
         '{"base": "nope"}',
     ],
 )

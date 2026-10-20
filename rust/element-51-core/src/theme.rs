@@ -67,6 +67,18 @@ pub struct Colours {
     pub menu_hover: String,
     /// Text of the menu entry under the pointer.
     pub menu_hover_text: String,
+    /// The Run button's background.
+    pub run_bg: String,
+    /// The Run button's text and triangle.
+    pub run_text: String,
+    /// The line round the Run button.
+    pub run_border: String,
+    /// The Run button's background under the pointer.
+    pub run_hover: String,
+    /// The Run button's text under the pointer.
+    pub run_hover_text: String,
+    /// The tint of a ticked checkbox in a value box.
+    pub accent: String,
     /// The error banner's background.
     pub error: String,
     /// Text in the error banner.
@@ -192,6 +204,55 @@ pub struct Fonts {
     pub field_px: f64,
 }
 
+/// Sizes of the page's own parts (menus, Run button, input boxes, error
+/// banner), in CSS pixels.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Page {
+    /// Size of text in the menus, the search box and the error banner.
+    pub font_px: f64,
+    /// Size of the text on the Run button.
+    pub button_font_px: f64,
+    /// Radius of a menu's corners.
+    pub menu_radius: f64,
+    /// Space above and below the entries of a menu.
+    pub menu_pad: f64,
+    /// Space left and right of a menu entry's text.
+    pub menu_item_pad_x: f64,
+    /// Space above and below a menu entry's text.
+    pub menu_item_pad_y: f64,
+    /// Narrowest a menu may be.
+    pub menu_min_width: f64,
+    /// How far a menu's shadow spreads.
+    pub shadow_blur: f64,
+    /// How far a menu's shadow sits below it.
+    pub shadow_y: f64,
+    /// Radius of the Run button's corners.
+    pub button_radius: f64,
+    /// Space left and right of the text on the Run button.
+    pub button_pad_x: f64,
+    /// Space above and below the text on the Run button.
+    pub button_pad_y: f64,
+    /// Distance of the Run button from the left edge of the window.
+    pub button_x: f64,
+    /// Distance of the Run button from the top edge of the window.
+    pub button_y: f64,
+    /// Space between the Run button's triangle and its text.
+    pub button_gap: f64,
+    /// How far the Run button's shadow spreads.
+    pub button_shadow_blur: f64,
+    /// How far the Run button's shadow sits below it.
+    pub button_shadow_y: f64,
+    /// Radius of the input boxes' corners.
+    pub field_radius: f64,
+    /// Radius of the menu search box's corners.
+    pub search_radius: f64,
+    /// Radius of the error banner's corners.
+    pub banner_radius: f64,
+    /// Distance of the error banner from the window's edges.
+    pub banner_margin: f64,
+}
+
 /// A complete look.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -200,6 +261,7 @@ pub struct Theme {
     pub colours: Colours,
     pub ports: Ports,
     pub metrics: Metrics,
+    pub page: Page,
     pub fonts: Fonts,
 }
 
@@ -235,11 +297,12 @@ impl Theme {
         };
         let mut whole = serde_json::to_value(&theme).map_err(|error| error.to_string())?;
         for (section, entries) in sections {
-            let known = ["colours", "ports", "metrics", "fonts"].contains(&section.as_str());
+            let known =
+                ["colours", "ports", "metrics", "page", "fonts"].contains(&section.as_str());
             let current = whole.get_mut(section).and_then(Value::as_object_mut);
             let (true, Some(current)) = (known, current) else {
                 return Err(format!(
-                    "unknown theme section {section:?}; the sections are: colours, ports, metrics, fonts"
+                    "unknown theme section {section:?}; the sections are: colours, ports, metrics, page, fonts"
                 ));
             };
             let Value::Object(entries) = entries else {
@@ -281,9 +344,47 @@ impl Theme {
             ("--error-text", &colours.error_text),
             ("--font", &self.fonts.family),
             ("--value-font", &self.fonts.value_family),
+            ("--run-bg", &colours.run_bg),
+            ("--run-text", &colours.run_text),
+            ("--run-border", &colours.run_border),
+            ("--run-hover-bg", &colours.run_hover),
+            ("--run-hover-text", &colours.run_hover_text),
+            ("--accent", &colours.accent),
         ]
         .into_iter()
         .map(|(name, value)| (name.to_string(), value.clone()))
+        .chain(self.page_variables())
+        .collect()
+    }
+
+    /// The page sizes as CSS custom properties, in pixels.
+    fn page_variables(&self) -> Vec<(String, String)> {
+        let page = &self.page;
+        [
+            ("--font-px", page.font_px),
+            ("--button-font-px", page.button_font_px),
+            ("--menu-radius", page.menu_radius),
+            ("--menu-pad", page.menu_pad),
+            ("--menu-item-pad-x", page.menu_item_pad_x),
+            ("--menu-item-pad-y", page.menu_item_pad_y),
+            ("--menu-min-width", page.menu_min_width),
+            ("--shadow-blur", page.shadow_blur),
+            ("--shadow-y", page.shadow_y),
+            ("--button-radius", page.button_radius),
+            ("--button-pad-x", page.button_pad_x),
+            ("--button-pad-y", page.button_pad_y),
+            ("--button-x", page.button_x),
+            ("--button-y", page.button_y),
+            ("--button-gap", page.button_gap),
+            ("--button-shadow-blur", page.button_shadow_blur),
+            ("--button-shadow-y", page.button_shadow_y),
+            ("--field-radius", page.field_radius),
+            ("--search-radius", page.search_radius),
+            ("--banner-radius", page.banner_radius),
+            ("--banner-margin", page.banner_margin),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), format!("{value}px")))
         .collect()
     }
 }

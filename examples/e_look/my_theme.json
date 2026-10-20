@@ -3,7 +3,12 @@
     "colours": {
         "canvas": "#101820",
         "dot": "#1c2a36",
-        "header": "#2b4a63"
+        "header": "#2b4a63",
+        "run_bg": "#2b4a63",
+        "run_text": "#e0e0e0",
+        "run_hover": "#ffb000",
+        "run_hover_text": "#101820",
+        "run_border": "#101820"
     },
     "ports": {
         "float": {
@@ -29,6 +34,11 @@
     },
     "metrics": {
         "node_width": 260
+    },
+    "page": {
+        "button_radius": 16,
+        "menu_radius": 10,
+        "button_pad_x": 18
     },
     "fonts": {
         "value": "13px Menlo, Monaco, monospace",

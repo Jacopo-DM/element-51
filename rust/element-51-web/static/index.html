@@ -7,51 +7,55 @@
 <style>
 html, body { margin: 0; background: var(--canvas, Canvas); height: 100%; font-family: var(--font, sans-serif); }
 canvas { display: block; width: 100%; height: 100%; }
-#error { position: fixed; left: 16px; right: 16px; bottom: 16px; padding: 10px 14px;
-    background: var(--error-bg); color: var(--error-text); font-size: 14px; border-radius: 6px; }
+#error { position: fixed; left: var(--banner-margin); right: var(--banner-margin); bottom: var(--banner-margin);
+    padding: 10px 14px; background: var(--error-bg); color: var(--error-text); font-size: var(--font-px);
+    border-radius: var(--banner-radius); }
 #error[hidden] { display: none; }
 #error button { margin-left: 12px; }
-#run { position: fixed; left: 16px; top: 16px; display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 12px;
-    font: 600 13px var(--font, sans-serif); letter-spacing: 0.02em; cursor: pointer;
-    background: var(--menu-bg); color: var(--menu-text); border: 1px solid var(--field-border); border-radius: 6px;
-    box-shadow: 0 1px 4px var(--menu-shadow); }
+#run { position: fixed; left: var(--button-x); top: var(--button-y); display: flex; align-items: center; gap: var(--button-gap);
+    padding: var(--button-pad-y) var(--button-pad-x) var(--button-pad-y) calc(var(--button-pad-x) - 2px);
+    font: 600 var(--button-font-px) var(--font, sans-serif); letter-spacing: 0.02em; cursor: pointer;
+    background: var(--run-bg); color: var(--run-text); border: 1px solid var(--run-border);
+    border-radius: var(--button-radius); box-shadow: 0 var(--button-shadow-y) var(--button-shadow-blur) var(--menu-shadow); }
 #run::before { content: ""; border-style: solid; border-width: 5px 0 5px 8px;
     border-color: transparent transparent transparent currentColor; }
-#run:hover { background: var(--menu-hover-bg); color: var(--menu-hover-text); }
+#run:hover { background: var(--run-hover-bg); color: var(--run-hover-text); }
 #run:active { transform: translateY(1px); }
-#run:focus-visible { outline: 2px solid var(--menu-hover-bg); outline-offset: 2px; }
+#run:focus-visible { outline: 2px solid var(--run-hover-bg); outline-offset: 2px; }
 #fields { position: fixed; left: 0; top: 0; width: 0; height: 0; }
 #fields input { position: fixed; box-sizing: border-box; margin: 0; padding: 0 3px;
     background: var(--field-bg); color: var(--field-text); border: 1px solid var(--field-border);
-    border-radius: 2px; font-family: var(--value-font, monospace); }
+    border-radius: var(--field-radius); font-family: var(--value-font, monospace); }
 #fields input::placeholder { color: var(--placeholder); }
-#fields input[type=checkbox] { padding: 0; }
-#menu { position: fixed; display: flex; flex-direction: column; min-width: 160px;
-    background: var(--menu-bg); border-radius: 4px; padding: 4px 0; box-shadow: 0 2px 8px var(--menu-shadow);
+#fields input[type=checkbox] { padding: 0; accent-color: var(--accent); }
+#menu { position: fixed; display: flex; flex-direction: column; min-width: var(--menu-min-width);
+    background: var(--menu-bg); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
+    box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--menu-shadow);
     z-index: 10; }
 #menu[hidden] { display: none; }
-#card-menu { position: fixed; display: flex; flex-direction: column; min-width: 140px;
-    background: var(--menu-bg); border-radius: 4px; padding: 4px 0; box-shadow: 0 2px 8px var(--menu-shadow);
+#card-menu { position: fixed; display: flex; flex-direction: column; min-width: var(--menu-min-width);
+    background: var(--menu-bg); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
+    box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--menu-shadow);
     z-index: 10; }
 #card-menu[hidden] { display: none; }
-#card-menu button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 4px 14px;
-    font: 14px var(--font, sans-serif); color: var(--menu-text); cursor: pointer; }
+#card-menu button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: var(--menu-item-pad-y) var(--menu-item-pad-x);
+    font: var(--font-px) var(--font, sans-serif); color: var(--menu-text); cursor: pointer; }
 #card-menu button:hover { background: var(--menu-hover-bg); color: var(--menu-hover-text); }
 #menu-search { margin: 2px 6px 6px; padding: 4px 6px; box-sizing: border-box;
-    border: 1px solid var(--field-border); border-radius: 3px; background: var(--menu-field-bg);
-    color: var(--menu-text); font: 14px var(--font, sans-serif); }
+    border: 1px solid var(--field-border); border-radius: var(--search-radius); background: var(--menu-field-bg);
+    color: var(--menu-text); font: var(--font-px) var(--font, sans-serif); }
 #menu-tree, #menu-results { display: flex; flex-direction: column; }
 #menu-tree[hidden], #menu-results[hidden] { display: none; }
 #menu-results { max-height: calc(100vh - 90px); overflow-y: auto; }
-#menu .none { padding: 4px 14px; font: 14px var(--font, sans-serif); color: var(--menu-text); opacity: 0.6; }
-#menu button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 4px 14px;
-    font: 14px var(--font, sans-serif); color: var(--menu-text); cursor: pointer; }
+#menu .none { padding: var(--menu-item-pad-y) var(--menu-item-pad-x); font: var(--font-px) var(--font, sans-serif); color: var(--menu-text); opacity: 0.6; }
+#menu button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: var(--menu-item-pad-y) var(--menu-item-pad-x);
+    font: var(--font-px) var(--font, sans-serif); color: var(--menu-text); cursor: pointer; }
 #menu button:hover, #menu .submenu:hover > button { background: var(--menu-hover-bg); color: var(--menu-hover-text); }
 #menu .category::after { content: "\25B8"; float: right; margin-left: 14px; }
 .submenu { position: relative; }
-.submenu > .panel { display: none; position: absolute; left: 100%; top: -4px; min-width: 160px;
-    flex-direction: column; background: var(--menu-bg); border-radius: 4px; padding: 4px 0;
-    box-shadow: 0 2px 8px var(--menu-shadow); z-index: 11; }
+.submenu > .panel { display: none; position: absolute; left: 100%; top: calc(-1 * var(--menu-pad)); min-width: var(--menu-min-width);
+    flex-direction: column; background: var(--menu-bg); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
+    box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--menu-shadow); z-index: 11; }
 .submenu:hover > .panel { display: flex; }
 #menu.flip .submenu > .panel { left: auto; right: 100%; }
 </style>

@@ -2,7 +2,8 @@
 
 `my_theme.json` next to this script changes a few values of the dark theme: a
 dark blue canvas, blue title bars, number inputs drawn as diamonds and number
-outputs as circles, wider cards and a larger value font.
+outputs as circles, wider cards, a larger value font, a round blue Run button
+and rounder menus.
 
 Every key you can change is listed in `docs/themes.md`.
 
