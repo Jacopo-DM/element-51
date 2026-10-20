@@ -33,6 +33,8 @@ the ignore list in CLAUDE.md.
     `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
     in a FastAPI or NiceGUI host, with a side panel). Each example has
     `build_app()`; `tests/test_examples.py` runs every one except the template.
+- `docs/images/`: the three README screenshots (`dark`, `light`, `palette`; how they
+    were made is in DESIGN.md, Gotchas).
 - `docs/themes.md`: the theme reference. A hand-written introduction, then one
     table per theme section (`colours`, `ports`, `page`, `metrics`, `fonts`) with
     every key, its meaning from the doc comment in `theme.rs` and the built-in

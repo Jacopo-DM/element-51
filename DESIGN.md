@@ -933,6 +933,17 @@ have to go through `tools/compress_images.py`).
 
 ## Gotchas
 
+- The README images (`docs/images/dark.jpg`, `light.jpg`, `palette.jpg`) are the
+    editor's canvas exported with `canvas.toDataURL` (2560 by 1440 at 2x, cropped to
+    2400 by 1200 and resized to 1600 by 800), not browser-pane screenshots: the pane's
+    screenshots come back to Claude at 800 px and are not saved to disk, and a
+    macOS `screencapture` would take the user's whole screen. The page's value boxes
+    and buttons are HTML on top of the canvas, so an export leaves unlinked inputs
+    blank; the demo graph therefore links every input. To redo them: serve a graph on
+    port 8766 with an extra POST route that writes the body to a file, press Run, and
+    `fetch` the data URL to it from the page; the palette shot is the Try palette
+    box with `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`; then
+    `tools/compress_images.py docs`.
 - The user's VS Code can keep a stale unsaved buffer of a file that changed on
     disk (seen on `f1_fastapi_host.py` after a rewrite); saving it overwrites the
     new text. Say so when a file the user has open is rewritten.
