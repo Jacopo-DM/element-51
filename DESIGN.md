@@ -582,6 +582,12 @@ theme, with the credit in the README.
     Rejected: sending the palette to Python (it would change the graph owner's
     state from a click, and the user chose "until reload"); fetching the palette
     from coolors.co (needs the network and an API for no gain).
+- Release guard (2026-10-20): `src/element_51/web/` is generated and git-ignored, so
+    `uv build` succeeds without it and ships a wheel with no editor. `uv_build` has
+    no build hook, so the guard is a script, `tools/check_wheel.py`, that builds the
+    wheel in a temporary folder and exits 1 naming the missing files. CI runs it
+    after `build_wasm.py`; before publishing, run it by hand (CLAUDE.md). Rejected:
+    switching to a build backend with hooks, for one check.
 
 ## Rejected approaches
 

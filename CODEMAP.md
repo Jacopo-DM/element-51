@@ -15,6 +15,8 @@ the ignore list in CLAUDE.md.
     each state, for screenshots and accessibility scans (commands in CLAUDE.md).
 - `tools/bench_python.py`, `tools/bench_page.py` and `tools/bench_page.js`: the speed
     benchmarks (see the commands in CLAUDE.md).
+- `uv run python tools/check_wheel.py`: build the wheel in a temporary folder and
+    fail if it lacks the browser layer.
 - `uv run python tools/measure_structure.py [--jscpd <binary>]`: print the
     structure numbers (files, lines, files over 400 lines, modules over five
     imports, clones).

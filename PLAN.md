@@ -277,9 +277,6 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Tier 3: listed, not executed
 
-- A release guard that fails `uv build` itself when `web/` is missing: CI now
-    checks that the wheel built after `build_wasm.py` holds the WASM, but a local
-    `uv build` without the build is still not stopped.
 - Automated browser tests for `element-51-web`: large setup, and the logic is
     already in `element-51-core`.
 - `wasm-opt` size pass on the 706 KB WASM: no size budget was set.
@@ -339,8 +336,9 @@ Oldest first.
 - The WASM build works around a broken `rust-lld` in the rustup toolchain
     (see CLAUDE.md, things that bite). Not reported upstream.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran
-    first (checked 2026-10-19: the wheel held the WASM). Nothing stops a build
-    without it, which would ship a package whose `asgi_app()` fails.
+    first (checked 2026-10-19: the wheel held the WASM). `uv build` itself still
+    succeeds without it; `tools/check_wheel.py` (CI runs it; run it by hand before
+    publishing) fails when the wheel lacks the browser layer.
 - A bool input is the browser's own checkbox. A theme can tint it when ticked
     (`accent`), but the unticked box stays white.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
