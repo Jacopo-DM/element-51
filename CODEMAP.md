@@ -28,6 +28,8 @@ the ignore list in CLAUDE.md.
     table per theme section (`colours`, `ports`, `page`, `metrics`, `fonts`) with
     every key, its meaning from the doc comment in `theme.rs` and the built-in
     values; the native tests in `theme.rs` fail if a key has no row.
+- `.github/workflows/`: `ci.yml` (Python checks, from the `rsync-sync` template),
+    `rust.yml` (Rust checks and the WASM build and wheel check) and `docs.yml`.
 - Browser: `element_51_web::start()` runs when the page loads, opens `/ws`, and
     wires the canvas, the right-click menu and the window.
 

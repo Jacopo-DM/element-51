@@ -1,0 +1,75 @@
+# Checks the Rust crates and builds the browser layer. It lives beside ci.yml,
+# which `rsync-sync pull python` owns, so a template update cannot overwrite it.
+# Action SHAs are the ones ci.yml uses. Every indent is a multiple of 4, so a
+# list item starts with a bare dash and its keys sit one level in.
+name: Rust and WASM
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    rust:
+        runs-on: ubuntu-latest
+        steps:
+            -
+                uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+                with:
+                    persist-credentials: false
+            -
+                name: Install the stable toolchain with rustfmt and clippy
+                run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+            -
+                name: Format
+                run: cargo fmt --all --check --manifest-path rust/Cargo.toml
+            -
+                name: Lint
+                run: cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings
+            -
+                name: Tests
+                run: cargo test --manifest-path rust/Cargo.toml
+
+    wasm:
+        runs-on: ubuntu-latest
+        steps:
+            -
+                uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+                with:
+                    persist-credentials: false
+            -
+                name: Install the stable toolchain with the WASM target
+                run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+            -
+                name: Install the wasm-bindgen CLI (the version the crate pins)
+                run: |
+                    cargo install wasm-bindgen-cli --version 0.2.129 --locked
+                    mkdir -p tools/bin
+                    cp "$HOME/.cargo/bin/wasm-bindgen" tools/bin/wasm-bindgen
+            -
+                name: Install uv and Python
+                uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+                with:
+                    version: "0.13.1"
+                    python-version: "3.13"
+                    enable-cache: true
+            -
+                name: Install the locked environment
+                run: uv sync --locked
+            -
+                name: Build the browser layer
+                run: uv run python tools/build_wasm.py
+            -
+                name: Check the build output
+                run: |
+                    test -s src/element_51/web/index.html
+                    test -s src/element_51/web/element_51_web_bg.wasm
+                    test -s src/element_51/web/element_51_web.js
+            -
+                name: Build the wheel and check that it holds the browser layer
+                run: |
+                    uv build --wheel --out-dir dist
+                    uv run python -c "import sys, zipfile; names = zipfile.ZipFile(sys.argv[1]).namelist(); assert 'element_51/web/element_51_web_bg.wasm' in names, names" dist/*.whl

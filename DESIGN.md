@@ -686,6 +686,21 @@ issue of unknown state and is not relied on. Untried idea: PySide6's
 and date claims could not be checked; `fastapi` 0.156.0 and `nicegui` 3.18.0 are
 what `uv add` resolved.
 
+CI for Rust and WASM, task 23 (2026-10-20, the user approved it): a new workflow
+`.github/workflows/rust.yml` with two jobs, `rust` (rustfmt, clippy with
+`-D warnings`, native tests) and `wasm` (installs the `wasm-bindgen` CLI 0.2.129
+with `cargo install --locked`, runs `tools/build_wasm.py`, checks the three
+output files, builds the wheel and asserts it holds `element_51/web/element_51_web_bg.wasm`).
+It is a separate file because `ci.yml` is pulled in by `rsync-sync pull python`
+and a template update would overwrite edits. Rejected: downloading the prebuilt
+`wasm-bindgen` release as local development does, because I could not check its
+sha256 for Linux offline, and `cargo install --locked` needs none (it costs a few
+minutes per run; a cache could be added). The toolchain is `stable`, which is
+what `build_wasm.py` asks rustup for, so a new stable release can add clippy
+lints and fail CI; fix the code then. Indents are multiples of 4, so each list
+item starts with a bare dash. There is no remote, so the workflow has not run on
+GitHub; the same commands, the YAML parse and the wheel check were run locally.
+
 ## Results
 
 | Date | Change | Result |

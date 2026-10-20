@@ -70,8 +70,10 @@ tasks 1 to 15 and 18 to 22 plus 6a (push), 16 (rename) and 17 (rounded look); th
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: add CI that builds the WASM and runs the Rust checks (Tier 3; the
-user has not yet said "start CI"). Waiting on the user: their own try-out of goal
+Next step: the known problems the user approved on 2026-10-20 (the add-node
+menu that does not scroll, the dark flash on the light theme, `App` thread
+safety), then drafts of the README body and docs prose for the user's review.
+Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
 Nothing is uncommitted in this repo (checked 2026-10-20 after task 22). All
@@ -147,6 +149,8 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Extra task, added by the user 2026-10-20
 
+23. **CI for the Rust crates and the WASM build** (approved by the user
+    2026-10-20). Done: `.github/workflows/rust.yml`. Detail in DESIGN.md.
 22. **Page theme keys** (approved by the user 2026-10-20 in housekeeping). Done:
     the `page` section, six colours, docs. Detail in DESIGN.md.
 21. **FastAPI and NiceGUI examples** (asked by the user 2026-10-20, with the
@@ -161,9 +165,9 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Tier 3: listed, not executed
 
-- CI builds the WASM and runs the Rust checks: outside the acceptance
-    criteria, though it closes a known problem; I suggest doing it soon.
-- A release guard that fails `uv build` when `web/` is missing: same.
+- A release guard that fails `uv build` itself when `web/` is missing: CI now
+    checks that the wheel built after `build_wasm.py` holds the WASM, but a local
+    `uv build` without the build is still not stopped.
 - Automated browser tests for `element-51-web`: large setup, and the logic is
     already in `element-51-core`.
 - `wasm-opt` size pass on the 706 KB WASM: no size budget was set.
@@ -189,9 +193,9 @@ Oldest first.
 
 - `README.md`, `docs/index.md` and the `pyproject.toml` description are still
     template text. Only its Credits section is written.
-- CI (`.github/workflows/ci.yml`) runs Python checks only. It does not build
-    the WASM or run the Rust checks. Without a build, `asgi_app()` fails at
-    start (the `web/` folder is missing); the tests avoid this with a fake folder.
+- Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
+    the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
+    run on GitHub yet, since there is no remote; its commands were run by hand.
 - `element-51-web` has no automated test; it is checked by hand in the browser.
 - `App` is not thread-safe. A script that edits while the server runs should do
     so from one thread. A browser edit and a script edit that propose the same
