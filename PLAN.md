@@ -102,7 +102,9 @@ the restructure, speed-up and ui-design-pass passes and the `palette-try` goal (
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the user's own try-out (below), then publishing, which the user does.
+Next step: the user's own try-out (below), then finishing the upload of 0.1.0
+(`uv run python tools/check_wheel.py`, `uv build`, `uv publish` with username
+`__token__`), which the user does.
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
 the menu button beside Run, choose Try palette and paste
@@ -315,7 +317,10 @@ Oldest first.
 - The page parts and the theme colours are checked at AA by tests and by axe in
     the built-in browser pane; a scan with a real screen reader was not done.
 - The README says `uv add element-51`, which is true only after the user
-    publishes the package.
+    publishes 0.1.0. On 2026-10-20 (23:10) PyPI held only the placeholder 0.0.1
+    (1.5 KiB); the user's `uv publish` stopped at the credentials prompt (they typed
+    `jmdm`, but PyPI wants the username `__token__` and an API token). Until it
+    succeeds, `uv add element-51` installs the empty placeholder.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
     the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
     run on GitHub yet, since there is no remote; its commands were run by hand.
@@ -343,8 +348,6 @@ Oldest first.
     (`accent`), but the unticked box stays white.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
     which is faint. The user may want it lighter (a theme colour, `placeholder`).
-- Text is still blurry on the user's screen (see Open questions); the next steps
-    would be a larger card font or integer-pixel text positions.
 - `a1_hello_world.py` is the project template, not an example of the library: it
     imports numpy and creates `__data__`, and the example tests skip it by name.
 - The NiceGUI host example (`f2_nicegui_host.py`) has no automated test, because
