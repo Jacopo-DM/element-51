@@ -4,6 +4,9 @@ use element_51_core::theme::{THEME_NAMES, Theme};
 
 const DRAW: &str = include_str!("../../element-51-web/src/draw.rs");
 const WEB: &str = include_str!("../../element-51-web/src/lib.rs");
+const FIELDS_UI: &str = include_str!("../../element-51-web/src/fields_ui.rs");
+const INPUT: &str = include_str!("../../element-51-web/src/input.rs");
+const MENU_UI: &str = include_str!("../../element-51-web/src/menu_ui.rs");
 const PAGE: &str = include_str!("../../element-51-web/static/index.html");
 
 #[test]
@@ -78,7 +81,14 @@ fn has_hex_colour(text: &str) -> Option<String> {
 
 #[test]
 fn no_colour_is_written_in_the_drawing_code_or_the_page() {
-    for (name, text) in [("draw.rs", DRAW), ("lib.rs", WEB), ("index.html", PAGE)] {
+    for (name, text) in [
+        ("draw.rs", DRAW),
+        ("lib.rs", WEB),
+        ("fields_ui.rs", FIELDS_UI),
+        ("input.rs", INPUT),
+        ("menu_ui.rs", MENU_UI),
+        ("index.html", PAGE),
+    ] {
         assert_eq!(has_hex_colour(text), None, "{name} holds a colour literal");
     }
 }

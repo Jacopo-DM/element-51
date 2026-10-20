@@ -234,7 +234,9 @@ Findings (file, what I saw):
 
 Proposed tasks, ranked by benefit over risk. None is started.
 
-1. **Split the web crate's `lib.rs` by concern** (risk medium: no automated
+1. **Done 2026-10-20** (`lib.rs` 1147 to 455 lines; `menu_ui.rs` 293, `input.rs` 258,
+    `fields_ui.rs` 182; checked by hand in the browser: drag, typed value, Run,
+    zoom, card menu, add-node menu, undo). **Split the web crate's `lib.rs` by concern** (risk medium: no automated
     test). Move the menu code to `menu_ui.rs`, the gestures to `input.rs` and the
     value boxes to `fields_ui.rs`; `lib.rs` keeps `start`, `State`, drawing and
     the websocket (about 500 lines). A pure move of functions, each `pub(crate)`
