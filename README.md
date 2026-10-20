@@ -26,7 +26,7 @@ is open.
 - **Python is in charge.** The graph lives in your process. Read it, run it,
     save and load it as JSON, or add nodes from a script and watch an open page
     update.
-- **Yours to restyle.** Two themes ship, and a small JSON file changes any colour,
+- **Yours to restyle.** Three themes ship, and a small JSON file changes any colour,
     size, font or port shape.
 - **Embeddable.** It is an ASGI app, so it mounts inside FastAPI, NiceGUI or any
     other ASGI host.
@@ -83,14 +83,16 @@ Python, editor features, themes, and embedding the editor in FastAPI or NiceGUI.
 ## Looks
 
 The default theme is dark. The light theme is one argument away
-(`serve(app, theme="antimony-light")`).
+(`serve(app, theme="antimony-light")`), and `theme="purple-synthwave"` gives the
+violet one.
 
 ![The same graph in the light theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/light.jpg)
 
-Paste a [Coolors](https://coolors.co) palette link into the editor's menu and it
-takes the colours at once, keeping the text readable (`examples/e_look/e3_palette.py`).
+The `purple-synthwave` theme was made from a [Coolors](https://coolors.co)
+palette. Paste any palette link into the editor's menu and it takes the colours at
+once, keeping the text readable (`examples/e_look/e3_palette.py`).
 
-![The same graph after pasting a Coolors palette](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/palette.jpg)
+![The same graph in the purple-synthwave theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/palette.jpg)
 
 ## Documentation
 

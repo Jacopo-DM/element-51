@@ -588,6 +588,17 @@ theme, with the credit in the README.
     wheel in a temporary folder and exits 1 naming the missing files. CI runs it
     after `build_wasm.py`; before publishing, run it by hand (CLAUDE.md). Rejected:
     switching to a build backend with hooks, for one check.
+- Third built-in theme `purple-synthwave` (user's request, 2026-10-21): the colours
+    are what `with_palette` gives `antimony` for
+    `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`, written out once as
+    `rust/element-51-core/themes/purple-synthwave.json` (a temporary native test dumped
+    the theme with `serde_json`; the file is then indented by 4 and named
+    `purple-synthwave`), so the shipped values do not depend on the mapping rule
+    changing later. Shapes, sizes, fonts and port shapes are `antimony`'s. It joins
+    `THEME_NAMES` (Rust and Python, `tests/fixtures/theme_names.json`), so the native
+    AA test, the no-hex test and the palette test run over it too; `docs/themes.md`
+    has a third column in the colours table; example `e_look/e4_purple_synthwave.py`.
+    Rejected: a pink and cyan neon palette, since the user asked for this one.
 
 ## Rejected approaches
 

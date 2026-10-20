@@ -1,7 +1,8 @@
 # Themes
 
-The editor ships with two themes, `antimony` (dark, the default) and
-`antimony-light`. Pick one by name:
+The editor ships with three themes: `antimony` (dark, the default),
+`antimony-light` and `purple-synthwave` (a near-black canvas with blue-violet
+cards, made from a Coolors palette). Pick one by name:
 
 ```python
 element_51.serve(app, theme="antimony-light")
@@ -33,7 +34,7 @@ The file has six members, all optional:
 
 | Member | Meaning |
 | --- | --- |
-| `base` | The built-in theme to start from: `antimony` (the default) or `antimony-light`. |
+| `base` | The built-in theme to start from: `antimony` (the default), `antimony-light` or `purple-synthwave`. |
 | `colours` | Colours to replace, by key. |
 | `ports` | The colour and shape of port markers, by type and side. |
 | `metrics` | Sizes on the canvas to replace, by key. |
@@ -66,44 +67,44 @@ Each table shows the key, what it affects and the built-in values. The tables li
 
 Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a name such as `"tomato"`.
 
-| Key | What it colours | `antimony` | `antimony-light` |
-| --- | --- | --- | --- |
-| `canvas` | The canvas behind the graph. | `#1a1a1a` | `#eeeeee` |
-| `dot` | The dots of the grid on the canvas. | `#2c2c2c` | `#d4d4d4` |
-| `card` | A node card's body. | `#202020` | `#202020` |
-| `card_border` | The line round a node card. | `#505050` | `#505050` |
-| `header` | A node card's title bar. | `#505050` | `#505050` |
-| `header_error` | The title bar of a node that failed. | `#8a3a3a` | `#8a3a3a` |
-| `header_skipped` | The title bar of a node that was skipped. | `#3a3a3a` | `#3a3a3a` |
-| `title` | The id and type name in a title bar. | `#e0e0e0` | `#e0e0e0` |
-| `label` | Port names, and the values shown after a run. | `#b0b0b0` | `#b0b0b0` |
-| `text_dim` | Faded text, for a node that was skipped. | `#aaaaaa` | `#aaaaaa` |
-| `placeholder` | A greyed hint in a value box: a default, a source, `output`. | `#9a9a9a` | `#9a9a9a` |
-| `icon` | The three-bar icon in a title bar. | `#9e9e9e` | `#9e9e9e` |
-| `selected` | The outline of a selected node. | `#e0e0e0` | `#202020` |
-| `selected_wire` | A selected wire, which must show on the canvas. | `#e0e0e0` | `#202020` |
-| `allowed` | A port a dragged link may end at. | `#6fcf6f` | `#2e8b45` |
-| `refused` | A port a dragged link may not end at. | `#e06060` | `#c03030` |
-| `field` | The background of a value box. | `#303030` | `#303030` |
-| `field_text` | Text typed in a value box. | `#e0e0e0` | `#e0e0e0` |
-| `field_border` | The border of an input box. | `#303030` | `#303030` |
-| `menu` | The right-click menu's background. | `#1c1c1f` | `#ffffff` |
-| `menu_text` | Text in the right-click menu. | `#e6e6e8` | `#1f1f23` |
-| `menu_muted` | Muted text in the right-click menu, such as `No matching node`. | `#9b9ba3` | `#5f5f68` |
-| `menu_border` | The line round the right-click menu, its flyouts and its search box. | `#2e2e32` | `#d9d9de` |
-| `menu_field` | The search box in the right-click menu. | `#26262a` | `#f3f3f5` |
-| `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.6)` | `rgba(0, 0, 0, 0.18)` |
-| `menu_hover` | The menu entry under the pointer. | `#2c2c31` | `#ececf0` |
-| `menu_hover_text` | Text of the menu entry under the pointer. | `#e6e6e8` | `#1f1f23` |
-| `run_bg` | The Run button's background. | `#5e6ad2` | `#4f46e5` |
-| `run_text` | The Run button's text and triangle. | `#ffffff` | `#ffffff` |
-| `run_border` | The line round the Run button. | `#5e6ad2` | `#4f46e5` |
-| `run_hover` | The Run button's background under the pointer. | `#4f5bbf` | `#4338ca` |
-| `run_hover_text` | The Run button's text under the pointer. | `#ffffff` | `#ffffff` |
-| `focus` | The ring round the control that has the keyboard focus. | `#7c86f0` | `#4f46e5` |
-| `accent` | The tint of a ticked checkbox in a value box. | `#5e6ad2` | `#4f46e5` |
-| `error` | The error banner's background. | `#4a2328` | `#4a2328` |
-| `error_text` | Text in the error banner. | `#fbdada` | `#fbdada` |
+| Key | What it colours | `antimony` | `antimony-light` | `purple-synthwave` |
+| --- | --- | --- | --- | --- |
+| `canvas` | The canvas behind the graph. | `#1a1a1a` | `#eeeeee` | `#000500` |
+| `dot` | The dots of the grid on the canvas. | `#2c2c2c` | `#d4d4d4` | `#161548` |
+| `card` | A node card's body. | `#202020` | `#202020` | `#2b2590` |
+| `card_border` | The line round a node card. | `#505050` | `#505050` | `#39397c` |
+| `header` | A node card's title bar. | `#505050` | `#505050` | `#39397c` |
+| `header_error` | The title bar of a node that failed. | `#8a3a3a` | `#8a3a3a` | `#6e2e2e` |
+| `header_skipped` | The title bar of a node that was skipped. | `#3a3a3a` | `#3a3a3a` | `#322f86` |
+| `title` | The id and type name in a title bar. | `#e0e0e0` | `#e0e0e0` | `#acadbc` |
+| `label` | Port names, and the values shown after a run. | `#b0b0b0` | `#b0b0b0` | `#9f9fbc` |
+| `text_dim` | Faded text, for a node that was skipped. | `#aaaaaa` | `#aaaaaa` | `#a5a5c2` |
+| `placeholder` | A greyed hint in a value box: a default, a source, `output`. | `#9a9a9a` | `#9a9a9a` | `#8787a0` |
+| `icon` | The three-bar icon in a title bar. | `#9e9e9e` | `#9e9e9e` | `#9596af` |
+| `selected` | The outline of a selected node. | `#e0e0e0` | `#202020` | `#acadbc` |
+| `selected_wire` | A selected wire, which must show on the canvas. | `#e0e0e0` | `#202020` | `#acadbc` |
+| `allowed` | A port a dragged link may end at. | `#6fcf6f` | `#2e8b45` | `#6fcf6f` |
+| `refused` | A port a dragged link may not end at. | `#e06060` | `#c03030` | `#e06060` |
+| `field` | The background of a value box. | `#303030` | `#303030` | `#161548` |
+| `field_text` | Text typed in a value box. | `#e0e0e0` | `#e0e0e0` | `#acadbc` |
+| `field_border` | The border of an input box. | `#303030` | `#303030` | `#161548` |
+| `menu` | The right-click menu's background. | `#1c1c1f` | `#ffffff` | `#2b2590` |
+| `menu_text` | Text in the right-click menu. | `#e6e6e8` | `#1f1f23` | `#acadbc` |
+| `menu_muted` | Muted text in the right-click menu, such as `No matching node`. | `#9b9ba3` | `#5f5f68` | `#9e9cc1` |
+| `menu_border` | The line round the right-click menu, its flyouts and its search box. | `#2e2e32` | `#d9d9de` | `#322f86` |
+| `menu_field` | The search box in the right-click menu. | `#26262a` | `#f3f3f5` | `#1a1856` |
+| `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.6)` | `rgba(0, 0, 0, 0.18)` | `rgba(0, 0, 0, 0.6)` |
+| `menu_hover` | The menu entry under the pointer. | `#2c2c31` | `#ececf0` | `#3a3595` |
+| `menu_hover_text` | Text of the menu entry under the pointer. | `#e6e6e8` | `#1f1f23` | `#afb0bf` |
+| `run_bg` | The Run button's background. | `#5e6ad2` | `#4f46e5` | `#473bf0` |
+| `run_text` | The Run button's text and triangle. | `#ffffff` | `#ffffff` | `#d4d4dc` |
+| `run_border` | The line round the Run button. | `#5e6ad2` | `#4f46e5` | `#473bf0` |
+| `run_hover` | The Run button's background under the pointer. | `#4f5bbf` | `#4338ca` | `#3c32cc` |
+| `run_hover_text` | The Run button's text under the pointer. | `#ffffff` | `#ffffff` | `#c0c1cc` |
+| `focus` | The ring round the control that has the keyboard focus. | `#7c86f0` | `#4f46e5` | `#7b72f4` |
+| `accent` | The tint of a ticked checkbox in a value box. | `#5e6ad2` | `#4f46e5` | `#473bf0` |
+| `error` | The error banner's background. | `#4a2328` | `#4a2328` | `#4a2328` |
+| `error_text` | Text in the error banner. | `#fbdada` | `#fbdada` | `#fbdada` |
 
 ### `ports`
 

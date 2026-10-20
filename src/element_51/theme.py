@@ -13,7 +13,7 @@ from pydantic import Field, field_validator
 
 from element_51.model import Model
 
-THEME_NAMES = ("antimony", "antimony-light")
+THEME_NAMES = ("antimony", "antimony-light", "purple-synthwave")
 DEFAULT_THEME = THEME_NAMES[0]
 
 

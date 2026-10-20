@@ -84,6 +84,10 @@ EXPECTED: dict[str, Expected] = {
         ("n1", "ok", {"out": 12.0}),
         ("n2", "ok", {"out": 6.0}),
     ],
+    "e_look/e4_purple_synthwave.py": [
+        ("n1", "ok", {"out": 12.0}),
+        ("n2", "ok", {"out": 6.0}),
+    ],
     "d_editor/d3_undo_redo.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 6.0}),
@@ -227,6 +231,11 @@ def test_the_save_example_gets_back_what_was_saved(tmp_path: Path) -> None:
 def test_the_light_theme_example_uses_the_light_theme() -> None:
     """Building the app already selects the light theme."""
     assert build("e_look/e1_light_theme.py").theme == "antimony-light"
+
+
+def test_the_purple_synthwave_example_uses_that_theme() -> None:
+    """Building the app already selects the purple-synthwave theme."""
+    assert build("e_look/e4_purple_synthwave.py").theme == "purple-synthwave"
 
 
 def test_the_menu_example_puts_nodes_in_nested_categories() -> None:

@@ -1,0 +1,142 @@
+{
+    "name": "purple-synthwave",
+    "colours": {
+        "canvas": "#000500",
+        "dot": "#161548",
+        "card": "#2b2590",
+        "card_border": "#39397c",
+        "header": "#39397c",
+        "header_error": "#6e2e2e",
+        "header_skipped": "#322f86",
+        "title": "#acadbc",
+        "label": "#9f9fbc",
+        "text_dim": "#a5a5c2",
+        "placeholder": "#8787a0",
+        "icon": "#9596af",
+        "selected": "#acadbc",
+        "selected_wire": "#acadbc",
+        "allowed": "#6fcf6f",
+        "refused": "#e06060",
+        "field": "#161548",
+        "field_text": "#acadbc",
+        "field_border": "#161548",
+        "menu": "#2b2590",
+        "menu_text": "#acadbc",
+        "menu_muted": "#9e9cc1",
+        "menu_border": "#322f86",
+        "menu_field": "#1a1856",
+        "menu_shadow": "rgba(0, 0, 0, 0.6)",
+        "menu_hover": "#3a3595",
+        "menu_hover_text": "#afb0bf",
+        "run_bg": "#473bf0",
+        "run_text": "#d4d4dc",
+        "run_border": "#473bf0",
+        "run_hover": "#3c32cc",
+        "run_hover_text": "#c0c1cc",
+        "focus": "#7b72f4",
+        "accent": "#473bf0",
+        "error": "#4a2328",
+        "error_text": "#fbdada"
+    },
+    "ports": {
+        "int": {
+            "in": {
+                "colour": "#edc27b",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#edc27b",
+                "shape": "box"
+            }
+        },
+        "float": {
+            "in": {
+                "colour": "#edc27b",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#edc27b",
+                "shape": "box"
+            }
+        },
+        "text": {
+            "in": {
+                "colour": "#94a95f",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#94a95f",
+                "shape": "box"
+            }
+        },
+        "bool": {
+            "in": {
+                "colour": "#6fa8dc",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#6fa8dc",
+                "shape": "box"
+            }
+        }
+    },
+    "metrics": {
+        "node_width": 220.0,
+        "header_height": 28.0,
+        "row_height": 26.0,
+        "card_radius": 8.0,
+        "border_width": 2.0,
+        "port_size": 10.0,
+        "port_inset": 8.0,
+        "port_hit_radius": 9.0,
+        "wire_width": 3.5,
+        "wire_width_selected": 5.0,
+        "selection_width": 2.0,
+        "wire_min_reach": 20.0,
+        "wire_max_swing": 70.0,
+        "field_height": 20.0,
+        "box_radius": 4.0,
+        "port_gap": 8.0,
+        "box_gap": 8.0,
+        "title_pad": 10.0,
+        "box_pad": 6.0,
+        "text_baseline": 4.5,
+        "icon_width": 14.0,
+        "icon_bar": 2.5,
+        "icon_gap": 2.5,
+        "grid_step": 24.0,
+        "dot_radius": 1.2
+    },
+    "page": {
+        "font_px": 14.0,
+        "button_font_px": 13.0,
+        "menu_radius": 8.0,
+        "menu_item_radius": 5.0,
+        "menu_pad": 6.0,
+        "menu_item_pad_x": 12.0,
+        "menu_item_pad_y": 6.0,
+        "menu_min_width": 160.0,
+        "shadow_blur": 24.0,
+        "shadow_y": 8.0,
+        "button_radius": 6.0,
+        "button_pad_x": 14.0,
+        "button_pad_y": 6.0,
+        "button_x": 16.0,
+        "button_y": 16.0,
+        "button_gap": 8.0,
+        "button_shadow_blur": 4.0,
+        "button_shadow_y": 1.0,
+        "field_radius": 2.0,
+        "search_radius": 6.0,
+        "banner_radius": 8.0,
+        "banner_margin": 16.0
+    },
+    "fonts": {
+        "card": "12px Verdana, sans-serif",
+        "title": "bold 12px Verdana, sans-serif",
+        "value": "12px Monaco, Menlo, monospace",
+        "family": "system-ui, -apple-system, 'Segoe UI', sans-serif",
+        "value_family": "Monaco, Menlo, monospace",
+        "field_px": 12.0
+    }
+}

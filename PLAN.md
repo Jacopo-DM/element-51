@@ -108,6 +108,9 @@ add the GitHub link to the PyPI page (`[project.urls]`); PyPI lists 0.0.1, 0.1.0
 and 0.1.1. A version number cannot be reused, so the next release is 0.1.2 or
 0.2.0 (bump `version` in `pyproject.toml`, run `uv run python
 tools/check_wheel.py`, then the user publishes).
+The third built-in theme `purple-synthwave` (the user's favourite Coolors palette) was
+added on 2026-10-21; it ships with the next release (0.1.2 or 0.2.0), together with the
+classifiers.
 Next step: the user's own try-out (below), then `/zz-02-project-plan` for canvas
 accessibility.
 To try the newest work: `uv run python tools/build_wasm.py`, then

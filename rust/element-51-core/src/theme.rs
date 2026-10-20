@@ -9,10 +9,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 /// The names of the built-in themes, the default first.
-pub const THEME_NAMES: [&str; 2] = ["antimony", "antimony-light"];
+pub const THEME_NAMES: [&str; 3] = ["antimony", "antimony-light", "purple-synthwave"];
 
 const ANTIMONY: &str = include_str!("../themes/antimony.json");
 const ANTIMONY_LIGHT: &str = include_str!("../themes/antimony-light.json");
+const PURPLE_SYNTHWAVE: &str = include_str!("../themes/purple-synthwave.json");
 
 /// Colours, as CSS colour strings.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -280,6 +281,7 @@ impl Theme {
         let text = match name {
             "antimony" => ANTIMONY,
             "antimony-light" => ANTIMONY_LIGHT,
+            "purple-synthwave" => PURPLE_SYNTHWAVE,
             _ => return None,
         };
         Some(serde_json::from_str(text).expect("a built-in theme is valid JSON"))
