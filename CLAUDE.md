@@ -146,6 +146,17 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - To run an example that opens a browser without opening the user's own browser,
     set `BROWSER="echo OPENED %s"`: Python's `webbrowser` then prints the URL
     instead (`BROWSER="echo OPENED %s" uv run examples/a_basics/a2_two_nodes.py`).
+- Run both gates after moving or renaming a file. The Rust tests read files
+    outside `rust/` with `include_str!` (`examples/e_look/my_theme.json`,
+    `docs/themes.md`, `index.html`), so a move can break `cargo test` while pytest
+    stays green; this happened when the examples went into folders.
+- An example server can outlive a `pkill` of its `uv run` parent and keep port
+    8765, so the next example fails with "address already in use" while the page
+    still shows the old one. Check with `ps aux | rg examples/` and kill the python
+    process before starting another.
+- `uv add` has no `--dry-run`, and the hook blocks `uv pip`. `uv sync --group docs
+    --offline` works from the cache. `uv venv --clear` then `uv sync` recreates the
+    environment (its `pyvenv.cfg` prompt takes the project name).
 - zsh stops on an unquoted `--include=*.rs` ("no matches found"); quote it or use
     `rg -g '*.rs'`.
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's

@@ -671,6 +671,21 @@ checkbox is the browser's; `accent` only tints it when ticked, and the
 unticked box stays white. Run's hover and focus colours now have their own
 keys instead of borrowing the menu's.
 
+Embedding research (2026-10-20, from a second LLM's answers, checked where
+possible): verified here, Starlette 1.9.0 gives a Starlette child app a path
+without the mount prefix, and a plain ASGI callable the full path in
+`scope["path"]` with `scope["root_path"]` set to the prefix. Run for real:
+FastAPI and NiceGUI hosts (tasks above). Claimed by that LLM and not tried:
+Gradio can be mounted onto FastAPI with `gr.mount_gradio_app` (the only direction
+that matters here); Streamlit has an experimental `streamlit.starlette.App`
+(1.53); Dash 4.2 can use a FastAPI backend; Reflex cannot mount a sub-app below
+`/` (open issue); Flet mounts through `flet_fastapi.app`; Mesop is WSGI only. A
+claim that websockets are broken in pywebview's GTK backend rests on a 2021
+issue of unknown state and is not relied on. Untried idea: PySide6's
+`QWebEngineView` pointing at a local `serve()` for a native window. Its version
+and date claims could not be checked; `fastapi` 0.156.0 and `nicegui` 3.18.0 are
+what `uv add` resolved.
+
 ## Results
 
 | Date | Change | Result |
@@ -699,5 +714,8 @@ keys instead of borrowing the menu's.
 
 ## Gotchas
 
+- The user's VS Code can keep a stale unsaved buffer of a file that changed on
+    disk (seen on `f1_fastapi_host.py` after a rewrite); saving it overwrites the
+    new text. Say so when a file the user has open is rewritten.
 - The 22 transitive Rust crates come from wasm-bindgen (`futures-*`, `slab`,
     `bumpalo`, `syn` 3.0.9 and friends) and serde (`serde_derive`).

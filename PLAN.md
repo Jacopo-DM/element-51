@@ -70,11 +70,13 @@ tasks 1 to 15 and 18 to 22 plus 6a (push), 16 (rename) and 17 (rounded look); th
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the user's own try-out of goal `skeleton`, and their look at the menus
-(tasks 14 and 18, examples `d4_menu` and `d5_card_menu`); after that Tier 3, starting with CI
-that builds the WASM and runs the Rust checks.
-Nothing is uncommitted. All merged branches are
-deleted. There is no remote, so nothing
+Next step: add CI that builds the WASM and runs the Rust checks (Tier 3; the
+user has not yet said "start CI"). Waiting on the user: their own try-out of goal
+`skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
+have looked at `a2_two_nodes` and said it looks good.
+Nothing is uncommitted in this repo (checked 2026-10-20 after task 22). All
+merged branches are deleted. In `~/Functions`, the profile settings were committed
+and its leftover branch deleted at the user's say-so. There is no remote, so nothing
 is pushed. The user approves each task start and each branch deletion in one
 reply ("Yes, start task N, and delete the merged branch ...").
 
@@ -173,7 +175,15 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 Oldest first.
 
-None.
+1. (2026-10-20) Does text now look sharp on the user's screen, and is zoom fast
+    enough? Three fixes were made on their report (device-pixel canvas, opaque
+    context, Verdana and Monaco; wheel and pinch rates) and I could only check
+    them in the built-in browser. The user has not said.
+2. (2026-10-20) `~/Functions/_rsync/vscode/settings.json`, the template that
+    `rsync-sync` copies into new projects, is modified in the working tree and not
+    committed: most hidden-file excludes flipped to `false` and `.github` hidden. It
+    looks like the explorer-exclude extension saving its toggle state, so I left it.
+    Commit it or restore it? Also three untracked `.bak` files there.
 
 ## Known problems
 
@@ -209,5 +219,13 @@ None.
     (`accent`), but the unticked box stays white.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
     which is faint. The user may want it lighter (a theme colour, `placeholder`).
+- Text sharpness on the user's screen is unconfirmed (see Open questions); a
+    further step would be a larger card font or integer-pixel text positions.
+- `a1_hello_world.py` is the project template, not an example of the library: it
+    imports numpy and creates `__data__`, and the example tests skip it by name.
+- The NiceGUI host example (`f2_nicegui_host.py`) has no automated test, because
+    `ui.run_with` changes NiceGUI's global state; the FastAPI one is tested.
+- The page keeps a few fixed sizes (1 px borders, the banner and search-box
+    paddings, the Run triangle, letter spacing); see DESIGN.md, task 22.
 - The undo history is per page: a reload empties it, and edits made by other
     pages or scripts are not in it (see DESIGN.md, undo and redo).
