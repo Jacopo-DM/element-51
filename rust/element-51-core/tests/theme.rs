@@ -209,7 +209,7 @@ fn changes_that_are_not_objects_are_refused() {
     );
 }
 
-const EXAMPLE_THEME: &str = include_str!("../../../examples/my_theme.json");
+const EXAMPLE_THEME: &str = include_str!("../../../examples/e_look/my_theme.json");
 const THEME_DOCS: &str = include_str!("../../../docs/themes.md");
 
 #[test]
