@@ -43,7 +43,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
 | Serve the editor | `uv run examples/a1_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
-| Serve another example | `uv run python examples/a2_arithmetic.py` (a2 to a6, a8, a9 to a18 serve on http://127.0.0.1:8765; a7 prints and exits) | same port, so stop one before starting the next |
+| Serve another example | `uv run python examples/a2_arithmetic.py` (a2 to a6, a8, a9 to a20 serve on http://127.0.0.1:8765; a7 prints and exits) | same port, so stop one before starting the next |
 
 ## Code rules
 
@@ -122,6 +122,7 @@ No tool ignore or deny file exists in this repo, so none was changed.
 - BSD `sed` on macOS has no `\b`. Use Python `re` for whole-word replacements.
 - `ls` and `mv` read a name starting with `-` as an option. Claude's history
   folders under `~/.claude/projects/` start with one; prefix `./`.
+- `fastapi` and `nicegui` are in the `examples` group, which `[tool.uv] default-groups` installs with `dev`, so mypy can resolve the two host examples. They are not runtime dependencies of the library.
 - `uv sync` with no flags uninstalls the `docs` group. Use `uv sync --group docs`
   before building the docs.
 - After moving the repo folder, run `uv sync --reinstall` and `uv run

@@ -5,6 +5,7 @@ mod draw;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use element_51_core::address::websocket_url;
 use element_51_core::fields::{format_value, parse_input};
 use element_51_core::history::History;
 use element_51_core::layout::icon_at;
@@ -106,12 +107,11 @@ pub fn start() -> Result<(), JsValue> {
         .ok_or("no 2d context")?
         .dyn_into()?;
     let location = window.location();
-    let scheme = if location.protocol()? == "https:" {
-        "wss"
-    } else {
-        "ws"
-    };
-    let socket = WebSocket::new(&format!("{scheme}://{}/ws", location.host()?))?;
+    let socket = WebSocket::new(&websocket_url(
+        &location.protocol()?,
+        &location.host()?,
+        &location.pathname()?,
+    ))?;
 
     let theme = Theme::default();
     apply_theme(&document, &theme);

@@ -594,10 +594,32 @@ input's own shape. A circle's diameter is `port_size`; a diamond reaches
 0.7 of it from the centre, about the area of the box. Hit-testing still uses a
 round target for every shape.
 
+Embedding examples, task 21 (2026-10-20, the user asked for a small test of how
+simple it is to build a GUI around the editor): `a19_fastapi_host.py` mounts
+`asgi_app(app)` at `/editor` in a FastAPI app with a side panel of plain HTML
+and two endpoints (`/api/run`, `/api/add-node`); `a20_nicegui_host.py` does the
+same with NiceGUI's `ui.run_with(host)` on the same FastAPI app and a splitter
+page (editor in an iframe, NiceGUI widgets beside it). Findings: both are about
+60 lines and worked on the first run once the page found its websocket. The
+page used to connect to `/ws` at the host root, so a mounted editor loaded but
+could not connect; it now takes the address from its own path
+(`address::websocket_url`, so `/editor/` gives `/editor/ws`). A node added by
+the panel reaches the open editor at once, because the editor listens to the
+`App`. Starlette strips the mount prefix for a Starlette child app, so no
+change was needed on the Python side. Limits: one `App` per process, so one
+worker; the host and the editor must share the process. `fastapi` and `nicegui`
+(about 31 packages, 8 MB for NiceGUI) are in a new `examples` dependency group
+that is installed by default with `dev`, so the checks can type-check the
+examples; the library does not depend on them. Only the FastAPI example is
+tested automatically (a real server, the websocket and both endpoints); the
+NiceGUI one is checked by hand, because `ui.run_with` changes NiceGUI's global
+state and a second call in one test process is not safe.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 21: FastAPI and NiceGUI examples, editor under a prefix | native tests: websocket address at the root, under prefixes, with a file name, https; pytest: the FastAPI host serves the panel and the editor, the editor's websocket works at `/editor/ws`, a node added through the API reaches the open page, Run through the API; by hand: both examples show the editor, Add node adds a node live, Run shows `{'n1': {'out': 3.0}, 'n2': {'out': 3.0}}`; 216 Python tests at 100%, 110 Rust tests |
 | 2026-10-20 | task 20: port styles by type and side | native tests: every type and side has a style, defaults are boxes with equal in and out colours, a change reaches one side of one type only, wrong names and shapes name the path and the valid values, docs list every type; pytest: a ports file and bad shapes; by hand: `a18` shows diamonds for number inputs and circles for number outputs, `a6` keeps the box look; 213 Python tests at 100%, 105 Rust tests |
 | 2026-10-20 | task 19: theme files | native tests: no changes, partial changes, base, unknown base, key, section, wrong kind, non-objects; the example file and every key in the docs; pytest: file shapes, name and path, errors, session and snapshot, `serve` with a file, example `a18`; by hand: `a18_theme_file.py` shows the blue theme, a file with `canvass` shows the banner naming the key and listing the keys; 210 Python tests at 100%, 100 Rust tests |
 | 2026-10-20 | task 18: the header icon opens a Delete node menu | native tests: icon box position and size, icon hit-test (inside, header height, title text and body excluded, under another card refused), the entry list and its edit; by hand with `a17_card_menu.py`: the click opens the popup and selects the card, Delete node removes the node and its links, Cmd+Z restores them, Escape and a click on empty canvas close the popup; 194 Python tests at 100%, 90 Rust tests |

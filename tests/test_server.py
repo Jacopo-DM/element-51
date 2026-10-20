@@ -2,6 +2,7 @@
 
 import asyncio
 import http.client
+import json
 import signal
 import socket
 import subprocess  # ruff: ignore[suspicious-subprocess-import]  # runs our own script
@@ -18,6 +19,7 @@ import uvicorn
 from sample_nodes import add, show
 from starlette.types import ASGIApp
 from starlette.websockets import WebSocketDisconnect
+from test_examples import load
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import connect
 
@@ -601,3 +603,47 @@ def test_serve_takes_a_theme_file_and_the_page_is_sent_its_changes(
         snapshot = Snapshot.model_validate_json(websocket.recv())
     assert snapshot.theme == "antimony"
     assert snapshot.theme_changes.colours == {"canvas": "#101010"}
+
+
+def post(port: int, path: str) -> object:
+    """POST nothing to `path` on the local server.
+
+    Returns
+    -------
+    object
+        The JSON the server answered with.
+    """
+    connection = http.client.HTTPConnection(server.HOST, port, timeout=10)
+    try:
+        connection.request("POST", path)
+        return json.loads(connection.getresponse().read())
+    finally:
+        connection.close()
+
+
+def test_the_fastapi_example_hosts_the_editor_under_a_prefix(
+    web_dir: Path,
+) -> None:
+    """The panel, the editor page and its websocket share one process.
+
+    The editor's websocket is at `/editor/ws`; a node added by the panel's
+    API reaches the page that is already open, and `Run` sees it.
+    """
+    assert web_dir.exists()
+    example = load("a19_fastapi_host.py")
+    host = example.build_host(example.build_app())
+    with running(host) as port:
+        status, _, panel = fetch(port, "/")
+        assert status == HTTPStatus.OK
+        assert b'<iframe src="/editor/">' in panel
+        assert fetch(port, "/editor/")[2] == b"<p>element-51</p>"
+        with connect(f"ws://{server.HOST}:{port}/editor/ws") as websocket:
+            first = Snapshot.model_validate_json(websocket.recv())
+            assert [n.id for n in first.graph.nodes] == ["n1"]
+            assert post(port, "/api/add-node") == {"added": "n2"}
+            pushed = Snapshot.model_validate_json(websocket.recv())
+            assert [n.id for n in pushed.graph.nodes] == ["n1", "n2"]
+        assert post(port, "/api/run") == {
+            "n1": {"out": 3.0},
+            "n2": {"out": 3.0},
+        }

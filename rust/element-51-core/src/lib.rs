@@ -4,6 +4,7 @@
 //! `src/element_51/protocol.py`; `tests/fixtures/snapshot.json` is read by both
 //! sides.
 
+pub mod address;
 mod edit;
 pub mod fields;
 pub mod history;
