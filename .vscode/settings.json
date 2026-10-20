@@ -11,16 +11,14 @@
     },
     "explorerExclude.backup": {},
     "files.exclude": {
-        "**/.git": true,
-        "**/.svn": false,
-        "**/.hg": false,
-        "**/.DS_Store": true,
-        "**/Thumbs.db": false,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
         "**/__pycache__": true,
         ".typings": true,
-        ".venv": true
+        ".venv": true,
+        ".vscode": true,
+        ".ruff_cache": true,
+        ".github": true
     },
     "explorerExcludeManager.backup": {}
 }
