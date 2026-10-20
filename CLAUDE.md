@@ -204,5 +204,8 @@ No tool ignore or deny file exists in this repo, so none was changed.
     edits failed and I committed anyway.
 - zsh stops on an unquoted `--include=*.rs` ("no matches found"); quote it or use
     `rg -g '*.rs'`.
+- When another session shares this folder and has a branch checked out, do not
+    switch branches. Fast-forward `main` without a checkout: `git fetch . <branch>:main`
+    (it refuses anything that is not a fast-forward).
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's
     `no-self-use` flags every `run` that does not use `self`.

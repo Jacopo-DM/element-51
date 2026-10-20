@@ -696,6 +696,15 @@ theme, with the credit in the README.
     (the palette test cannot use the default as its base: the default is the
     palette of its example link).
 
+- `element_51.serve` binds `127.0.0.1` only and has no `host` argument (2026-10-21,
+    the user asked whether a script can change the address): the server has no login,
+    so exposing it to the network would let anyone edit and run the graph. A script that
+    wants another address runs `uvicorn.run(element_51.asgi_app(app), host=..., port=...)`;
+    `examples/a_basics/a1_hello_world.py` does this, with `HOST` and `PORT` at its top and
+    a note about the missing password, and `docs/embedding.md` shows the same for FastAPI.
+    Not done: a `host` argument on `serve()` (new behaviour, not asked for; if added, keep
+    `127.0.0.1` the default and warn when it changes).
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a

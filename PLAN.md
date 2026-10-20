@@ -158,8 +158,15 @@ a new `Select theme` entry lists the three built-in themes and switches at once,
 the default theme is now `purple-synthwave`. Not decided by the user: the end of their
 second point (it stopped at "and there should be"); a hint in the link box already
 exists (its placeholder), nothing was added.
-Next step: the user's own try-out (below), then `/zz-02-project-plan` for canvas
-accessibility.
+Next step: the user asked (2026-10-21, mid task 27) for `/zz-02-project-plan` on a new
+feature, experiment nodes (open question 4); run it first, then continue with task 28 of
+`canvas-accessibility` (approved) unless the user reorders them. The user's own try-out
+(below) is still pending.
+`examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
+`examples/template.py`); it serves with `uvicorn` on `HOST` and `PORT` set at its top, so a
+script can choose the address (`element_51.serve` always uses `127.0.0.1`). The user has
+`a1_hello_world.py` running in their own terminal (pid 2151 on 2026-10-21, started before
+the default-theme change): it needs a restart to show purple-synthwave; never kill it.
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
 the menu button at the top right, choose Load palette from Coolors link and paste
@@ -171,8 +178,10 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
-`main` equals `origin/main` (`825929d`, the merged Dependabot bump). No merged
-local branch is left (the thirteen were deleted on 2026-10-21 at the user's say-so).
+`main` equals `origin/main` (`0d73fdc`, task 27). The merged local branch
+`canvas-access-27` is not deleted yet (a side session had it checked out; deleting
+needs the user's say-so). Earlier merged branches were deleted on 2026-10-21 at the
+user's say-so.
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. The repo was pushed on
@@ -433,6 +442,19 @@ Oldest first.
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
     Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
     fix and touch support.
+
+4. (2026-10-21) New feature idea from the user, not planned yet: set up a small
+    experiment in the editor for visualisation, for example MNIST classification: a
+    node that shows a sample image from MNIST, a node that starts a training run, and
+    a node that plots the live results of the training. The user asked for
+    `/zz-02-project-plan` on it (it was sent while task 27 ran, which went to a side
+    session). It needs a goal with its own spec and approval; open points to settle in
+    that conversation: who supplies the data and the training code (a dependency such
+    as torch or numpy needs approval, and MNIST is a download needing approval by name,
+    source and size), how a node shows an image or a live plot (the page is a canvas
+    plus HTML boxes today, and Python pushes a snapshot, not a stream), whether a
+    node can run for a long time without freezing the editor (`App` takes one
+    lock and `Run` is one request), and its order against `canvas-accessibility`.
 
 ## Known problems
 
