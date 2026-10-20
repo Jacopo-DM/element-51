@@ -9,22 +9,23 @@ import pytest
 from element_51.session import App
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
+TEMPLATE = "a1_hello_world.py"
 
 type Expected = list[tuple[str, str, dict[str, float | int | str | bool]]]
 
 EXPECTED: dict[str, Expected] = {
-    "a1_two_nodes.py": [
+    "a_basics/a2_two_nodes.py": [
         ("n1", "ok", {"out": 21.0}),
         ("n2", "ok", {"out": 42.0}),
     ],
-    "a2_arithmetic.py": [
+    "a_basics/a3_arithmetic.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 4.0}),
         ("n3", "ok", {"out": 7.0}),
         ("n4", "ok", {"out": 21.0}),
         ("n5", "ok", {"out": 21.0}),
     ],
-    "a3_strings.py": [
+    "a_basics/a4_strings.py": [
         ("n1", "ok", {"out": "hello"}),
         ("n2", "ok", {"out": "world"}),
         ("n3", "ok", {"out": 3.0}),
@@ -32,7 +33,7 @@ EXPECTED: dict[str, Expected] = {
         ("n5", "ok", {"out": "HELLO WORLD"}),
         ("n6", "ok", {"out": "HELLO WORLD / HELLO WORLD"}),
     ],
-    "a4_errors.py": [
+    "b_node_types/b5_errors.py": [
         ("n1", "ok", {"out": 10.0}),
         ("n2", "ok", {"out": 0.0}),
         ("n3", "error", {}),
@@ -41,7 +42,7 @@ EXPECTED: dict[str, Expected] = {
         ("n6", "error", {}),
         ("n7", "error", {}),
     ],
-    "a5_diamond.py": [
+    "b_node_types/b4_diamond.py": [
         ("n1", "ok", {"out": 2.0}),
         ("n2", "ok", {"out": 4.0}),
         ("n3", "ok", {"out": -2.0}),
@@ -49,47 +50,47 @@ EXPECTED: dict[str, Expected] = {
         ("n5", "ok", {"out": 5}),
         ("n6", "ok", {"out": 2.5}),
     ],
-    "a6_port_types.py": [
+    "b_node_types/b1_port_types.py": [
         ("n1", "ok", {"out": True}),
         ("n2", "ok", {"out": 4}),
         ("n3", "ok", {"out": 0.5}),
         ("n4", "ok", {"out": "items"}),
         ("n5", "ok", {"out": "4 items, ratio 0.5, flag no"}),
     ],
-    "a8_multiple_outputs.py": [
+    "b_node_types/b2_multiple_outputs.py": [
         ("n1", "ok", {"out": 17}),
         ("n2", "ok", {"out": 5}),
         ("n3", "ok", {"q": 3, "r": 2}),
         ("n4", "ok", {"out": "3 remainder 2"}),
     ],
-    "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
-    "a16_menu.py": [("n1", "ok", {"out": 3.0})],
-    "a19_fastapi_host.py": [("n1", "ok", {"out": 3.0})],
-    "a20_nicegui_host.py": [("n1", "ok", {"out": 3.0})],
-    "a18_theme_file.py": [
+    "c_python_api/c2_live_push.py": [("n1", "ok", {"out": 1.0})],
+    "d_editor/d4_menu.py": [("n1", "ok", {"out": 3.0})],
+    "f_embedding/f1_fastapi_host.py": [("n1", "ok", {"out": 3.0})],
+    "f_embedding/f2_nicegui_host.py": [("n1", "ok", {"out": 3.0})],
+    "e_look/e2_theme_file.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 3.0}),
     ],
-    "a17_card_menu.py": [
+    "d_editor/d5_card_menu.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 5.0}),
         ("n3", "ok", {"out": 5.0}),
     ],
-    "a15_light_theme.py": [
+    "e_look/e1_light_theme.py": [
         ("n1", "ok", {"out": 12.0}),
         ("n2", "ok", {"out": 6.0}),
     ],
-    "a14_undo_redo.py": [
+    "d_editor/d3_undo_redo.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 6.0}),
         ("n3", "ok", {"out": 7.0}),
     ],
-    "a13_values.py": [
+    "d_editor/d2_values.py": [
         ("n1", "ok", {"out": 6.0}),
         ("n2", "ok", {"out": "hello world"}),
         ("n3", "ok", {"out": "hello worldhello world"}),
     ],
-    "a12_big_graph.py": [
+    "d_editor/d1_big_graph.py": [
         ("n1", "ok", {"out": 1.0}),
         ("n2", "ok", {"out": 2.0}),
         ("n3", "ok", {"out": 4.0}),
@@ -115,17 +116,17 @@ EXPECTED: dict[str, Expected] = {
         ("n23", "ok", {"out": 16.0}),
         ("n24", "ok", {"out": 32.0}),
     ],
-    "a11_save_load.py": [
+    "c_python_api/c3_save_load.py": [
         ("n1", "ok", {"out": 4.0}),
         ("n2", "ok", {"out": 8.0}),
     ],
-    "a9_class_nodes.py": [
+    "b_node_types/b3_class_nodes.py": [
         ("n1", "ok", {"out": "hello, world!"}),
         ("n2", "ok", {"out": "HELLO, WORLD!"}),
         ("n3", "ok", {"a": 3.0, "b": 4.5}),
         ("n4", "ok", {"total": 7.5, "mean": 3.75}),
     ],
-    "a7_script_api.py": [
+    "c_python_api/c1_script_api.py": [
         ("n1", "ok", {"out": 19.99}),
         ("n2", "ok", {"out": 3}),
         ("n3", "ok", {"out": 59.97}),
@@ -165,7 +166,11 @@ def build(name: str) -> App:
 
 def test_every_example_has_an_expected_outcome() -> None:
     """A new example file is not forgotten here."""
-    found = sorted(path.name for path in EXAMPLES.glob("a[1-9]*.py"))
+    found = sorted(
+        path.relative_to(EXAMPLES).as_posix()
+        for path in EXAMPLES.glob("*/[a-z][0-9]*_*.py")
+        if path.name != TEMPLATE
+    )
     assert found == sorted(EXPECTED)
 
 
@@ -180,7 +185,7 @@ def test_example_runs_to_the_outcome_it_describes(name: str) -> None:
 
 def test_the_error_example_reports_each_kind_of_failure() -> None:
     """Three different messages, one per failing node."""
-    result = build("a4_errors.py").execute()
+    result = build("b_node_types/b5_errors.py").execute()
     errors = {o.node: o.error for o in result.outcomes if o.error}
     assert errors == {
         "n3": "ZeroDivisionError: float division by zero",
@@ -191,7 +196,7 @@ def test_the_error_example_reports_each_kind_of_failure() -> None:
 
 def test_the_push_example_grows_a_running_total() -> None:
     """Each step adds two nodes and two links; the total counts up."""
-    example = load("a10_live_push.py")
+    example = load("c_python_api/c2_live_push.py")
     app = example.build_app()
     example.keep_adding(app, steps=2, pause=0.0)
     result = app.execute()
@@ -207,7 +212,7 @@ def test_the_push_example_grows_a_running_total() -> None:
 
 def test_the_save_example_gets_back_what_was_saved(tmp_path: Path) -> None:
     """A second run loads the file the first run saved."""
-    example = load("a11_save_load.py")
+    example = load("c_python_api/c3_save_load.py")
     first = example.build_app(tmp_path / "g.json")
     first.add_node(example.number, x=1.0, y=1.0)
     first.save(tmp_path / "g.json")
@@ -217,12 +222,12 @@ def test_the_save_example_gets_back_what_was_saved(tmp_path: Path) -> None:
 
 def test_the_light_theme_example_uses_the_light_theme() -> None:
     """Building the app already selects the light theme."""
-    assert build("a15_light_theme.py").theme == "antimony-light"
+    assert build("e_look/e1_light_theme.py").theme == "antimony-light"
 
 
 def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
     """The categories of the example's node types, in menu order."""
-    app = build("a16_menu.py")
+    app = build("d_editor/d4_menu.py")
     categories = {
         name: function.node_type.category
         for name, function in app.node_functions.items()
@@ -239,7 +244,7 @@ def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
 
 def test_the_theme_file_example_changes_the_dark_theme() -> None:
     """The app reads `my_theme.json` and sends its changes to the page."""
-    snapshot = build("a18_theme_file.py").snapshot()
+    snapshot = build("e_look/e2_theme_file.py").snapshot()
     assert snapshot.theme == "antimony"
     assert snapshot.theme_changes.colours["canvas"] == "#101820"
     assert snapshot.theme_changes.metrics == {"node_width": 260.0}

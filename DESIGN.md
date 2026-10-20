@@ -623,6 +623,38 @@ guard. The random generator, the data folder and the `Todo` section are left
 out, because no example needs them. `a7` prints through the rich console.
 `a0` itself stays as the template and is not run by the tests.
 
+Example folders (2026-10-20, the user's grouping): the examples sit in group
+folders named letter and topic, and each file takes the folder's letter and a
+number that restarts in the group. Old names, which older Results rows and
+Decisions still use, map like this:
+
+| Old | New |
+| --- | --- |
+| `a0_hello_world` | `a_basics/a1_hello_world` |
+| `a1_two_nodes` | `a_basics/a2_two_nodes` |
+| `a2_arithmetic` | `a_basics/a3_arithmetic` |
+| `a3_strings` | `a_basics/a4_strings` |
+| `a6_port_types` | `b_node_types/b1_port_types` |
+| `a8_multiple_outputs` | `b_node_types/b2_multiple_outputs` |
+| `a9_class_nodes` | `b_node_types/b3_class_nodes` |
+| `a5_diamond` | `b_node_types/b4_diamond` |
+| `a4_errors` | `b_node_types/b5_errors` |
+| `a7_script_api` | `c_python_api/c1_script_api` |
+| `a10_live_push` | `c_python_api/c2_live_push` |
+| `a11_save_load` | `c_python_api/c3_save_load` (writes `c3_graph.json`) |
+| `a12_big_graph` | `d_editor/d1_big_graph` |
+| `a13_values` | `d_editor/d2_values` |
+| `a14_undo_redo` | `d_editor/d3_undo_redo` |
+| `a16_menu` | `d_editor/d4_menu` |
+| `a17_card_menu` | `d_editor/d5_card_menu` |
+| `a15_light_theme` | `e_look/e1_light_theme` |
+| `a18_theme_file` | `e_look/e2_theme_file` (with `my_theme.json`) |
+| `a19_fastapi_host` | `f_embedding/f1_fastapi_host` |
+| `a20_nicegui_host` | `f_embedding/f2_nicegui_host` |
+
+`a1_hello_world.py` is the project template and keeps its numpy and data setup;
+`tests/test_examples.py` skips it by name.
+
 ## Results
 
 | Date | Change | Result |

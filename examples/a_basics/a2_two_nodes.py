@@ -1,7 +1,8 @@
 """Two nodes and a link: the smallest editor, opened in your browser.
 
-Run it: `uv run examples/a1_two_nodes.py`. The page opens by itself. Stop it
-with Ctrl+C in the terminal; it shuts down and the command ends.
+Run it: `uv run examples/a_basics/a2_two_nodes.py`. The page opens by
+itself. Stop it with Ctrl+C in the terminal; it shuts down and the command
+ends.
 
 The graph holds a `number` node (written as a function) linked to a `Double`
 node (written as a class).

@@ -15,7 +15,7 @@
        incompatible port types (float to str) is refused by the Rust engine.
     3. After editing, `app.graph` in Python holds the same nodes and links,
        and `app.run()` returns the computed value.
-    4. `uv run examples/a1_two_nodes.py` starts a local server, opens the
+    4. `uv run examples/a_basics/a2_two_nodes.py` starts a local server, opens the
        page, and stops cleanly on Ctrl+C.
     5. A function returning a pydantic model (e.g. `-> DivMod` with fields `q`
        and `r`) shows one output port per field; a link from either port
@@ -71,7 +71,7 @@ goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
 Next step: the user's own try-out of goal `skeleton`, and their look at the menus
-(tasks 14 and 18, examples `a16` and `a17`); after that Tier 3, starting with CI
+(tasks 14 and 18, examples `d4_menu` and `d5_card_menu`); after that Tier 3, starting with CI
 that builds the WASM and runs the Rust checks.
 Nothing is uncommitted. All merged branches are
 deleted. There is no remote, so nothing
@@ -90,20 +90,20 @@ Measured 2026-10-20 after task 21, Apple silicon, Python 3.13:
   the node's rows; the class-form example runs and its menu lists the class
   names; a long text value is trimmed with an ellipsis to fit its row; a node
   added in the browser is still there after a reload, with the run values
-  cleared; with `a10_live_push.py` an open page shows each node the script
-  adds, with no reload, and Run then gives 2.0 to 6.0; with `a12_big_graph.py`
+  cleared; with `c2_live_push.py` an open page shows each node the script
+  adds, with no reload, and Run then gives 2.0 to 6.0; with `d1_big_graph.py`
   a node drags and its move survives a reload, the wheel zooms and empty
   canvas pans, Delete removes the selected node (its links go) or the selected
-  wire, and Run then shows `has no value` downstream; with `a13_values.py` typed
+  wire, and Run then shows `has no value` downstream; with `d2_values.py` typed
   numbers change the Run result, `abc` in a number box is refused with a message
   and the box restored, the boxes follow pan, zoom and drag, and the values and
-  a ticked box survive a reload; with `a14_undo_redo.py` Ctrl+Z undid a drag and
+  a ticked box survive a reload; with `d3_undo_redo.py` Ctrl+Z undid a drag and
   a node delete (the node came back with its links) and Ctrl+Shift+Z redid a
-  move, and the result survived a reload; with `a15_light_theme.py` the canvas is
+  move, and the result survived a reload; with `e1_light_theme.py` the canvas is
   light grey with a dot grid, the cards stay dark and a selected wire is dark;
-  with `a16_menu.py` the right-click menu has Math > Trig > sine flyouts, the
+  with `d4_menu.py` the right-click menu has Math > Trig > sine flyouts, the
   search box lists matches with their paths, Enter adds the first and Escape
-  closes, and the flyouts flip left near the right edge; with `a17_card_menu.py`
+  closes, and the flyouts flip left near the right edge; with `d5_card_menu.py`
   the icon opens a Delete node popup, the click removes the node and its links,
   Cmd+Z restores them, and Escape or a click elsewhere closes it.
 
@@ -128,7 +128,7 @@ Done: tasks 3 (run the graph), 4 (several outputs, class-form nodes), 5
 open browsers; added 2026-10-19 at the user's choice, detail in DESIGN.md), 6
 (save and load as versioned JSON), 7 (pan, zoom, move, select, delete), 8
 (value editing with HTML inputs), 9 (undo and redo), 10
-(`a1_two_nodes.py`, `serve(open_browser=True)`, clean Ctrl+C). Extra task 17,
+(`a2_two_nodes.py`, `serve(open_browser=True)`, clean Ctrl+C). Extra task 17,
 added at the user's request and approved in words 2026-10-19: rounded node cards
 and wire ends (done; the radius is `card_radius` in the Theme's metrics). Rounded
 port markers were tried at the user's request and reverted because they did not
@@ -146,13 +146,13 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 ### Extra task, added by the user 2026-10-20
 
 21. **FastAPI and NiceGUI examples** (asked by the user 2026-10-20, with the
-    page fix and the `examples` group approved in words). Done: `a19`, `a20`,
+    page fix and the `examples` group approved in words). Done: `f1_fastapi_host`, `f2_nicegui_host`,
     the websocket address from the page's path. Detail in DESIGN.md.
 20. **Port styles** (from the user's sketch, with their answers). Done: the
     `ports` theme section by type and side, with colour and shape. Detail in
     DESIGN.md.
 19. **Theme files** (the user chose the option and asked for the docs). Done:
-    `serve(theme="my_theme.json")`, `docs/themes.md`, example `a18`. Detail in
+    `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
 
 ### Tier 3: listed, not executed

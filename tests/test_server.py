@@ -630,7 +630,7 @@ def test_the_fastapi_example_hosts_the_editor_under_a_prefix(
     API reaches the page that is already open, and `Run` sees it.
     """
     assert web_dir.exists()
-    example = load("a19_fastapi_host.py")
+    example = load("f_embedding/f1_fastapi_host.py")
     host = example.build_host(example.build_app())
     with running(host) as port:
         status, _, panel = fetch(port, "/")

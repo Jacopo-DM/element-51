@@ -39,7 +39,7 @@ The file has five members, all optional:
 | `metrics` | Sizes to replace, by key. |
 | `fonts` | Fonts to replace, by key. |
 
-`examples/a18_theme_file.py` and `examples/my_theme.json` are a working pair.
+`examples/e_look/e2_theme_file.py` and `examples/my_theme.json` are a working pair.
 The same choice works on a running app: `app.theme = "my_theme.json"` redraws
 every open page.
 

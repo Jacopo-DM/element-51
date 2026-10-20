@@ -11,14 +11,19 @@ the ignore list in CLAUDE.md.
 - `element_51.asgi_app(app, theme=None)`: an ASGI app to mount in an existing
   server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
-- `examples/a1_two_nodes.py` to `a6_port_types.py`: served graphs, one idea each
-  (two nodes and a link, which opens the browser, arithmetic, strings, errors, diamond and int to float, all four
-  port types), `a8_multiple_outputs.py` (a function with two outputs) and
-  `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
-  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo), `a15_light_theme.py` (the light theme), `a16_menu.py` (categories and the nested menu with search), `a17_card_menu.py` (the menu on a card's header icon), `a18_theme_file.py` with `my_theme.json` (a theme file), `a19_fastapi_host.py` and `a20_nicegui_host.py` (the editor mounted at `/editor` in a FastAPI or NiceGUI host, with a side panel). `a7_script_api.py`: the graph from plain
-  Python, no browser. `a0_hello_world.py` is the project template, not an
-  example of the library. Each example has `build_app()`; `tests/test_examples.py`
-  runs every one.
+- `examples/`, in group folders; the file name starts with the folder's letter and
+  a number. `a_basics`: `a1_hello_world.py` (the project template, not an example
+  of the library), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
+  `a4_strings.py`. `b_node_types`: `b1_port_types.py`, `b2_multiple_outputs.py`,
+  `b3_class_nodes.py`, `b4_diamond.py`, `b5_errors.py`. `c_python_api`:
+  `c1_script_api.py` (the graph from plain Python, no browser), `c2_live_push.py`
+  (a script edits the graph while the page is open), `c3_save_load.py`.
+  `d_editor`: `d1_big_graph.py` (pan, zoom, move, select, delete),
+  `d2_values.py`, `d3_undo_redo.py`, `d4_menu.py`, `d5_card_menu.py`. `e_look`:
+  `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`. `f_embedding`:
+  `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
+  in a FastAPI or NiceGUI host, with a side panel). Each example has
+  `build_app()`; `tests/test_examples.py` runs every one except the template.
 - Browser: `element_51_web::start()` runs when the page loads, opens `/ws`, and
   wires the canvas, the right-click menu and the window.
 
@@ -65,7 +70,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_store.py`, `test_theme.py`, `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a20` file and runs its graph).
+`test_examples.py` (loads every example in `examples/` and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`

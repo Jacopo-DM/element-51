@@ -1,9 +1,9 @@
 """Save a graph to a file and load it back, with the page open.
 
-Run it: `uv run python examples/a11_save_load.py`, then open
+Run it: `uv run python examples/c_python_api/c3_save_load.py`, then open
 http://127.0.0.1:8765. The page shows a small graph. Add a node or two by hand,
 then press Ctrl+C. Run it again: the graph you left is back, because the script
-loads `a11_graph.json` (next to this file) if it exists, and saves it again on
+loads `c3_graph.json` (next to this file) if it exists, and saves it again on
 exit. Delete that file to start over. Open it in a text editor to see the
 format: a `format_version`, the nodes with their positions, and the links.
 
@@ -22,7 +22,7 @@ from rich.traceback import install
 import element_51
 
 # --- Globals --- #
-FILE = Path(__file__).with_name("a11_graph.json")
+FILE = Path(__file__).with_name("c3_graph.json")
 
 # --- Warnings --- #
 

@@ -1,8 +1,8 @@
 """Use the graph from plain Python, with no browser.
 
-Run it: `uv run python examples/a7_script_api.py`. It builds a graph with
-`add_node` and `add_link`, runs it with `app.run()`, and shows what happens
-when a node fails. To look at the same graph in the editor, call
+Run it: `uv run python examples/c_python_api/c1_script_api.py`. It builds a
+graph with `add_node` and `add_link`, runs it with `app.run()`, and shows what
+happens when a node fails. To look at the same graph in the editor, call
 `element_51.serve(app)` instead.
 
 """

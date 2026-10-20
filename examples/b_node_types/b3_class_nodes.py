@@ -4,7 +4,7 @@ Press Run. `Greeting` has two text inputs with defaults, so with no links it
 says "hello, world!", and `Shout` upper-cases it. `Numbers` returns two values,
 so it has two output ports, and `Summary` turns them into a total and a mean.
 
-Compare with `a8_multiple_outputs.py`, which uses the function form. Both build
+Compare with `b2_multiple_outputs.py`, which uses the function form. Both build
 the same kind of node. A class gets its input types checked by pydantic, and
 the class name is the name you see in the right-click menu.
 

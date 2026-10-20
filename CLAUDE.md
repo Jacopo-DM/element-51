@@ -42,8 +42,8 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust lint | `R cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings` | about 1 s warm |
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
-| Serve the editor | `uv run examples/a1_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
-| Serve another example | `uv run python examples/a2_arithmetic.py` (a2 to a6, a8, a9 to a20 serve on http://127.0.0.1:8765; a7 prints and exits) | same port, so stop one before starting the next |
+| Serve the editor | `uv run examples/a_basics/a2_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
+| Serve another example | `uv run python examples/a_basics/a3_arithmetic.py` (every example except `c1_script_api.py`, which prints and exits, and `a1_hello_world.py`, the template, serves on http://127.0.0.1:8765) | same port, so stop one before starting the next |
 
 ## Code rules
 
@@ -61,9 +61,12 @@ has no WASM target and is not used. Every Rust command below is prefixed with
   parts use CSS custom properties such as `var(--menu-bg)`.
 - A change to a wire record (snapshot, edit, node type) changes the shared files in
   `tests/fixtures/` too; both test suites read them.
-- A feature the user can try gets a runnable example in `examples/`, laid out like
-  `examples/a0_hello_world.py`: a docstring with a `Notes` section that says what
-  to try, the comment headers (Standard library, Third-party libraries, Local
+- A feature the user can try gets a runnable example in `examples/`, in the group
+  folder it belongs to (`a_basics`, `b_node_types`, `c_python_api`, `d_editor`,
+  `e_look`, `f_embedding`; the file is named with the folder's letter and the next
+  number), laid out like
+  `examples/a_basics/a1_hello_world.py`: a docstring with a `Notes` section that
+  says what to try, the comment headers (Standard library, Third-party libraries, Local
   libraries, Globals, Warnings, Typing, Terminal output setup), the rich traceback
   and console, `main()` and the guard. Leave out the random generator and the
   data folder unless the example needs them. Add a `build_app()` and a row in
@@ -141,7 +144,7 @@ No tool ignore or deny file exists in this repo, so none was changed.
   restart the example only after a Python change.
 - To run an example that opens a browser without opening the user's own browser,
   set `BROWSER="echo OPENED %s"`: Python's `webbrowser` then prints the URL
-  instead (`BROWSER="echo OPENED %s" uv run examples/a1_two_nodes.py`).
+  instead (`BROWSER="echo OPENED %s" uv run examples/a_basics/a2_two_nodes.py`).
 - zsh stops on an unquoted `--include=*.rs` ("no matches found"); quote it or use
   `rg -g '*.rs'`.
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's
