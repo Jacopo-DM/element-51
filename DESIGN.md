@@ -789,8 +789,8 @@ sha256 for Linux offline, and `cargo install --locked` needs none (it costs a fe
 minutes per run; a cache could be added). The toolchain is `stable`, which is
 what `build_wasm.py` asks rustup for, so a new stable release can add clippy
 lints and fail CI; fix the code then. Indents are multiples of 4, so each list
-item starts with a bare dash. There is no remote, so the workflow has not run on
-GitHub; the same commands, the YAML parse and the wheel check were run locally.
+item starts with a bare dash. The workflow first ran on GitHub on 2026-10-21 (Results); before
+that the same commands, the YAML parse and the wheel check were run locally.
 
 Scrolling add-node menu, task 24 (2026-10-20, the user approved it): the menu's
 tree now has `max-height: calc(100vh - 90px)` and `overflow-y: auto`, as the

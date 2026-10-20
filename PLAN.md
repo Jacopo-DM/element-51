@@ -124,8 +124,12 @@ merged branches are deleted (`notes-before-compact-4` too, 2026-10-20); the only
 other branch is `main`.
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
-merged branches deleted, all at the user's say-so. There is no remote, so nothing
-is pushed. The user approves each task start and each branch deletion in one
+merged branches deleted, all at the user's say-so. The repo was pushed on
+2026-10-21 to https://github.com/Jacopo-DM/element-51 (public, `main` and the tag
+`v0.1.0`); every later push needs the user's say-so. New commits in this repo use
+GitHub's noreply address (`git config user.email`, set locally); the first 116 keep
+the user's own address, which is already public in `ci-group/ariel`, so no rewrite
+was done (user's choice). The user approves each task start and each branch deletion in one
 reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
@@ -323,8 +327,8 @@ Oldest first.
 - The page parts and the theme colours are checked at AA by tests and by axe in
     the built-in browser pane; a scan with a real screen reader was not done.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
-    the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
-    run on GitHub yet, since there is no remote; its commands were run by hand.
+    the tests avoid this with a fake folder. The workflows ran on GitHub for the
+    first time on 2026-10-21 (see the results in DESIGN.md, Results).
 - `element-51-web` has no automated test; it is checked by hand in the browser.
 - A browser edit and a script edit that propose the same node id still collide
     (the browser picks ids from its own copy); Python refuses the later one and the
