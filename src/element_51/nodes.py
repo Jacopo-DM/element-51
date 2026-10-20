@@ -6,23 +6,8 @@ from typing import ClassVar, Protocol, cast, get_type_hints, overload
 
 from pydantic import BaseModel
 
-from element_51.model import (
-    Model,
-    NodeType,
-    Port,
-    PortType,
-    PortValue,
-    value_fits,
-)
-
-PORT_TYPES: dict[type, PortType] = {
-    float: PortType.FLOAT,
-    int: PortType.INT,
-    str: PortType.STR,
-    bool: PortType.BOOL,
-}
-
-NO_DEFAULT = inspect.Parameter.empty
+from element_51.model import Model, NodeType, Port, PortValue, value_fits
+from element_51.ports import NO_DEFAULT, input_port, output_ports
 
 
 class NamedCall(Protocol):
@@ -161,7 +146,7 @@ class Node(Model):
                 msg = f"{where}: default_factory is not supported"
                 raise TypeError(msg)
             default = NO_DEFAULT if info.is_required() else info.default
-            port = _input_port(field_name, info.annotation, default, where)
+            port = input_port(field_name, info.annotation, default, where)
             inputs.append(port)
             if value_fits(default, port.kind):
                 defaults[field_name] = default
@@ -169,7 +154,7 @@ class Node(Model):
         if "return" not in hints:
             msg = f"{name}, return: no type hint"
             raise TypeError(msg)
-        outputs, output_model = _output_ports(name, hints["return"])
+        outputs, output_model = output_ports(name, hints["return"])
         cls.node_type = NodeType(
             name=name,
             inputs=tuple(inputs),
@@ -205,85 +190,6 @@ class Node(Model):
             Whatever `run` returns.
         """
         return cls(**inputs).run()
-
-
-def port_type(annotation: object, where: str) -> PortType:
-    """Map a type hint to a port type.
-
-    Parameters
-    ----------
-    annotation
-        The hint from the function signature.
-    where
-        Words naming the hint in an error, for example "parameter 'a'".
-
-    Returns
-    -------
-    PortType
-        The port type for the hint.
-
-    Raises
-    ------
-    TypeError
-        If the hint is not float, int, str or bool.
-    """
-    if isinstance(annotation, type) and annotation in PORT_TYPES:
-        return PORT_TYPES[annotation]
-    msg = f"{where}: {annotation!r} is not one of float, int, str, bool"
-    raise TypeError(msg)
-
-
-def _input_port(
-    name: str, annotation: object, default: object, where: str
-) -> Port:
-    """Build an input port, checking its default against its type.
-
-    Returns
-    -------
-    Port
-        The input port.
-
-    Raises
-    ------
-    TypeError
-        If the type is unsupported or the default does not fit it.
-    """
-    kind = port_type(annotation, where)
-    if default is not NO_DEFAULT and not value_fits(default, kind):
-        msg = f"{where}: default {default!r} is not a {kind}"
-        raise TypeError(msg)
-    return Port(name=name, kind=kind)
-
-
-def _output_ports(
-    name: str, annotation: object
-) -> tuple[tuple[Port, ...], type[BaseModel] | None]:
-    """Build the output ports from a return hint.
-
-    A pydantic model gives one port per field, in the order declared. Any
-    other hint gives the single port `out`.
-
-    Returns
-    -------
-    tuple[tuple[Port, ...], type[BaseModel] | None]
-        The ports, and the model if there is one.
-    """
-    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
-        return (
-            tuple(
-                Port(
-                    name=field_name,
-                    kind=port_type(
-                        info.annotation, f"{name}, return field {field_name!r}"
-                    ),
-                )
-                for field_name, info in annotation.model_fields.items()
-            ),
-            annotation,
-        )
-    return (
-        Port(name="out", kind=port_type(annotation, f"{name}, return")),
-    ), None
 
 
 def _build_node[**P, R](
@@ -335,7 +241,7 @@ def _build_node[**P, R](
         if parameter.name not in hints:
             msg = f"{where}: no type hint"
             raise TypeError(msg)
-        port = _input_port(
+        port = input_port(
             parameter.name, hints[parameter.name], parameter.default, where
         )
         inputs.append(port)
@@ -344,7 +250,7 @@ def _build_node[**P, R](
     if "return" not in hints:
         msg = f"{name}, return: no type hint"
         raise TypeError(msg)
-    outputs, output_model = _output_ports(name, hints["return"])
+    outputs, output_model = output_ports(name, hints["return"])
     node_type = NodeType(
         name=name,
         inputs=tuple(inputs),

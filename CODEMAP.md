@@ -43,7 +43,8 @@ the ignore list in CLAUDE.md.
 | `__init__` | package surface | `App`, `Model`, `Node`, `NodeFunction`, `node`, `asgi_app`, `serve`, `StoreError` |
 | `model` | immutable records for node types and graphs | `Model`, `PortType`, `PortValue`, `value_fits`, `can_link`, `NodeId`, `Port`, `NodeType` (`defaults`, `category`), `PortRef`, `Link`, `PlacedNode` (`values`), `Graph` (with `next_id()`) |
 | `edits` | edits and the rules that allow or refuse them | `AddNode`, `AddLink`, `MoveNode`, `DeleteNode`, `DeleteLink`, `SetValue`, `AnyEdit`, `Edit`, `apply_edit`, `EditError`, `EditErrorKind` |
-| `nodes` | `@node` and the `Node` base class turn a typed function or a class into a node type, with its defaults and output model | `node` (bare, or `node(category=...)`), `Node` (`run`, `call`; `node_type`, `defaults`, `output_model` built per subclass), `NodeFunction` (`call`, `defaults`, `output_model`), `Registered` (protocol), `port_type` |
+| `ports` | maps a type hint to a port type, and builds input and output ports, checking defaults | `PORT_TYPES`, `NO_DEFAULT`, `port_type`, `input_port`, `output_ports` |
+| `nodes` | `@node` and the `Node` base class turn a typed function or a class into a node type, with its defaults and output model | `node` (bare, or `node(category=...)`), `Node` (`run`, `call`; `node_type`, `defaults`, `output_model` built per subclass), `NodeFunction` (`call`, `defaults`, `output_model`), `Registered` (protocol) |
 | `engine` | runs a graph in dependency order; an input takes its link, then the node's own value, then the default | `run_graph`, `RunResult`, `NodeOutcome` (`outputs` by port) |
 | `protocol` | messages in both directions | `Snapshot` (carries `theme` and `theme_changes`), `EditRequest`, `RunRequest`, `ClientMessage`, `Ack`, `Reject` (and `engine.RunResult`) |
 | `session` | the live graph and the node types | `App(node_functions)` (every change and snapshot takes one re-entrant lock), `App.add_node`, `App.add_link`, `App.theme` (the getter returns the base theme's name; the setter takes a name or the path of a theme file, validates and pushes), `App.subscribe`, `App.save`, `App.load`, `App.apply` (silent), `App.execute`, `App.run` (nested: node id, then port), `App.snapshot`, `App.graph` |
@@ -51,10 +52,12 @@ the ignore list in CLAUDE.md.
 | `store` | save and load a graph as versioned JSON | `FORMAT_VERSION` (2; reads 1 and 2), `StoreError`, `save_graph`, `load_graph` |
 | `server` | page, WASM files and `/ws` through starlette and uvicorn | `asgi_app(app, theme)`, `serve(app, port, open_browser, theme)`, `PageServer`, async `reply_to`, `Hub` (open pages, `broadcast`), `Connection` (one page's outbox, `send`, `pump`), `Sender`, `WEB_DIR`, `HOST` |
 
+Sizes in lines: `__init__` 18, `edits` 303, `engine` 237, `model` 150, `nodes` 355, `ports` 95, `protocol` 54, `server` 222, `session` 250, `store` 126, `theme` 101 (1,911 in all).
+
 Import direction: `server` imports `session`, `protocol`, `edits`, `engine`;
 `session` imports `nodes`, `protocol`, `edits`, `engine`, `store`, `model`; `store` imports `edits`, `model`; `engine`
 imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
-`nodes` import `model`. Nothing imports
+`ports` import `model`; `nodes` imports `model` and `ports`. Nothing imports
 `server` except `__init__`. `web/` holds the built page and WASM (generated).
 
 ## Rust, `rust/`
@@ -63,6 +66,10 @@ imports `nodes`, `model`; `protocol` imports `edits`, `model`; `edits` and
 | --- | --- | --- |
 | `element-51-core` | records, messages, `address::websocket_url` (the page's websocket sits beside the page), edit rules, the browser's graph copy, box layout; native tests | `PortType`, `Port`, `NodeType`, `PortRef`, `Link`, `PlacedNode`, `Graph` (`next_id`, `is_linked`), `Snapshot` (`theme`, `theme_changes`), `Edit`, `EditRequest`, `Ack`, `Reject`, `RunRequest`, `RunResult` (`outcome_for`, `error_summary`), `NodeOutcome` (`outputs`, `output_text`), `Status`, `Message` (`from_json`, `to_json`), `can_link`, `apply_edit`, `value_fits`, `EditError` (`kind`), `fields::{parse_input, format_value}`, `menu::{Entry, Match, build_menu, search, CardAction, card_actions, clamp_into, flyout_at}` (`CardAction::label`, `edit`), `history::History` (`record`, `undo`, `redo`, `can_undo`, `can_redo`), `Replica` (`new`, `reset` (keeps pending edits that still apply), `graph`, `node_types`, `submit`, `ack`, `reject`, `pending_len`, `next_node_id`), `layout::{node_rect, icon_rect, icon_at, input_anchor, output_anchor, output_row, anchor_of, port_at, node_at, link_at, wire_controls, PortHit, Side, Rect}` (every one takes the theme's `Metrics`; a card's rows are its inputs, then its outputs), `theme::{Theme, Colours, Ports, PortSides, PortStyle, PortShape, Metrics, Page, Fonts, THEME_NAMES}` (`builtin`, `with_changes`, `port_style`, `css_variables`; built-in themes are JSON in `element-51-core/themes/`), `view::{View, MIN_ZOOM, MAX_ZOOM}` (`pan_by`, `zoom_at`, `to_screen`, `to_graph`) |
 | `element-51-web` | WASM layer: websocket, canvas drawing (`draw`, one `Frame` per frame, which carries the `Theme`; `columns` and `field_box` place the labels and value boxes; the dot grid, cards, wires and ports are drawn in that order), `apply_theme` (CSS custom properties from the theme), the HTML input boxes over the canvas (`sync_fields`), the add-node menu (`fill_menu`, `on_menu_search`, `on_menu_hover` places the flyouts), `mark_ready` (reveals the page after the first snapshot), the card menu on a card's header icon (`open_card_menu`, `on_card_menu_click`), an opaque canvas context at device-pixel size (`fit_canvas`, `json_parse`), undo and redo keys (`step_history`), mouse, wheel, key, menu and Run button handling (a `Gesture` is a link drag, a node move or a pan), error banner | `start()` (runs on load) |
+
+Sizes in lines. `element-51-core/src`: `address` 13, `edit` 266, `fields` 43, `history` 140, `layout` 265, `lib` 59, `menu` 150, `model` 287, `replica` 107, `theme` 427, `view` 70. `element-51-web/src`: `lib` 455, `draw` 497, `menu_ui` 293, `input` 258, `fields_ui` 182.
+
+`element-51-web` modules: `lib` holds the shared `State`, `start()`, the websocket and the edit flow (`submit`, `step_history`, `on_message`) and drawing the canvas; `input` holds `Gesture` and the mouse, wheel and key handlers (and `dragged_graph`, the preview of a node being dragged); `menu_ui` holds the add-node menu, the card menu and their placement; `fields_ui` holds the input boxes over the canvas; `draw` holds the canvas drawing. The three small modules reach `State`, `Shared`, `submit`, `redraw`, `show_error` and `listen` through `crate::`.
 
 Import direction: `element-51-web` imports `element-51-core`. The reverse never
 happens. `element-51-web/static/index.html` is copied into `src/element_51/web/`.
