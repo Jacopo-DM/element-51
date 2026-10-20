@@ -112,3 +112,39 @@ impl CardAction {
         }
     }
 }
+
+/// Where to put a popup of `size` that was asked for at `want`, so that it
+/// lies inside a window of `window` size with `margin` to spare. A popup too
+/// large for the window sticks to the top and left margin.
+pub fn clamp_into(
+    want: (f64, f64),
+    size: (f64, f64),
+    window: (f64, f64),
+    margin: f64,
+) -> (f64, f64) {
+    let x = want.0.min(window.0 - size.0 - margin).max(margin);
+    let y = want.1.min(window.1 - size.1 - margin).max(margin);
+    (x, y)
+}
+
+/// Where a flyout of `size` goes for the menu entry with edges `entry`, which
+/// is `(left, top, right)` in window pixels. The flyout opens against the entry's
+/// right edge, level with it and raised by `raise` (the menu's padding), or
+/// against its left edge if the right has no room. It is kept inside the window
+/// with `margin` to spare.
+pub fn flyout_at(
+    entry: (f64, f64, f64),
+    size: (f64, f64),
+    window: (f64, f64),
+    raise: f64,
+    margin: f64,
+) -> (f64, f64) {
+    let (left, top, right) = entry;
+    let x = if right + size.0 + margin > window.0 {
+        left - size.0
+    } else {
+        right
+    };
+    let (_, y) = clamp_into((x, top - raise), size, window, margin);
+    (x, y)
+}

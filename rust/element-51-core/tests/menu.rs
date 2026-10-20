@@ -119,3 +119,59 @@ fn a_card_offers_one_action_and_it_deletes_the_node() {
         Edit::DeleteNode { id: "n3".into() }
     );
 }
+
+mod placement {
+    use element_51_core::menu::{clamp_into, flyout_at};
+
+    const WINDOW: (f64, f64) = (1000.0, 800.0);
+
+    #[test]
+    fn a_menu_inside_the_window_stays_where_it_was_asked_for() {
+        assert_eq!(
+            clamp_into((100.0, 120.0), (160.0, 200.0), WINDOW, 8.0),
+            (100.0, 120.0)
+        );
+    }
+
+    #[test]
+    fn a_menu_that_hangs_out_is_moved_back_inside_with_the_margin() {
+        assert_eq!(
+            clamp_into((950.0, 700.0), (160.0, 200.0), WINDOW, 8.0),
+            (832.0, 592.0)
+        );
+        assert_eq!(
+            clamp_into((-30.0, -5.0), (160.0, 200.0), WINDOW, 8.0),
+            (8.0, 8.0)
+        );
+    }
+
+    #[test]
+    fn a_menu_taller_than_the_window_sticks_to_the_top_margin() {
+        assert_eq!(
+            clamp_into((10.0, 300.0), (160.0, 900.0), WINDOW, 8.0).1,
+            8.0
+        );
+    }
+
+    #[test]
+    fn a_flyout_opens_beside_its_entry_to_the_right_when_there_is_room() {
+        // The entry spans x 100 to 260 and starts at y 300; the flyout is level
+        // with it, raised by the menu padding of 4.
+        let at = flyout_at((100.0, 300.0, 260.0), (160.0, 120.0), WINDOW, 4.0, 8.0);
+        assert_eq!(at, (260.0, 296.0));
+    }
+
+    #[test]
+    fn a_flyout_opens_to_the_left_when_the_right_has_no_room() {
+        let at = flyout_at((780.0, 300.0, 940.0), (160.0, 120.0), WINDOW, 4.0, 8.0);
+        assert_eq!(at, (620.0, 296.0));
+    }
+
+    #[test]
+    fn a_flyout_near_the_bottom_is_lifted_to_fit_and_never_leaves_the_top() {
+        let low = flyout_at((100.0, 780.0, 260.0), (160.0, 300.0), WINDOW, 4.0, 8.0);
+        assert_eq!(low, (260.0, 492.0));
+        let high = flyout_at((100.0, 2.0, 260.0), (160.0, 120.0), WINDOW, 4.0, 8.0);
+        assert_eq!(high, (260.0, 8.0));
+    }
+}

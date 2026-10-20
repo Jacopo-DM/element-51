@@ -66,13 +66,12 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 15 and 18 to 22 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+tasks 1 to 15 and 18 to 24 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the known problems the user approved on 2026-10-20 (the add-node
-menu that does not scroll, the dark flash on the light theme, `App` thread
-safety), then drafts of the README body and docs prose for the user's review.
+Next step: the known problems the user approved on 2026-10-20 (the dark flash
+on the light theme, then `App` thread safety), then drafts of the README body and docs prose for the user's review.
 Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
@@ -88,7 +87,7 @@ Measured 2026-10-20 after task 22, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 217 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 115 tests.
+- cargo fmt, clippy (`-D warnings`), test: pass, 121 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
     the node's rows; the class-form example runs and its menu lists the class
@@ -149,6 +148,8 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Extra task, added by the user 2026-10-20
 
+24. **The add-node menu scrolls** (approved by the user 2026-10-20). Done: flyouts
+    are placed against the window, so the tree can scroll. Detail in DESIGN.md.
 23. **CI for the Rust crates and the WASM build** (approved by the user
     2026-10-20). Done: `.github/workflows/rust.yml`. Detail in DESIGN.md.
 22. **Page theme keys** (approved by the user 2026-10-20 in housekeeping). Done:
@@ -214,9 +215,6 @@ Oldest first.
 - `uv build` bundles `src/element_51/web/` only if `tools/build_wasm.py` ran
     first (checked 2026-10-19: the wheel held the WASM). Nothing stops a build
     without it, which would ship a package whose `asgi_app()` fails.
-- The add-node menu's tree does not scroll (a scrolling panel would clip the
-    flyout submenus), so a menu with more top-level entries than fit in the window
-    runs off its bottom. Search results do scroll.
 - The page starts in the dark theme and switches when the first snapshot names
     another one, so a light-theme page can flash dark for a moment.
 - A bool input is the browser's own checkbox. A theme can tint it when ticked

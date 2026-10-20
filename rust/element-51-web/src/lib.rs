@@ -10,7 +10,9 @@ use element_51_core::fields::{format_value, parse_input};
 use element_51_core::history::History;
 use element_51_core::layout::icon_at;
 use element_51_core::layout::{PortHit, Side, link_at, node_at, node_rect, port_at};
-use element_51_core::menu::{Entry, build_menu, card_actions, search as search_node_types};
+use element_51_core::menu::{
+    Entry, build_menu, card_actions, clamp_into, flyout_at, search as search_node_types,
+};
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
 use element_51_core::{
@@ -89,8 +91,6 @@ extern "C" {
 
 /// The least gap between the right-click menu and the window edge, in pixels.
 const MENU_MARGIN: f64 = 8.0;
-/// How much room a submenu needs to open to the right of its parent.
-const MENU_FLYOUT_WIDTH: f64 = 180.0;
 
 /// Connect to `/ws`, draw the graph Python sends, and send the user's edits.
 #[wasm_bindgen(start)]
@@ -191,6 +191,12 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&menu, "click", move |event: MouseEvent| {
             on_menu_click(&shared, &event)
+        })?;
+    }
+    if let Some(menu) = document.get_element_by_id("menu") {
+        let shared = state.clone();
+        listen(&menu, "mouseover", move |event: MouseEvent| {
+            on_menu_hover(&shared, &event)
         })?;
     }
     if let Some(card_menu) = document.get_element_by_id("card-menu") {
@@ -601,22 +607,14 @@ fn on_context_menu(shared: &Shared, event: &MouseEvent) {
     let _ = menu.remove_attribute("hidden");
     reset_menu_search(&state.document);
     // Now that it is laid out, move it back inside the window if it hangs out.
-    let Some(window) = web_sys::window() else {
-        return;
-    };
-    let size = |value: Result<JsValue, JsValue>| value.ok().and_then(|v| v.as_f64()).unwrap_or(0.0);
-    let (width, height) = (size(window.inner_width()), size(window.inner_height()));
     let rect = menu.get_bounding_client_rect();
-    let left = left
-        .min(width - rect.width() - MENU_MARGIN)
-        .max(MENU_MARGIN);
-    let top = top
-        .min(height - rect.height() - MENU_MARGIN)
-        .max(MENU_MARGIN);
+    let (left, top) = clamp_into(
+        (left, top),
+        (rect.width(), rect.height()),
+        window_size(),
+        MENU_MARGIN,
+    );
     let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
-    // Submenus open to the right unless that would leave the window.
-    let flip = rect.right() + MENU_FLYOUT_WIDTH > width;
-    menu.set_class_name(if flip { "flip" } else { "" });
 }
 
 /// Empty the search box, show the tree, and put the cursor in the box.
@@ -630,10 +628,50 @@ fn reset_menu_search(document: &Document) {
     }
     if let Some(tree) = document.get_element_by_id("menu-tree") {
         let _ = tree.remove_attribute("hidden");
+        tree.set_scroll_top(0);
     }
     if let Some(results) = document.get_element_by_id("menu-results") {
         let _ = results.set_attribute("hidden", "");
     }
+}
+
+/// The size of the browser window, in pixels.
+fn window_size() -> (f64, f64) {
+    let Some(window) = web_sys::window() else {
+        return (0.0, 0.0);
+    };
+    let pixels =
+        |value: Result<JsValue, JsValue>| value.ok().and_then(|v| v.as_f64()).unwrap_or(0.0);
+    (pixels(window.inner_width()), pixels(window.inner_height()))
+}
+
+/// Put the flyout of the menu entry under the pointer beside that entry. A
+/// flyout is positioned against the window, not its parent, so a menu that
+/// scrolls does not clip it.
+fn on_menu_hover(shared: &Shared, event: &MouseEvent) {
+    let Some(entry) = event
+        .target()
+        .and_then(|target| target.dyn_into::<Element>().ok())
+        .and_then(|element| element.closest(".submenu").ok().flatten())
+    else {
+        return;
+    };
+    let Ok(Some(panel)) = entry.query_selector(":scope > .panel") else {
+        return;
+    };
+    let raise = shared.borrow().theme.page.menu_pad;
+    let (outer, size) = (
+        entry.get_bounding_client_rect(),
+        panel.get_bounding_client_rect(),
+    );
+    let (left, top) = flyout_at(
+        (outer.left(), outer.top(), outer.right()),
+        (size.width(), size.height()),
+        window_size(),
+        raise,
+        MENU_MARGIN,
+    );
+    let _ = panel.set_attribute("style", &format!("left: {left}px; top: {top}px"));
 }
 
 fn hide_menu(state: &State) {
@@ -653,18 +691,14 @@ fn open_card_menu(state: &mut State, id: String, event: &MouseEvent) {
     let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
     let _ = menu.remove_attribute("hidden");
     // Move it back inside the window if it hangs out.
-    if let Some(window) = web_sys::window() {
-        let size =
-            |value: Result<JsValue, JsValue>| value.ok().and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let rect = menu.get_bounding_client_rect();
-        let left = left
-            .min(size(window.inner_width()) - rect.width() - MENU_MARGIN)
-            .max(MENU_MARGIN);
-        let top = top
-            .min(size(window.inner_height()) - rect.height() - MENU_MARGIN)
-            .max(MENU_MARGIN);
-        let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
-    }
+    let rect = menu.get_bounding_client_rect();
+    let (left, top) = clamp_into(
+        (left, top),
+        (rect.width(), rect.height()),
+        window_size(),
+        MENU_MARGIN,
+    );
+    let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
     state.card_menu_node = Some(id);
 }
 
