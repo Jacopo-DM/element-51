@@ -858,6 +858,13 @@ have to go through `tools/compress_images.py`).
     editor (square corners, `#4772b3` hover, 4.85:1), was the runner-up. The user
     preferred the softer, rounder look.
 
+- UI design pass, left alone on purpose (2026-10-20, the user confirmed): fit-to-view
+    and touch handling at phone width (new behaviour, not style); keyboard and
+    touch ways to open the menus and flyouts (new behaviour, part of the canvas
+    accessibility goal); custom illustration, decorative animation or a component
+    library (nothing in the page needs one); a "running" state for the Run button
+    (the page does not learn when a run ends, so it needs a protocol change).
+
 ## Results
 
 | Date | Change | Result |

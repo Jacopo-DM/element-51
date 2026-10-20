@@ -93,7 +93,8 @@ the Tier 3 items left alone on purpose are in DESIGN.md.
     positioned absolutely; bundle size is the WASM 706 KB plus a 3 KB page, to be
     re-measured after each task).
 - Status: in progress (Phase 0 and 1 done 2026-10-20; direction C chosen by the
-    user 2026-10-20, recorded in DESIGN.md; the task list waits for approval).
+    user 2026-10-20, recorded in DESIGN.md; tasks 1 to 4 approved in words
+    2026-10-20).
 - Added: 2026-10-20
 
 ### palette-try
@@ -123,7 +124,7 @@ the Tier 3 items left alone on purpose are in DESIGN.md.
         only the page's `Theme`, a by-hand reload check).
     6. No network request is made: the colours come from the link text (by hand,
         in the network log).
-- Status: draft, 2026-10-20; needs the user's approval in words. Specified from
+- Status: approved 2026-10-20, to follow `ui-design-pass` tasks 1 to 4. Specified from
     the user's answers of 2026-10-20 (by lightness and colour; a hamburger menu
     beside Run; kept until reload; text adjusted to stay readable).
 - Order: after goal `ui-design-pass` tasks 1 to 4, because it reuses their contrast
@@ -333,7 +334,7 @@ Each with the screen and state, the evidence, and who it affects.
     screen readers), so it is a new goal for `/zz-02-project-plan`, not part of
     this pass; see Open questions.
 
-### Goal `ui-design-pass`: proposed tasks (direction C; waiting for approval)
+### Goal `ui-design-pass`: tasks (direction C; approved 2026-10-20)
 
 Tier 1, foundations:
 
@@ -411,10 +412,6 @@ Oldest first.
     user asked for WCAG 2.2 AA including the canvas. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
-3. (2026-10-20) Goal `palette-try` (draft) and goal `ui-design-pass` edit the same
-    files. Proposed order: the four design tasks first. Needs the user's answer
-    with the approval of both.
-
 ## Known problems
 
 - The README says `uv add element-51`, which is true only after the user
