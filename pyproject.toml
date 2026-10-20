@@ -9,6 +9,11 @@ authors = [
     { name = "jmdm" }
 ]
 requires-python = ">=3.13"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
 dependencies = [
     "pydantic>=2.14.1",
     "starlette>=1.9.0",

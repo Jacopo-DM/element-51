@@ -1,7 +1,7 @@
 # element-51
 
 [![PyPI](https://img.shields.io/pypi/v/element-51)](https://pypi.org/project/element-51/)
-[![Python](https://img.shields.io/pypi/pyversions/element-51)](https://pypi.org/project/element-51/)
+[![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://pypi.org/project/element-51/)
 [![License](https://img.shields.io/pypi/l/element-51)](LICENSE)
 [![CI](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml)
 [![Rust and WASM](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml)
