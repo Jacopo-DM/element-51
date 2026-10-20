@@ -73,6 +73,13 @@ struct State {
 
 type Shared = Rc<RefCell<State>>;
 
+#[wasm_bindgen::prelude::wasm_bindgen]
+extern "C" {
+    /// `JSON.parse`, to build the options object for the canvas context.
+    #[wasm_bindgen(js_namespace = JSON, js_name = parse)]
+    fn json_parse(text: &str) -> JsValue;
+}
+
 /// The least gap between the right-click menu and the window edge, in pixels.
 const MENU_MARGIN: f64 = 8.0;
 /// How much room a submenu needs to open to the right of its parent.
@@ -87,8 +94,9 @@ pub fn start() -> Result<(), JsValue> {
         .get_element_by_id("canvas")
         .ok_or("no canvas element")?
         .dyn_into()?;
+    // An opaque canvas lets the browser use sharper text smoothing.
     let context: CanvasRenderingContext2d = canvas
-        .get_context("2d")?
+        .get_context_with_context_options("2d", &json_parse("{\"alpha\": false}"))?
         .ok_or("no 2d context")?
         .dyn_into()?;
     let location = window.location();

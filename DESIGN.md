@@ -550,6 +550,13 @@ font for the text in value boxes (numbers, strings, run outputs, link hints) and
 the page as `--value-font`. Menlo and `monospace` are the fallbacks. Port names,
 titles, menus and buttons stay in Verdana.
 
+The canvas context is created with `alpha: false` (2026-10-20): an opaque canvas
+lets Chrome smooth text with sub-pixel colour, which looks sharper on dark
+backgrounds than the grey smoothing of a transparent one. The options object is
+made with `JSON.parse` through a small `wasm_bindgen` import, so no new crate
+is needed. The user still saw soft text after the device-pixel fix, so this is a
+further attempt; whether it is enough depends on their screen and browser.
+
 ## Results
 
 | Date | Change | Result |
