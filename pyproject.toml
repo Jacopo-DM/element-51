@@ -1,6 +1,6 @@
 [project]
 name = "element-51"
-version = "0.1.0"
+version = "0.1.1"
 description = "Build browser node-editor GUIs from Python, with a Rust/WASM canvas."
 license = "Apache-2.0"
 license-files = ["LICENSE"]
