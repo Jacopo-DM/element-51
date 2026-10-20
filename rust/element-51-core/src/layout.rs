@@ -159,6 +159,41 @@ pub fn node_at(
         .map(|node| node.id.clone())
 }
 
+/// Where the three-bar icon is drawn in the header of the card at `rect`.
+pub fn icon_rect(rect: &Rect, metrics: &Metrics) -> Rect {
+    let bars = 3.0;
+    let h = bars * metrics.icon_bar + (bars - 1.0) * metrics.icon_gap;
+    Rect {
+        x: rect.x + rect.w - metrics.title_pad - metrics.icon_width,
+        y: rect.y + (metrics.header_height - h) / 2.0,
+        w: metrics.icon_width,
+        h,
+    }
+}
+
+/// The node whose header icon is under `(x, y)`, if any. Only the topmost card
+/// at that point counts, so an icon hidden under another card cannot be
+/// pressed. The target is the icon's width plus half the title padding on each
+/// side, over the full height of the header.
+pub fn icon_at(
+    graph: &Graph,
+    node_types: &[NodeType],
+    x: f64,
+    y: f64,
+    metrics: &Metrics,
+) -> Option<String> {
+    let id = node_at(graph, node_types, x, y, metrics)?;
+    let node = graph.nodes.iter().find(|node| node.id == id)?;
+    let node_type = node_types
+        .iter()
+        .find(|known| known.name == node.node_type)?;
+    let rect = node_rect(node, node_type, metrics);
+    let icon = icon_rect(&rect, metrics);
+    let slack = metrics.title_pad / 2.0;
+    let in_header = y >= rect.y && y <= rect.y + metrics.header_height;
+    (in_header && x >= icon.x - slack && x <= icon.x + icon.w + slack).then_some(id)
+}
+
 /// The four control points of the curve a link is drawn along: it leaves
 /// `from` and arrives at `to` horizontally.
 pub fn wire_controls(from: (f64, f64), to: (f64, f64), metrics: &Metrics) -> [(f64, f64); 4] {

@@ -106,3 +106,16 @@ fn empty_or_unmatched_text_finds_nothing() {
     assert!(search(&types(), "   ").is_empty());
     assert!(search(&types(), "zzz").is_empty());
 }
+
+#[test]
+fn a_card_offers_one_action_and_it_deletes_the_node() {
+    use element_51_core::Edit;
+    use element_51_core::menu::{CardAction, card_actions};
+    let actions = card_actions();
+    assert_eq!(actions, vec![CardAction::DeleteNode]);
+    assert_eq!(CardAction::DeleteNode.label(), "Delete node");
+    assert_eq!(
+        CardAction::DeleteNode.edit("n3"),
+        Edit::DeleteNode { id: "n3".into() }
+    );
+}

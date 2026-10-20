@@ -3,7 +3,7 @@
 //! Every colour, size and font comes from the `Theme` in the frame.
 
 use element_51_core::layout::{
-    PortHit, Rect, Side, anchor_of, input_anchor, node_rect, output_anchor, output_row,
+    PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_controls,
 };
 use element_51_core::theme::{Colours, Metrics, Theme};
@@ -323,19 +323,17 @@ fn card(
         rect.x + metrics.title_pad,
         middle + metrics.text_baseline,
     )?;
-    let icon_left = rect.x + rect.w - metrics.title_pad - metrics.icon_width;
+    let icon = icon_rect(&rect, metrics);
     context.set_text_align("right");
     context.fill_text(
         &node_type.name,
-        icon_left - metrics.title_pad,
+        icon.x - metrics.title_pad,
         middle + metrics.text_baseline,
     )?;
     context.set_fill_style_str(&colours.icon);
-    let bars = 3.0;
-    let stack = bars * metrics.icon_bar + (bars - 1.0) * metrics.icon_gap;
     for bar in 0..3 {
-        let top = middle - stack / 2.0 + f64::from(bar) * (metrics.icon_bar + metrics.icon_gap);
-        context.fill_rect(icon_left, top, metrics.icon_width, metrics.icon_bar);
+        let top = icon.y + f64::from(bar) * (metrics.icon_bar + metrics.icon_gap);
+        context.fill_rect(icon.x, top, icon.w, metrics.icon_bar);
     }
 
     // Rows: inputs first, then outputs. Each has a right-aligned name and a

@@ -1,6 +1,6 @@
 //! The add-node menu: nested categories, and search across all of them.
 
-use crate::NodeType;
+use crate::{Edit, NodeType};
 
 /// One line of a menu level.
 #[derive(Clone, Debug, PartialEq)]
@@ -84,4 +84,31 @@ pub fn search(node_types: &[NodeType], text: &str) -> Vec<Match> {
             })
         })
         .collect()
+}
+
+/// Something the menu on a card's header icon can do to that card's node.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CardAction {
+    DeleteNode,
+}
+
+/// The entries of the card menu, in the order shown.
+pub fn card_actions() -> Vec<CardAction> {
+    vec![CardAction::DeleteNode]
+}
+
+impl CardAction {
+    /// The words on the menu entry.
+    pub fn label(self) -> &'static str {
+        match self {
+            CardAction::DeleteNode => "Delete node",
+        }
+    }
+
+    /// The edit that carries out this action on node `id`.
+    pub fn edit(self, id: &str) -> Edit {
+        match self {
+            CardAction::DeleteNode => Edit::DeleteNode { id: id.to_string() },
+        }
+    }
 }

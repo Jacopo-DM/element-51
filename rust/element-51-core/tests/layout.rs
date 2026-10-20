@@ -1,8 +1,8 @@
 //! Size and position of a node box.
 
 use element_51_core::layout::{
-    Side, anchor_of, input_anchor, link_at, node_at as pick_node, node_rect, output_anchor,
-    output_row, port_at, wire_controls,
+    Side, anchor_of, icon_at, icon_rect, input_anchor, link_at, node_at as pick_node, node_rect,
+    output_anchor, output_row, port_at, wire_controls,
 };
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
@@ -298,4 +298,56 @@ fn layout_follows_the_metrics_it_is_given() {
         output_anchor(&rect, output_row(&types, 0), &wide),
         (295.0, 85.0)
     );
+}
+
+#[test]
+fn the_icon_sits_at_the_right_end_of_the_header_and_is_centred_in_it() {
+    let rect = node_rect(&node_at(40.0, 60.0), &node_type(&["a"], &[]), &m());
+    let icon = icon_rect(&rect, &m());
+    assert_eq!(
+        icon.x,
+        40.0 + m().node_width - m().title_pad - m().icon_width
+    );
+    assert_eq!(icon.w, m().icon_width);
+    let bars = 3.0;
+    assert_eq!(icon.h, bars * m().icon_bar + (bars - 1.0) * m().icon_gap);
+    assert_eq!(icon.y + icon.h / 2.0, 60.0 + m().header_height / 2.0);
+}
+
+#[test]
+fn a_press_on_the_icon_finds_its_node_and_a_press_elsewhere_does_not() {
+    let types = [node_type(&["a"], &["out"])];
+    let graph = graph_of(node_at(40.0, 60.0));
+    let rect = node_rect(&graph.nodes[0], &types[0], &m());
+    let icon = icon_rect(&rect, &m());
+    let (cx, cy) = (icon.x + icon.w / 2.0, icon.y + icon.h / 2.0);
+    assert_eq!(icon_at(&graph, &types, cx, cy, &m()).as_deref(), Some("n1"));
+    // The hit area is the whole header height, a little wider than the bars.
+    assert!(icon_at(&graph, &types, cx, rect.y + 1.0, &m()).is_some());
+    // The title text, the body of the card and empty canvas are not the icon.
+    assert!(icon_at(&graph, &types, rect.x + 10.0, cy, &m()).is_none());
+    assert!(icon_at(&graph, &types, cx, rect.y + m().header_height + 5.0, &m()).is_none());
+    assert!(icon_at(&graph, &types, 900.0, 900.0, &m()).is_none());
+    assert!(icon_at(&graph, &[], cx, cy, &m()).is_none());
+}
+
+#[test]
+fn an_icon_under_another_card_cannot_be_pressed() {
+    let types = [node_type(&["a"], &["out"])];
+    let mut under = node_at(0.0, 0.0);
+    under.id = "under".into();
+    let mut over = node_at(60.0, 0.0);
+    over.id = "over".into();
+    let graph = Graph {
+        nodes: vec![under.clone(), over.clone()],
+        links: vec![],
+    };
+    let icon_under = icon_rect(&node_rect(&under, &types[0], &m()), &m());
+    let icon_over = icon_rect(&node_rect(&over, &types[0], &m()), &m());
+    let y = icon_under.y + icon_under.h / 2.0;
+    // The lower card's icon lies inside the upper card's header.
+    let x = icon_under.x + icon_under.w / 2.0;
+    assert!(icon_at(&graph, &types, x, y, &m()).is_none());
+    let x = icon_over.x + icon_over.w / 2.0;
+    assert_eq!(icon_at(&graph, &types, x, y, &m()).as_deref(), Some("over"));
 }

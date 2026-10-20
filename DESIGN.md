@@ -453,8 +453,8 @@ theme, with the credit in the README.
   output's box shows `output` greyed, then the value after a run; the page's
   input boxes sit over unlinked inputs' boxes and a bool is a small checkbox
   at the start of its box. The title bar has the id bold on the left, the type
-  name bold on the right and a three-bar icon (decoration until task 18 gives
-  it a menu). Cards have a 2-unit border in the header grey and a light
+  name bold on the right and a three-bar icon (clicking it opens the card menu,
+  task 18). Cards have a 2-unit border in the header grey and a light
   selection outline. The canvas has a dot grid (every 24 units, left out when
   the dots would be under 8 pixels apart). Colours are the sampled ones where
   we have them (card `#202020`, header and border `#505050`, value box
@@ -521,10 +521,23 @@ theme, with the credit in the README.
 - starlette's `TestClient`: needs `httpx` as a new dev dependency; tests use a
   real uvicorn server and the `websockets` client instead (see Decisions).
 
+Task 18, the card menu (2026-10-20): clicking the three-bar icon selects the
+card and opens a small popup at the pointer, in the theme's menu colours
+(`#card-menu`, the same CSS variables as the add-node menu). `layout::icon_rect`
+gives the icon's box, which `draw.rs` also uses, and `layout::icon_at` finds
+the node whose icon is under a point: only the topmost card there counts, and
+the target is the icon plus half the title padding each side, over the header's
+full height. `menu::CardAction` lists what the popup can do and maps each action
+to an edit, so the entry list and the edit are native-tested; the page builds
+its buttons from `card_actions()`. There is one entry, Delete node, as the user
+chose. It goes through the normal edit channel, so undo brings the node back.
+Escape, a click elsewhere and a right-click close the popup.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 18: the header icon opens a Delete node menu | native tests: icon box position and size, icon hit-test (inside, header height, title text and body excluded, under another card refused), the entry list and its edit; by hand with `a17_card_menu.py`: the click opens the popup and selects the card, Delete node removes the node and its links, Cmd+Z restores them, Escape and a click on empty canvas close the popup; 194 Python tests at 100%, 90 Rust tests |
 | 2026-10-19 | task 14: categories and the nested menu with search | native tests: tree nesting and order, search by name, path and case, empty results; pytest: bare and called decorator, class variable, badly formed categories refused, fixtures carry `category`; by hand with `a16_menu.py`: Math > Trig > sine adds a node at the click, `math` lists three matches with paths, Enter adds the first, Escape closes, flyouts flip left near the right edge; 193 Python tests at 100%, 86 Rust tests |
 | 2026-10-19 | task 13: `antimony-light`, `serve(theme=...)` | pytest: theme names equal on both sides, unknown name lists the valid ones and starts no server, setting the theme pushes a snapshot, every snapshot names the theme; native: both themes parse, share sizes, differ in canvas and selected wire; by eye with `a15_light_theme.py`: light canvas and grid, dark cards, dark selected wire; 181 Python tests at 100%, 79 Rust tests |
 | 2026-10-19 | task 12: the Antimony look | native tests rewritten for stacked rows and inset ports (anchors, hit-testing, link picking, metrics); by eye in the browser pane next to the screenshots: dark cards with a grey title bar, id left, type right, icon, right-aligned names, dark value boxes, greyed hints, ports over wires, dot grid; typed value 5 gives 15.0 on Run and a float to int link is refused with the right hit-testing; 77 Rust tests, 167 Python tests at 100%; the user's acceptance (criterion 1) is pending |

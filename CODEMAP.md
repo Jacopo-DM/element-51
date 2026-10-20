@@ -14,7 +14,7 @@ the ignore list in CLAUDE.md.
   (two nodes and a link, which opens the browser, arithmetic, strings, errors, diamond and int to float, all four
   port types), `a8_multiple_outputs.py` (a function with two outputs) and
   `a9_class_nodes.py` (class-form nodes), `a10_live_push.py` (a script edits the
-  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo), `a15_light_theme.py` (the light theme), `a16_menu.py` (categories and the nested menu with search). `a7_script_api.py`: the graph from plain
+  graph while the page is open), `a11_save_load.py` (save and load a file), `a12_big_graph.py` (pan, zoom, move, select, delete), `a13_values.py` (typing values into inputs), `a14_undo_redo.py` (undo and redo), `a15_light_theme.py` (the light theme), `a16_menu.py` (categories and the nested menu with search), `a17_card_menu.py` (the menu on a card's header icon). `a7_script_api.py`: the graph from plain
   Python, no browser. `a0_hello_world.py` is the project template, not an
   example of the library. Each example has `build_app()`; `tests/test_examples.py`
   runs every one.
@@ -64,7 +64,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_store.py`, `test_theme.py`, `test_server.py` (a real uvicorn server and the `websockets` client),
-`test_examples.py` (loads every `examples/a1` to `a16` file and runs its graph).
+`test_examples.py` (loads every `examples/a1` to `a17` file and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
@@ -72,8 +72,3 @@ Rust, `rust/element-51-core/tests/`: `snapshot.rs`, `messages.rs`, `rules.rs`
 `history.rs`, `menu.rs`, `theme.rs` (includes the no-hex-colour scan of the web
 crate); unit tests for
 `can_link` sit in `src/lib.rs`. `element-51-web` has no automated tests.
-
-## Not built yet
-
-The header icon's menu (task 18). The
-planned layout is in DESIGN.md under Specs.

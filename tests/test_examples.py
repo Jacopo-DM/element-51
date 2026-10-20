@@ -64,6 +64,11 @@ EXPECTED: dict[str, Expected] = {
     ],
     "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
     "a16_menu.py": [("n1", "ok", {"out": 3.0})],
+    "a17_card_menu.py": [
+        ("n1", "ok", {"out": 3.0}),
+        ("n2", "ok", {"out": 5.0}),
+        ("n3", "ok", {"out": 5.0}),
+    ],
     "a15_light_theme.py": [
         ("n1", "ok", {"out": 12.0}),
         ("n2", "ok", {"out": 6.0}),

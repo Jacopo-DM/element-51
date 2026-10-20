@@ -59,19 +59,20 @@
 - Status: approved 2026-10-19. Spec approved 2026-10-19 (DESIGN.md, under
   "antimony-theme spec"), with these choices: rows stacked like Antimony, the
   header icon opens a small menu (task 18), the theme is chosen only by
-  `serve(theme=...)`. In progress: tasks 11 to 15 are done (the user accepted the look, so
-  criteria 1 to 5 are met), next is task 18.
+  `serve(theme=...)`. In progress: tasks 11 to 15 and 18 are done (the user accepted the look, so
+  criteria 1 to 5 are met); the goal waits only for the user's look at task 18.
 - Added: 2026-10-19
 
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 14 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+tasks 1 to 15 and 18 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: task 18 (the header icon menu; one entry, Delete node, confirmed). The user's own try-out of goal
-`skeleton` is still pending, and so is their look at the menu (task 14).
+Next step: the user's own try-out of goal `skeleton`, and their look at the menus
+(tasks 14 and 18, examples `a16` and `a17`); after that Tier 3, starting with CI
+that builds the WASM and runs the Rust checks.
 Nothing is uncommitted. All merged branches are
 deleted. There is no remote, so nothing
 is pushed. The user approves each task start and each branch deletion in one
@@ -79,11 +80,11 @@ reply ("Yes, start task N, and delete the merged branch ...").
 
 ## Baseline
 
-Measured 2026-10-19 after task 14, Apple silicon, Python 3.13:
+Measured 2026-10-20 after task 18, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 193 passed, 100% coverage, about 4 s (includes every example).
-- cargo fmt, clippy (`-D warnings`), test: pass, 86 tests.
+- pytest: 194 passed, 100% coverage, about 4 s (includes every example).
+- cargo fmt, clippy (`-D warnings`), test: pass, 90 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
   the node's rows; the class-form example runs and its menu lists the class
@@ -102,7 +103,9 @@ Measured 2026-10-19 after task 14, Apple silicon, Python 3.13:
   light grey with a dot grid, the cards stay dark and a selected wire is dark;
   with `a16_menu.py` the right-click menu has Math > Trig > sine flyouts, the
   search box lists matches with their paths, Enter adds the first and Escape
-  closes, and the flyouts flip left near the right edge.
+  closes, and the flyouts flip left near the right edge; with `a17_card_menu.py`
+  the icon opens a Delete node popup, the click removes the node and its links,
+  Cmd+Z restores them, and Escape or a click elsewhere closes it.
 
 ## Tasks
 
@@ -137,17 +140,8 @@ wire curve was changed to stop it hugging a card's edge; details in DESIGN.md.
 
 Tasks 11 (`Theme`), 12 (the Antimony look; the user accepted it), 13
 (`antimony-light`, `serve(theme=...)`) and 14 (categories and the nested menu
-with search) are done, and 15 (README credit); detail in DESIGN.md. Open, below: 18.
+with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the card menu) is also done.
 
-
-### Goal `antimony-theme` (depends on tasks 1, 2 and 7)
-
-18. **The header icon opens a small menu** (added 2026-10-19 by the user's
-    choice while approving the spec). Clicking the three-bar icon on a card
-    opens a small popup with one entry, Delete node, in the theme's menu
-    style. The user gave "for example Delete node"; The user confirmed on 2026-10-19
-    that Delete node is the only entry. After task 12 (done). Risk low. Cost about 120 lines Rust.
-    Verify: native test for the entry list; by hand.
 
 ### Tier 3: listed, not executed
 
@@ -201,6 +195,5 @@ None.
   theme.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
   which is faint. The user may want it lighter (a theme colour, `placeholder`).
-- The three-bar icon on a card is decoration until task 18.
 - The undo history is per page: a reload empties it, and edits made by other
   pages or scripts are not in it (see DESIGN.md, undo and redo).

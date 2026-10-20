@@ -7,8 +7,9 @@ use std::rc::Rc;
 
 use element_51_core::fields::{format_value, parse_input};
 use element_51_core::history::History;
+use element_51_core::layout::icon_at;
 use element_51_core::layout::{PortHit, Side, link_at, node_at, node_rect, port_at};
-use element_51_core::menu::{Entry, build_menu, search as search_node_types};
+use element_51_core::menu::{Entry, build_menu, card_actions, search as search_node_types};
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
 use element_51_core::{
@@ -66,6 +67,8 @@ struct State {
     run: Option<RunResult>,
     /// Where the right-click menu was opened: new nodes are placed here.
     menu_at: (f64, f64),
+    /// The node whose card menu is open, if any.
+    card_menu_node: Option<String>,
 }
 
 type Shared = Rc<RefCell<State>>;
@@ -112,6 +115,7 @@ pub fn start() -> Result<(), JsValue> {
         hover: None,
         run: None,
         menu_at: (0.0, 0.0),
+        card_menu_node: None,
     }));
     fit_canvas(&state, &window);
 
@@ -172,6 +176,19 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&menu, "click", move |event: MouseEvent| {
             on_menu_click(&shared, &event)
+        })?;
+    }
+    if let Some(card_menu) = document.get_element_by_id("card-menu") {
+        for (index, action) in card_actions().into_iter().enumerate() {
+            if let Ok(button) = document.create_element("button") {
+                button.set_text_content(Some(action.label()));
+                let _ = button.set_attribute("data-card-action", &index.to_string());
+                let _ = card_menu.append_child(&button);
+            }
+        }
+        let shared = state.clone();
+        listen(&card_menu, "click", move |event: MouseEvent| {
+            on_card_menu_click(&shared, &event)
         })?;
     }
     if let Some(search) = document.get_element_by_id("menu-search") {
@@ -601,8 +618,58 @@ fn reset_menu_search(document: &Document) {
 }
 
 fn hide_menu(state: &State) {
-    if let Some(menu) = state.document.get_element_by_id("menu") {
-        let _ = menu.set_attribute("hidden", "");
+    for id in ["menu", "card-menu"] {
+        if let Some(menu) = state.document.get_element_by_id(id) {
+            let _ = menu.set_attribute("hidden", "");
+        }
+    }
+}
+
+/// Show the card menu for node `id` with its corner at the pointer.
+fn open_card_menu(state: &mut State, id: String, event: &MouseEvent) {
+    let Some(menu) = state.document.get_element_by_id("card-menu") else {
+        return;
+    };
+    let (left, top) = (f64::from(event.client_x()), f64::from(event.client_y()));
+    let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
+    let _ = menu.remove_attribute("hidden");
+    // Move it back inside the window if it hangs out.
+    if let Some(window) = web_sys::window() {
+        let size =
+            |value: Result<JsValue, JsValue>| value.ok().and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let rect = menu.get_bounding_client_rect();
+        let left = left
+            .min(size(window.inner_width()) - rect.width() - MENU_MARGIN)
+            .max(MENU_MARGIN);
+        let top = top
+            .min(size(window.inner_height()) - rect.height() - MENU_MARGIN)
+            .max(MENU_MARGIN);
+        let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
+    }
+    state.card_menu_node = Some(id);
+}
+
+/// A click on a card-menu entry carries out its action on the node.
+fn on_card_menu_click(shared: &Shared, event: &MouseEvent) {
+    let action = event
+        .target()
+        .and_then(|target| target.dyn_into::<Element>().ok())
+        .and_then(|target| target.get_attribute("data-card-action"))
+        .and_then(|index| index.parse::<usize>().ok())
+        .and_then(|index| card_actions().get(index).copied());
+    let edit = {
+        let mut state = shared.borrow_mut();
+        hide_menu(&state);
+        let id = state.card_menu_node.take();
+        let selected_here = matches!(&state.selected, Some(Selected::Node(selected)) if Some(selected) == id.as_ref());
+        if selected_here {
+            state.selected = None;
+        }
+        action.zip(id).map(|(action, id)| action.edit(&id))
+    };
+    match edit {
+        Some(edit) => submit(shared, edit),
+        None => redraw(shared),
     }
 }
 
@@ -666,7 +733,14 @@ fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
         }
         let screen = screen_point(event);
         let (x, y) = state.view.to_graph(screen.0, screen.1);
-        if let Some(hit) = port_under(&state, x, y).filter(|hit| hit.side == Side::Output) {
+        let icon = state
+            .replica
+            .as_ref()
+            .and_then(|r| icon_at(r.graph(), r.node_types(), x, y, &state.theme.metrics));
+        if let Some(id) = icon {
+            state.selected = Some(Selected::Node(id.clone()));
+            open_card_menu(&mut state, id, event);
+        } else if let Some(hit) = port_under(&state, x, y).filter(|hit| hit.side == Side::Output) {
             state.gesture = Gesture::Link(Drag {
                 source: PortRef {
                     node: hit.node,
@@ -819,6 +893,7 @@ fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
             },
             "Escape" => {
                 state.selected = None;
+                hide_menu(&state);
                 None
             }
             _ => return,
