@@ -81,7 +81,7 @@ the Tier 3 items left alone on purpose are in DESIGN.md.
 
 ### ui-design-pass: done (2026-10-20)
 
-Commits `0eeb4ee..` on branch `ui-design-pass` (baseline `710a82f`, direction `05d8ae7`, tasks 1 to 4 `f6146a2`, `3fcdd25`, `a5b971e`, `3ffabdd`). axe-core
+Commits `0eeb4ee..cb6a819` on branch `ui-design-pass` (palette-try is `cb6a819`; baseline `710a82f`, direction `05d8ae7`, tasks 1 to 4 `f6146a2`, `3fcdd25`, `a5b971e`, `3ffabdd`). axe-core
 violations 5 rules to 0 in both themes in every state checked; all theme colour
 pairs at WCAG 2.2 AA, enforced by a native test; focus and press states on every
 page control; the soft modern look in both themes. The numbers and screenshots
