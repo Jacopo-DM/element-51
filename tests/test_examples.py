@@ -9,11 +9,11 @@ import pytest
 from element_51.session import App
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
-TEMPLATE = "a1_hello_world.py"
 
 type Expected = list[tuple[str, str, dict[str, float | int | str | bool]]]
 
 EXPECTED: dict[str, Expected] = {
+    "a_basics/a1_hello_world.py": [("n1", "ok", {"out": "hello, world"})],
     "a_basics/a2_two_nodes.py": [
         ("n1", "ok", {"out": 21.0}),
         ("n2", "ok", {"out": 42.0}),
@@ -177,7 +177,6 @@ def test_every_example_has_an_expected_outcome() -> None:
     found = sorted(
         path.relative_to(EXAMPLES).as_posix()
         for path in EXAMPLES.glob("*/[a-z][0-9]*_*.py")
-        if path.name != TEMPLATE
     )
     assert found == sorted(EXPECTED)
 

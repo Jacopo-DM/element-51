@@ -20,9 +20,10 @@ the ignore list in CLAUDE.md.
 - `uv run python tools/measure_structure.py [--jscpd <binary>]`: print the
     structure numbers (files, lines, files over 400 lines, modules over five
     imports, clones).
+- `examples/template.py`: the project template for a script (not an example of the
+    library; the example tests do not load it).
 - `examples/`, in group folders; the file name starts with the folder's letter and
-    a number. `a_basics`: `a1_hello_world.py` (the project template, not an example
-    of the library), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
+    a number. `a_basics`: `a1_hello_world.py` (one node, opens the browser), `a2_two_nodes.py` (opens the browser), `a3_arithmetic.py`,
     `a4_strings.py`. `b_node_types`: `b1_port_types.py`, `b2_multiple_outputs.py`,
     `b3_class_nodes.py`, `b4_diamond.py`, `b5_errors.py`. `c_python_api`:
     `c1_script_api.py` (the graph from plain Python, no browser), `c2_live_push.py`
@@ -32,7 +33,7 @@ the ignore list in CLAUDE.md.
     `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`, `e3_palette.py`, `e4_purple_synthwave.py`. `f_embedding`:
     `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
     in a FastAPI or NiceGUI host, with a side panel). Each example has
-    `build_app()`; `tests/test_examples.py` runs every one except the template.
+    `build_app()`; `tests/test_examples.py` runs every one.
 - `docs/images/`: the three README screenshots (`dark`, `light`, `palette`; how they
     were made is in DESIGN.md, Gotchas).
 - `docs/themes.md`: the theme reference. A hand-written introduction, then one
@@ -123,7 +124,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_store.py`, `test_theme.py`, `test_server.py` (the page, `serve` and the process), `test_server_websocket.py` (a real uvicorn server and the `websockets` client), `test_server_hosts.py` (themes, and the FastAPI example's host with a fake web folder); `server_support.py` holds `running`, `fetch`, `post` and `free_port`, and `conftest.py` the `web_dir` fixture,
-`test_examples.py` (loads every example in `examples/` except the template `a1_hello_world.py` and runs its graph).
+`test_examples.py` (loads every example in `examples/` and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
 Rust, `rust/element-51-core/tests/`: `address.rs`, `snapshot.rs`, `messages.rs`, `rules.rs`

@@ -764,8 +764,10 @@ Decisions still use, map like this:
 | `a19_fastapi_host` | `f_embedding/f1_fastapi_host` |
 | `a20_nicegui_host` | `f_embedding/f2_nicegui_host` |
 
-`a1_hello_world.py` is the project template and keeps its numpy and data setup;
-`tests/test_examples.py` skips it by name.
+`examples/template.py` is the project template and keeps its numpy and data setup;
+it sits outside the group folders, so `tests/test_examples.py` does not load it.
+`a_basics/a1_hello_world.py` is a one-node example (added 2026-10-21; before that
+the file was the template, which looked empty).
 
 Page theme keys, task 22 (2026-10-20, the user approved starting it): a new
 `page` section holds the sizes of the page's own parts in CSS pixels (21 keys:

@@ -373,8 +373,9 @@ Oldest first.
     (`accent`), but the unticked box stays white.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
     which is faint. The user may want it lighter (a theme colour, `placeholder`).
-- `a1_hello_world.py` is the project template, not an example of the library: it
-    imports numpy and creates `__data__`, and the example tests skip it by name.
+- `examples/template.py` is the project template, not an example of the library: it
+    imports numpy and creates `__data__`; it sits outside the group folders, so the
+    example tests do not load it.
 - The NiceGUI host example (`f2_nicegui_host.py`) has no automated test, because
     `ui.run_with` changes NiceGUI's global state; the FastAPI one is tested.
 - The page keeps a few fixed sizes (1 px borders, the banner and search-box
