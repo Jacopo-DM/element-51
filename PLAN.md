@@ -88,6 +88,46 @@ page control; the soft modern look in both themes. The numbers and screenshots
 are in DESIGN.md (Results). Left alone on purpose, with reasons, in DESIGN.md.
 The canvas itself has no keyboard or screen-reader access: open question 2.
 
+### canvas-accessibility
+
+- Goal: a person who cannot use a mouse, or who uses a screen reader, can do
+    everything on the editor's canvas that a mouse user can: select, move, add,
+    link, delete and edit nodes, pan and zoom, run, and undo, and hear what
+    happened. Depends on `skeleton`.
+- Kind: new behaviour.
+- Success measure (each is a test or a recorded walk-through):
+    1. Every canvas action has a keyboard route: select a node or link, move a
+        node, add a node (the add-node menu opens by keyboard too), start and
+        finish a link from port to port, delete a node or link, set a value in a
+        node's box, pan and zoom, open a node's card menu, Run, undo and redo.
+        Each is a test where the logic is native (Rust), and a walk-through by me
+        in the browser pane for the DOM parts.
+    2. The page holds a hidden but real HTML list that mirrors the graph (one
+        item per node with its ports and its links, rebuilt on every change); a
+        focused item outlines the matching node on the canvas; a test checks the
+        list equals the snapshot.
+    3. A live status line announces each result: linked, refused (with the
+        reason), deleted, moved, added, and the end of a run (counts of ok, error
+        and skipped). It never vanishes on a timer for refusals, which also show
+        in the banner with Dismiss.
+    4. Focus is always visible (a 2 px ring in the theme's `focus` colour, 3:1
+        against its background, checked at AA for every theme and palette), and
+        the tab order is Run, the node list, the menu button.
+    5. axe-core 4.14.0 reports 0 violations in every state of `tools/ui_states.py`
+        (a new state per new part), in all three themes; no new colour pair fails
+        the native AA test.
+    6. Nothing a mouse user does today changes: the Rust and Python suites pass
+        unchanged apart from the new tests.
+- Non-goals (proposed): touch input and fit-to-view (a separate goal, PLAN.md
+    known problems), voice control, a tested run with a real screen reader (I
+    cannot run one here; it stays listed as not verified until the user tries
+    VoiceOver), keyboard shortcuts that can be rebound, and any change to the look.
+- Status: draft, added 2026-10-21. The user's answers (2026-10-21): everything the
+    mouse does by keyboard; a hidden list beside the canvas for the screen
+    reader; a live status line; checked with axe plus a keyboard walk-through by
+    me.
+- Added: 2026-10-21
+
 ### palette-try: done (2026-10-20)
 
 Pasting a Coolors link in the page (menu button at the top right, Load palette from Coolors link) applies
@@ -329,7 +369,7 @@ Oldest first.
     Monaco). Options not yet tried: a larger card font, or snapping text
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
-2. (2026-10-20) Canvas accessibility: the user asked for WCAG 2.2 AA including the
+2. (2026-10-20; now the draft goal `canvas-accessibility`, 2026-10-21) Canvas accessibility: the user asked for WCAG 2.2 AA including the
     canvas (nodes, wires, ports) when the design pass started. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
