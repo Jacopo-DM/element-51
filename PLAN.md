@@ -124,12 +124,8 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
-`main` equals `origin/main` (`3b658e0`). Thirteen merged local branches are not
-deleted yet, waiting for the user's say-so: `docs-commands`, `github-remote`,
-`notes-before-compact-6`, `notes-readme-images`, `purple-synthwave`,
-`readme-badges`, `readme-docs-link`, `readme-header-synthwave`, `readme-visuals`,
-`record-0-1-1`, `record-release`, `record-release-hold`, `release-0-1-1` (all
-merged into `main`).
+`main` equals `origin/main` (`825929d`, the merged Dependabot bump). No merged
+local branch is left (the thirteen were deleted on 2026-10-21 at the user's say-so).
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. The repo was pushed on
@@ -333,10 +329,7 @@ Oldest first.
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
     Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
     fix and touch support.
-3. (2026-10-21) Dependabot opened pull request #1 on GitHub, "Bump astral-sh/setup-uv
-    from 9.0.0 to 10.3.0" (a major version; `ci.yml`, `docs.yml` and `rust.yml` pin
-    9.0.0 by SHA). Not looked at. Merging changes `main` on GitHub, so the user decides;
-    more Dependabot pull requests may follow for uv and cargo.
+
 ## Known problems
 
 - `.pre-commit-config.yaml` lacks the template's notebook hooks (`run-notebooks`,
