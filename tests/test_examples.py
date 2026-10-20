@@ -76,6 +76,10 @@ EXPECTED: dict[str, Expected] = {
         ("n2", "ok", {"out": 5.0}),
         ("n3", "ok", {"out": 5.0}),
     ],
+    "e_look/e3_palette.py": [
+        ("n1", "ok", {"out": 12.0}),
+        ("n2", "ok", {"out": 6.0}),
+    ],
     "e_look/e1_light_theme.py": [
         ("n1", "ok", {"out": 12.0}),
         ("n2", "ok", {"out": 6.0}),

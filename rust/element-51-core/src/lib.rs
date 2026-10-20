@@ -12,6 +12,7 @@ pub mod history;
 pub mod layout;
 pub mod menu;
 mod model;
+pub mod palette;
 mod replica;
 pub mod theme;
 pub mod view;

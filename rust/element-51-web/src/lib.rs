@@ -32,8 +32,9 @@ use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
 };
 use menu_ui::{
-    fill_menu, on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search,
-    on_menu_search_key,
+    fill_menu, on_app_menu_button, on_card_menu_click, on_context_menu, on_menu_click,
+    on_menu_hover, on_menu_search, on_menu_search_key, on_palette_key, on_palette_submit,
+    on_try_palette,
 };
 
 /// Everything the event handlers share.
@@ -196,6 +197,30 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&search, "keydown", move |event: KeyboardEvent| {
             on_menu_search_key(&shared, &event)
+        })?;
+    }
+    if let Some(button) = document.get_element_by_id("app-menu-button") {
+        let shared = state.clone();
+        listen(&button, "click", move |_event: MouseEvent| {
+            on_app_menu_button(&shared)
+        })?;
+    }
+    if let Some(item) = document.get_element_by_id("try-palette") {
+        let shared = state.clone();
+        listen(&item, "click", move |_event: MouseEvent| {
+            on_try_palette(&shared)
+        })?;
+    }
+    if let Some(form) = document.get_element_by_id("palette-box") {
+        let shared = state.clone();
+        listen(&form, "submit", move |event: web_sys::Event| {
+            on_palette_submit(&shared, &event)
+        })?;
+    }
+    if let Some(input) = document.get_element_by_id("palette-input") {
+        let shared = state.clone();
+        listen(&input, "keydown", move |event: KeyboardEvent| {
+            on_palette_key(&shared, &event)
         })?;
     }
     let shared = state.clone();

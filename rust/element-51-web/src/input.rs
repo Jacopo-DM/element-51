@@ -216,7 +216,7 @@ pub(crate) fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
         .target()
         .and_then(|target| target.dyn_into::<HtmlInputElement>().ok())
     {
-        if event.key() == "Enter" {
+        if event.key() == "Enter" && field.id().starts_with("field-") {
             let _ = field.blur();
         }
         return;

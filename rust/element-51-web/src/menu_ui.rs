@@ -3,12 +3,13 @@
 use element_51_core::menu::{
     Entry, build_menu, card_actions, clamp_into, flyout_at, search as search_node_types,
 };
+use element_51_core::palette::with_palette;
 use element_51_core::{Edit, Snapshot};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, HtmlInputElement, KeyboardEvent, MouseEvent};
 
 use crate::draw::Selected;
-use crate::{Shared, State, redraw, submit};
+use crate::{Shared, State, apply_theme, redraw, show_error, submit};
 
 /// The least gap between the right-click menu and the window edge, in pixels.
 const MENU_MARGIN: f64 = 8.0;
@@ -206,7 +207,7 @@ pub(crate) fn on_menu_hover(shared: &Shared, event: &MouseEvent) {
 }
 
 pub(crate) fn hide_menu(state: &State) {
-    for id in ["menu", "card-menu"] {
+    for id in ["menu", "card-menu", "app-menu", "palette-box"] {
         if let Some(menu) = state.document.get_element_by_id(id) {
             let _ = menu.set_attribute("hidden", "");
         }
@@ -218,10 +219,19 @@ pub(crate) fn open_card_menu(state: &mut State, id: String, event: &MouseEvent) 
     let Some(menu) = state.document.get_element_by_id("card-menu") else {
         return;
     };
-    let (left, top) = (f64::from(event.client_x()), f64::from(event.client_y()));
+    show_at(
+        &menu,
+        f64::from(event.client_x()),
+        f64::from(event.client_y()),
+    );
+    state.card_menu_node = Some(id);
+}
+
+/// Show `menu` with its corner at (`left`, `top`), moved back inside the window
+/// if it would hang out.
+fn show_at(menu: &Element, left: f64, top: f64) {
     let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
     let _ = menu.remove_attribute("hidden");
-    // Move it back inside the window if it hangs out.
     let rect = menu.get_bounding_client_rect();
     let (left, top) = clamp_into(
         (left, top),
@@ -230,7 +240,78 @@ pub(crate) fn open_card_menu(state: &mut State, id: String, event: &MouseEvent) 
         MENU_MARGIN,
     );
     let _ = menu.set_attribute("style", &format!("left: {left}px; top: {top}px"));
-    state.card_menu_node = Some(id);
+}
+
+/// Open the menu under the button beside Run, or close it if it is open.
+pub(crate) fn on_app_menu_button(shared: &Shared) {
+    let state = shared.borrow();
+    let (Some(button), Some(menu)) = (
+        state.document.get_element_by_id("app-menu-button"),
+        state.document.get_element_by_id("app-menu"),
+    ) else {
+        return;
+    };
+    let was_closed = menu.has_attribute("hidden");
+    hide_menu(&state);
+    if was_closed {
+        let rect = button.get_bounding_client_rect();
+        show_at(&menu, rect.left(), rect.bottom() + MENU_MARGIN / 2.0);
+    }
+}
+
+/// `Try palette`: open the box for a Coolors link, empty and with the cursor in
+/// it.
+pub(crate) fn on_try_palette(shared: &Shared) {
+    let state = shared.borrow();
+    hide_menu(&state);
+    let (Some(button), Some(form)) = (
+        state.document.get_element_by_id("app-menu-button"),
+        state.document.get_element_by_id("palette-box"),
+    ) else {
+        return;
+    };
+    let rect = button.get_bounding_client_rect();
+    show_at(&form, rect.left(), rect.bottom() + MENU_MARGIN / 2.0);
+    if let Some(input) = palette_input(&state.document) {
+        input.set_value("");
+        let _ = input.focus();
+    }
+}
+
+fn palette_input(document: &Document) -> Option<HtmlInputElement> {
+    document
+        .get_element_by_id("palette-input")?
+        .dyn_into::<HtmlInputElement>()
+        .ok()
+}
+
+/// The link was submitted: make the palette the page's colours, or say why not.
+/// Nothing is sent to Python; a reload brings back the theme Python holds.
+pub(crate) fn on_palette_submit(shared: &Shared, event: &web_sys::Event) {
+    event.prevent_default();
+    let text = palette_input(&shared.borrow().document)
+        .map(|input| input.value())
+        .unwrap_or_default();
+    let tried = with_palette(&shared.borrow().theme, &text);
+    match tried {
+        Ok(theme) => {
+            {
+                let mut state = shared.borrow_mut();
+                apply_theme(&state.document, &theme);
+                state.theme = theme;
+                hide_menu(&state);
+            }
+            redraw(shared);
+        }
+        Err(reason) => show_error(&shared.borrow().document, &reason),
+    }
+}
+
+/// Escape in the palette box closes it.
+pub(crate) fn on_palette_key(shared: &Shared, event: &KeyboardEvent) {
+    if event.key() == "Escape" {
+        hide_menu(&shared.borrow());
+    }
 }
 
 /// A click on a card-menu entry carries out its action on the node.

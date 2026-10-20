@@ -561,6 +561,28 @@ theme, with the credit in the README.
     (task 1). Reason: the user's choice; the menus sit apart from the canvas
     cards, which keep the Antimony card look.
 
+- Trying a palette (goal palette-try, 2026-10-20): `element-51-core::palette`
+    reads a Coolors link (the colours are in the link, so nothing is fetched) and
+    returns the current theme with new colours; the page's `Theme` is replaced and
+    the CSS custom properties are set again, and the wire protocol is untouched, so
+    a reload shows the theme Python holds. Mapping, by the user's choice of "by
+    lightness and colour": the colours are sorted by lightness; the darkest is the
+    canvas, the lightest the text, the most saturated of the rest the accent; the
+    next dark one, toned down until its luminance is at most 0.05, the cards and
+    menus; the third (or a mix of the card and the text when there are fewer than
+    four colours), toned down until the text reads on it, the title bars and
+    borders. The other colours are mixes of those. Readability ("adjust text to
+    stay readable", the user's choice): `ensure` moves a colour toward white or
+    black, whichever needs the smaller move, in 4% steps until it has the contrast
+    against every background it sits on; the one background that moves is the red
+    bar of a failed node, so the title keeps the palette's text colour. Port
+    colours are nudged to 3:1 on the card too; shapes, sizes and fonts are not
+    touched. One list of pairs (`Theme::contrast_pairs`) serves the built-in
+    theme tests and the palette tests, so a new colour pair is checked in both.
+    Rejected: sending the palette to Python (it would change the graph owner's
+    state from a click, and the user chose "until reload"); fetching the palette
+    from coolors.co (needs the network and an API for no gain).
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -869,6 +891,7 @@ have to go through `tools/compress_images.py`).
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | goal palette-try: paste a Coolors link, the editor takes its colours | native tests (9 in `tests/palette.rs`, 3 more for the page, 3 for `contrast_failures`): the link parser (the example, five other written forms, eight bad links each with its reason), the mapping for the example (canvas `#000500`, text `#acadbc`, accent `#473bf0`, cards and headers dark, menus take the card colour), two colours are enough, the order in the link does not matter, six palettes (the example, all light, all dark, one hue, near-grey, ten colours) leave both base themes with 0 AA failures, a palette changes colours only (not metrics, page, fonts or port shapes), a bad link leaves the theme as it was, the page has the menu button after Run, the `Try palette` entry and the box, focus and press styles for them, and the page code never sends a palette to Python; by hand in the browser pane: the menu button opens a menu with Try palette, the box takes the link, Enter applies it at once (near-black canvas, blue-violet cards, violet Run), `hello` shows "That is not a Coolors link" in the banner and leaves the box open, a reload brings back `#1a1a1a`, the page made no request to coolors.co, and axe-core reported 0 violations with the menu closed, the menu open, the box open and after applying; screenshots `docs/ui-baseline/palette-1-menu-beside-run.jpg` to `palette-4-bad-link-banner.jpg`; example `examples/e_look/e3_palette.py`; 153 Rust tests, 221 Python tests at 100% |
 | 2026-10-20 | ui-design-pass task 4: the soft modern look for the page parts | native tests: the page font is the system UI font, menu and banner radii 8, new `menu_border` colour and `menu_item_radius` page key reach the page and are used by it, the focus ring is the theme's focus colour in menus too, every colour pair still at AA (including the focus ring on the menu and its search box); the old test pinning the previous page values now pins only what did not change; by hand in both themes: violet Run button, dark rounded menu with an inset hover row and flyout, 8 px banner with a styled Dismiss, violet checkbox tick; axe-core 0 violations in both themes in the default state, after Run, and the search with and without a match; before `docs/ui-baseline/dark-1280-default.jpg`, `-menu.jpg`, `-run-and-banner.jpg`, after `docs/ui-baseline/task4-dark-1280-default.jpg`, `task4-dark-1280-menu-flyout.jpg`, `task4-dark-1280-run-and-banner.jpg`, `task4-light-1280-menu-flyout.jpg`, `task4-light-1280-run-and-banner.jpg`; 140 Rust tests, 220 Python tests at 100% |
 | 2026-10-20 | ui-design-pass task 3: page structure and names | native tests: the page has `<main>`, a visually hidden `<h1>`, `role="alert"` on the banner and an `aria-label` on the search box; `field_label` names each value box "port of node id" (the checkbox included); axe-core in both themes, in the default state, after Run (with the banner), the search with matches, with no match and the tree: all five rules gone, 0 violations (before: `label` 1, `landmark-one-main` 1, `page-has-heading-one` 1, `region` 2 to 5, and after task 1 a `scrollable-region-focusable` that did not come back once the lists sat inside `<main>`); the page looks the same (the heading is hidden); 138 Rust tests, 220 Python tests at 100% |
 | 2026-10-20 | ui-design-pass task 2: visible focus and press states | native tests: every page control (Run, menu and card-menu buttons, search box, Dismiss, value boxes) has a `:focus-visible` rule that uses `var(--focus)` (inside the light menus `--menu-hover-bg`), the three buttons have `:active`, transitions are 120 ms and `prefers-reduced-motion` sets them to none, the new `focus` colour reaches the page as `--focus` and meets 3:1 on both canvases (`#7c86f0` dark, `#4f46e5` light); by hand: Tab shows a ring on Run and on a menu entry; before `docs/ui-baseline/dark-1280-menu.jpg`, after `docs/ui-baseline/task2-dark-1280-menu-focus.jpg` and `task2-dark-run-focus.png`; axe unchanged (task 3 fixes the rest); 136 Rust tests, 220 Python tests at 100% |

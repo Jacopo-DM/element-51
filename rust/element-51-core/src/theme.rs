@@ -4,6 +4,7 @@
 //! argument, so nothing else in the program says what a colour or a size is.
 
 use crate::PortType;
+use crate::contrast::ratio;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
@@ -398,6 +399,91 @@ impl Theme {
         .into_iter()
         .map(|(name, value)| (name.to_string(), format!("{value}px")))
         .collect()
+    }
+}
+
+/// WCAG 2.2 AA for text.
+pub const TEXT_RATIO: f64 = 4.5;
+/// WCAG 2.2 AA for icons, outlines and other graphics.
+pub const GRAPHIC_RATIO: f64 = 3.0;
+
+impl Theme {
+    /// The pairs of colours the editor draws text or graphics in, that fall
+    /// below WCAG 2.2 AA, each as a line that names the pair and its ratio.
+    /// Nothing is returned when every pair passes.
+    pub fn contrast_failures(&self) -> Vec<String> {
+        let mut failures = Vec::new();
+        for (what, front, back, needed) in self.contrast_pairs() {
+            match ratio(&front, &back) {
+                Some(value) if value >= needed => {}
+                Some(value) => failures.push(format!("{what} is {value:.2}:1, needs {needed}:1")),
+                None => failures.push(format!("{what}: a colour is not #rrggbb")),
+            }
+        }
+        failures
+    }
+
+    /// Every pair as (name, foreground, background, the ratio it needs): text
+    /// pairs first, then graphics.
+    fn contrast_pairs(&self) -> Vec<(String, String, String, f64)> {
+        let c = &self.colours;
+        let text = |what: &str, front: &String, back: &String| {
+            (what.to_string(), front.clone(), back.clone(), TEXT_RATIO)
+        };
+        let graphic = |what: String, front: &String, back: &String| {
+            (what, front.clone(), back.clone(), GRAPHIC_RATIO)
+        };
+        let mut pairs = vec![
+            text("title on header", &c.title, &c.header),
+            text("title on header_error", &c.title, &c.header_error),
+            text("text_dim on header_skipped", &c.text_dim, &c.header_skipped),
+            text("label on card", &c.label, &c.card),
+            text("field_text on field", &c.field_text, &c.field),
+            text("placeholder on field", &c.placeholder, &c.field),
+            text("menu_text on menu", &c.menu_text, &c.menu),
+            text("menu_muted on menu", &c.menu_muted, &c.menu),
+            text("menu_text on menu_field", &c.menu_text, &c.menu_field),
+            text(
+                "menu_hover_text on menu_hover",
+                &c.menu_hover_text,
+                &c.menu_hover,
+            ),
+            text("run_text on run_bg", &c.run_text, &c.run_bg),
+            text(
+                "run_hover_text on run_hover",
+                &c.run_hover_text,
+                &c.run_hover,
+            ),
+            text("error_text on error", &c.error_text, &c.error),
+            graphic("icon on header".to_string(), &c.icon, &c.header),
+            graphic("selected on canvas".to_string(), &c.selected, &c.canvas),
+            graphic(
+                "selected_wire on canvas".to_string(),
+                &c.selected_wire,
+                &c.canvas,
+            ),
+            graphic("allowed on canvas".to_string(), &c.allowed, &c.canvas),
+            graphic("refused on canvas".to_string(), &c.refused, &c.canvas),
+            graphic("focus on canvas".to_string(), &c.focus, &c.canvas),
+            graphic("focus on menu".to_string(), &c.focus, &c.menu),
+            graphic("focus on menu_field".to_string(), &c.focus, &c.menu_field),
+        ];
+        for (kind, name) in [
+            (PortType::Int, "int"),
+            (PortType::Float, "float"),
+            (PortType::Str, "text"),
+            (PortType::Bool, "bool"),
+        ] {
+            for (output, side) in [(false, "in"), (true, "out")] {
+                let colour = &self.port_style(kind, output).colour;
+                pairs.push(graphic(
+                    format!("port {name} {side} on card"),
+                    colour,
+                    &c.card,
+                ));
+            }
+        }
+        pairs
     }
 }
 

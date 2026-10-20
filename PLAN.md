@@ -79,58 +79,21 @@ Commits `971fb48..29d5f57` (benchmarks `30634e3`, engine
 200-node page 3.4 to 0.21 ms; page load unchanged. The numbers, the decisions and
 the Tier 3 items left alone on purpose are in DESIGN.md.
 
-### ui-design-pass
+### ui-design-pass: done (2026-10-20)
 
-- Goal: the page parts of the editor (Run button, add-node menu, card menu,
-    error banner, value boxes) and the theme colours meet WCAG 2.2 AA and look
-    polished and consistent, without changing what the editor does.
-- Kind: improvement (behaviour unchanged).
-- Success measure: axe-core violations on the page parts from 5 rules to 0 in both
-    themes (Baseline); every theme text and graphic colour pair at its AA ratio
-    (4.5:1 text, 3:1 graphics; Baseline lists the 4 that fail); every interactive
-    page part with hover, focus-visible and active states; no screen slower or
-    more prone to layout shift (the page has no shift: the canvas and boxes are
-    positioned absolutely; bundle size is the WASM 706 KB plus a 3 KB page, to be
-    re-measured after each task).
-- Status: in progress (Phase 0 and 1 done 2026-10-20; direction C chosen by the
-    user 2026-10-20, recorded in DESIGN.md; tasks 1 to 4 approved in words
-    2026-10-20).
-- Added: 2026-10-20
+Commits `0eeb4ee..` on branch `ui-design-pass` (baseline `710a82f`, direction `05d8ae7`, tasks 1 to 4 `f6146a2`, `3fcdd25`, `a5b971e`, `3ffabdd`). axe-core
+violations 5 rules to 0 in both themes in every state checked; all theme colour
+pairs at WCAG 2.2 AA, enforced by a native test; focus and press states on every
+page control; the soft modern look in both themes. The numbers and screenshots
+are in DESIGN.md (Results). Left alone on purpose, with reasons, in DESIGN.md.
+The canvas itself has no keyboard or screen-reader access: open question 2.
 
-### palette-try
+### palette-try: done (2026-10-20)
 
-- Goal: the user can paste a Coolors palette link into the page and see the whole
-    editor take its colours at once, to try palettes, without restarting.
-- Kind: new behaviour.
-- Success measure (each is a test, unless marked by hand):
-    1. A hamburger button beside Run opens a small menu with one entry, "Try
-        palette", which opens a box for a link (by hand, and a native test that the
-        page has the button, the menu and the box).
-    2. A Coolors link such as `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`
-        gives its colours (2 to 10, any case, with or without `https://`, `www.` or
-        `/palette/`); anything else gives an error in the banner that names what is
-        wrong (native tests on the parser: good links and five bad ones).
-    3. The colours map to theme colours by lightness and colour, with no input
-        order needed: darkest to the canvas, the next to cards and menus, mid tones
-        to headers and borders, the lightest to the text, the most saturated to the
-        accent (a native test pins the result for the example link and for a
-        two-colour link).
-    4. Every text and graphic pair of the resulting theme meets WCAG AA (4.5 for
-        text, 3 for graphics): text and hint colours are nudged lighter or darker
-        until they do (a native test over the example, an all-light palette, an
-        all-dark one and a one-hue one).
-    5. The page applies it at once; a reload shows the theme Python holds, and
-        Python is not told (no wire change; a native test that the palette changes
-        only the page's `Theme`, a by-hand reload check).
-    6. No network request is made: the colours come from the link text (by hand,
-        in the network log).
-- Status: approved 2026-10-20, to follow `ui-design-pass` tasks 1 to 4. Specified from
-    the user's answers of 2026-10-20 (by lightness and colour; a hamburger menu
-    beside Run; kept until reload; text adjusted to stay readable).
-- Order: after goal `ui-design-pass` tasks 1 to 4, because it reuses their contrast
-    test, the accent and focus colours, and the page keys, and edits the same
-    files (`index.html`, `theme.rs`, the theme files, `docs/themes.md`).
-- Added: 2026-10-20
+Pasting a Coolors link in the page (menu button beside Run, Try palette) applies
+the palette to the page's colours at once; kept until reload; text readable at AA
+whatever the palette. Tests, behaviour and the mapping rule are in DESIGN.md
+(Results and Decisions); example `examples/e_look/e3_palette.py`.
 
 ## Current state
 
@@ -140,6 +103,8 @@ goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
 Next step: the user's own try-out (below), then publishing, which the user does.
+The design pass and the palette box are merged to `main` once the user has looked
+at them (branch `ui-design-pass`).
 The README and docs drafts were reviewed and merged on 2026-10-20.
 Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
@@ -202,6 +167,11 @@ Measured 2026-10-20 after task 26, Apple silicon, Python 3.13:
         transitions, 0 media queries. Everything else is `var(--...)` from the
         theme: 33 colours, 4 port types by 2 sides, 25 metrics, 21 page keys and
         6 fonts, in each of the two themes.
+    - After the pass (2026-10-20): axe violations 0 in both themes in the default
+        state, after Run, the menus and the palette box; theme pairs below AA 0
+        (the native test `every_built_in_theme_meets_aa_wherever_it_draws_text_or_graphics`);
+        page parts with a `:focus-visible` style: all 8 (was 1). Raw values in
+        `index.html`: still 0 hex colours.
     - Components: 1 button kind (Run) plus the banner's Dismiss, 2 menus (add-node
         and card) of one button style, 1 search box, value boxes (text, checkbox).
         No near-duplicates.
@@ -296,104 +266,6 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
 
-### Goal `ui-design-pass`: audit findings (waiting for the design direction)
-
-Each with the screen and state, the evidence, and who it affects.
-
-1. Bool inputs have no accessible name: `#field-n6-loud` fails axe `label`
-    (critical). Default state; screenshot `dark-1280-default`. Every user with a
-    bool input and a screen reader.
-2. The page has no landmarks or heading (`landmark-one-main`,
-    `page-has-heading-one`, `region`): the Run button, boxes and menus sit outside
-    any landmark. Every state; every screen-reader user.
-3. "No matching node" is 4.01:1 on the menu (axe `color-contrast`, serious).
-    Search with no match; `light-1280-search-none-and-banner`. Anyone who searches.
-4. Theme colours below AA (see Baseline): hints in value boxes 1.64:1 (the most
-    visible: every unlinked input shows one; `dark-1280-default`), skipped nodes'
-    title 2.88:1 (`dark-1280-run-and-banner`), the Run button's hover text 3.34:1,
-    and the light theme's selection outline 1.14:1 against its canvas.
-5. Focus: only `#run` has a `:focus-visible` style. The menu buttons, the card
-    menu buttons, the search box, Dismiss and the checkbox use the browser's
-    default ring, which the dark canvas hides in places. All keyboard users.
-6. States: hover only; no `:active`, no `:disabled`, no transitions, no
-    `prefers-reduced-motion` (no motion exists to reduce). The Run button has no
-    "running" state; it does not know when a run finishes.
-7. The error banner has no `role="alert"`, so a failure is not announced; it
-    stays until Dismiss (correct) and joins several messages with "; ". Screenshot
-    `dark-1280-run-and-banner`. Every run with an error.
-8. The add-node and card menus open only by right-click and the flyouts only by
-    `:hover`: no keyboard or touch way to reach them. Behaviour change if fixed.
-9. At 375 wide the page shows a clipped part of the graph with no fit-to-view,
-    and touch input is not handled (mouse and wheel only);
-    `dark-375-default`. An edge screen today.
-10. Copy: the empty output placeholder is "output", the same word as the port
-    name; "No matching node" is the only empty-state message.
-12. Found while checking task 1: the add-node menu's scrolling lists (`#menu-tree`,
-    `#menu-results`) failed axe `scrollable-region-focusable` (serious) once, with
-    a search that shows no match; it did not come back after task 3 put the page
-    in `<main>`, and I did not find why, so a later scan may show it again.
-11. The canvas (nodes, wires, ports) has no keyboard access or accessible
-    description at all. The user chose "AA including the canvas" on 2026-10-20.
-    That adds behaviour (keyboard selection, moving and linking, names for
-    screen readers), so it is a new goal for `/zz-02-project-plan`, not part of
-    this pass; see Open questions.
-
-### Goal `ui-design-pass`: tasks (direction C; approved 2026-10-20)
-
-Tier 1, foundations:
-
-1. **Done 2026-10-20** (DESIGN.md Results; `color-contrast` 1 to 0, all theme pairs at AA).
-    **Contrast test and AA colours in both themes** (findings 3 and 4; axe
-    `color-contrast` 1 to 0 and four failing pairs to 0). A native test in
-    `rust/element-51-core/tests/theme.rs` computes the WCAG ratio for each text
-    pair and graphic pair of both themes (text 4.5, graphics 3) and fails below;
-    then change `placeholder`, `text_dim`, `run_hover_text`, the light theme's
-    `selected`, and the menu colours of direction C. Files: the two theme JSON
-    files, `docs/themes.md` if keys change. About 40 lines of test and 10 colour
-    values, no dependency. Risk low to medium: hints and skipped titles get
-    lighter, so the canvas screenshots change on purpose. Verify: the new test,
-    the existing theme tests, axe on both themes, screenshots of default, run and
-    search-none.
-2. **Done 2026-10-20** (DESIGN.md Results).
-    **Visible focus and press states on every page control** (finding 5, 6). One
-    focus ring token (`focus` page key, `#7c86f0` dark) used by Run, the menu
-    buttons, card menu buttons, search box, Dismiss and the value boxes; `:active`
-    for buttons; 120 ms transitions off under `prefers-reduced-motion`. Files:
-    `index.html`, `theme.rs` (the key), both themes, `docs/themes.md`. About 25
-    lines. Risk low. Verify: native tests (key present, documented, no raw colour
-    in the page), by hand Tab through the page in both themes, screenshots of
-    focus on each control.
-3. **Done 2026-10-20** (DESIGN.md Results; axe 5 rules to 0 in both themes).
-    **Page structure and names** (findings 1, 2, 7): wrap the page parts in
-    `<main>`, a visually hidden `<h1>`, an `aria-label` on the bool checkbox (the
-    port name) and on the search box, `role="alert"` on the banner. Files:
-    `index.html`, `fields_ui.rs` (the checkbox label). About 15 lines. Risk low;
-    no behaviour change. Verify: axe 5 rules to 0 on every state, native test that
-    the page has the landmark and the banner role, the existing 126 Rust tests.
-
-Tier 2:
-
-4. **Done 2026-10-20** (DESIGN.md Results; both themes, axe 0).
-    **The soft modern look for the page parts** (direction C, finding 6 states):
-    rounder Run button in the accent, 8 px menus with the popover shadow, 5 px
-    fields, the 8 px banner, the system UI font; new page keys in both themes and
-    in `docs/themes.md`, applied through `var(--...)`. Files: `index.html`, both
-    themes, `theme.rs`, docs. About 40 lines. Risk medium: the look of every page
-    part changes, and a user's theme file that sets page keys keeps working because
-    new keys have defaults. Verify: the page-key tests, side-by-side screenshots in
-    every state in both themes at 1280 and 375, axe still at 0.
-
-Tier 3, not executed (reason):
-
-- Fit-to-view and touch handling at phone width (finding 9): new behaviour, not a
-    style change.
-- Keyboard and touch ways to open the menus and flyouts (finding 8): new
-    behaviour; part of the canvas accessibility goal (open question 2).
-- Custom illustration, decorative animation, a component library: nothing in the
-    page needs one.
-- A "running" state for the Run button (finding 6): the page does not learn when a
-    run ends today, so it needs a protocol change.
-
 ### Tier 3: listed, not executed
 
 - A release guard that fails `uv build` itself when `web/` is missing: CI now
@@ -422,6 +294,16 @@ Oldest first.
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
 ## Known problems
 
+- The editor's canvas has no keyboard or screen-reader access (open question 2).
+- Nothing on the page works by touch: panning, zooming and the menus need a mouse
+    and a wheel, and a 375 px wide window shows a clipped part of the graph with no
+    fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
+- The add-node and card menus open only by right-click or a click on the card's
+    icon, and the flyouts only by hover; the menu beside Run works by keyboard.
+- The Run button has no running state: the page is not told when a run ends.
+- A node's empty output box says `output`, the same word as the port name.
+- The page parts and the theme colours are checked at AA by tests and by axe in
+    the built-in browser pane; a scan with a real screen reader was not done.
 - The README says `uv add element-51`, which is true only after the user
     publishes the package.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);

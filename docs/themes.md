@@ -191,3 +191,22 @@ Numbers, in CSS pixels, for the page's own parts: the menus, the Run button, the
 | `family` | The family for the page's own parts: menu, banner, buttons. | `system-ui, -apple-system, 'Segoe UI', sans-serif` |
 | `value_family` | The family for the text typed into an input box. | `Monaco, Menlo, monospace` |
 | `field_px` | The size of text in an input box at zoom 1, in pixels. | `12.0` |
+
+## Trying a Coolors palette
+
+The menu button beside Run has one entry, `Try palette`. Paste a Coolors link
+such as `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500` and press Enter:
+the whole editor takes the palette's colours at once. The link carries the
+colours, so nothing is fetched, and Python is not told: reload the page to get
+the theme Python holds back.
+
+The colours are sorted by lightness, whatever order the link gives them. The
+darkest becomes the canvas, the next dark one the cards and menus, a mid tone the
+title bars and borders, the lightest the text, and the most saturated of the rest
+the accent (the Run button, the focus ring and the checkbox tick). Text, icon and
+outline colours are then moved lighter or darker until they meet WCAG 2.2 AA (4.5
+to 1 for text, 3 to 1 for graphics), so every palette stays readable; the colours
+of a failed node and of the port types are kept as close to the theme's as that
+allows. A link with fewer than 2 or more than 10 colours, or that is not a
+Coolors link, shows the reason in the banner. Shapes, sizes and fonts do not
+change.

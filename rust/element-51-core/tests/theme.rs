@@ -1,7 +1,5 @@
 //! The theme: every colour, size and font in one place.
 
-use element_51_core::PortType;
-use element_51_core::contrast::ratio;
 use element_51_core::theme::{THEME_NAMES, Theme};
 
 const DRAW: &str = include_str!("../../element-51-web/src/draw.rs");
@@ -467,140 +465,34 @@ fn the_page_stays_hidden_until_the_first_snapshot_has_set_the_theme() {
     assert!(body.contains("mark_ready"), "{body}");
 }
 
-/// WCAG 2.2 AA for text.
-const TEXT_RATIO: f64 = 4.5;
-/// WCAG 2.2 AA for icons, outlines and other graphics.
-const GRAPHIC_RATIO: f64 = 3.0;
-
-/// Every pair of colours the editor draws text on, as (text, background).
-fn text_pairs(theme: &Theme) -> Vec<(&'static str, String, String)> {
-    let c = &theme.colours;
-    vec![
-        ("title on header", c.title.clone(), c.header.clone()),
-        (
-            "title on header_error",
-            c.title.clone(),
-            c.header_error.clone(),
-        ),
-        (
-            "text_dim on header_skipped",
-            c.text_dim.clone(),
-            c.header_skipped.clone(),
-        ),
-        ("label on card", c.label.clone(), c.card.clone()),
-        ("field_text on field", c.field_text.clone(), c.field.clone()),
-        (
-            "placeholder on field",
-            c.placeholder.clone(),
-            c.field.clone(),
-        ),
-        ("menu_text on menu", c.menu_text.clone(), c.menu.clone()),
-        ("menu_muted on menu", c.menu_muted.clone(), c.menu.clone()),
-        (
-            "menu_text on menu_field",
-            c.menu_text.clone(),
-            c.menu_field.clone(),
-        ),
-        (
-            "menu_hover_text on menu_hover",
-            c.menu_hover_text.clone(),
-            c.menu_hover.clone(),
-        ),
-        ("run_text on run_bg", c.run_text.clone(), c.run_bg.clone()),
-        (
-            "run_hover_text on run_hover",
-            c.run_hover_text.clone(),
-            c.run_hover.clone(),
-        ),
-        ("error_text on error", c.error_text.clone(), c.error.clone()),
-    ]
-}
-
-/// Every pair of colours a graphic is drawn in, as (graphic, background).
-fn graphic_pairs(theme: &Theme) -> Vec<(String, String, String)> {
-    let c = &theme.colours;
-    let mut pairs = vec![
-        (
-            "icon on header".to_string(),
-            c.icon.clone(),
-            c.header.clone(),
-        ),
-        (
-            "selected on canvas".to_string(),
-            c.selected.clone(),
-            c.canvas.clone(),
-        ),
-        (
-            "selected_wire on canvas".to_string(),
-            c.selected_wire.clone(),
-            c.canvas.clone(),
-        ),
-        (
-            "allowed on canvas".to_string(),
-            c.allowed.clone(),
-            c.canvas.clone(),
-        ),
-        (
-            "focus on canvas".to_string(),
-            c.focus.clone(),
-            c.canvas.clone(),
-        ),
-        ("focus on menu".to_string(), c.focus.clone(), c.menu.clone()),
-        (
-            "focus on menu_field".to_string(),
-            c.focus.clone(),
-            c.menu_field.clone(),
-        ),
-        (
-            "refused on canvas".to_string(),
-            c.refused.clone(),
-            c.canvas.clone(),
-        ),
-    ];
-    for kind in [
-        PortType::Int,
-        PortType::Float,
-        PortType::Str,
-        PortType::Bool,
-    ] {
-        for output in [false, true] {
-            let side = if output { "out" } else { "in" };
-            pairs.push((
-                format!("port {kind:?} {side} on card"),
-                theme.port_style(kind, output).colour.clone(),
-                c.card.clone(),
-            ));
-        }
-    }
-    pairs
-}
-
 #[test]
-fn every_text_pair_of_every_theme_meets_aa() {
+fn every_built_in_theme_meets_aa_wherever_it_draws_text_or_graphics() {
     for name in THEME_NAMES {
-        let theme = Theme::builtin(name).unwrap();
-        for (what, text, background) in text_pairs(&theme) {
-            let value = ratio(&text, &background).unwrap_or_else(|| panic!("{name}: {what}"));
-            assert!(
-                value >= TEXT_RATIO,
-                "{name}: {what} is {value:.2}:1, needs {TEXT_RATIO}:1"
-            );
-        }
+        let failures = Theme::builtin(name).unwrap().contrast_failures();
+        assert!(failures.is_empty(), "{name}: {failures:?}");
     }
 }
 
 #[test]
-fn every_graphic_pair_of_every_theme_meets_aa() {
-    for name in THEME_NAMES {
-        let theme = Theme::builtin(name).unwrap();
-        for (what, graphic, background) in graphic_pairs(&theme) {
-            let value = ratio(&graphic, &background).unwrap_or_else(|| panic!("{name}: {what}"));
-            assert!(
-                value >= GRAPHIC_RATIO,
-                "{name}: {what} is {value:.2}:1, needs {GRAPHIC_RATIO}:1"
-            );
-        }
-    }
+fn a_pair_below_aa_is_named_in_the_failures() {
+    let mut theme = Theme::default();
+    theme.colours.placeholder = theme.colours.field.clone();
+    theme.colours.selected = theme.colours.canvas.clone();
+    let failures = theme.contrast_failures();
+    assert_eq!(failures.len(), 2, "{failures:?}");
+    assert!(failures[0].contains("placeholder on field"), "{failures:?}");
+    assert!(failures[1].contains("selected on canvas"), "{failures:?}");
+}
+
+#[test]
+fn a_colour_that_is_not_hex_is_a_failure_too() {
+    let mut theme = Theme::default();
+    theme.colours.title = "red".to_string();
+    let failures = theme.contrast_failures();
+    assert!(
+        failures.iter().any(|line| line.contains("title on header")),
+        "{failures:?}"
+    );
 }
 
 #[test]
@@ -706,5 +598,55 @@ fn the_focus_ring_is_the_themes_focus_colour_everywhere() {
     assert!(
         !PAGE.contains("outline: 2px solid var(--menu-hover-bg)"),
         "a menu ring still uses the hover colour"
+    );
+}
+
+#[test]
+fn the_page_has_a_menu_button_beside_run_with_a_try_palette_box() {
+    for needle in [
+        "id=\"app-menu-button\"",
+        "aria-label=\"Menu\"",
+        "aria-haspopup=\"menu\"",
+        "id=\"app-menu\"",
+        "id=\"try-palette\"",
+        ">Try palette<",
+        "id=\"palette-box\"",
+        "id=\"palette-input\"",
+        "aria-label=\"Coolors palette link\"",
+    ] {
+        assert!(PAGE.contains(needle), "the page has no {needle}");
+    }
+    let toolbar = PAGE.find("id=\"toolbar\"").expect("no toolbar");
+    let run = PAGE.find("id=\"run\"").unwrap();
+    let button = PAGE.find("id=\"app-menu-button\"").unwrap();
+    assert!(
+        toolbar < run && run < button,
+        "the menu button comes after Run"
+    );
+}
+
+#[test]
+fn the_new_controls_have_focus_and_press_styles() {
+    for selector in [
+        "#app-menu-button:focus-visible",
+        "#app-menu button:focus-visible",
+        "#palette-input:focus-visible",
+        "#palette-box button:focus-visible",
+        "#app-menu-button:active",
+        "#app-menu button:active",
+    ] {
+        assert!(PAGE.contains(selector), "no style for {selector}");
+    }
+}
+
+#[test]
+fn the_page_code_applies_a_palette_to_the_page_theme_only() {
+    assert!(
+        MENU_UI.contains("with_palette"),
+        "the palette box does not apply a palette"
+    );
+    assert!(
+        !MENU_UI.contains("send(") && !MENU_UI.contains("socket"),
+        "a tried palette must not be sent to Python"
     );
 }
