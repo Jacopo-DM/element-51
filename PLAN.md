@@ -266,7 +266,8 @@ Tier 1:
 
 Tier 2:
 
-3. **Draw only the nodes on screen** (workload (a); cards and ports are 100% of
+3. **Done 2026-10-20** (redraw 3.4 to 0.21 ms, 16 times faster; DESIGN.md Results).
+    **Draw only the nodes on screen** (workload (a); cards and ports are 100% of
     the nodes drawn; 15.4 to 0.7 ms measured when 12 of 200 are visible, no gain
     when all are; it falls to nothing for a graph that fits the window). Add
     `Rect::overlaps` to `element-51-core` with a native test, and skip a card and

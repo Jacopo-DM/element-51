@@ -1,8 +1,8 @@
 //! Size and position of a node box.
 
 use element_51_core::layout::{
-    Side, anchor_of, icon_at, icon_rect, input_anchor, link_at, node_at as pick_node, node_rect,
-    output_anchor, output_row, port_at, wire_controls,
+    Rect, Side, anchor_of, icon_at, icon_rect, input_anchor, link_at, node_at as pick_node,
+    node_rect, output_anchor, output_row, port_at, wire_controls,
 };
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
@@ -350,4 +350,56 @@ fn an_icon_under_another_card_cannot_be_pressed() {
     assert!(icon_at(&graph, &types, x, y, &m()).is_none());
     let x = icon_over.x + icon_over.w / 2.0;
     assert_eq!(icon_at(&graph, &types, x, y, &m()).as_deref(), Some("over"));
+}
+
+fn rect(x: f64, y: f64, w: f64, h: f64) -> Rect {
+    Rect { x, y, w, h }
+}
+
+#[test]
+fn overlapping_rectangles_overlap_whichever_way_round() {
+    let view = rect(0.0, 0.0, 100.0, 100.0);
+    for other in [
+        rect(10.0, 10.0, 20.0, 20.0),
+        rect(-10.0, -10.0, 20.0, 20.0),
+        rect(90.0, 90.0, 50.0, 50.0),
+        rect(-50.0, -50.0, 300.0, 300.0),
+    ] {
+        assert!(view.overlaps(&other), "{other:?}");
+        assert!(other.overlaps(&view), "{other:?}");
+    }
+}
+
+#[test]
+fn rectangles_apart_on_either_axis_do_not_overlap() {
+    let view = rect(0.0, 0.0, 100.0, 100.0);
+    for other in [
+        rect(150.0, 10.0, 20.0, 20.0),
+        rect(-50.0, 10.0, 20.0, 20.0),
+        rect(10.0, 150.0, 20.0, 20.0),
+        rect(10.0, -50.0, 20.0, 20.0),
+    ] {
+        assert!(!view.overlaps(&other), "{other:?}");
+        assert!(!other.overlaps(&view), "{other:?}");
+    }
+}
+
+#[test]
+fn rectangles_that_only_touch_do_not_overlap() {
+    let view = rect(0.0, 0.0, 100.0, 100.0);
+    assert!(!view.overlaps(&rect(100.0, 0.0, 10.0, 10.0)));
+    assert!(!view.overlaps(&rect(0.0, 100.0, 10.0, 10.0)));
+}
+
+#[test]
+fn a_grown_rectangle_reaches_a_neighbour_the_plain_one_misses() {
+    let card = rect(100.0, 0.0, 50.0, 50.0);
+    let view = rect(0.0, 0.0, 98.0, 100.0);
+    assert!(!view.overlaps(&card));
+    assert!(view.overlaps(&card.grown(5.0)));
+    assert_eq!(
+        card.grown(5.0),
+        rect(95.0, -5.0, 60.0, 60.0),
+        "grown on every side"
+    );
 }

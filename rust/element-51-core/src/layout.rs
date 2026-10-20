@@ -12,6 +12,27 @@ pub struct Rect {
     pub h: f64,
 }
 
+impl Rect {
+    /// Whether the two rectangles share any area; rectangles that only touch
+    /// along an edge do not.
+    pub fn overlaps(&self, other: &Rect) -> bool {
+        self.x < other.x + other.w
+            && other.x < self.x + self.w
+            && self.y < other.y + other.h
+            && other.y < self.y + self.h
+    }
+
+    /// The rectangle with `by` added on every side.
+    pub fn grown(&self, by: f64) -> Rect {
+        Rect {
+            x: self.x - by,
+            y: self.y - by,
+            w: self.w + 2.0 * by,
+            h: self.h + 2.0 * by,
+        }
+    }
+}
+
 /// The box for `node`: a header, then one row per input, then one row per
 /// output.
 pub fn node_rect(node: &PlacedNode, node_type: &NodeType, metrics: &Metrics) -> Rect {

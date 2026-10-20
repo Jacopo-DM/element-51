@@ -158,11 +158,28 @@ pub fn draw(
         context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
         return Ok(());
     };
+    // Only the cards in view are drawn; the outline and the ports reach a little
+    // outside a card's box. See DESIGN.md, speed-up task 3.
+    let (left, top) = view.to_graph(0.0, 0.0);
+    let (right, bottom) = view.to_graph(width, height);
+    let visible = Rect {
+        x: left,
+        y: top,
+        w: right - left,
+        h: bottom - top,
+    };
+    let margin = metrics.selection_width + metrics.border_width;
+    let on_screen = |node: &PlacedNode, node_type: &NodeType| {
+        visible.overlaps(&node_rect(node, node_type, metrics).grown(margin))
+    };
 
     for node in &graph.nodes {
         let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
             continue;
         };
+        if !on_screen(node, node_type) {
+            continue;
+        }
         let is_selected = selected == Some(&Selected::Node(node.id.clone()));
         card(context, theme, graph, (node, node_type), run, is_selected)?;
     }
@@ -201,6 +218,9 @@ pub fn draw(
         let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
             continue;
         };
+        if !on_screen(node, node_type) {
+            continue;
+        }
         let rect = node_rect(node, node_type, metrics);
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row, metrics);

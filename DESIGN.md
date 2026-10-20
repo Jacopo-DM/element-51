@@ -513,6 +513,18 @@ theme, with the credit in the README.
     has its own. They say what each assumes and must never depend on, and point
     to CODEMAP.md for the interface.
 
+- Drawing only what is in view (speed-up task 3, 2026-10-20): `draw` skips a
+    card, and its port markers, whose box does not overlap the visible part of the
+    canvas. The box is grown by the selection width plus the border width first, so
+    the outline and the markers at an edge are not cut off. Wires, the dot grid and
+    the page's input boxes (`sync_fields`) are still drawn for every node: wires
+    were 12% and the grid 8% of the old redraw and have not been measured since;
+    a wire can cross the view between two nodes that are both outside it, so
+    skipping wires needs a test of its own. `Rect::overlaps` and `Rect::grown` are
+    in the core so a native test covers them.
+- Task 2 (speed-up): `_delete_link` still compares pydantic records
+    (`gone not in graph.links`); it runs once per delete, not per link added.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -790,10 +802,25 @@ have to go through `tools/compress_images.py`).
     - Extracting shared code between clones: none to extract, jscpd found 0
         clones (5,363 lines, `--min-lines 8 --min-tokens 70`).
 
+- Speed-up pass, left alone on purpose (2026-10-20, the user confirmed):
+    - `Graph.next_id` (about 0.9 s of the 2.2 s the build took after task 2): it
+        scans every node id. A faster version needs a cached counter, and a counter
+        changes which id is reused after the newest node is deleted, which is a
+        behaviour change.
+    - A set of node ids for `_add_node`'s id-in-use scan: about 14% of build, and
+        a set needs invalidation rules for a gain nobody feels.
+    - Snapshot JSON: linear, 1.8 ms for 2000 nodes.
+    - Page load: 22 ms warm on localhost for the 706 KB WASM. `wasm-opt` could
+        shrink the file, but no size budget exists and the cold load was not
+        measured.
+    - Skipping wires and the dot grid in `draw`: 12% and 8% of the old redraw;
+        revisit only if a measured redraw after task 3 is still too slow.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | speed-up task 3: draw only the cards and ports in view | `tools/bench_page.js`, 200 nodes, 12 in view, 4 sets of 11 batches of 100 wheel events: redraw median 3.3 to 3.5 ms (range 3.26 to 4.06) before, 0.21 to 0.22 ms (range 0.207 to 0.520) after, 16 times faster; the experiment had given 15.4 to 0.7 ms with the browser painting between batches; native tests for `Rect::overlaps` (inside, partly outside, apart on each axis, touching) and `Rect::grown`; by hand in the browser pane: panning shows the partly visible nodes at each edge, zooming out shows every node, and a selected edge node keeps its outline; 126 Rust tests, 220 Python tests at 100% |
 | 2026-10-20 | speed-up task 2: link targets compared by field in `edits._add_link` | `tools/bench_python.py`, 2000-node chain, 11 runs: build median 1968.9 ms (range 1944.7 to 2091.2; 2059.1 at the first baseline) before, 795.3 ms (782.8 to 889.4) after, 2.5 times faster; run and snapshot unchanged within the spread; 220 Python tests at 100%, unchanged. What is left of the build is `Graph.next_id` and the id-in-use scan, left alone (see the rejected approaches) |
 | 2026-10-20 | speed-up task 1: links indexed in `engine.py` | `tools/bench_python.py`, 2000-node chain, 11 runs: `run` median 489.8 ms (range 480.6 to 585.2) before, 5.9 ms (5.7 to 6.7) after, 83 times faster; build 1969 ms (1945 to 2091) and snapshot 1.9 ms unchanged within the spread; 220 Python tests at 100%, unchanged |
 | 2026-10-20 | task 26: thread-safe `App` | pytest: 8 threads adding 60 nodes each through `add_node` (distinct ids, none lost), through `apply` (none lost), and listener snapshots arriving in order; the three failed without the lock (stashed the change to check) and pass 5 of 5 runs with it; 220 Python tests at 100%, 122 Rust tests |
