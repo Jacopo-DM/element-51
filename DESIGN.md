@@ -497,6 +497,22 @@ theme, with the credit in the README.
 - Reference screenshots of Antimony stay outside the repo; they are not ours to
     redistribute.
 
+- Restructure pass (2026-10-20, approved by the user). Thresholds were the
+    defaults, 400 lines and five imports. The first measure found 7 files over
+    400 lines and 2 modules over five imports, and jscpd found 0 clones, so the
+    pass was about moving code by concern, not removing duplicates. Three moves:
+    the web crate's `lib.rs` (1147 lines) split into `input`, `menu_ui` and
+    `fields_ui` beside `draw`; `tests/test_server.py` (649) split into pages,
+    websocket and hosts files with `server_support.py` and `conftest.py`; port
+    inference moved from `nodes.py` into `ports.py` (the helpers lost their
+    underscore, since `nodes` imports them). Each was a pure move, checked by the
+    same tests, and the web split by hand in the browser. The hex-colour scan in
+    `rust/element-51-core/tests/theme.rs` reads the new web files too.
+- A README per module (restructure pass): the Python package is one flat set of
+    modules, so it has one README (`src/element_51/README.md`); each Rust crate
+    has its own. They say what each assumes and must never depend on, and point
+    to CODEMAP.md for the interface.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -760,6 +776,19 @@ limits (one process and one worker, a lock in `App`, the editor works under any
 prefix). Two assumptions to check at review: the install line is true only after
 the user publishes the package, and the drafts contain no images (any image would
 have to go through `tools/compress_images.py`).
+
+- Restructure pass, left alone on purpose (2026-10-20, the user confirmed):
+    - Splitting `session.py` (250 lines, 7 imports): it is the facade that joins
+        edits, engine, store, theme and protocol; each import is used for one call
+        it must make, so a split would add a layer with one call site.
+    - Splitting `rust/element-51-web/src/draw.rs` (497), the core `theme.rs`
+        (427, one struct per theme section plus the merge code) and
+        `rust/element-51-core/tests/theme.rs` (462, key tables): one concern each;
+        a split adds files without making a feature easier to hold.
+    - `tools/compress_images.py` (470): a copy of the template that a project
+        does not edit.
+    - Extracting shared code between clones: none to extract, jscpd found 0
+        clones (5,363 lines, `--min-lines 8 --min-tokens 70`).
 
 ## Results
 

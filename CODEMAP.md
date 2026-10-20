@@ -38,6 +38,8 @@ the ignore list in CLAUDE.md.
 
 ## Python, `src/element_51/`
 
+Module READMEs (what each assumes and must never depend on): `src/element_51/README.md`, `rust/element-51-core/README.md`, `rust/element-51-web/README.md`.
+
 | Module | Purpose | Public interface |
 | --- | --- | --- |
 | `__init__` | package surface | `App`, `Model`, `Node`, `NodeFunction`, `node`, `asgi_app`, `serve`, `StoreError` |
