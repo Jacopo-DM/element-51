@@ -447,16 +447,10 @@ fn a_page_key_that_does_not_exist_lists_the_page_keys() {
 }
 
 #[test]
-fn the_default_page_values_are_the_ones_the_page_used_before_it_was_themed() {
+fn the_page_values_the_soft_modern_look_did_not_change_keep_their_sizes() {
     let page = Theme::default().page;
-    assert_eq!(
-        (page.font_px, page.button_font_px, page.menu_radius),
-        (14.0, 13.0, 4.0)
-    );
-    assert_eq!(
-        (page.button_radius, page.field_radius, page.search_radius),
-        (6.0, 2.0, 3.0)
-    );
+    assert_eq!((page.font_px, page.button_font_px), (14.0, 13.0));
+    assert_eq!((page.button_radius, page.field_radius), (6.0, 2.0));
     assert_eq!((page.button_x, page.button_y), (16.0, 16.0));
 }
 
@@ -550,6 +544,12 @@ fn graphic_pairs(theme: &Theme) -> Vec<(String, String, String)> {
             "focus on canvas".to_string(),
             c.focus.clone(),
             c.canvas.clone(),
+        ),
+        ("focus on menu".to_string(), c.focus.clone(), c.menu.clone()),
+        (
+            "focus on menu_field".to_string(),
+            c.focus.clone(),
+            c.menu_field.clone(),
         ),
         (
             "refused on canvas".to_string(),
@@ -675,5 +675,36 @@ fn the_page_has_a_landmark_a_heading_and_names() {
     assert!(
         PAGE.contains(".visually-hidden"),
         "no rule hides the heading"
+    );
+}
+
+#[test]
+fn the_page_parts_use_the_soft_modern_look() {
+    let theme = Theme::default();
+    assert!(
+        theme.fonts.family.starts_with("system-ui"),
+        "the page font is {}",
+        theme.fonts.family
+    );
+    assert_eq!(theme.page.menu_radius, 8.0);
+    assert_eq!(theme.page.banner_radius, 8.0);
+    assert!(theme.page.menu_item_radius > 0.0, "menu entries are square");
+    let variables = theme.css_variables();
+    for name in ["--menu-border", "--menu-item-radius"] {
+        assert!(
+            variables.iter().any(|(known, _)| known == name),
+            "{name} does not reach the page"
+        );
+    }
+    for rule in ["var(--menu-border)", "var(--menu-item-radius)"] {
+        assert!(PAGE.contains(rule), "the page does not use {rule}");
+    }
+}
+
+#[test]
+fn the_focus_ring_is_the_themes_focus_colour_everywhere() {
+    assert!(
+        !PAGE.contains("outline: 2px solid var(--menu-hover-bg)"),
+        "a menu ring still uses the hover colour"
     );
 }

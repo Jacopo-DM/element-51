@@ -87,22 +87,23 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `field` | The background of a value box. | `#303030` | `#303030` |
 | `field_text` | Text typed in a value box. | `#e0e0e0` | `#e0e0e0` |
 | `field_border` | The border of an input box. | `#303030` | `#303030` |
-| `menu` | The right-click menu's background. | `#ececec` | `#ececec` |
-| `menu_text` | Text in the right-click menu. | `#222222` | `#222222` |
-| `menu_muted` | Muted text in the right-click menu, such as `No matching node`. | `#595959` | `#595959` |
-| `menu_field` | The search box in the right-click menu. | `#ffffff` | `#ffffff` |
-| `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.5)` | `rgba(0, 0, 0, 0.5)` |
-| `menu_hover` | The menu entry under the pointer. | `#2f6db5` | `#2f6db5` |
-| `menu_hover_text` | Text of the menu entry under the pointer. | `#ffffff` | `#ffffff` |
-| `run_bg` | The Run button's background. | `#ececec` | `#ececec` |
-| `run_text` | The Run button's text and triangle. | `#222222` | `#222222` |
-| `run_border` | The line round the Run button. | `#303030` | `#303030` |
-| `run_hover` | The Run button's background under the pointer. | `#2f6db5` | `#2f6db5` |
+| `menu` | The right-click menu's background. | `#1c1c1f` | `#ffffff` |
+| `menu_text` | Text in the right-click menu. | `#e6e6e8` | `#1f1f23` |
+| `menu_muted` | Muted text in the right-click menu, such as `No matching node`. | `#9b9ba3` | `#5f5f68` |
+| `menu_border` | The line round the right-click menu, its flyouts and its search box. | `#2e2e32` | `#d9d9de` |
+| `menu_field` | The search box in the right-click menu. | `#26262a` | `#f3f3f5` |
+| `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.6)` | `rgba(0, 0, 0, 0.18)` |
+| `menu_hover` | The menu entry under the pointer. | `#2c2c31` | `#ececf0` |
+| `menu_hover_text` | Text of the menu entry under the pointer. | `#e6e6e8` | `#1f1f23` |
+| `run_bg` | The Run button's background. | `#5e6ad2` | `#4f46e5` |
+| `run_text` | The Run button's text and triangle. | `#ffffff` | `#ffffff` |
+| `run_border` | The line round the Run button. | `#5e6ad2` | `#4f46e5` |
+| `run_hover` | The Run button's background under the pointer. | `#4f5bbf` | `#4338ca` |
 | `run_hover_text` | The Run button's text under the pointer. | `#ffffff` | `#ffffff` |
 | `focus` | The ring round the control that has the keyboard focus. | `#7c86f0` | `#4f46e5` |
-| `accent` | The tint of a ticked checkbox in a value box. | `#4a90d9` | `#4a90d9` |
-| `error` | The error banner's background. | `#5a2d2d` | `#5a2d2d` |
-| `error_text` | Text in the error banner. | `#f0d0d0` | `#f0d0d0` |
+| `accent` | The tint of a ticked checkbox in a value box. | `#5e6ad2` | `#4f46e5` |
+| `error` | The error banner's background. | `#4a2328` | `#4a2328` |
+| `error_text` | Text in the error banner. | `#fbdada` | `#fbdada` |
 
 ### `ports`
 
@@ -157,13 +158,14 @@ Numbers, in CSS pixels, for the page's own parts: the menus, the Run button, the
 | --- | --- | --- |
 | `font_px` | Size of text in the menus, the search box and the error banner. | `14.0` |
 | `button_font_px` | Size of the text on the Run button. | `13.0` |
-| `menu_radius` | Radius of a menu's corners. | `4.0` |
-| `menu_pad` | Space above and below the entries of a menu. | `4.0` |
-| `menu_item_pad_x` | Space left and right of a menu entry's text. | `14.0` |
-| `menu_item_pad_y` | Space above and below a menu entry's text. | `4.0` |
+| `menu_radius` | Radius of a menu's corners. | `8.0` |
+| `menu_item_radius` | Radius of the highlight on a menu entry. | `5.0` |
+| `menu_pad` | Space above and below the entries of a menu. | `6.0` |
+| `menu_item_pad_x` | Space left and right of a menu entry's text. | `12.0` |
+| `menu_item_pad_y` | Space above and below a menu entry's text. | `6.0` |
 | `menu_min_width` | Narrowest a menu may be. | `160.0` |
-| `shadow_blur` | How far a menu's shadow spreads. | `8.0` |
-| `shadow_y` | How far a menu's shadow sits below it. | `2.0` |
+| `shadow_blur` | How far a menu's shadow spreads. | `24.0` |
+| `shadow_y` | How far a menu's shadow sits below it. | `8.0` |
 | `button_radius` | Radius of the Run button's corners. | `6.0` |
 | `button_pad_x` | Space left and right of the text on the Run button. | `14.0` |
 | `button_pad_y` | Space above and below the text on the Run button. | `6.0` |
@@ -173,8 +175,8 @@ Numbers, in CSS pixels, for the page's own parts: the menus, the Run button, the
 | `button_shadow_blur` | How far the Run button's shadow spreads. | `4.0` |
 | `button_shadow_y` | How far the Run button's shadow sits below it. | `1.0` |
 | `field_radius` | Radius of the input boxes' corners. | `2.0` |
-| `search_radius` | Radius of the menu search box's corners. | `3.0` |
-| `banner_radius` | Radius of the error banner's corners. | `6.0` |
+| `search_radius` | Radius of the menu search box's corners. | `6.0` |
+| `banner_radius` | Radius of the error banner's corners. | `8.0` |
 | `banner_margin` | Distance of the error banner from the window's edges. | `16.0` |
 
 ### `fonts`
@@ -186,6 +188,6 @@ Numbers, in CSS pixels, for the page's own parts: the menus, the Run button, the
 | `card` | The canvas font for port names and values, as a CSS font string. | `12px Verdana, sans-serif` |
 | `title` | The canvas font for the id and type name in a title bar. | `bold 12px Verdana, sans-serif` |
 | `value` | The canvas font for what sits in a value box: numbers, text, links. | `12px Monaco, Menlo, monospace` |
-| `family` | The family for the page's own parts: menu, banner, buttons. | `Verdana, sans-serif` |
+| `family` | The family for the page's own parts: menu, banner, buttons. | `system-ui, -apple-system, 'Segoe UI', sans-serif` |
 | `value_family` | The family for the text typed into an input box. | `Monaco, Menlo, monospace` |
 | `field_px` | The size of text in an input box at zoom 1, in pixels. | `12.0` |

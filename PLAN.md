@@ -373,7 +373,8 @@ Tier 1, foundations:
 
 Tier 2:
 
-4. **The soft modern look for the page parts** (direction C, finding 6 states):
+4. **Done 2026-10-20** (DESIGN.md Results; both themes, axe 0).
+    **The soft modern look for the page parts** (direction C, finding 6 states):
     rounder Run button in the accent, 8 px menus with the popover shadow, 5 px
     fields, the 8 px banner, the system UI font; new page keys in both themes and
     in `docs/themes.md`, applied through `var(--...)`. Files: `index.html`, both

@@ -61,6 +61,8 @@ pub struct Colours {
     pub menu_text: String,
     /// Muted text in the right-click menu, such as `No matching node`.
     pub menu_muted: String,
+    /// The line round the right-click menu, its flyouts and its search box.
+    pub menu_border: String,
     /// The search box in the right-click menu.
     pub menu_field: String,
     /// The shadow under the right-click menu.
@@ -219,6 +221,8 @@ pub struct Page {
     pub button_font_px: f64,
     /// Radius of a menu's corners.
     pub menu_radius: f64,
+    /// Radius of the highlight on a menu entry.
+    pub menu_item_radius: f64,
     /// Space above and below the entries of a menu.
     pub menu_pad: f64,
     /// Space left and right of a menu entry's text.
@@ -341,6 +345,7 @@ impl Theme {
             ("--menu-bg", &colours.menu),
             ("--menu-text", &colours.menu_text),
             ("--menu-muted", &colours.menu_muted),
+            ("--menu-border", &colours.menu_border),
             ("--menu-field-bg", &colours.menu_field),
             ("--menu-shadow", &colours.menu_shadow),
             ("--menu-hover-bg", &colours.menu_hover),
@@ -370,6 +375,7 @@ impl Theme {
             ("--font-px", page.font_px),
             ("--button-font-px", page.button_font_px),
             ("--menu-radius", page.menu_radius),
+            ("--menu-item-radius", page.menu_item_radius),
             ("--menu-pad", page.menu_pad),
             ("--menu-item-pad-x", page.menu_item_pad_x),
             ("--menu-item-pad-y", page.menu_item_pad_y),

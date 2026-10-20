@@ -14,7 +14,9 @@ canvas { display: block; width: 100%; height: 100%; }
     padding: 10px 14px; background: var(--error-bg); color: var(--error-text); font-size: var(--font-px);
     border-radius: var(--banner-radius); }
 #error[hidden] { display: none; }
-#error button { margin-left: 12px; }
+#error button { margin-left: 12px; padding: 3px 10px; font: inherit; cursor: pointer;
+    background: var(--menu-hover-bg); color: var(--menu-hover-text); border: 1px solid var(--menu-border);
+    border-radius: var(--menu-item-radius); }
 #run { position: fixed; left: var(--button-x); top: var(--button-y); display: flex; align-items: center; gap: var(--button-gap);
     padding: var(--button-pad-y) var(--button-pad-x) var(--button-pad-y) calc(var(--button-pad-x) - 2px);
     font: 600 var(--button-font-px) var(--font, sans-serif); letter-spacing: 0.02em; cursor: pointer;
@@ -31,41 +33,41 @@ canvas { display: block; width: 100%; height: 100%; }
 #fields input::placeholder { color: var(--placeholder); }
 #fields input[type=checkbox] { padding: 0; accent-color: var(--accent); }
 #menu { position: fixed; display: flex; flex-direction: column; min-width: var(--menu-min-width);
-    background: var(--menu-bg); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
+    background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
     box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--menu-shadow);
     z-index: 10; }
 #menu[hidden] { display: none; }
 #card-menu { position: fixed; display: flex; flex-direction: column; min-width: var(--menu-min-width);
-    background: var(--menu-bg); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
+    background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
     box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--menu-shadow);
     z-index: 10; }
 #card-menu[hidden] { display: none; }
-#card-menu button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: var(--menu-item-pad-y) var(--menu-item-pad-x);
+#card-menu button { display: block; width: calc(100% - 8px); margin: 0 4px; border: 0; border-radius: var(--menu-item-radius); background: none; text-align: left; padding: var(--menu-item-pad-y) var(--menu-item-pad-x);
     font: var(--font-px) var(--font, sans-serif); color: var(--menu-text); cursor: pointer; }
 #card-menu button:hover { background: var(--menu-hover-bg); color: var(--menu-hover-text); }
 #menu-search { margin: 2px 6px 6px; padding: 4px 6px; box-sizing: border-box;
-    border: 1px solid var(--field-border); border-radius: var(--search-radius); background: var(--menu-field-bg);
+    border: 1px solid var(--menu-border); border-radius: var(--search-radius); background: var(--menu-field-bg);
     color: var(--menu-text); font: var(--font-px) var(--font, sans-serif); }
 #menu-tree, #menu-results { display: flex; flex-direction: column; }
 #menu-tree { max-height: calc(100vh - 90px); overflow-y: auto; }
 #menu-tree[hidden], #menu-results[hidden] { display: none; }
 #menu-results { max-height: calc(100vh - 90px); overflow-y: auto; }
 #menu .none { padding: var(--menu-item-pad-y) var(--menu-item-pad-x); font: var(--font-px) var(--font, sans-serif); color: var(--menu-muted); }
-#menu button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: var(--menu-item-pad-y) var(--menu-item-pad-x);
+#menu button { display: block; width: calc(100% - 8px); margin: 0 4px; border: 0; border-radius: var(--menu-item-radius); background: none; text-align: left; padding: var(--menu-item-pad-y) var(--menu-item-pad-x);
     font: var(--font-px) var(--font, sans-serif); color: var(--menu-text); cursor: pointer; }
 #menu button:hover, #menu .submenu:hover > button { background: var(--menu-hover-bg); color: var(--menu-hover-text); }
 #menu .category::after { content: "\25B8"; float: right; margin-left: 14px; }
 .submenu { position: relative; }
 .submenu > .panel { display: none; position: fixed; left: 0; top: 0; min-width: var(--menu-min-width);
     max-height: calc(100vh - 16px); overflow-y: auto;
-    flex-direction: column; background: var(--menu-bg); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
+    flex-direction: column; background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
     box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--menu-shadow); z-index: 11; }
 .submenu:hover > .panel { display: flex; }
 #run, #menu button, #card-menu button, #error button { transition: background-color 120ms, color 120ms, transform 120ms; }
 #run:focus-visible, #menu-search:focus-visible, #error button:focus-visible, #fields input:focus-visible {
     outline: 2px solid var(--focus); outline-offset: 2px; }
 #menu button:focus-visible, #card-menu button:focus-visible {
-    outline: 2px solid var(--menu-hover-bg); outline-offset: -2px; }
+    outline: 2px solid var(--focus); outline-offset: -2px; }
 #menu button:active, #card-menu button:active { background: var(--menu-hover-bg); color: var(--menu-hover-text); }
 @media (prefers-reduced-motion: reduce) {
     #run, #menu button, #card-menu button, #error button { transition: none; } }
