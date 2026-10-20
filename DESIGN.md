@@ -701,10 +701,29 @@ lints and fail CI; fix the code then. Indents are multiples of 4, so each list
 item starts with a bare dash. There is no remote, so the workflow has not run on
 GitHub; the same commands, the YAML parse and the wheel check were run locally.
 
+Scrolling add-node menu, task 24 (2026-10-20, the user approved it): the menu's
+tree now has `max-height: calc(100vh - 90px)` and `overflow-y: auto`, as the
+search results already did. A scrolling box clips an absolutely positioned child,
+so the flyouts are `position: fixed` and a `mouseover` handler on `#menu`
+(`on_menu_hover`) places the flyout of the entry under the pointer against the
+window: `menu::flyout_at` (native-tested) puts it against the entry's right edge,
+level with it and raised by the menu padding, flips it to the left edge when the
+right has no room, and keeps it inside the window; `menu::clamp_into` does the
+same clamping for the menu itself and for the card menu, which had two copies of
+that code. The flyout touches its entry, so the hover is not lost on the way. This
+replaces the `flip` class and `MENU_FLYOUT_WIDTH`, a guess at the flyout's width.
+A flyout taller than the window scrolls inside itself. The tree's scroll position
+is reset each time the menu opens. Checked in the browser pane with 30 top-level
+categories (the tree scrolls, a flyout at the bottom stays level with its entry,
+a menu opened at the right edge flips its flyouts left) and with three levels of
+nesting.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 24: scrolling add-node menu | native tests: `clamp_into` (inside, hanging out, too tall) and `flyout_at` (right, flipped left, lifted near the bottom, kept below the top); by hand with 30 categories and with three nesting levels: the tree scrolls and resets on open, flyouts sit level with their entry, flip at the right edge and stay open on the way from the entry; 217 Python tests at 100%, 121 Rust tests |
+| 2026-10-20 | task 23: CI for the Rust crates and the WASM build | not run on GitHub (no remote); locally: the workflow parses as YAML with the two jobs and 5 and 8 steps, `cargo fmt`, `clippy` and `cargo test` pass, `build_wasm.py` builds, and a wheel built with `uv build --wheel` holds `element_51/web/element_51_web_bg.wasm` |
 | 2026-10-20 | task 22: page theme keys | native tests: the page reads only variables the theme sets, no pixel font sizes or radii in the page, page keys come out as pixel values, a wrong or mistyped page key lists the valid ones, defaults equal the old literals, docs list every key; pytest: a `page` section in a theme file and a bad value; by hand: `e2_theme_file` shows a round blue Run button and rounder menus, and the default theme reads back 16 px, 6 px, 13 px and `#ececec` on the Run button; 217 Python tests at 100%, 115 Rust tests |
 | 2026-10-20 | task 21: FastAPI and NiceGUI examples, editor under a prefix | native tests: websocket address at the root, under prefixes, with a file name, https; pytest: the FastAPI host serves the panel and the editor, the editor's websocket works at `/editor/ws`, a node added through the API reaches the open page, Run through the API; by hand: both examples show the editor, Add node adds a node live, Run shows `{'n1': {'out': 3.0}, 'n2': {'out': 3.0}}`; 216 Python tests at 100%, 110 Rust tests |
 | 2026-10-20 | task 20: port styles by type and side | native tests: every type and side has a style, defaults are boxes with equal in and out colours, a change reaches one side of one type only, wrong names and shapes name the path and the valid values, docs list every type; pytest: a ports file and bad shapes; by hand: `a18` shows diamonds for number inputs and circles for number outputs, `a6` keeps the box look; 213 Python tests at 100%, 105 Rust tests |
