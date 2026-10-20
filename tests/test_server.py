@@ -581,3 +581,23 @@ def test_asgi_app_takes_the_theme_too(web_dir: Path) -> None:
     app = App([add])
     server.asgi_app(app, theme="antimony-light")
     assert app.theme == "antimony-light"
+
+
+def test_serve_takes_a_theme_file_and_the_page_is_sent_its_changes(
+    web_dir: Path, tmp_path: Path
+) -> None:
+    """`serve(theme="my_theme.json")` sends the file's values to the page."""
+    assert web_dir.exists()
+    path = tmp_path / "my_theme.json"
+    path.write_text('{"colours": {"canvas": "#101010"}}', encoding="utf-8")
+    app = App([add])
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(uvicorn.Server, "run", _do_not_run)
+        server.serve(app, port=9000, theme=str(path))
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        snapshot = Snapshot.model_validate_json(websocket.recv())
+    assert snapshot.theme == "antimony"
+    assert snapshot.theme_changes.colours == {"canvas": "#101010"}

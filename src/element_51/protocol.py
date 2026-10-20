@@ -6,6 +6,7 @@ from pydantic import Field, TypeAdapter
 
 from element_51.edits import Edit
 from element_51.model import Graph, Model, NodeType
+from element_51.theme import ThemeChanges
 
 
 class Snapshot(Model):
@@ -14,6 +15,7 @@ class Snapshot(Model):
     op: Literal["snapshot"] = "snapshot"
     version: Literal[2] = 2
     theme: str
+    theme_changes: ThemeChanges = ThemeChanges()
     node_types: tuple[NodeType, ...]
     graph: Graph
 

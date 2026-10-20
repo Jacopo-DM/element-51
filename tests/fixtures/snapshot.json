@@ -2,6 +2,13 @@
   "op": "snapshot",
   "version": 2,
   "theme": "antimony-light",
+  "theme_changes": {
+    "colours": {},
+    "metrics": {},
+    "fonts": {
+      "value": "14px Menlo"
+    }
+  },
   "node_types": [
     {
       "name": "add",

@@ -1,5 +1,6 @@
 """Tests for the live session."""
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -198,3 +199,18 @@ def test_an_unknown_theme_is_refused_and_changes_nothing() -> None:
     with pytest.raises(ValueError, match="antimony-light"):
         app.theme = "dark"
     assert app.theme == "antimony"
+
+
+def test_a_theme_file_changes_reach_the_snapshot(tmp_path: Path) -> None:
+    """The base name stays the theme; the file's values ride along."""
+    path = tmp_path / "t.json"
+    path.write_text('{"fonts": {"value": "14px Menlo"}}', encoding="utf-8")
+    app = App([add])
+    heard: list[Snapshot] = []
+    app.subscribe(heard.append)
+    app.theme = path
+    assert app.theme == "antimony"
+    assert heard[0].theme_changes.fonts == {"value": "14px Menlo"}
+    assert app.snapshot().theme_changes.fonts == {"value": "14px Menlo"}
+    app.theme = "antimony-light"
+    assert not app.snapshot().theme_changes.fonts

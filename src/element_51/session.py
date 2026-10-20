@@ -9,7 +9,7 @@ from element_51.model import Graph, NodeType, PortRef, PortValue
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot
 from element_51.store import load_graph, save_graph
-from element_51.theme import DEFAULT_THEME, check_theme
+from element_51.theme import ThemeChanges, ThemeFile, resolve_theme
 
 
 class App:
@@ -36,7 +36,7 @@ class App:
             self.node_functions[name] = function
         self.graph = Graph(nodes=(), links=())
         self._listeners: list[Callable[[Snapshot], None]] = []
-        self._theme = DEFAULT_THEME
+        self._theme = ThemeFile()
 
     def add_node(self, function: Registered, *, x: float, y: float) -> str:
         """Place a new node of a registered type.
@@ -147,16 +147,18 @@ class App:
 
     @property
     def theme(self) -> str:
-        """The name of the theme the editor is drawn in."""
-        return self._theme
+        """The name of the built-in theme the editor is drawn in."""
+        return self._theme.base
 
     @theme.setter
-    def theme(self, name: str) -> None:
+    def theme(self, choice: str | Path) -> None:
         """Change the theme. Open pages are told at once.
 
-        Raises `ValueError`, naming the valid themes, for an unknown name.
+        `choice` is a built-in theme name or the path of a theme file (see
+        `element_51.theme`). Raises `ValueError`, naming the valid themes, for
+        anything else.
         """
-        self._theme = check_theme(name)
+        self._theme = resolve_theme(choice)
         self._changed()
 
     def subscribe(self, listener: Callable[[Snapshot], None]) -> None:
@@ -215,7 +217,12 @@ class App:
             Every node type and the current graph.
         """
         return Snapshot(
-            theme=self._theme,
+            theme=self._theme.base,
+            theme_changes=ThemeChanges(
+                colours=self._theme.colours,
+                metrics=self._theme.metrics,
+                fonts=self._theme.fonts,
+            ),
             node_types=tuple(f.node_type for f in self.node_functions.values()),
             graph=self.graph,
         )

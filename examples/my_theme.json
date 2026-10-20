@@ -1,0 +1,17 @@
+{
+  "base": "antimony",
+  "colours": {
+    "canvas": "#101820",
+    "dot": "#1c2a36",
+    "port_number": "#ffb000",
+    "header": "#2b4a63"
+  },
+  "metrics": {
+    "node_width": 260
+  },
+  "fonts": {
+    "value": "13px Menlo, Monaco, monospace",
+    "value_family": "Menlo, Monaco, monospace",
+    "field_px": 13
+  }
+}

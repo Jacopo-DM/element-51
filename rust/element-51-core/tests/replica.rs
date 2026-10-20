@@ -15,6 +15,7 @@ fn replica() -> Replica {
     Replica::new(Snapshot {
         version: Snapshot::VERSION,
         theme: "antimony".into(),
+        theme_changes: Default::default(),
         node_types: fixture.node_types,
         graph: Graph {
             nodes: vec![],
@@ -132,6 +133,7 @@ fn snapshot_with(ids: &[&str]) -> Snapshot {
     Snapshot {
         version: Snapshot::VERSION,
         theme: "antimony".into(),
+        theme_changes: Default::default(),
         node_types: fixture.node_types,
         graph: Graph {
             nodes,

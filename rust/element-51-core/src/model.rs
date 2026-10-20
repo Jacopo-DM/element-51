@@ -92,8 +92,12 @@ pub struct Graph {
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
     pub version: u32,
-    /// The name of the theme to draw in.
+    /// The name of the built-in theme to draw in.
     pub theme: String,
+    /// Values that replace the theme's own (see `Theme::with_changes`); absent
+    /// or `null` means none.
+    #[serde(default)]
+    pub theme_changes: serde_json::Value,
     pub node_types: Vec<NodeType>,
     pub graph: Graph,
 }

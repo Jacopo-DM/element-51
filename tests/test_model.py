@@ -98,3 +98,4 @@ def test_the_snapshot_carries_its_theme_and_protocol_version_2() -> None:
     snapshot = Snapshot.model_validate_json(FIXTURE.read_text())
     assert snapshot.version == PROTOCOL_VERSION
     assert snapshot.theme == "antimony-light"
+    assert snapshot.theme_changes.fonts == {"value": "14px Menlo"}

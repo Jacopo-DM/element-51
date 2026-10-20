@@ -73,6 +73,8 @@ struct State {
     menu_at: (f64, f64),
     /// The node whose card menu is open, if any.
     card_menu_node: Option<String>,
+    /// The theme name and changes the current theme was built from.
+    theme_key: String,
 }
 
 type Shared = Rc<RefCell<State>>;
@@ -128,6 +130,7 @@ pub fn start() -> Result<(), JsValue> {
         run: None,
         menu_at: (0.0, 0.0),
         card_menu_node: None,
+        theme_key: String::new(),
     }));
     fit_canvas(&state, &window);
 
@@ -403,15 +406,17 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
             Ok(Message::Snapshot(snapshot)) => {
                 state.run = None;
                 state.selected = None;
-                if snapshot.theme != state.theme.name {
-                    match Theme::builtin(&snapshot.theme) {
-                        Some(theme) => {
+                let theme_key = format!("{} {}", snapshot.theme, snapshot.theme_changes);
+                if theme_key != state.theme_key {
+                    match Theme::with_changes(&snapshot.theme, &snapshot.theme_changes) {
+                        Ok(theme) => {
                             apply_theme(&state.document, &theme);
                             state.theme = theme;
+                            state.theme_key = theme_key;
                         }
-                        None => show_error(
+                        Err(reason) => show_error(
                             &state.document,
-                            &format!("Python asked for an unknown theme: {}", snapshot.theme),
+                            &format!("The theme cannot be used: {reason}"),
                         ),
                     }
                 }

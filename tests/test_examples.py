@@ -64,6 +64,10 @@ EXPECTED: dict[str, Expected] = {
     ],
     "a10_live_push.py": [("n1", "ok", {"out": 1.0})],
     "a16_menu.py": [("n1", "ok", {"out": 3.0})],
+    "a18_theme_file.py": [
+        ("n1", "ok", {"out": 3.0}),
+        ("n2", "ok", {"out": 3.0}),
+    ],
     "a17_card_menu.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 5.0}),
@@ -229,3 +233,11 @@ def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
         "add": "",
         "show": "",
     }
+
+
+def test_the_theme_file_example_changes_the_dark_theme() -> None:
+    """The app reads `my_theme.json` and sends its changes to the page."""
+    snapshot = build("a18_theme_file.py").snapshot()
+    assert snapshot.theme == "antimony"
+    assert snapshot.theme_changes.colours["canvas"] == "#101820"
+    assert snapshot.theme_changes.metrics == {"node_width": 260.0}

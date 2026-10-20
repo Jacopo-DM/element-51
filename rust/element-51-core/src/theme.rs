@@ -3,7 +3,8 @@
 //! A theme is plain data, read from JSON. Drawing and layout take it as an
 //! argument, so nothing else in the program says what a colour or a size is.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// The names of the built-in themes, the default first.
 pub const THEME_NAMES: [&str; 2] = ["antimony", "antimony-light"];
@@ -12,7 +13,7 @@ const ANTIMONY: &str = include_str!("../themes/antimony.json");
 const ANTIMONY_LIGHT: &str = include_str!("../themes/antimony-light.json");
 
 /// Colours, as CSS colour strings.
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Colours {
     /// The canvas behind the graph.
@@ -78,21 +79,28 @@ pub struct Colours {
 }
 
 /// Sizes, in graph units (one unit is one pixel at zoom 1).
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Metrics {
+    /// Width of a node card.
     pub node_width: f64,
+    /// Height of a card's title bar.
     pub header_height: f64,
+    /// Height of one row of a card: an input or an output.
     pub row_height: f64,
+    /// Radius of a card's corners.
     pub card_radius: f64,
     /// Thickness of the line round a card.
     pub border_width: f64,
+    /// Side of a port's square marker.
     pub port_size: f64,
     /// How far a port's centre sits inside the card's edge.
     pub port_inset: f64,
     /// How close a press must be to a port's anchor to hit it.
     pub port_hit_radius: f64,
+    /// Thickness of a wire.
     pub wire_width: f64,
+    /// Thickness of a selected wire.
     pub wire_width_selected: f64,
     /// Thickness of the outline round a selected node.
     pub selection_width: f64,
@@ -102,6 +110,7 @@ pub struct Metrics {
     pub wire_max_swing: f64,
     /// Height of a value box.
     pub field_height: f64,
+    /// Radius of a value box's corners.
     pub box_radius: f64,
     /// Space between a port and its label.
     pub port_gap: f64,
@@ -121,11 +130,12 @@ pub struct Metrics {
     pub icon_gap: f64,
     /// Distance between grid dots.
     pub grid_step: f64,
+    /// Radius of a grid dot.
     pub dot_radius: f64,
 }
 
 /// Fonts.
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Fonts {
     /// The canvas font for port names and values, as a CSS font string.
@@ -143,7 +153,7 @@ pub struct Fonts {
 }
 
 /// A complete look.
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Theme {
     pub name: String,
@@ -161,6 +171,54 @@ impl Theme {
             _ => return None,
         };
         Some(serde_json::from_str(text).expect("a built-in theme is valid JSON"))
+    }
+
+    /// The built-in theme `base` with some of its values replaced.
+    ///
+    /// `changes` is an object with up to three members, `colours`, `metrics`
+    /// and `fonts`, each an object of the keys to replace. A value must have the
+    /// same kind (text or number) as the one it replaces. `null` means no
+    /// changes. The error says which name or key is wrong and what would do.
+    pub fn with_changes(base: &str, changes: &Value) -> Result<Theme, String> {
+        let theme = Theme::builtin(base).ok_or_else(|| {
+            format!(
+                "unknown theme {base:?}; the themes are: {}",
+                THEME_NAMES.join(", ")
+            )
+        })?;
+        let sections = match changes {
+            Value::Null => return Ok(theme),
+            Value::Object(sections) => sections,
+            _ => return Err("theme changes must be an object".to_string()),
+        };
+        let mut whole = serde_json::to_value(&theme).map_err(|error| error.to_string())?;
+        for (section, entries) in sections {
+            let known = ["colours", "metrics", "fonts"].contains(&section.as_str());
+            let current = whole.get_mut(section).and_then(Value::as_object_mut);
+            let (true, Some(current)) = (known, current) else {
+                return Err(format!(
+                    "unknown theme section {section:?}; the sections are: colours, metrics, fonts"
+                ));
+            };
+            let Value::Object(entries) = entries else {
+                return Err(format!("{section} must be an object of changes"));
+            };
+            for (key, value) in entries {
+                let Some(old) = current.get(key) else {
+                    let keys: Vec<&str> = current.keys().map(String::as_str).collect();
+                    return Err(format!(
+                        "unknown {section} key {key:?}; the keys are: {}",
+                        keys.join(", ")
+                    ));
+                };
+                if std::mem::discriminant(old) != std::mem::discriminant(value) {
+                    let kind = if old.is_number() { "a number" } else { "text" };
+                    return Err(format!("{section} key {key:?} must be {kind}"));
+                }
+                current.insert(key.clone(), value.clone());
+            }
+        }
+        serde_json::from_value(whole).map_err(|error| error.to_string())
     }
 
     /// The values the page's own parts (input boxes, menu, error banner) read

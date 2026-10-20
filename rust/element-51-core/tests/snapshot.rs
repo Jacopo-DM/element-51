@@ -12,6 +12,7 @@ fn shared_fixture_parses() {
     };
     assert_eq!(snapshot.version, 2);
     assert_eq!(snapshot.theme, "antimony-light");
+    assert_eq!(snapshot.theme_changes["fonts"]["value"], "14px Menlo");
     let names: Vec<&str> = snapshot
         .node_types
         .iter()

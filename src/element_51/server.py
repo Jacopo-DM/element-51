@@ -108,7 +108,7 @@ async def reply_to(app: App, text: str) -> Ack | Reject | RunResult | None:
     return Ack(id=message.id)
 
 
-def asgi_app(app: App, theme: str | None = None) -> Starlette:
+def asgi_app(app: App, theme: str | Path | None = None) -> Starlette:
     """Return an ASGI app that serves the editor for `app`.
 
     Mount it in an existing ASGI app, or pass the `App` to `serve`.
@@ -118,7 +118,8 @@ def asgi_app(app: App, theme: str | None = None) -> Starlette:
     app
         The session whose graph the browser edits.
     theme
-        The theme to draw it in, by name, or None to keep the app's own.
+        The theme to draw it in: a built-in name or the path of a theme file,
+        or None to keep the app's own.
 
     Returns
     -------
@@ -192,7 +193,7 @@ def serve(
     port: int = 8765,
     *,
     open_browser: bool = False,
-    theme: str | None = None,
+    theme: str | Path | None = None,
 ) -> None:
     """Run the editor on this machine only, until interrupted.
 
@@ -208,8 +209,10 @@ def serve(
         Open the editor page in the default browser once the server is
         listening.
     theme
-        The theme to draw the editor in: `antimony` (dark, the default) or
-        `antimony-light`. An unknown name raises `ValueError` listing them.
+        The theme to draw the editor in: `antimony` (dark, the default),
+        `antimony-light`, or the path of a JSON theme file that changes some
+        of their values (see `docs/themes.md`). Anything else raises
+        `ValueError`.
     """
     config = uvicorn.Config(asgi_app(app, theme), host=HOST, port=port)
     url = f"http://{HOST}:{port}/" if open_browser else None
