@@ -1,663 +1,663 @@
 {
-  "node_types": [
-    {
-      "name": "add",
-      "inputs": [
+    "node_types": [
         {
-          "name": "a",
-          "kind": "float"
+            "name": "add",
+            "inputs": [
+                {
+                    "name": "a",
+                    "kind": "float"
+                },
+                {
+                    "name": "b",
+                    "kind": "float"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "float"
+                }
+            ],
+            "defaults": {},
+            "category": ""
         },
         {
-          "name": "b",
-          "kind": "float"
+            "name": "label",
+            "inputs": [
+                {
+                    "name": "text",
+                    "kind": "str"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "str"
+                }
+            ],
+            "defaults": {},
+            "category": ""
         }
-      ],
-      "outputs": [
-        {
-          "name": "out",
-          "kind": "float"
-        }
-      ],
-      "defaults": {},
-      "category": ""
-    },
-    {
-      "name": "label",
-      "inputs": [
-        {
-          "name": "text",
-          "kind": "str"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "out",
-          "kind": "str"
-        }
-      ],
-      "defaults": {},
-      "category": ""
-    }
-  ],
-  "graph": {
-    "nodes": [
-      {
-        "id": "n1",
-        "node_type": "add",
-        "x": 10.0,
-        "y": 20.0,
-        "values": {}
-      },
-      {
-        "id": "n2",
-        "node_type": "add",
-        "x": 200.0,
-        "y": 20.0,
-        "values": {}
-      },
-      {
-        "id": "n3",
-        "node_type": "add",
-        "x": 400.0,
-        "y": 60.0,
-        "values": {}
-      }
     ],
-    "links": [
-      {
-        "source": {
-          "node": "n1",
-          "port": "out"
+    "graph": {
+        "nodes": [
+            {
+                "id": "n1",
+                "node_type": "add",
+                "x": 10.0,
+                "y": 20.0,
+                "values": {}
+            },
+            {
+                "id": "n2",
+                "node_type": "add",
+                "x": 200.0,
+                "y": 20.0,
+                "values": {}
+            },
+            {
+                "id": "n3",
+                "node_type": "add",
+                "x": 400.0,
+                "y": 60.0,
+                "values": {}
+            }
+        ],
+        "links": [
+            {
+                "source": {
+                    "node": "n1",
+                    "port": "out"
+                },
+                "target": {
+                    "node": "n2",
+                    "port": "a"
+                }
+            },
+            {
+                "source": {
+                    "node": "n2",
+                    "port": "out"
+                },
+                "target": {
+                    "node": "n3",
+                    "port": "a"
+                }
+            },
+            {
+                "source": {
+                    "node": "n1",
+                    "port": "out"
+                },
+                "target": {
+                    "node": "n3",
+                    "port": "b"
+                }
+            }
+        ]
+    },
+    "cases": [
+        {
+            "name": "a node can be moved",
+            "edit": {
+                "kind": "move_node",
+                "id": "n2",
+                "x": 55.5,
+                "y": 66.0
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 55.5,
+                        "y": 66.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
         },
-        "target": {
-          "node": "n2",
-          "port": "a"
-        }
-      },
-      {
-        "source": {
-          "node": "n2",
-          "port": "out"
+        {
+            "name": "moving a missing node is refused",
+            "edit": {
+                "kind": "move_node",
+                "id": "n9",
+                "x": 1.0,
+                "y": 1.0
+            },
+            "result": "unknown_node"
         },
-        "target": {
-          "node": "n3",
-          "port": "a"
-        }
-      },
-      {
-        "source": {
-          "node": "n1",
-          "port": "out"
+        {
+            "name": "deleting a node takes its links with it",
+            "edit": {
+                "kind": "delete_node",
+                "id": "n2"
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
         },
-        "target": {
-          "node": "n3",
-          "port": "b"
+        {
+            "name": "deleting a source node frees the inputs it fed",
+            "edit": {
+                "kind": "delete_node",
+                "id": "n1"
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "deleting a missing node is refused",
+            "edit": {
+                "kind": "delete_node",
+                "id": "n9"
+            },
+            "result": "unknown_node"
+        },
+        {
+            "name": "a link can be deleted",
+            "edit": {
+                "kind": "delete_link",
+                "source": {
+                    "node": "n2",
+                    "port": "out"
+                },
+                "target": {
+                    "node": "n3",
+                    "port": "a"
+                }
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "deleting a link that is not there is refused",
+            "edit": {
+                "kind": "delete_link",
+                "source": {
+                    "node": "n1",
+                    "port": "out"
+                },
+                "target": {
+                    "node": "n2",
+                    "port": "b"
+                }
+            },
+            "result": "unknown_link"
+        },
+        {
+            "name": "a value can be set on an unlinked input",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "b",
+                "value": 2.5
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {
+                            "b": 2.5
+                        }
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "an int may be set on a float input",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "a",
+                "value": 3
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {
+                            "a": 3
+                        }
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "a value can be set on a linked input too",
+            "edit": {
+                "kind": "set_value",
+                "node": "n2",
+                "port": "a",
+                "value": 1.5
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {
+                            "a": 1.5
+                        }
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "setting no value clears an earlier one",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "a",
+                "value": null
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {}
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {}
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "a value for a missing node is refused",
+            "edit": {
+                "kind": "set_value",
+                "node": "n9",
+                "port": "a",
+                "value": 1.0
+            },
+            "result": "unknown_node"
+        },
+        {
+            "name": "a value for an output port is refused",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "out",
+                "value": 1.0
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "a value for a missing port is refused",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "zzz",
+                "value": 1.0
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "a text value for a float input is refused",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "a",
+                "value": "hi"
+            },
+            "result": "bad_value"
+        },
+        {
+            "name": "a bool is not a number",
+            "edit": {
+                "kind": "set_value",
+                "node": "n1",
+                "port": "a",
+                "value": true
+            },
+            "result": "bad_value"
         }
-      }
     ]
-  },
-  "cases": [
-    {
-      "name": "a node can be moved",
-      "edit": {
-        "kind": "move_node",
-        "id": "n2",
-        "x": 55.5,
-        "y": 66.0
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 55.5,
-            "y": 66.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n2",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n2",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "moving a missing node is refused",
-      "edit": {
-        "kind": "move_node",
-        "id": "n9",
-        "x": 1.0,
-        "y": 1.0
-      },
-      "result": "unknown_node"
-    },
-    {
-      "name": "deleting a node takes its links with it",
-      "edit": {
-        "kind": "delete_node",
-        "id": "n2"
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "deleting a source node frees the inputs it fed",
-      "edit": {
-        "kind": "delete_node",
-        "id": "n1"
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 200.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n2",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "a"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "deleting a missing node is refused",
-      "edit": {
-        "kind": "delete_node",
-        "id": "n9"
-      },
-      "result": "unknown_node"
-    },
-    {
-      "name": "a link can be deleted",
-      "edit": {
-        "kind": "delete_link",
-        "source": {
-          "node": "n2",
-          "port": "out"
-        },
-        "target": {
-          "node": "n3",
-          "port": "a"
-        }
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 200.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n2",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "deleting a link that is not there is refused",
-      "edit": {
-        "kind": "delete_link",
-        "source": {
-          "node": "n1",
-          "port": "out"
-        },
-        "target": {
-          "node": "n2",
-          "port": "b"
-        }
-      },
-      "result": "unknown_link"
-    },
-    {
-      "name": "a value can be set on an unlinked input",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "b",
-        "value": 2.5
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {
-              "b": 2.5
-            }
-          },
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 200.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n2",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n2",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "an int may be set on a float input",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "a",
-        "value": 3
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {
-              "a": 3
-            }
-          },
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 200.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n2",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n2",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "a value can be set on a linked input too",
-      "edit": {
-        "kind": "set_value",
-        "node": "n2",
-        "port": "a",
-        "value": 1.5
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 200.0,
-            "y": 20.0,
-            "values": {
-              "a": 1.5
-            }
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n2",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n2",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "setting no value clears an earlier one",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "a",
-        "value": null
-      },
-      "result": "ok",
-      "graph": {
-        "nodes": [
-          {
-            "id": "n1",
-            "node_type": "add",
-            "x": 10.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n2",
-            "node_type": "add",
-            "x": 200.0,
-            "y": 20.0,
-            "values": {}
-          },
-          {
-            "id": "n3",
-            "node_type": "add",
-            "x": 400.0,
-            "y": 60.0,
-            "values": {}
-          }
-        ],
-        "links": [
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n2",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n2",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "a"
-            }
-          },
-          {
-            "source": {
-              "node": "n1",
-              "port": "out"
-            },
-            "target": {
-              "node": "n3",
-              "port": "b"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "a value for a missing node is refused",
-      "edit": {
-        "kind": "set_value",
-        "node": "n9",
-        "port": "a",
-        "value": 1.0
-      },
-      "result": "unknown_node"
-    },
-    {
-      "name": "a value for an output port is refused",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "out",
-        "value": 1.0
-      },
-      "result": "unknown_port"
-    },
-    {
-      "name": "a value for a missing port is refused",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "zzz",
-        "value": 1.0
-      },
-      "result": "unknown_port"
-    },
-    {
-      "name": "a text value for a float input is refused",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "a",
-        "value": "hi"
-      },
-      "result": "bad_value"
-    },
-    {
-      "name": "a bool is not a number",
-      "edit": {
-        "kind": "set_value",
-        "node": "n1",
-        "port": "a",
-        "value": true
-      },
-      "result": "bad_value"
-    }
-  ]
 }

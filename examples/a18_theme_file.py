@@ -5,15 +5,15 @@ dark blue canvas, blue title bars, number inputs drawn as diamonds and number
 outputs as circles, wider cards and a larger value font. Try these:
 
 * Run the script and look at the editor: it is two linked nodes in the
-  new colours.
+    new colours.
 * Open `my_theme.json`, change `"canvas"` to another colour, stop the script
-  with Ctrl+C and run it again to see it.
+    with Ctrl+C and run it again to see it.
 * In the `"ports"` entry, change a `"shape"` to `"box"` or `"circle"`, or give
-  `"text"` ports a style of their own (see `docs/themes.md`).
+    `"text"` ports a style of their own (see `docs/themes.md`).
 * Change `"colours"` to `"colors"` and run it: Python refuses the file and
-  names the member that is wrong.
+    names the member that is wrong.
 * Change `"canvas"` to `"canvass"` and run it: the page shows a banner that
-  names the key and lists the valid ones.
+    names the key and lists the valid ones.
 
 Every key you can change is listed in `docs/themes.md`.
 

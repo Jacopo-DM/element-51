@@ -1,109 +1,109 @@
 {
-  "name": "antimony",
-  "colours": {
-    "canvas": "#1a1a1a",
-    "dot": "#2c2c2c",
-    "card": "#202020",
-    "card_border": "#505050",
-    "header": "#505050",
-    "header_error": "#8a3a3a",
-    "header_skipped": "#3a3a3a",
-    "title": "#e0e0e0",
-    "label": "#b0b0b0",
-    "text_dim": "#808080",
-    "placeholder": "#505050",
-    "icon": "#9e9e9e",
-    "selected": "#e0e0e0",
-    "selected_wire": "#e0e0e0",
-    "allowed": "#6fcf6f",
-    "refused": "#e06060",
-    "field": "#303030",
-    "field_text": "#e0e0e0",
-    "field_border": "#303030",
-    "menu": "#ececec",
-    "menu_text": "#222222",
-    "menu_field": "#ffffff",
-    "menu_shadow": "rgba(0, 0, 0, 0.5)",
-    "menu_hover": "#4a90d9",
-    "menu_hover_text": "#ffffff",
-    "error": "#5a2d2d",
-    "error_text": "#f0d0d0"
-  },
-  "ports": {
-    "int": {
-      "in": {
-        "colour": "#edc27b",
-        "shape": "box"
-      },
-      "out": {
-        "colour": "#edc27b",
-        "shape": "box"
-      }
+    "name": "antimony",
+    "colours": {
+        "canvas": "#1a1a1a",
+        "dot": "#2c2c2c",
+        "card": "#202020",
+        "card_border": "#505050",
+        "header": "#505050",
+        "header_error": "#8a3a3a",
+        "header_skipped": "#3a3a3a",
+        "title": "#e0e0e0",
+        "label": "#b0b0b0",
+        "text_dim": "#808080",
+        "placeholder": "#505050",
+        "icon": "#9e9e9e",
+        "selected": "#e0e0e0",
+        "selected_wire": "#e0e0e0",
+        "allowed": "#6fcf6f",
+        "refused": "#e06060",
+        "field": "#303030",
+        "field_text": "#e0e0e0",
+        "field_border": "#303030",
+        "menu": "#ececec",
+        "menu_text": "#222222",
+        "menu_field": "#ffffff",
+        "menu_shadow": "rgba(0, 0, 0, 0.5)",
+        "menu_hover": "#4a90d9",
+        "menu_hover_text": "#ffffff",
+        "error": "#5a2d2d",
+        "error_text": "#f0d0d0"
     },
-    "float": {
-      "in": {
-        "colour": "#edc27b",
-        "shape": "box"
-      },
-      "out": {
-        "colour": "#edc27b",
-        "shape": "box"
-      }
+    "ports": {
+        "int": {
+            "in": {
+                "colour": "#edc27b",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#edc27b",
+                "shape": "box"
+            }
+        },
+        "float": {
+            "in": {
+                "colour": "#edc27b",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#edc27b",
+                "shape": "box"
+            }
+        },
+        "text": {
+            "in": {
+                "colour": "#94a95f",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#94a95f",
+                "shape": "box"
+            }
+        },
+        "bool": {
+            "in": {
+                "colour": "#6fa8dc",
+                "shape": "box"
+            },
+            "out": {
+                "colour": "#6fa8dc",
+                "shape": "box"
+            }
+        }
     },
-    "text": {
-      "in": {
-        "colour": "#94a95f",
-        "shape": "box"
-      },
-      "out": {
-        "colour": "#94a95f",
-        "shape": "box"
-      }
+    "metrics": {
+        "node_width": 220.0,
+        "header_height": 28.0,
+        "row_height": 26.0,
+        "card_radius": 8.0,
+        "border_width": 2.0,
+        "port_size": 10.0,
+        "port_inset": 8.0,
+        "port_hit_radius": 9.0,
+        "wire_width": 3.5,
+        "wire_width_selected": 5.0,
+        "selection_width": 2.0,
+        "wire_min_reach": 20.0,
+        "wire_max_swing": 70.0,
+        "field_height": 20.0,
+        "box_radius": 4.0,
+        "port_gap": 8.0,
+        "box_gap": 8.0,
+        "title_pad": 10.0,
+        "box_pad": 6.0,
+        "text_baseline": 4.5,
+        "icon_width": 14.0,
+        "icon_bar": 2.5,
+        "icon_gap": 2.5,
+        "grid_step": 24.0,
+        "dot_radius": 1.2
     },
-    "bool": {
-      "in": {
-        "colour": "#6fa8dc",
-        "shape": "box"
-      },
-      "out": {
-        "colour": "#6fa8dc",
-        "shape": "box"
-      }
+    "fonts": {
+        "card": "12px Verdana, sans-serif",
+        "title": "bold 12px Verdana, sans-serif",
+        "value": "12px Monaco, Menlo, monospace",
+        "family": "Verdana, sans-serif",
+        "value_family": "Monaco, Menlo, monospace",
+        "field_px": 12.0
     }
-  },
-  "metrics": {
-    "node_width": 220.0,
-    "header_height": 28.0,
-    "row_height": 26.0,
-    "card_radius": 8.0,
-    "border_width": 2.0,
-    "port_size": 10.0,
-    "port_inset": 8.0,
-    "port_hit_radius": 9.0,
-    "wire_width": 3.5,
-    "wire_width_selected": 5.0,
-    "selection_width": 2.0,
-    "wire_min_reach": 20.0,
-    "wire_max_swing": 70.0,
-    "field_height": 20.0,
-    "box_radius": 4.0,
-    "port_gap": 8.0,
-    "box_gap": 8.0,
-    "title_pad": 10.0,
-    "box_pad": 6.0,
-    "text_baseline": 4.5,
-    "icon_width": 14.0,
-    "icon_bar": 2.5,
-    "icon_gap": 2.5,
-    "grid_step": 24.0,
-    "dot_radius": 1.2
-  },
-  "fonts": {
-    "card": "12px Verdana, sans-serif",
-    "title": "bold 12px Verdana, sans-serif",
-    "value": "12px Monaco, Menlo, monospace",
-    "family": "Verdana, sans-serif",
-    "value_family": "Monaco, Menlo, monospace",
-    "field_px": 12.0
-  }
 }

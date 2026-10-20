@@ -4,13 +4,13 @@ FastAPI hosts the page. The editor is mounted at `/editor`, the side panel is
 plain HTML at `/`, and both talk to one `App` held in this process. Try these:
 
 * Run the script. Your browser opens on the panel, with the editor on the
-  left and a panel on the right.
+    left and a panel on the right.
 * Click `Run` in the panel: FastAPI calls `app.run()` and shows every node's
-  outputs.
+    outputs.
 * Click `Add node`: a node appears in the editor at once, with no reload,
-  because the editor listens to the `App`.
+    because the editor listens to the `App`.
 * Drag a node in the editor and click `Run` again: the panel sees the graph
-  you just edited.
+    you just edited.
 
 Run it with one worker only: the `App` lives in this process, and a second
 worker would hold a second, separate graph.
@@ -31,28 +31,37 @@ PAGE = """<!doctype html>
 <meta charset="utf-8">
 <title>element-51 in FastAPI</title>
 <style>
-  body { margin: 0; display: flex; height: 100vh; color-scheme: light;
-         font: 14px Verdana, sans-serif; }
-  iframe { flex: 1; border: 0; }
-  aside { width: 280px; padding: 16px; box-sizing: border-box;
-          border-left: 1px solid #ccc; }
-  button { margin-right: 8px; padding: 6px 12px; }
-  pre { white-space: pre-wrap; }
+    body {
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        color-scheme: light;
+        font: 14px Verdana, sans-serif;
+    }
+    iframe { flex: 1; border: 0; }
+    aside {
+        width: 280px;
+        padding: 16px;
+        box-sizing: border-box;
+        border-left: 1px solid #ccc;
+    }
+    button { margin-right: 8px; padding: 6px 12px; }
+    pre { white-space: pre-wrap; }
 </style>
 <iframe src="/editor/"></iframe>
 <aside>
-  <h3>Side panel</h3>
-  <button id="run">Run</button><button id="add">Add node</button>
-  <pre id="out"></pre>
+    <h3>Side panel</h3>
+    <button id="run">Run</button><button id="add">Add node</button>
+    <pre id="out"></pre>
 </aside>
 <script>
-  const out = document.getElementById("out");
-  async function call(path) {
-    const reply = await fetch(path, {method: "POST"});
-    out.textContent = JSON.stringify(await reply.json(), null, 2);
-  }
-  document.getElementById("run").onclick = () => call("/api/run");
-  document.getElementById("add").onclick = () => call("/api/add-node");
+    const out = document.getElementById("out");
+    async function call(path) {
+        const reply = await fetch(path, {method: "POST"});
+        out.textContent = JSON.stringify(await reply.json(), null, 4);
+    }
+    document.getElementById("run").onclick = () => call("/api/run");
+    document.getElementById("add").onclick = () => call("/api/add-node");
 </script>
 """
 

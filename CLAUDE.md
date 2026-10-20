@@ -113,8 +113,7 @@ No tool ignore or deny file exists in this repo, so none was changed.
   called, so coverage stays at 100%.
 - `typing.TypeGuard` narrows only the first argument of the guard function, so
   the value being checked goes first (`value_fits(value, kind)`).
-- A wrapped bullet in a docstring breaks the 4-space indent rule when the
-  continuation is indented by 2. Keep each bullet on one line.
+- Every indent in every file you write is a multiple of 4: Python, docstrings, strings that hold HTML, CSS or JS, the page, and JSON (`json.dumps(..., indent=4)`). Check with `grep -rnP '^(    )* {1,3}[^ ]' --include='*.py' src tests examples`, which must print nothing, and look at new HTML and JSON by eye. A continuation line of a docstring bullet goes in by 4.
 - Checking the editor in the browser pane: click and drag coordinates are
   screenshot pixels (the page is about 1.28 times larger in CSS pixels), so read
   positions off the screenshot. A menu opened by a right-click may not be painted

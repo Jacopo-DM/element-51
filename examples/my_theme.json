@@ -1,26 +1,38 @@
 {
-  "base": "antimony",
-  "colours": {
-    "canvas": "#101820",
-    "dot": "#1c2a36",
-    "header": "#2b4a63"
-  },
-  "ports": {
-    "float": {
-      "in": {"colour": "#ffb000", "shape": "diamond"},
-      "out": {"colour": "#ffb000", "shape": "circle"}
+    "base": "antimony",
+    "colours": {
+        "canvas": "#101820",
+        "dot": "#1c2a36",
+        "header": "#2b4a63"
     },
-    "int": {
-      "in": {"colour": "#ff7a00", "shape": "diamond"},
-      "out": {"colour": "#ff7a00", "shape": "circle"}
+    "ports": {
+        "float": {
+            "in": {
+                "colour": "#ffb000",
+                "shape": "diamond"
+            },
+            "out": {
+                "colour": "#ffb000",
+                "shape": "circle"
+            }
+        },
+        "int": {
+            "in": {
+                "colour": "#ff7a00",
+                "shape": "diamond"
+            },
+            "out": {
+                "colour": "#ff7a00",
+                "shape": "circle"
+            }
+        }
+    },
+    "metrics": {
+        "node_width": 260
+    },
+    "fonts": {
+        "value": "13px Menlo, Monaco, monospace",
+        "value_family": "Menlo, Monaco, monospace",
+        "field_px": 13
     }
-  },
-  "metrics": {
-    "node_width": 260
-  },
-  "fonts": {
-    "value": "13px Menlo, Monaco, monospace",
-    "value_family": "Menlo, Monaco, monospace",
-    "field_px": 13
-  }
 }

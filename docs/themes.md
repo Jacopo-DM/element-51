@@ -18,11 +18,14 @@ element_51.serve(app, theme="my_theme.json")
 
 ```json
 {
-  "base": "antimony",
-  "colours": {"canvas": "#101820"},
-  "ports": {"float": {"out": {"colour": "#ffb000", "shape": "circle"}}},
-  "metrics": {"node_width": 260},
-  "fonts": {"value": "13px Menlo, monospace", "value_family": "Menlo, monospace"}
+    "base": "antimony",
+    "colours": {"canvas": "#101820"},
+    "ports": {"float": {"out": {"colour": "#ffb000", "shape": "circle"}}},
+    "metrics": {"node_width": 260},
+    "fonts": {
+        "value": "13px Menlo, monospace",
+        "value_family": "Menlo, monospace"
+    }
 }
 ```
 

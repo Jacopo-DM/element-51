@@ -1,127 +1,127 @@
 {
-  "edit_add_node": {
-    "op": "edit",
-    "id": 17,
-    "edit": {
-      "kind": "add_node",
-      "id": "n3",
-      "node_type": "add",
-      "x": 120.5,
-      "y": 80.0
+    "edit_add_node": {
+        "op": "edit",
+        "id": 17,
+        "edit": {
+            "kind": "add_node",
+            "id": "n3",
+            "node_type": "add",
+            "x": 120.5,
+            "y": 80.0
+        }
+    },
+    "edit_add_link": {
+        "op": "edit",
+        "id": 18,
+        "edit": {
+            "kind": "add_link",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n3",
+                "port": "a"
+            }
+        }
+    },
+    "edit_move_node": {
+        "op": "edit",
+        "id": 19,
+        "edit": {
+            "kind": "move_node",
+            "id": "n3",
+            "x": 10.5,
+            "y": -4.0
+        }
+    },
+    "edit_delete_node": {
+        "op": "edit",
+        "id": 20,
+        "edit": {
+            "kind": "delete_node",
+            "id": "n3"
+        }
+    },
+    "edit_delete_link": {
+        "op": "edit",
+        "id": 21,
+        "edit": {
+            "kind": "delete_link",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n3",
+                "port": "a"
+            }
+        }
+    },
+    "edit_set_value": {
+        "op": "edit",
+        "id": 22,
+        "edit": {
+            "kind": "set_value",
+            "node": "n3",
+            "port": "a",
+            "value": 4.5
+        }
+    },
+    "edit_clear_value": {
+        "op": "edit",
+        "id": 23,
+        "edit": {
+            "kind": "set_value",
+            "node": "n3",
+            "port": "a",
+            "value": null
+        }
+    },
+    "ack": {
+        "op": "ack",
+        "id": 17
+    },
+    "reject": {
+        "op": "reject",
+        "id": 18,
+        "reason": "cannot link float to str"
+    },
+    "run": {
+        "op": "run"
+    },
+    "run_result": {
+        "op": "run_result",
+        "outcomes": [
+            {
+                "node": "n1",
+                "status": "ok",
+                "outputs": {
+                    "out": 3.0
+                },
+                "error": null
+            },
+            {
+                "node": "n2",
+                "status": "error",
+                "outputs": {},
+                "error": "ZeroDivisionError: float division by zero"
+            },
+            {
+                "node": "n3",
+                "status": "skipped",
+                "outputs": {},
+                "error": null
+            },
+            {
+                "node": "n4",
+                "status": "ok",
+                "outputs": {
+                    "q": 3,
+                    "r": 1
+                },
+                "error": null
+            }
+        ]
     }
-  },
-  "edit_add_link": {
-    "op": "edit",
-    "id": 18,
-    "edit": {
-      "kind": "add_link",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n3",
-        "port": "a"
-      }
-    }
-  },
-  "edit_move_node": {
-    "op": "edit",
-    "id": 19,
-    "edit": {
-      "kind": "move_node",
-      "id": "n3",
-      "x": 10.5,
-      "y": -4.0
-    }
-  },
-  "edit_delete_node": {
-    "op": "edit",
-    "id": 20,
-    "edit": {
-      "kind": "delete_node",
-      "id": "n3"
-    }
-  },
-  "edit_delete_link": {
-    "op": "edit",
-    "id": 21,
-    "edit": {
-      "kind": "delete_link",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n3",
-        "port": "a"
-      }
-    }
-  },
-  "edit_set_value": {
-    "op": "edit",
-    "id": 22,
-    "edit": {
-      "kind": "set_value",
-      "node": "n3",
-      "port": "a",
-      "value": 4.5
-    }
-  },
-  "edit_clear_value": {
-    "op": "edit",
-    "id": 23,
-    "edit": {
-      "kind": "set_value",
-      "node": "n3",
-      "port": "a",
-      "value": null
-    }
-  },
-  "ack": {
-    "op": "ack",
-    "id": 17
-  },
-  "reject": {
-    "op": "reject",
-    "id": 18,
-    "reason": "cannot link float to str"
-  },
-  "run": {
-    "op": "run"
-  },
-  "run_result": {
-    "op": "run_result",
-    "outcomes": [
-      {
-        "node": "n1",
-        "status": "ok",
-        "outputs": {
-          "out": 3.0
-        },
-        "error": null
-      },
-      {
-        "node": "n2",
-        "status": "error",
-        "outputs": {},
-        "error": "ZeroDivisionError: float division by zero"
-      },
-      {
-        "node": "n3",
-        "status": "skipped",
-        "outputs": {},
-        "error": null
-      },
-      {
-        "node": "n4",
-        "status": "ok",
-        "outputs": {
-          "q": 3,
-          "r": 1
-        },
-        "error": null
-      }
-    ]
-  }
 }

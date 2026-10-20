@@ -4,7 +4,7 @@ Three nodes are linked in a chain: `a` feeds `b`, which feeds `show`. Try
 these:
 
 * Click the three bars at the right end of a card's title bar. A small menu
-  opens with one entry, `Delete node`. The card is selected.
+    opens with one entry, `Delete node`. The card is selected.
 * Click `Delete node`: the node goes, and so do the links that touched it.
 * Press Ctrl+Z (Cmd+Z on a Mac) to bring it back with its links.
 * Click anywhere else, or press Escape, to close the menu without deleting.

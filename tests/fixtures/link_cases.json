@@ -1,329 +1,329 @@
 {
-  "node_types": [
-    {
-      "name": "add",
-      "inputs": [
+    "node_types": [
         {
-          "name": "a",
-          "kind": "float"
+            "name": "add",
+            "inputs": [
+                {
+                    "name": "a",
+                    "kind": "float"
+                },
+                {
+                    "name": "b",
+                    "kind": "float"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "float"
+                }
+            ],
+            "defaults": {},
+            "category": ""
         },
         {
-          "name": "b",
-          "kind": "float"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "out",
-          "kind": "float"
-        }
-      ],
-      "defaults": {},
-      "category": ""
-    },
-    {
-      "name": "label",
-      "inputs": [
-        {
-          "name": "text",
-          "kind": "str"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "out",
-          "kind": "str"
-        }
-      ],
-      "defaults": {},
-      "category": ""
-    },
-    {
-      "name": "count",
-      "inputs": [
-        {
-          "name": "value",
-          "kind": "int"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "out",
-          "kind": "int"
-        }
-      ],
-      "defaults": {},
-      "category": ""
-    },
-    {
-      "name": "divmod",
-      "inputs": [
-        {
-          "name": "a",
-          "kind": "int"
+            "name": "label",
+            "inputs": [
+                {
+                    "name": "text",
+                    "kind": "str"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "str"
+                }
+            ],
+            "defaults": {},
+            "category": ""
         },
         {
-          "name": "b",
-          "kind": "int"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "q",
-          "kind": "int"
+            "name": "count",
+            "inputs": [
+                {
+                    "name": "value",
+                    "kind": "int"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "int"
+                }
+            ],
+            "defaults": {},
+            "category": ""
         },
         {
-          "name": "r",
-          "kind": "int"
+            "name": "divmod",
+            "inputs": [
+                {
+                    "name": "a",
+                    "kind": "int"
+                },
+                {
+                    "name": "b",
+                    "kind": "int"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "q",
+                    "kind": "int"
+                },
+                {
+                    "name": "r",
+                    "kind": "int"
+                }
+            ],
+            "defaults": {},
+            "category": ""
         }
-      ],
-      "defaults": {},
-      "category": ""
-    }
-  ],
-  "graph": {
-    "nodes": [
-      {
-        "id": "n1",
-        "node_type": "add",
-        "x": 0.0,
-        "y": 0.0,
-        "values": {}
-      },
-      {
-        "id": "n2",
-        "node_type": "add",
-        "x": 0.0,
-        "y": 0.0,
-        "values": {}
-      },
-      {
-        "id": "n3",
-        "node_type": "label",
-        "x": 0.0,
-        "y": 0.0,
-        "values": {}
-      },
-      {
-        "id": "n4",
-        "node_type": "count",
-        "x": 0.0,
-        "y": 0.0,
-        "values": {}
-      },
-      {
-        "id": "n5",
-        "node_type": "divmod",
-        "x": 0.0,
-        "y": 0.0,
-        "values": {}
-      }
     ],
-    "links": [
-      {
-        "source": {
-          "node": "n1",
-          "port": "out"
+    "graph": {
+        "nodes": [
+            {
+                "id": "n1",
+                "node_type": "add",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n2",
+                "node_type": "add",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n3",
+                "node_type": "label",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n4",
+                "node_type": "count",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n5",
+                "node_type": "divmod",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            }
+        ],
+        "links": [
+            {
+                "source": {
+                    "node": "n1",
+                    "port": "out"
+                },
+                "target": {
+                    "node": "n2",
+                    "port": "a"
+                }
+            }
+        ]
+    },
+    "cases": [
+        {
+            "name": "one output may feed two inputs",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "ok"
         },
-        "target": {
-          "node": "n2",
-          "port": "a"
+        {
+            "name": "int output feeds a float input",
+            "source": {
+                "node": "n4",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "ok"
+        },
+        {
+            "name": "float output to a str input",
+            "source": {
+                "node": "n2",
+                "port": "out"
+            },
+            "target": {
+                "node": "n3",
+                "port": "text"
+            },
+            "result": "type_mismatch"
+        },
+        {
+            "name": "float output does not feed an int input",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n4",
+                "port": "value"
+            },
+            "result": "type_mismatch"
+        },
+        {
+            "name": "an input takes only one link",
+            "source": {
+                "node": "n4",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "a"
+            },
+            "result": "input_taken"
+        },
+        {
+            "name": "the same link twice",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "a"
+            },
+            "result": "input_taken"
+        },
+        {
+            "name": "a link back would make a cycle",
+            "source": {
+                "node": "n2",
+                "port": "out"
+            },
+            "target": {
+                "node": "n1",
+                "port": "a"
+            },
+            "result": "cycle"
+        },
+        {
+            "name": "a node cannot feed itself",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n1",
+                "port": "b"
+            },
+            "result": "cycle"
+        },
+        {
+            "name": "unknown source node",
+            "source": {
+                "node": "n9",
+                "port": "out"
+            },
+            "target": {
+                "node": "n1",
+                "port": "a"
+            },
+            "result": "unknown_node"
+        },
+        {
+            "name": "unknown target node",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "a"
+            },
+            "result": "unknown_node"
+        },
+        {
+            "name": "unknown source port",
+            "source": {
+                "node": "n1",
+                "port": "nope"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "an input port cannot be a source",
+            "source": {
+                "node": "n1",
+                "port": "a"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "an output port cannot be a target",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "out"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "the first output of a multi-output node links",
+            "source": {
+                "node": "n5",
+                "port": "q"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "ok"
+        },
+        {
+            "name": "the second output of a multi-output node links too",
+            "source": {
+                "node": "n5",
+                "port": "r"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "ok"
+        },
+        {
+            "name": "a multi-output node has no port called out",
+            "source": {
+                "node": "n5",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "unknown_port"
         }
-      }
     ]
-  },
-  "cases": [
-    {
-      "name": "one output may feed two inputs",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "ok"
-    },
-    {
-      "name": "int output feeds a float input",
-      "source": {
-        "node": "n4",
-        "port": "out"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "ok"
-    },
-    {
-      "name": "float output to a str input",
-      "source": {
-        "node": "n2",
-        "port": "out"
-      },
-      "target": {
-        "node": "n3",
-        "port": "text"
-      },
-      "result": "type_mismatch"
-    },
-    {
-      "name": "float output does not feed an int input",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n4",
-        "port": "value"
-      },
-      "result": "type_mismatch"
-    },
-    {
-      "name": "an input takes only one link",
-      "source": {
-        "node": "n4",
-        "port": "out"
-      },
-      "target": {
-        "node": "n2",
-        "port": "a"
-      },
-      "result": "input_taken"
-    },
-    {
-      "name": "the same link twice",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n2",
-        "port": "a"
-      },
-      "result": "input_taken"
-    },
-    {
-      "name": "a link back would make a cycle",
-      "source": {
-        "node": "n2",
-        "port": "out"
-      },
-      "target": {
-        "node": "n1",
-        "port": "a"
-      },
-      "result": "cycle"
-    },
-    {
-      "name": "a node cannot feed itself",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n1",
-        "port": "b"
-      },
-      "result": "cycle"
-    },
-    {
-      "name": "unknown source node",
-      "source": {
-        "node": "n9",
-        "port": "out"
-      },
-      "target": {
-        "node": "n1",
-        "port": "a"
-      },
-      "result": "unknown_node"
-    },
-    {
-      "name": "unknown target node",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n9",
-        "port": "a"
-      },
-      "result": "unknown_node"
-    },
-    {
-      "name": "unknown source port",
-      "source": {
-        "node": "n1",
-        "port": "nope"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "unknown_port"
-    },
-    {
-      "name": "an input port cannot be a source",
-      "source": {
-        "node": "n1",
-        "port": "a"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "unknown_port"
-    },
-    {
-      "name": "an output port cannot be a target",
-      "source": {
-        "node": "n1",
-        "port": "out"
-      },
-      "target": {
-        "node": "n2",
-        "port": "out"
-      },
-      "result": "unknown_port"
-    },
-    {
-      "name": "the first output of a multi-output node links",
-      "source": {
-        "node": "n5",
-        "port": "q"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "ok"
-    },
-    {
-      "name": "the second output of a multi-output node links too",
-      "source": {
-        "node": "n5",
-        "port": "r"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "ok"
-    },
-    {
-      "name": "a multi-output node has no port called out",
-      "source": {
-        "node": "n5",
-        "port": "out"
-      },
-      "target": {
-        "node": "n2",
-        "port": "b"
-      },
-      "result": "unknown_port"
-    }
-  ]
 }
