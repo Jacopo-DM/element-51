@@ -276,9 +276,9 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user asked (2026-10-21, mid task 27) for `/zz-02-project-plan` on a new
-feature, experiment nodes (open question 4); run it first, then continue with task 28 of
-`canvas-accessibility` (approved) unless the user reorders them. The user's own try-out
+Next step: the user approves or changes the four draft experiment goals (open question
+4), then task 28 of `canvas-accessibility` (approved); the experiment goals start after
+task 33, as the user chose on 2026-10-21. The user's own try-out
 (below) is still pending.
 `examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
 `examples/template.py`); it serves with `uvicorn` on `HOST` and `PORT` set at its top, so a
@@ -559,18 +559,10 @@ Oldest first.
     Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
     fix and touch support.
 
-4. (2026-10-21) New feature idea from the user, not planned yet: set up a small
-    experiment in the editor for visualisation, for example MNIST classification: a
-    node that shows a sample image from MNIST, a node that starts a training run, and
-    a node that plots the live results of the training. The user asked for
-    `/zz-02-project-plan` on it (it was sent while task 27 ran, which went to a side
-    session). It needs a goal with its own spec and approval; open points to settle in
-    that conversation: who supplies the data and the training code (a dependency such
-    as torch or numpy needs approval, and MNIST is a download needing approval by name,
-    source and size), how a node shows an image or a live plot (the page is a canvas
-    plus HTML boxes today, and Python pushes a snapshot, not a stream), whether a
-    node can run for a long time without freezing the editor (`App` takes one
-    lock and `Run` is one request), and its order against `canvas-accessibility`.
+4. (2026-10-21) The experiment idea is now four draft goals (`visual-ports`,
+    `job-nodes`, `auto-run`, `mnist-experiment`, under "Experiment goals"). They wait
+    for the user's approval in words, and start after `canvas-accessibility` tasks 27
+    to 33 (the user's choice).
 
 ## Known problems
 
