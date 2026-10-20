@@ -1,7 +1,7 @@
 //! The input boxes laid over the canvas, one per unlinked input.
 
 use element_51_core::PortType;
-use element_51_core::fields::{format_value, parse_input};
+use element_51_core::fields::{field_label, format_value, parse_input};
 use element_51_core::layout::node_rect;
 use element_51_core::{Edit, PlacedNode, Port};
 use wasm_bindgen::JsCast;
@@ -119,6 +119,7 @@ fn field_for(
         "text"
     };
     field.set_type(kind);
+    let _ = field.set_attribute("aria-label", &field_label(&node.id, &port.name));
     let _ = field.set_attribute("data-node", &node.id);
     let _ = field.set_attribute("data-port", &port.name);
     let _ = field.set_attribute("spellcheck", "false");

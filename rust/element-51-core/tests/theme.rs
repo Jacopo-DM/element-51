@@ -654,3 +654,26 @@ fn the_focus_colour_reaches_the_page_as_a_variable() {
         .map(|(_, value)| value);
     assert_eq!(focus, Some(&theme.colours.focus));
 }
+
+#[test]
+fn the_page_has_a_landmark_a_heading_and_names() {
+    assert!(PAGE.contains("<main"), "no <main> landmark");
+    assert!(PAGE.contains("<h1"), "no heading");
+    assert!(
+        PAGE.contains("role=\"alert\""),
+        "the error banner is not announced"
+    );
+    assert!(
+        PAGE.contains("id=\"menu-search\"") && PAGE.contains("aria-label=\"Search nodes\""),
+        "the search box has no name"
+    );
+    let heading = PAGE.find("<h1").unwrap();
+    assert!(
+        PAGE[heading..].starts_with("<h1 class=\"visually-hidden\">"),
+        "the heading is visible"
+    );
+    assert!(
+        PAGE.contains(".visually-hidden"),
+        "no rule hides the heading"
+    );
+}

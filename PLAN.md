@@ -329,8 +329,9 @@ Each with the screen and state, the evidence, and who it affects.
 10. Copy: the empty output placeholder is "output", the same word as the port
     name; "No matching node" is the only empty-state message.
 12. Found while checking task 1: the add-node menu's scrolling lists (`#menu-tree`,
-    `#menu-results`) fail axe `scrollable-region-focusable` (serious) when a search
-    shows no match; to fix in task 3.
+    `#menu-results`) failed axe `scrollable-region-focusable` (serious) once, with
+    a search that shows no match; it did not come back after task 3 put the page
+    in `<main>`, and I did not find why, so a later scan may show it again.
 11. The canvas (nodes, wires, ports) has no keyboard access or accessible
     description at all. The user chose "AA including the canvas" on 2026-10-20.
     That adds behaviour (keyboard selection, moving and linking, names for
@@ -362,7 +363,8 @@ Tier 1, foundations:
     lines. Risk low. Verify: native tests (key present, documented, no raw colour
     in the page), by hand Tab through the page in both themes, screenshots of
     focus on each control.
-3. **Page structure and names** (findings 1, 2, 7): wrap the page parts in
+3. **Done 2026-10-20** (DESIGN.md Results; axe 5 rules to 0 in both themes).
+    **Page structure and names** (findings 1, 2, 7): wrap the page parts in
     `<main>`, a visually hidden `<h1>`, an `aria-label` on the bool checkbox (the
     port name) and on the search box, `role="alert"` on the banner. Files:
     `index.html`, `fields_ui.rs` (the checkbox label). About 15 lines. Risk low;

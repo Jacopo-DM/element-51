@@ -1,6 +1,6 @@
 //! What a person types into an input box, and what the box shows.
 
-use element_51_core::fields::{format_value, parse_input};
+use element_51_core::fields::{field_label, format_value, parse_input};
 use element_51_core::{Graph, Link, PlacedNode, PortRef, PortType};
 use serde_json::json;
 
@@ -87,4 +87,10 @@ fn an_input_is_linked_when_a_link_ends_at_it() {
     assert!(graph.is_linked("n2", "a"));
     assert!(!graph.is_linked("n2", "b"));
     assert!(!graph.is_linked("n1", "out"));
+}
+
+#[test]
+fn an_input_box_is_named_by_its_port_and_its_node() {
+    assert_eq!(field_label("n6", "loud"), "loud of node n6");
+    assert_eq!(field_label("n12", "text"), "text of node n12");
 }

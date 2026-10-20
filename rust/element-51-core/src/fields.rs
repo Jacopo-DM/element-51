@@ -34,6 +34,11 @@ pub fn parse_input(text: &str, kind: PortType) -> Result<Option<Value>, String> 
     }
 }
 
+/// The name of the input box for port `port` of node `node`, for screen readers.
+pub fn field_label(node: &str, port: &str) -> String {
+    format!("{port} of node {node}")
+}
+
 /// The text an input box shows for `value`.
 pub fn format_value(value: &Value) -> String {
     match value {
