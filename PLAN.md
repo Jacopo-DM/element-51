@@ -103,11 +103,11 @@ goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
 0.1.0 was published to PyPI by the user on 2026-10-20 (built from commit
-`ca74873`, tagged `v0.1.0`; PyPI lists 0.0.1 and 0.1.0). A version number cannot
-be reused. 0.1.1 is prepared (2026-10-21) only to add the GitHub link to the PyPI
-page (`[project.urls]`); built and checked, not yet uploaded: the user runs
-`uv run python tools/check_wheel.py` and `uv publish`, then the tag `v0.1.1` is
-made on the release commit.
+`ca74873`, tagged `v0.1.0`). 0.1.1 followed on 2026-10-21 (tagged `v0.1.1`) only to
+add the GitHub link to the PyPI page (`[project.urls]`); PyPI lists 0.0.1, 0.1.0
+and 0.1.1. A version number cannot be reused, so the next release is 0.1.2 or
+0.2.0 (bump `version` in `pyproject.toml`, run `uv run python
+tools/check_wheel.py`, then the user publishes).
 Next step: the user's own try-out (below), then `/zz-02-project-plan` for canvas
 accessibility.
 To try the newest work: `uv run python tools/build_wasm.py`, then
