@@ -539,6 +539,11 @@ CSS-pixel canvas, which blurred on a Retina screen), and the Run button takes th
 menus' colours, a 6-pixel radius, a shadow and a play triangle, with the menu
 hover colour for hover and focus. No new theme colour was added.
 
+The themes use Verdana at 12 px (2026-10-20, the user's choice after the generic
+sans-serif still looked soft). Verdana is wide and drawn for small sizes, and it
+ships with macOS and Windows; `sans-serif` is the fallback. The font strings are
+in the theme files, and the card layout measures text, so nothing else changed.
+
 ## Results
 
 | Date | Change | Result |

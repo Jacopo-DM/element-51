@@ -60,9 +60,9 @@
     "dot_radius": 1.2
   },
   "fonts": {
-    "card": "13px sans-serif",
-    "title": "bold 13px sans-serif",
-    "family": "sans-serif",
-    "field_px": 13.0
+    "card": "12px Verdana, sans-serif",
+    "title": "bold 12px Verdana, sans-serif",
+    "family": "Verdana, sans-serif",
+    "field_px": 12.0
   }
 }
