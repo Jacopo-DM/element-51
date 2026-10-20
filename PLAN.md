@@ -102,10 +102,13 @@ the restructure, speed-up and ui-design-pass passes and the `palette-try` goal (
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the user's own try-out (below). Publishing 0.1.0 is on hold by the
-user's choice (2026-10-20): they will publish when the code is in a much better
-state (a version number cannot be reused on PyPI). When they do: `uv run python
-tools/check_wheel.py`, `uv build`, `uv publish` with username `__token__`.
+0.1.0 was published to PyPI by the user on 2026-10-20 (built from commit
+`ca74873`, tagged `v0.1.0`; PyPI lists 0.0.1 and 0.1.0). A version number cannot
+be reused, so the next release is 0.1.1 or 0.2.0 (bump `version` in
+`pyproject.toml`, run `uv run python tools/check_wheel.py`, then the user
+publishes).
+Next step: the user's own try-out (below), then `/zz-02-project-plan` for canvas
+accessibility.
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
 the menu button beside Run, choose Try palette and paste
@@ -301,7 +304,7 @@ Oldest first.
     canvas (nodes, wires, ports) when the design pass started. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
-    Priority (user, 2026-10-20): first work after publishing 0.1.0, ahead of the blur
+    Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
     fix and touch support.
 ## Known problems
 
@@ -319,12 +322,6 @@ Oldest first.
 - A node's empty output box says `output`, the same word as the port name.
 - The page parts and the theme colours are checked at AA by tests and by axe in
     the built-in browser pane; a scan with a real screen reader was not done.
-- The README says `uv add element-51`, which is true only after the user
-    publishes 0.1.0. On 2026-10-20 (23:10) PyPI held only the placeholder 0.0.1
-    (1.5 KiB); the user's `uv publish` stopped at the credentials prompt (they typed
-    `jmdm`, but PyPI wants the username `__token__` and an API token), and they
-    then chose to hold the release. Until it is published, `uv add element-51`
-    installs the empty placeholder.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
     the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
     run on GitHub yet, since there is no remote; its commands were run by hand.
