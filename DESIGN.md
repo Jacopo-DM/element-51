@@ -348,9 +348,8 @@ theme, with the credit in the README.
     already has the edit. Whole snapshots, not edit deltas: simple, and the
     graph is small. The browser's `Replica::reset` keeps pending edits that
     still apply to the new snapshot and drops the rest, so a push never wipes
-    what the user just did. `App` itself is not thread-safe: a script that
-    edits while the server runs should do so from one thread, and a browser
-    edit racing a script edit with the same id is refused with a reason.
+    what the user just did. `App` was not thread-safe at this point (it is since task 26, below); a
+    browser edit racing a script edit with the same id is refused with a reason.
 - Save and load (task 6): the file is `{"format_version": 1, "nodes": [...],
     "links": [...]}`, pretty-printed JSON, positions included. Loading reads the
     version first and refuses any other with a message naming both versions,
@@ -731,10 +730,29 @@ flash itself is too short to see in a screenshot, so it was not observed before 
 after; a native test checks that the rule and `mark_ready` exist and that
 `show_error` calls it.
 
+Thread-safe `App`, task 26 (2026-10-20, the user approved it): `App` has one
+`threading.RLock`, held by `add_node` (picking the id and applying the edit are one
+step), `apply`, `add_link`, `load` (the file is read and checked before the lock),
+the theme setter, `subscribe`, `snapshot` and `_changed`. Listeners are called
+inside the lock, so two threads' changes reach every listener in the order they
+were made (a later snapshot never overtakes an earlier one); the lock is
+re-entrant, so a listener may call back into the `App`, and listeners already
+had to be quick (the server's only listener posts to the event loop). Running the
+graph (`execute`, `run`) takes no lock: a `Graph` is immutable, a run reads it
+once, and node functions run unlocked, so a slow node never blocks editing.
+`save` reads the graph once and needs none. Three tests use 8 threads of 60 nodes
+with the interpreter's switch interval at one microsecond: distinct ids and no lost
+node through `add_node`, the same through `apply`, and listener snapshots in
+non-decreasing size; all three failed on the old code and pass 5 runs out of 5
+with the lock. Rejected: a lock for `run` (it would block edits for as long as the
+slowest node), and an `asyncio` lock (scripts run in plain threads). Still true:
+one `App` per process, so several server workers would each hold their own graph.
+
 ## Results
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-20 | task 26: thread-safe `App` | pytest: 8 threads adding 60 nodes each through `add_node` (distinct ids, none lost), through `apply` (none lost), and listener snapshots arriving in order; the three failed without the lock (stashed the change to check) and pass 5 of 5 runs with it; 220 Python tests at 100%, 122 Rust tests |
 | 2026-10-20 | task 25: no dark flash on the light theme | native test: the page has the hiding rule, `mark_ready` exists and `show_error` calls it; by hand: with the light example the root has class `ready` and a `#eeeeee` body, and without the class its visibility is hidden; the flash itself was not observed; 217 Python tests at 100%, 122 Rust tests |
 | 2026-10-20 | task 24: scrolling add-node menu | native tests: `clamp_into` (inside, hanging out, too tall) and `flyout_at` (right, flipped left, lifted near the bottom, kept below the top); by hand with 30 categories and with three nesting levels: the tree scrolls and resets on open, flyouts sit level with their entry, flip at the right edge and stay open on the way from the entry; 217 Python tests at 100%, 121 Rust tests |
 | 2026-10-20 | task 23: CI for the Rust crates and the WASM build | not run on GitHub (no remote); locally: the workflow parses as YAML with the two jobs and 5 and 8 steps, `cargo fmt`, `clippy` and `cargo test` pass, `build_wasm.py` builds, and a wheel built with `uv build --wheel` holds `element_51/web/element_51_web_bg.wasm` |

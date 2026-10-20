@@ -1,5 +1,8 @@
 """Tests for the live session."""
 
+import sys
+import threading
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -214,3 +217,87 @@ def test_a_theme_file_changes_reach_the_snapshot(tmp_path: Path) -> None:
     assert app.snapshot().theme_changes.fonts == {"value": "14px Menlo"}
     app.theme = "antimony-light"
     assert not app.snapshot().theme_changes.fonts
+
+
+THREADS = 8
+NODES_PER_THREAD = 60
+
+
+def _hammer(work: Callable[[int], None]) -> None:
+    """Run `work(thread_number)` in several threads started together."""
+    start = threading.Barrier(THREADS)
+
+    def body(number: int) -> None:
+        start.wait()
+        work(number)
+
+    threads = [
+        threading.Thread(target=body, args=(number,))
+        for number in range(THREADS)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+
+@pytest.fixture
+def fast_switching() -> Generator[None]:
+    """Make Python switch threads as often as it can, to provoke races.
+
+    Yields
+    ------
+    None
+        Nothing; the interval is put back afterwards.
+    """
+    before = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    yield
+    sys.setswitchinterval(before)
+
+
+@pytest.mark.usefixtures("fast_switching")
+def test_threads_adding_nodes_get_distinct_ids_and_lose_none() -> None:
+    """`add_node` picks an id and applies the edit as one step."""
+    app = App([add])
+    ids: list[str] = []
+
+    def work(_: int) -> None:
+        ids.extend(
+            app.add_node(add, x=0.0, y=0.0) for _ in range(NODES_PER_THREAD)
+        )
+
+    _hammer(work)
+    total = THREADS * NODES_PER_THREAD
+    assert len(ids) == len(set(ids)) == total
+    assert len(app.graph.nodes) == total
+
+
+@pytest.mark.usefixtures("fast_switching")
+def test_edits_from_several_threads_do_not_overwrite_each_other() -> None:
+    """`apply`, the browser's route, replaces the graph in one step."""
+    app = App([add])
+
+    def work(number: int) -> None:
+        for index in range(NODES_PER_THREAD):
+            node_id = f"n{number * NODES_PER_THREAD + index + 1}"
+            app.apply(AddNode(id=node_id, node_type="add", x=0.0, y=0.0))
+
+    _hammer(work)
+    assert len(app.graph.nodes) == THREADS * NODES_PER_THREAD
+
+
+@pytest.mark.usefixtures("fast_switching")
+def test_listeners_hear_the_changes_in_the_order_they_were_made() -> None:
+    """A later snapshot never arrives before an earlier one."""
+    app = App([add])
+    sizes: list[int] = []
+    app.subscribe(lambda snapshot: sizes.append(len(snapshot.graph.nodes)))
+
+    def work(_: int) -> None:
+        for _ in range(NODES_PER_THREAD):
+            app.add_node(add, x=0.0, y=0.0)
+
+    _hammer(work)
+    assert sizes == sorted(sizes)
+    assert len(sizes) == THREADS * NODES_PER_THREAD

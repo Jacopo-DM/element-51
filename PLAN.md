@@ -66,12 +66,12 @@
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
-tasks 1 to 15 and 18 to 25 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
+tasks 1 to 15 and 18 to 26 plus 6a (push), 16 (rename) and 17 (rounded look); the skeleton
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: the known problem the user approved on 2026-10-20 that is left (`App`
-thread safety), then drafts of the README body and docs prose for the user's review.
+Next step: drafts of the README body and docs prose for the user's review (the
+user approved this on 2026-10-20; nothing is drafted yet).
 Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
@@ -86,7 +86,7 @@ reply ("Yes, start task N, and delete the merged branch ...").
 Measured 2026-10-20 after task 22, Apple silicon, Python 3.13:
 
 - ruff format, ruff check, mypy, ty: pass.
-- pytest: 217 passed, 100% coverage, about 4 s (includes every example).
+- pytest: 220 passed, 100% coverage, about 4 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 122 tests.
 - `tools/build_wasm.py`: builds, about 7 s from cold.
 - By hand in the browser pane: the two-output example shows `3 q` and `2 r` on
@@ -148,6 +148,8 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 
 ### Extra task, added by the user 2026-10-20
 
+26. **`App` is thread-safe** (approved by the user 2026-10-20). Done: one
+    re-entrant lock around every change and snapshot. Detail in DESIGN.md.
 25. **No dark flash on the light theme** (approved by the user 2026-10-20). Done:
     the page stays hidden until the first snapshot has set the theme. Detail in
     DESIGN.md.
@@ -201,10 +203,11 @@ Oldest first.
     the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
     run on GitHub yet, since there is no remote; its commands were run by hand.
 - `element-51-web` has no automated test; it is checked by hand in the browser.
-- `App` is not thread-safe. A script that edits while the server runs should do
-    so from one thread. A browser edit and a script edit that propose the same
-    node id race; Python refuses the later one and the browser may show the
-    reason, or may not, if the snapshot that makes the edit moot arrives first.
+- A browser edit and a script edit that propose the same node id still collide
+    (the browser picks ids from its own copy); Python refuses the later one and the
+    browser may show the reason, or may not, if the snapshot that makes the edit
+    moot arrives first.
+- One `App` per process: several server workers would each hold their own graph.
 - An empty input box means "use the default", so a text input cannot be set to
     the empty string. There is no script call for setting a value (`app.apply`
     with `SetValue` works but does not push to open pages).

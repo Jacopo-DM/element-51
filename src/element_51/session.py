@@ -1,5 +1,6 @@
 """The live session: node types and the graph being edited."""
 
+import threading
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
@@ -14,6 +15,12 @@ from element_51.theme import ThemeChanges, ThemeFile, resolve_theme
 
 class App:
     """Holds the node types and the authoritative copy of the graph.
+
+    Every change and every snapshot takes one lock, so scripts running in
+    several threads and the server can edit at the same time: ids are never
+    reused, no edit overwrites another, and listeners hear the changes in the
+    order they were made. Running the graph takes no lock, because a graph is
+    immutable and a run reads it once; node functions run unlocked.
 
     Parameters
     ----------
@@ -37,6 +44,7 @@ class App:
         self.graph = Graph(nodes=(), links=())
         self._listeners: list[Callable[[Snapshot], None]] = []
         self._theme = ThemeFile()
+        self._lock = threading.RLock()
 
     def add_node(self, function: Registered, *, x: float, y: float) -> str:
         """Place a new node of a registered type.
@@ -64,9 +72,10 @@ class App:
         if self.node_functions.get(name) is not function:
             msg = f"node type {name!r} is not registered with this app"
             raise ValueError(msg)
-        node_id = self.graph.next_id()
-        self.apply(AddNode(id=node_id, node_type=name, x=x, y=y))
-        self._changed()
+        with self._lock:
+            node_id = self.graph.next_id()
+            self.apply(AddNode(id=node_id, node_type=name, x=x, y=y))
+            self._changed()
         return node_id
 
     def apply(self, edit: AnyEdit) -> None:
@@ -80,7 +89,8 @@ class App:
         edit
             The edit to apply.
         """
-        self.graph = apply_edit(self.graph, self._node_types(), edit)
+        with self._lock:
+            self.graph = apply_edit(self.graph, self._node_types(), edit)
 
     def add_link(
         self, source: str, source_port: str, target: str, target_port: str
@@ -100,13 +110,14 @@ class App:
         target_port
             Name of its input port.
         """
-        self.apply(
-            AddLink(
-                source=PortRef(node=source, port=source_port),
-                target=PortRef(node=target, port=target_port),
+        with self._lock:
+            self.apply(
+                AddLink(
+                    source=PortRef(node=source, port=source_port),
+                    target=PortRef(node=target, port=target_port),
+                )
             )
-        )
-        self._changed()
+            self._changed()
 
     def save(self, path: Path | str) -> None:
         """Write the graph to a JSON file, replacing any file there.
@@ -129,8 +140,10 @@ class App:
         path
             The file to read.
         """
-        self.graph = load_graph(Path(path), self._node_types())
-        self._changed()
+        graph = load_graph(Path(path), self._node_types())
+        with self._lock:
+            self.graph = graph
+            self._changed()
 
     def _node_types(self) -> dict[str, NodeType]:
         """Return every node type by name.
@@ -158,8 +171,10 @@ class App:
         `element_51.theme`). Raises `ValueError`, naming the valid themes, for
         anything else.
         """
-        self._theme = resolve_theme(choice)
-        self._changed()
+        theme = resolve_theme(choice)
+        with self._lock:
+            self._theme = theme
+            self._changed()
 
     def subscribe(self, listener: Callable[[Snapshot], None]) -> None:
         """Call `listener` with a new snapshot after each change made here.
@@ -174,13 +189,15 @@ class App:
             Called with the whole state after each change. It may be called
             from any thread, so it must not block.
         """
-        self._listeners.append(listener)
+        with self._lock:
+            self._listeners.append(listener)
 
     def _changed(self) -> None:
         """Tell every listener the state after a change."""
-        snapshot = self.snapshot()
-        for listener in self._listeners:
-            listener(snapshot)
+        with self._lock:
+            snapshot = self.snapshot()
+            for listener in self._listeners:
+                listener(snapshot)
 
     def execute(self) -> RunResult:
         """Run the graph and report what happened to every node.
@@ -216,15 +233,18 @@ class App:
         Snapshot
             Every node type and the current graph.
         """
-        return Snapshot(
-            theme=self._theme.base,
-            theme_changes=ThemeChanges(
-                colours=self._theme.colours,
-                ports=self._theme.ports,
-                metrics=self._theme.metrics,
-                page=self._theme.page,
-                fonts=self._theme.fonts,
-            ),
-            node_types=tuple(f.node_type for f in self.node_functions.values()),
-            graph=self.graph,
-        )
+        with self._lock:
+            return Snapshot(
+                theme=self._theme.base,
+                theme_changes=ThemeChanges(
+                    colours=self._theme.colours,
+                    ports=self._theme.ports,
+                    metrics=self._theme.metrics,
+                    page=self._theme.page,
+                    fonts=self._theme.fonts,
+                ),
+                node_types=tuple(
+                    f.node_type for f in self.node_functions.values()
+                ),
+                graph=self.graph,
+            )
