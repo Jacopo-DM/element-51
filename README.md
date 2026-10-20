@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/pypi/l/element-51)](LICENSE)
 [![CI](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml)
 [![Rust and WASM](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml)
+[![Docs](https://github.com/Jacopo-DM/element-51/actions/workflows/docs.yml/badge.svg)](https://jacopo-dm.github.io/element-51/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
@@ -79,7 +80,8 @@ Python, editor features, themes, and embedding the editor in FastAPI or NiceGUI.
 
 ## Documentation
 
-The [documentation](docs/index.md) has the guides and the API reference. To
+The [documentation](https://jacopo-dm.github.io/element-51/) has the guides and
+the API reference (the sources are in [`docs/`](docs/index.md)). To
 build it, run `uv sync --group docs` and then
 `uv run sphinx-build -b html docs docs/_build/html`.
 
