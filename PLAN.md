@@ -242,8 +242,8 @@ Oldest first.
     (`accent`), but the unticked box stays white.
 - Greyed hints in value boxes use Antimony's sampled `#505050` on `#303030`,
     which is faint. The user may want it lighter (a theme colour, `placeholder`).
-- Text sharpness on the user's screen is unconfirmed (see Open questions); a
-    further step would be a larger card font or integer-pixel text positions.
+- Text is still blurry on the user's screen (see Open questions); the next steps
+    would be a larger card font or integer-pixel text positions.
 - `a1_hello_world.py` is the project template, not an example of the library: it
     imports numpy and creates `__data__`, and the example tests skip it by name.
 - The NiceGUI host example (`f2_nicegui_host.py`) has no automated test, because
