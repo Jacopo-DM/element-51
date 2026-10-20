@@ -9,7 +9,7 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-![The element-51 editor in the dark theme, with a graph of ten linked nodes](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/dark.jpg)
+![The element-51 editor in the purple-synthwave theme, with a graph of ten linked nodes](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/palette.jpg)
 
 Design node-editor GUIs from Python. You write nodes as typed functions or small
 classes. element-51 serves an editor in the browser where people wire them
@@ -82,17 +82,18 @@ Python, editor features, themes, and embedding the editor in FastAPI or NiceGUI.
 
 ## Looks
 
-The default theme is dark. The light theme is one argument away
-(`serve(app, theme="antimony-light")`), and `theme="purple-synthwave"` gives the
-violet one.
+The header shows the `purple-synthwave` theme (`serve(app, theme="purple-synthwave")`).
+The default is the dark `antimony` theme:
+
+![The same graph in the default dark theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/dark.jpg)
+
+The light theme is one argument away (`serve(app, theme="antimony-light")`):
 
 ![The same graph in the light theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/light.jpg)
 
-The `purple-synthwave` theme was made from a [Coolors](https://coolors.co)
-palette. Paste any palette link into the editor's menu and it takes the colours at
-once, keeping the text readable (`examples/e_look/e3_palette.py`).
-
-![The same graph in the purple-synthwave theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/palette.jpg)
+`purple-synthwave` was made from a [Coolors](https://coolors.co) palette. Paste any
+palette link into the editor's menu and it takes the colours at once, keeping the
+text readable (`examples/e_look/e3_palette.py`).
 
 ## Documentation
 
