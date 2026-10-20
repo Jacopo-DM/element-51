@@ -70,8 +70,10 @@ tasks 1 to 15 and 18 to 26 plus 6a (push), 16 (rename) and 17 (rounded look); th
 goal is complete and the antimony-theme goal has criteria 1 to 5 met (the graph
 runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
-Next step: drafts of the README body and docs prose for the user's review (the
-user approved this on 2026-10-20; nothing is drafted yet).
+Next step: the user's review of the README and docs drafts, which sit on the
+unmerged branch `docs-draft` (README.md, docs/index.md, docs/embedding.md; commit
+`git log main..docs-draft`). Merge them after the user's edits; then remove the
+template-text known problem below.
 Waiting on the user: their own try-out of goal
 `skeleton` and a look at the menus (examples `d4_menu` and `d5_card_menu`); they
 have looked at `a2_two_nodes` and said it looks good.
@@ -197,8 +199,10 @@ Oldest first.
 
 ## Known problems
 
-- `README.md`, `docs/index.md` and the `pyproject.toml` description are still
-    template text. Only its Credits section is written.
+- `README.md` and `docs/index.md` on `main` are still template text (the
+    `pyproject.toml` description is written); drafts are on branch `docs-draft`.
+    The draft's install line, `uv add element-51`, is true only after the user
+    publishes the package.
 - Without a build, `asgi_app()` fails at start (the `web/` folder is missing);
     the tests avoid this with a fake folder. `.github/workflows/rust.yml` has not
     run on GitHub yet, since there is no remote; its commands were run by hand.
