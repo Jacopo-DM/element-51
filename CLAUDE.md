@@ -43,6 +43,8 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
 | Structure numbers | `uv run python tools/measure_structure.py [--jscpd <binary>]` | under 1 s; files and lines, files over 400 lines, modules over 5 imports; jscpd is not a dependency (downloaded by hand, see DESIGN.md) |
+| Time the Python side | `uv run python tools/bench_python.py` | about 30 s; build, run and snapshot of a 2000-node chain, median and range of 11 runs; `--profile` prints a cProfile |
+| Time the page | `uv run python tools/bench_page.py`, open http://127.0.0.1:8767, then run `tools/bench_page.js` in the page (Claude: the browser pane's javascript tool) | redraw ms per wheel event and page load ms; Ctrl+C stops the server; the pane may need its tab fronted |
 | Serve the editor | `uv run examples/a_basics/a2_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
 | Serve another example | `uv run python examples/a_basics/a3_arithmetic.py` (every example except `c1_script_api.py`, which prints and exits, and `a1_hello_world.py`, the template, serves on http://127.0.0.1:8765) | same port, so stop one before starting the next |
 

@@ -11,6 +11,8 @@ the ignore list in CLAUDE.md.
 - `element_51.asgi_app(app, theme=None)`: an ASGI app to mount in an existing
     server.
 - `uv run python tools/build_wasm.py`: build the browser layer.
+- `tools/bench_python.py`, `tools/bench_page.py` and `tools/bench_page.js`: the speed
+    benchmarks (see the commands in CLAUDE.md).
 - `uv run python tools/measure_structure.py [--jscpd <binary>]`: print the
     structure numbers (files, lines, files over 400 lines, modules over five
     imports, clones).
