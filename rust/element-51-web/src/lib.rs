@@ -248,9 +248,11 @@ fn fit_canvas(state: &Shared, window: &web_sys::Window) {
         .ok()
         .and_then(|v| v.as_f64())
         .unwrap_or(600.0);
+    // One canvas pixel per device pixel, or the browser stretches it and blurs it.
+    let ratio = window.device_pixel_ratio();
     let state = state.borrow();
-    state.canvas.set_width(width as u32);
-    state.canvas.set_height(height as u32);
+    state.canvas.set_width((width * ratio).round() as u32);
+    state.canvas.set_height((height * ratio).round() as u32);
 }
 
 /// The graph with a node being dragged shown at the pointer, if one is. The

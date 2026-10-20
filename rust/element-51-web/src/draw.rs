@@ -145,15 +145,19 @@ pub fn draw(
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
     context.set_fill_style_str(&colours.canvas);
-    let (width, height) = (f64::from(canvas.width()), f64::from(canvas.height()));
-    context.fill_rect(0.0, 0.0, width, height);
+    let (pixel_width, pixel_height) = (f64::from(canvas.width()), f64::from(canvas.height()));
+    context.fill_rect(0.0, 0.0, pixel_width, pixel_height);
+    // The canvas has one pixel per device pixel, which on a sharp screen is
+    // more than one per CSS pixel; the view and the pointer work in CSS pixels.
+    let ratio = pixel_width / f64::from(canvas.client_width().max(1));
+    let (width, height) = (pixel_width / ratio, pixel_height / ratio);
     context.set_transform(
-        view.zoom(),
+        view.zoom() * ratio,
         0.0,
         0.0,
-        view.zoom(),
-        view.pan_x(),
-        view.pan_y(),
+        view.zoom() * ratio,
+        view.pan_x() * ratio,
+        view.pan_y() * ratio,
     )?;
     grid(context, (width, height), view, theme)?;
     let Some(graph) = graph else {
