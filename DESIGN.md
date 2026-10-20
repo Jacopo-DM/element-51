@@ -557,6 +557,13 @@ made with `JSON.parse` through a small `wasm_bindgen` import, so no new crate
 is needed. The user still saw soft text after the device-pixel fix, so this is a
 further attempt; whether it is enough depends on their screen and browser.
 
+Zoom speed (2026-10-20, the user found it slow): a mouse wheel pixel scales by
+`exp(0.002)`, so one notch (100 pixels) is about 22%; a trackpad pinch, which
+Chrome and Safari send as a wheel event with Ctrl held and steps of a few
+pixels, uses `exp(0.01)` per pixel. The time to draw was not the cause: 60
+wheel events took 89 ms in the browser pane, about 1.5 ms each, so redraws are
+not batched.
+
 ## Results
 
 | Date | Change | Result |

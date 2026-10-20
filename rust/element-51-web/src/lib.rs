@@ -47,8 +47,12 @@ struct Moving {
 
 /// How close, in screen pixels, a press must be to a link to select it.
 const LINK_PICK_PIXELS: f64 = 6.0;
-/// How strongly the wheel zooms: one wheel pixel scales by `exp(0.001)`.
-const WHEEL_ZOOM_RATE: f64 = 0.001;
+/// How strongly the wheel zooms: one wheel pixel scales by `exp(0.002)`, so a
+/// mouse wheel notch (100 pixels) zooms by about 22%.
+const WHEEL_ZOOM_RATE: f64 = 0.002;
+/// The same for a trackpad pinch, which browsers report as a wheel with Ctrl
+/// held and much smaller steps.
+const PINCH_ZOOM_RATE: f64 = 0.01;
 
 /// Everything the event handlers share.
 struct State {
@@ -860,7 +864,12 @@ fn on_wheel(shared: &Shared, event: &WheelEvent) {
     event.prevent_default();
     {
         let mut state = shared.borrow_mut();
-        let factor = (-event.delta_y() * WHEEL_ZOOM_RATE).exp();
+        let rate = if event.ctrl_key() {
+            PINCH_ZOOM_RATE
+        } else {
+            WHEEL_ZOOM_RATE
+        };
+        let factor = (-event.delta_y() * rate).exp();
         state.view.zoom_at(
             f64::from(event.offset_x()),
             f64::from(event.offset_y()),
