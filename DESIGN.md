@@ -221,7 +221,7 @@ theme, with the credit in the README.
   (0.2.129): the two must match exactly.
 - Servers tested with a real uvicorn server and the websockets client, to avoid
   adding httpx as a dev dependency.
-- Renamed from `patchbay` to `element-51` on 2026-10-19: `patchbay` is taken on
+- Renamed to `element-51` on 2026-10-19: the first working name was taken on
   PyPI and crates.io, and `element-51` is free on both. PyPI name `element-51`,
   import `element_51`, crates `element-51-core` and `element-51-web`, licence
   Apache-2.0 (copyright 2026 jmdm). The repo folder was renamed to `element-51`
