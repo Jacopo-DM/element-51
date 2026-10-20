@@ -135,6 +135,11 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
     five others (`session.py` 7, web `lib.rs` 6; before 7 and 7); jscpd 5.4.2
     (`--min-lines 8 --min-tokens 70`): 0 clones, 0.00% duplicated, before and
     after.
+    After the design and palette work (audit 2026-10-20): 88 files, 14,138 lines;
+    6 files over 400 lines (`rust/element-51-core/tests/theme.rs` 652,
+    `rust/element-51-core/src/theme.rs` 525, `rust/element-51-web/src/draw.rs` 517,
+    `rust/element-51-web/src/lib.rs` 480, `tools/compress_images.py` 470,
+    `rust/element-51-core/tests/layout.rs` 405); modules over five imports still 2.
 - Speed, measured 2026-10-20 after the speed-up pass (Apple silicon arm64, macOS
     27.0, Python 3.13 under uv, WASM built with the release profile, the page in
     the built-in browser pane; before in brackets):
@@ -298,6 +303,10 @@ Oldest first.
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
 ## Known problems
 
+- `.pre-commit-config.yaml` lacks the template's notebook hooks (`run-notebooks`,
+    `run-notebooks-all`, a pre-push stage). Left on purpose (2026-10-20): the repo has no
+    `tests/functional/` and no `tools/run_notebooks.py`; the pre-push hook would fail
+    without the runner. Adopt it together with the first notebooks.
 - The editor's canvas has no keyboard or screen-reader access (open question 2).
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
