@@ -243,9 +243,11 @@ Proposed tasks, ranked by benefit over risk. None is started.
     with `State` shared as it is. Verify: `cargo clippy -D warnings`, `cargo
     test`, `build_wasm.py`, and by hand in the browser (add node, card menu, drag,
     zoom, type a value, undo) because the web crate has no tests.
-2. **Split `tests/test_server.py`** (risk low): `test_server.py` (page, process,
-    websocket) and `test_server_host.py` (theme and FastAPI host), sharing the
-    helpers through a `tests/server_helpers.py` or a conftest fixture. Verify:
+2. **Done 2026-10-20** (`test_server.py` 649 to 114 lines, plus
+    `test_server_websocket.py` 341, `test_server_hosts.py` 112, `server_support.py`
+    99 and `conftest.py` 23; 220 tests, 100% coverage, as before). **Split `tests/test_server.py`** (risk low): `test_server.py` (page, process,
+    websocket) and `test_server_websocket.py` and `test_server_hosts.py` (theme and FastAPI host),
+    sharing helpers through `tests/server_support.py` and a `conftest.py` fixture. Verify:
     the same 220 tests pass, coverage stays 100%.
 3. **Move port-type inference out of `nodes.py`** into `ports.py` (risk low,
     about 85 lines move; `nodes` imports `ports`). Verify: `tests/test_nodes.py`

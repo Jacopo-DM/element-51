@@ -92,7 +92,7 @@ reject, run, run result), `link_cases.json` (a graph with a multi-output node, c
 
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
-`test_store.py`, `test_theme.py`, `test_server.py` (a real uvicorn server and the `websockets` client; it also runs the FastAPI example's host with a fake web folder),
+`test_store.py`, `test_theme.py`, `test_server.py` (the page, `serve` and the process), `test_server_websocket.py` (a real uvicorn server and the `websockets` client), `test_server_hosts.py` (themes, and the FastAPI example's host with a fake web folder); `server_support.py` holds `running`, `fetch`, `post` and `free_port`, and `conftest.py` the `web_dir` fixture,
 `test_examples.py` (loads every example in `examples/` except the template `a1_hello_world.py` and runs its graph).
 `sample_nodes.py` holds node functions shared by several test files.
 
