@@ -92,8 +92,8 @@ the Tier 3 items left alone on purpose are in DESIGN.md.
     more prone to layout shift (the page has no shift: the canvas and boxes are
     positioned absolutely; bundle size is the WASM 706 KB plus a 3 KB page, to be
     re-measured after each task).
-- Status: in progress (Phase 0 and 1 done 2026-10-20; the design direction waits
-    for the user's choice).
+- Status: in progress (Phase 0 and 1 done 2026-10-20; direction C chosen by the
+    user 2026-10-20, recorded in DESIGN.md; the task list waits for approval).
 - Added: 2026-10-20
 
 ## Current state
@@ -298,6 +298,58 @@ Each with the screen and state, the evidence, and who it affects.
     screen readers), so it is a new goal for `/zz-02-project-plan`, not part of
     this pass; see Open questions.
 
+### Goal `ui-design-pass`: proposed tasks (direction C; waiting for approval)
+
+Tier 1, foundations:
+
+1. **Contrast test and AA colours in both themes** (findings 3 and 4; axe
+    `color-contrast` 1 to 0 and four failing pairs to 0). A native test in
+    `rust/element-51-core/tests/theme.rs` computes the WCAG ratio for each text
+    pair and graphic pair of both themes (text 4.5, graphics 3) and fails below;
+    then change `placeholder`, `text_dim`, `run_hover_text`, the light theme's
+    `selected`, and the menu colours of direction C. Files: the two theme JSON
+    files, `docs/themes.md` if keys change. About 40 lines of test and 10 colour
+    values, no dependency. Risk low to medium: hints and skipped titles get
+    lighter, so the canvas screenshots change on purpose. Verify: the new test,
+    the existing theme tests, axe on both themes, screenshots of default, run and
+    search-none.
+2. **Visible focus and press states on every page control** (finding 5, 6). One
+    focus ring token (`focus` page key, `#7c86f0` dark) used by Run, the menu
+    buttons, card menu buttons, search box, Dismiss and the value boxes; `:active`
+    for buttons; 120 ms transitions off under `prefers-reduced-motion`. Files:
+    `index.html`, `theme.rs` (the key), both themes, `docs/themes.md`. About 25
+    lines. Risk low. Verify: native tests (key present, documented, no raw colour
+    in the page), by hand Tab through the page in both themes, screenshots of
+    focus on each control.
+3. **Page structure and names** (findings 1, 2, 7): wrap the page parts in
+    `<main>`, a visually hidden `<h1>`, an `aria-label` on the bool checkbox (the
+    port name) and on the search box, `role="alert"` on the banner. Files:
+    `index.html`, `fields_ui.rs` (the checkbox label). About 15 lines. Risk low;
+    no behaviour change. Verify: axe 5 rules to 0 on every state, native test that
+    the page has the landmark and the banner role, the existing 126 Rust tests.
+
+Tier 2:
+
+4. **The soft modern look for the page parts** (direction C, finding 6 states):
+    rounder Run button in the accent, 8 px menus with the popover shadow, 5 px
+    fields, the 8 px banner, the system UI font; new page keys in both themes and
+    in `docs/themes.md`, applied through `var(--...)`. Files: `index.html`, both
+    themes, `theme.rs`, docs. About 40 lines. Risk medium: the look of every page
+    part changes, and a user's theme file that sets page keys keeps working because
+    new keys have defaults. Verify: the page-key tests, side-by-side screenshots in
+    every state in both themes at 1280 and 375, axe still at 0.
+
+Tier 3, not executed (reason):
+
+- Fit-to-view and touch handling at phone width (finding 9): new behaviour, not a
+    style change.
+- Keyboard and touch ways to open the menus and flyouts (finding 8): new
+    behaviour; part of the canvas accessibility goal (open question 2).
+- Custom illustration, decorative animation, a component library: nothing in the
+    page needs one.
+- A "running" state for the Run button (finding 6): the page does not learn when a
+    run ends today, so it needs a protocol change.
+
 ### Tier 3: listed, not executed
 
 - A release guard that fails `uv build` itself when `web/` is missing: CI now
@@ -324,6 +376,12 @@ Oldest first.
     user asked for WCAG 2.2 AA including the canvas. It is new behaviour and large
     (keyboard selection, move and link, screen-reader names and live updates).
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
+3. (2026-10-20) A palette box in the UI: the user wants to paste a Coolors palette
+    link (for example `https://coolors.co/acadbc-9b9ece-6665dd-473bf0-000500`) and
+    hot-reload it as the theme to try colours. New behaviour, so a new goal for
+    `/zz-02-project-plan`, not part of the design pass; the questions to settle are
+    in the conversation of 2026-10-20 (how the five colours map to theme colours,
+    where the control sits, whether it is kept, what happens to contrast).
 
 ## Known problems
 

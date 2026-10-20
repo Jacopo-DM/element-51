@@ -544,6 +544,23 @@ theme, with the credit in the README.
 - Task 2 (speed-up): `_delete_link` still compares pydantic records
     (`gone not in graph.links`); it runs once per delete, not per link added.
 
+- Design direction for the page parts (ui-design-pass, chosen by the user
+    2026-10-20 after three mock renderings): "soft modern" (direction C). Dark
+    values, all text pairs at or above WCAG AA (ratio in brackets): menu `#1c1c1f`
+    with text `#e6e6e8` (13.64), menu border `#2e2e32`, hover row `#2c2c31`
+    (13.89), muted text and "No matching node" `#9b9ba3` (6.16), search box
+    `#26262a` with border `#3a3a40`, Run button `#5e6ad2` with white text (4.70),
+    its hover `#4f5bbf` (5.86), focus ring `#7c86f0` (5.41 on the canvas, drawn as a
+    2 px gap and a 2 px ring), error banner `#4a2328` with text `#fbdada` (10.33),
+    value-box hints `#9a9a9a` on `#303030` (4.69), skipped-node title lighter than
+    the old `#808080`. Radii: Run button 6 px, fields 5 px, menus and banner 8 px.
+    Popover shadow `0 8px 24px` at 60% black. The page font becomes the system UI
+    font; the canvas keeps Verdana, which the user chose for sharpness. Motion:
+    hover and press changes of 120 ms, none under `prefers-reduced-motion`. The
+    light theme gets the matching values, each checked by a native contrast test
+    (task 1). Reason: the user's choice; the menus sit apart from the canvas
+    cards, which keep the Antimony card look.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -834,6 +851,12 @@ have to go through `tools/compress_images.py`).
         measured.
     - Skipping wires and the dot grid in `draw`: 12% and 8% of the old redraw;
         revisit only if a measured redraw after task 3 is still too slow.
+
+- UI directions A and B (ui-design-pass, 2026-10-20, the user chose C): A,
+    Antimony with the gaps fixed (same look, hover blue `#2f6db5`, 5.28:1), was my
+    recommendation because the canvas matches it; B, a flat Blender-style node
+    editor (square corners, `#4772b3` hover, 4.85:1), was the runner-up. The user
+    preferred the softer, rounder look.
 
 ## Results
 
