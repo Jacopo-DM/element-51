@@ -73,7 +73,7 @@ purpose, with reasons, in DESIGN.md. Tests unchanged: 220 Python, 122 Rust.
 
 ### speed-up: done (2026-10-20)
 
-Commits `6f2aacc..HEAD` on branch `speed-up` (benchmarks `30634e3`, engine
+Commits `971fb48..29d5f57` (benchmarks `30634e3`, engine
 `b49e16b`, edits `6fc7183`, drawing `e258928`, and the closing notes). Python
 `run` on a 2000-node chain 490 to 5.9 ms, build 2059 to 795 ms; redraw of a
 200-node page 3.4 to 0.21 ms; page load unchanged. The numbers, the decisions and
