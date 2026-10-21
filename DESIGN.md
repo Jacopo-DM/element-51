@@ -1341,6 +1341,15 @@ have to go through `tools/compress_images.py`).
 
 ## Gotchas
 
+- Property tests (Hypothesis, since 2026-10-21) cover the six places Python reads outside data
+    or has a dump and load pair: `ClientMessage` (`test_protocol.py`), `Image`, `Series` and
+    `RunResult` (`test_visuals.py`), `load_graph` and `save_graph` (`test_store.py`), and
+    `resolve_theme` (`test_theme.py`). A test that needs a file makes its own folder with
+    `tempfile.TemporaryDirectory()` inside the test body: the `tmp_path` fixture lasts for the
+    whole test, so Hypothesis refuses it (`function_scoped_fixture` health check) and the
+    standard forbids suppressing that. A series round trip must allow NaN (a gap) and compare
+    with `same_values`, because NaN is not equal to NaN, and must exclude infinity, which
+    pydantic writes as `null` and reads back as NaN. The Rust side has its own cargo tests.
 - `cargo test` stops at the first test file that fails, so the files after it never run
     and the total looks smaller: a count of 166 instead of 215 once hid `theme.rs`.
     Run `cargo test --no-fail-fast` to see every failure.
