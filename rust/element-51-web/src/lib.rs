@@ -27,8 +27,9 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use a11y_ui::{on_tree_focus_in, on_tree_focus_out, on_tree_key, sync_tree};
+use a11y_ui::{announce, on_tree_focus_in, on_tree_focus_out, on_tree_key, sync_tree};
 use draw::{Focus, Frame, Selected, draw};
+use element_51_core::access::{edit_text, refusal_text, undo_text};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
@@ -396,6 +397,7 @@ fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
             Ok(request) => {
                 if record {
                     state.history.record(&before, &edit);
+                    announce(&state.document, &edit_text(&edit));
                 }
                 send(&state, request);
                 state.tree_stale = true;
@@ -403,7 +405,10 @@ fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
                     state.run = None;
                 }
             }
-            Err(error) => show_error(&state.document, &error.to_string()),
+            Err(error) => {
+                show_error(&state.document, &error.to_string());
+                announce(&state.document, &refusal_text(&error.to_string()));
+            }
         }
     }
     redraw(shared);
@@ -422,13 +427,20 @@ fn step_history(shared: &Shared, undo: bool) {
             state.history.redo()
         }
     };
+    let changed = edits.as_ref().is_some_and(|edits| !edits.is_empty());
+    let mut interrupted = false;
     for edit in edits.unwrap_or_default() {
         let before = shared.borrow().replica.as_ref().map(|r| r.graph().clone());
         submit_edit(shared, edit, false);
         let after = shared.borrow().replica.as_ref().map(|r| r.graph().clone());
         if before == after {
+            interrupted = true;
             break;
         }
+    }
+    // A refused step has already been announced with its reason.
+    if !interrupted {
+        announce(&shared.borrow().document, &undo_text(undo, changed));
     }
     redraw(shared);
 }
@@ -484,6 +496,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                         &state.document,
                         &format!("Python refused the edit: {}", reject.reason),
                     );
+                    announce(&state.document, &refusal_text(&reject.reason));
                 }
             }
             Ok(Message::RunResult(result)) => {

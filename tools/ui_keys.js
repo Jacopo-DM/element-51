@@ -1,6 +1,9 @@
 // Walk the editor's hidden tree by keyboard and check what it says. Run it in
 // the page of tools/ui_states.py (or any example) with the browser pane's
 // javascript tool: paste the function, then `await uiKeys()`.
+// The page must have keyboard focus (click empty canvas first), or the browser
+// sends no focus events and rows that depend on them fail. Reload the page and
+// restart the server before a run: the rows delete and restore a node and a link.
 // Each row is [step, passed, what was seen]. The page's window must have the
 // focus, or the browser sends no focus events and the canvas ring never moves:
 // click the empty canvas first (take a screenshot before a click by coordinate).
@@ -80,6 +83,64 @@ async function uiKeys() {
         "",
     );
     check("still one tab stop", tree.querySelectorAll('[tabindex="0"]').length === 1, tree.querySelectorAll('[tabindex="0"]').length);
+
+    // Task 28: select, delete and undo, with the status line.
+    const status = document.getElementById("status");
+    check("the status line is a live region", status && status.getAttribute("role") === "status", status && status.id);
+    nodes()[0].focus();
+    await wait(60);
+    await press("Enter");
+    check("Enter selects the focused node", /^Selected n\d+$/.test(status.textContent), status.textContent);
+    await press(" ");
+    check("Space selects it too", /^Selected n\d+$/.test(status.textContent), status.textContent);
+
+    // Find an input port with a link: walk the nodes, entering their ports.
+    let linked = null;
+    for (const li of nodes()) {
+        li.focus();
+        await wait(30);
+        await press("ArrowRight");
+        for (let i = 0; i < 6 && !linked; i++) {
+            if (active().dataset.side === "input" && /linked from/.test(active().getAttribute("aria-label"))) linked = active().id;
+            else await press("ArrowDown");
+        }
+        if (linked) break;
+    }
+    check("a linked input port exists to try", linked !== null, linked);
+    const linkLabel = linked && document.getElementById(linked).getAttribute("aria-label");
+    await press("Delete");
+    check("Delete on a linked input removes its link", /^Deleted the link from /.test(status.textContent), status.textContent);
+    const gone = document.getElementById(linked);
+    if (gone) gone.focus();
+    await wait(60);
+    check("the port now says it is not linked", gone && /not linked/.test(document.getElementById(linked).getAttribute("aria-label")), document.getElementById(linked) && document.getElementById(linked).getAttribute("aria-label"));
+    document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(300);
+    check("Ctrl+Z puts the link back and says so", status.textContent === "Undid the last change", status.textContent);
+    const restored = document.getElementById(linked);
+    check("the port is linked again", restored && restored.getAttribute("aria-label") === linkLabel, restored && restored.getAttribute("aria-label"));
+
+    // Delete on an output port explains itself.
+    const firstNode = nodes()[0];
+    firstNode.focus();
+    await wait(30);
+    await press("ArrowRight");
+    for (let i = 0; i < 6 && active().dataset.side !== "output"; i++) await press("ArrowDown");
+    if (active().dataset.side === "output") await press("Delete");
+    check("Delete on an output port says why nothing happened", /^Delete works on a node/.test(status.textContent), status.textContent);
+
+    // Delete a node, then undo it.
+    const count = nodes().length;
+    nodes().at(-1).focus();
+    await wait(30);
+    const lastId = active().dataset.node;
+    await press("Delete");
+    await wait(300);
+    check("Delete removes the node and says so", status.textContent === "Deleted node " + lastId && nodes().length === count - 1, status.textContent + " / " + nodes().length);
+    check("the focus moved to a neighbour, not lost", tree.contains(active()) || active().id === "run", active().id);
+    document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(400);
+    check("Ctrl+Z brings the node back", nodes().length === count && status.textContent === "Undid the last change", nodes().length + " / " + status.textContent);
 
     // Leave focus on a port of the first node, for a screenshot of the ring.
     first.focus();

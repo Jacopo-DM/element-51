@@ -2,20 +2,34 @@
 //! the graph. Its items take the keyboard focus, the canvas draws a ring on the
 //! focused node or port, and the view pans to keep it in sight.
 
+use element_51_core::Edit;
 use element_51_core::access::{
-    Direction, NodeItem, describe_ports, list_nodes, neighbour, pan_to_show,
+    Direction, NodeItem, cannot_delete_text, describe_ports, list_nodes, neighbour, pan_to_show,
+    selected_text,
 };
 use element_51_core::layout::{Side, node_rect};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, FocusEvent, HtmlElement, KeyboardEvent};
 
-use crate::draw::Focus;
-use crate::{Shared, redraw};
+use crate::draw::{Focus, Selected};
+use crate::{Shared, redraw, submit};
 
 /// The least gap, in pixels, between a focused node and the window edge. It is
 /// big enough to clear the Run button and the menu button, so the focus is not
 /// hidden behind them.
 const FOCUS_MARGIN: f64 = 72.0;
+
+/// Say `text` to a screen reader through the hidden status line. A repeated
+/// sentence is cleared first, so it is read again.
+pub(crate) fn announce(document: &Document, text: &str) {
+    let Some(status) = document.get_element_by_id("status") else {
+        return;
+    };
+    if status.text_content().as_deref() == Some(text) {
+        status.set_text_content(None);
+    }
+    status.set_text_content(Some(text));
+}
 
 /// The id of the tree item for node `id`.
 fn node_element_id(id: &str) -> String {
@@ -121,7 +135,14 @@ pub(crate) fn sync_tree(shared: &Shared) {
     let Some(tree) = document.get_element_by_id("graph-tree") else {
         return;
     };
-    // Rebuilding drops the keyboard focus with the old items; remember it.
+    // Rebuilding drops the keyboard focus with the old items, and removing the
+    // focused item reports the focus as lost: remember both, and mark the tree
+    // as built first so that report does not rebuild it again.
+    let saved = {
+        let mut state = shared.borrow_mut();
+        state.tree_stale = false;
+        state.focus.clone()
+    };
     let refocus = document
         .active_element()
         .filter(|active| tree.contains(Some(active)))
@@ -138,17 +159,13 @@ pub(crate) fn sync_tree(shared: &Shared) {
         let _ = tree.remove_attribute("hidden");
     }
     // A focused port needs its node's port list, which the rebuild dropped.
-    let focused = shared.borrow().focus.clone();
-    if let Some(Focus::Port { node, .. }) = &focused
+    shared.borrow_mut().focus = saved.clone();
+    if let Some(Focus::Port { node, .. }) = &saved
         && let Some(item) = document.get_element_by_id(&node_element_id(node))
     {
         ensure_ports(shared, &item);
     }
-    let wanted = {
-        let mut state = shared.borrow_mut();
-        state.tree_stale = false;
-        state.focus.as_ref().map(focus_element_id)
-    };
+    let wanted = saved.as_ref().map(focus_element_id);
     // One tab stop: the focused item if it survived, else the first node.
     let stop = wanted
         .as_deref()
@@ -298,6 +315,23 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
     let Some(focus_now) = focus_of(&item) else {
         return;
     };
+    match event.key().as_str() {
+        "Enter" | " " => {
+            if let Focus::Node(id) = &focus_now {
+                event.prevent_default();
+                event.stop_propagation();
+                select_node(shared, id);
+            }
+            return;
+        }
+        "Delete" | "Backspace" => {
+            event.prevent_default();
+            event.stop_propagation();
+            delete_focused(shared, &item, &focus_now);
+            return;
+        }
+        _ => {}
+    }
     let next = match (&focus_now, event.key().as_str()) {
         (Focus::Node(id), "ArrowRight") => {
             first_port(shared, &item).or_else(|| spatial(shared, id, Direction::Right))
@@ -319,6 +353,75 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
     if let Some(next) = next {
         expand_for(&next);
         focus(&next);
+    }
+}
+
+/// Enter or Space on a node: select it, as a click does.
+fn select_node(shared: &Shared, id: &str) {
+    let document = {
+        let mut state = shared.borrow_mut();
+        state.selected = Some(Selected::Node(id.to_string()));
+        state.document.clone()
+    };
+    announce(&document, &selected_text(id));
+    redraw(shared);
+}
+
+/// Delete on a tree item: a node goes, an input port loses its link, anything
+/// else says why nothing happened. The focus moves to a neighbour so it is not
+/// lost with the item.
+fn delete_focused(shared: &Shared, item: &Element, focus_now: &Focus) {
+    let document = shared.borrow().document.clone();
+    match focus_now {
+        Focus::Node(id) => {
+            let neighbour_id = item
+                .next_element_sibling()
+                .or_else(|| item.previous_element_sibling())
+                .and_then(|other| other.get_attribute("data-node"));
+            {
+                let mut state = shared.borrow_mut();
+                if state.selected == Some(Selected::Node(id.clone())) {
+                    state.selected = None;
+                }
+            }
+            submit(shared, Edit::DeleteNode { id: id.clone() });
+            let next = neighbour_id
+                .and_then(|other| document.get_element_by_id(&node_element_id(&other)))
+                .or_else(|| document.get_element_by_id("run"));
+            if let Some(next) = next {
+                focus(&next);
+            }
+        }
+        Focus::Port {
+            node,
+            port,
+            side: Side::Input,
+        } => {
+            let link = {
+                let state = shared.borrow();
+                state.replica.as_ref().and_then(|replica| {
+                    replica
+                        .graph()
+                        .links
+                        .iter()
+                        .find(|link| link.target.node == *node && link.target.port == *port)
+                        .cloned()
+                })
+            };
+            match link {
+                Some(link) => submit(
+                    shared,
+                    Edit::DeleteLink {
+                        source: link.source,
+                        target: link.target,
+                    },
+                ),
+                None => announce(&document, &cannot_delete_text(Side::Input)),
+            }
+        }
+        Focus::Port {
+            side: Side::Output, ..
+        } => announce(&document, &cannot_delete_text(Side::Output)),
     }
 }
 

@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use crate::layout::{Rect, Side, node_rect};
 use crate::theme::Metrics;
 use crate::view::View;
-use crate::{Graph, NodeType, PlacedNode, PortRef};
+use crate::{Edit, Graph, NodeType, PlacedNode, PortRef};
 
 /// How much more a step sideways counts than a step ahead, when the keyboard
 /// looks for the nearest node in a direction.
@@ -231,4 +231,67 @@ fn shift(start: f64, length: f64, window: f64, margin: f64) -> f64 {
     } else {
         0.0
     }
+}
+
+/// The sentence for the status line after `edit` was applied.
+pub fn edit_text(edit: &Edit) -> String {
+    match edit {
+        Edit::AddNode { id, node_type, .. } => format!("Added node {id}, {node_type}"),
+        Edit::AddLink { source, target } => {
+            format!("Linked {} to {}", end_name(source), end_name(target))
+        }
+        Edit::MoveNode { id, .. } => format!("Moved {id}"),
+        Edit::DeleteNode { id } => format!("Deleted node {id}"),
+        Edit::DeleteLink { source, target } => format!(
+            "Deleted the link from {} to {}",
+            end_name(source),
+            end_name(target)
+        ),
+        Edit::SetValue {
+            node,
+            port,
+            value: Some(value),
+        } => {
+            let shown = value
+                .as_str()
+                .map_or_else(|| value.to_string(), str::to_string);
+            format!("Set {port} of {node} to {shown}")
+        }
+        Edit::SetValue {
+            node,
+            port,
+            value: None,
+        } => format!("Cleared the value of {port} of {node}"),
+    }
+}
+
+/// The sentence after undo (`undo` true) or redo, whether or not there was a
+/// step to take.
+pub fn undo_text(undo: bool, changed: bool) -> String {
+    match (undo, changed) {
+        (true, true) => "Undid the last change",
+        (false, true) => "Redid the last change",
+        (true, false) => "Nothing to undo",
+        (false, false) => "Nothing to redo",
+    }
+    .to_string()
+}
+
+/// The sentence when Python or the rules refused something.
+pub fn refusal_text(reason: &str) -> String {
+    format!("Refused: {reason}")
+}
+
+/// The sentence when node `id` was selected from the keyboard.
+pub fn selected_text(id: &str) -> String {
+    format!("Selected {id}")
+}
+
+/// Why Delete did nothing on a port of this side.
+pub fn cannot_delete_text(side: Side) -> String {
+    match side {
+        Side::Output => "Delete works on a node, or on an input port with a link",
+        Side::Input => "That input has no link",
+    }
+    .to_string()
 }

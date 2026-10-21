@@ -2,12 +2,13 @@
 //! around it.
 
 use element_51_core::access::{
-    Direction, describe_graph, describe_ports, list_nodes, neighbour, pan_to_show,
+    Direction, cannot_delete_text, describe_graph, describe_ports, edit_text, list_nodes,
+    neighbour, pan_to_show, refusal_text, selected_text, undo_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::view::View;
-use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
+use element_51_core::{Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
 
 fn m() -> Metrics {
     Theme::default().metrics
@@ -347,4 +348,86 @@ fn a_missing_node_or_type_has_no_ports() {
         links: vec![],
     };
     assert!(describe_ports(&lone, &types, "n1").is_empty());
+}
+
+fn end(node: &str, port: &str) -> PortRef {
+    PortRef {
+        node: node.to_string(),
+        port: port.to_string(),
+    }
+}
+
+#[test]
+fn each_kind_of_edit_has_a_sentence() {
+    let add = Edit::AddNode {
+        id: "n4".into(),
+        node_type: "add".into(),
+        x: 0.0,
+        y: 0.0,
+    };
+    assert_eq!(edit_text(&add), "Added node n4, add");
+    let linked = Edit::AddLink {
+        source: end("n1", "out"),
+        target: end("n3", "a"),
+    };
+    assert_eq!(edit_text(&linked), "Linked n1 out to n3 a");
+    let moved = Edit::MoveNode {
+        id: "n2".into(),
+        x: 5.0,
+        y: 6.0,
+    };
+    assert_eq!(edit_text(&moved), "Moved n2");
+    assert_eq!(
+        edit_text(&Edit::DeleteNode { id: "n2".into() }),
+        "Deleted node n2"
+    );
+    let unlinked = Edit::DeleteLink {
+        source: end("n1", "out"),
+        target: end("n3", "a"),
+    };
+    assert_eq!(edit_text(&unlinked), "Deleted the link from n1 out to n3 a");
+}
+
+#[test]
+fn a_value_edit_says_what_was_set_or_cleared() {
+    let set = |value| Edit::SetValue {
+        node: "n1".into(),
+        port: "a".into(),
+        value,
+    };
+    assert_eq!(
+        edit_text(&set(Some(serde_json::json!(2.5)))),
+        "Set a of n1 to 2.5"
+    );
+    assert_eq!(
+        edit_text(&set(Some(serde_json::json!("hello")))),
+        "Set a of n1 to hello"
+    );
+    assert_eq!(edit_text(&set(None)), "Cleared the value of a of n1");
+}
+
+#[test]
+fn undo_and_redo_say_what_they_did_or_that_they_could_not() {
+    assert_eq!(undo_text(true, true), "Undid the last change");
+    assert_eq!(undo_text(false, true), "Redid the last change");
+    assert_eq!(undo_text(true, false), "Nothing to undo");
+    assert_eq!(undo_text(false, false), "Nothing to redo");
+}
+
+#[test]
+fn a_refusal_and_a_selection_have_their_sentences() {
+    assert_eq!(
+        refusal_text("float cannot feed str"),
+        "Refused: float cannot feed str"
+    );
+    assert_eq!(selected_text("n3"), "Selected n3");
+}
+
+#[test]
+fn delete_on_a_port_that_has_nothing_to_delete_explains_why() {
+    assert_eq!(
+        cannot_delete_text(Side::Output),
+        "Delete works on a node, or on an input port with a link"
+    );
+    assert_eq!(cannot_delete_text(Side::Input), "That input has no link");
 }

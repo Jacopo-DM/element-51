@@ -123,7 +123,7 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
     cannot run one here; it stays listed as not verified until the user tries
     VoiceOver), keyboard shortcuts that can be rebound, and any change to the look.
 - Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
-    "canvas-accessibility spec"); the task list (tasks 27 to 33) approved 2026-10-21; task 27 is done. The user's answers (2026-10-21): everything the
+    "canvas-accessibility spec"); the task list (tasks 27 to 33) approved 2026-10-21; tasks 27 and 28 are done. The user's answers (2026-10-21): everything the
     mouse does by keyboard; a hidden list beside the canvas for the screen
     reader; a live status line; checked with axe plus a keyboard walk-through by
     me.
@@ -279,7 +279,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 28 of `canvas-accessibility` (approved). The experiment goals are
+Next step: task 29 of `canvas-accessibility` (approved). The experiment goals are
 approved (2026-10-21; `visual-ports` has its spec and tasks 34 to 38); they start after
 task 33, as the user chose. Open question 4 is answered (the goals are the answer). The user's own try-out
 (below) is still pending.
@@ -491,19 +491,12 @@ of Rust and 60 of CSS and HTML per task of this size); nothing is measured yet.
 #### Tier 1: walking skeleton (criteria 2, 4, 5)
 
 Done: task 27 (2026-10-21), the hidden tree, the focus ring and the pan to keep
-focus in view. Detail, numbers and the changes from the spec are in DESIGN.md
+focus in view. Task 28 is done too (2026-10-21): the status line, Enter or Space to
+select, Delete on a node or a linked input port, undo and redo announced. Detail, numbers and the changes from the spec are in DESIGN.md
 (Results, and the spec's "Task 27 outcome").
 
 #### Tier 2 (ordered by value over risk plus cost)
 
-28. **Select, delete and undo by keyboard, with announcements.** Adds the
-    `role="status"` line (hidden, beside `#graph-tree`; it moved here from task 27,
-    because focus is announced by the focused item itself). Enter or Space
-    selects; Delete deletes a node or the link on an input port; Escape; Ctrl+Z and
-    Ctrl+Y announce what they undid; every ack and reject goes to the status line
-    (a refusal also shows in the banner with Dismiss). Files: `access.rs`, `a11y_ui.rs`,
-    `input.rs`, `lib.rs`. Criteria 1 and 3. Risk: low. Cost: about 150 lines. Verify: native
-    tests for the texts, `ui_keys.js` sequences, axe.
 29. **Link by keyboard.** `LinkMode`, Enter on an output port then on an input port;
     a refusal says why (the same reason the engine gives); Escape cancels. Files:
     `access.rs`, `a11y_ui.rs`. Criterion 1. Risk: medium (the refusal rules must match
