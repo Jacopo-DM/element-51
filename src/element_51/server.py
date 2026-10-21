@@ -17,7 +17,14 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from element_51.edits import EditError
 from element_51.engine import RunResult
-from element_51.protocol import Ack, ClientMessage, Reject, RunRequest
+from element_51.protocol import (
+    Ack,
+    ClientMessage,
+    Reject,
+    RunRequest,
+    SourceReply,
+    SourceRequest,
+)
 from element_51.session import App
 
 WEB_DIR = Path(__file__).parent / "web"
@@ -78,7 +85,9 @@ class Hub:
                 connection.send(text)
 
 
-async def reply_to(app: App, text: str) -> Ack | Reject | RunResult | None:
+async def reply_to(
+    app: App, text: str
+) -> Ack | Reject | RunResult | SourceReply | None:
     """Act on a message from the browser and say how it went.
 
     Parameters
@@ -90,10 +99,10 @@ async def reply_to(app: App, text: str) -> Ack | Reject | RunResult | None:
 
     Returns
     -------
-    Ack | Reject | RunResult | None
+    Ack | Reject | RunResult | SourceReply | None
         `Ack` if an edit was applied, `Reject` with a reason if the rules
-        refused it, `RunResult` for a run request, `None` if the message is
-        not valid.
+        refused it, `RunResult` for a run request, `SourceReply` for a source
+        request, `None` if the message is not valid.
     """
     try:
         message = ClientMessage.validate_json(text)
@@ -101,6 +110,8 @@ async def reply_to(app: App, text: str) -> Ack | Reject | RunResult | None:
         return None
     if isinstance(message, RunRequest):
         return await run_in_threadpool(app.execute)
+    if isinstance(message, SourceRequest):
+        return await run_in_threadpool(app.source, message.node)
     try:
         app.apply(message.edit)
     except EditError as error:

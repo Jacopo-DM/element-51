@@ -2,7 +2,8 @@
 
 use element_51_core::layout::{icon_rect, node_rect};
 use element_51_core::menu::{
-    Entry, build_menu, card_actions, clamp_into, flyout_at, search as search_node_types, step_menu,
+    CardAction, Entry, build_menu, card_actions, clamp_into, flyout_at,
+    search as search_node_types, step_menu,
 };
 use element_51_core::palette::with_palette;
 use element_51_core::theme::Theme;
@@ -12,6 +13,7 @@ use web_sys::{Document, Element, HtmlElement, HtmlInputElement, KeyboardEvent, M
 
 use crate::a11y_ui::announce;
 use crate::draw::Selected;
+use crate::source_ui::request_source;
 use crate::{Shared, State, apply_theme, redraw, show_error, submit};
 
 /// The least gap between the right-click menu and the window edge, in pixels.
@@ -399,6 +401,22 @@ pub(crate) fn on_card_menu_click(shared: &Shared, event: &MouseEvent) {
         .and_then(|target| target.get_attribute("data-card-action"))
         .and_then(|index| index.parse::<usize>().ok())
         .and_then(|index| card_actions().get(index).copied());
+    if action == Some(CardAction::ViewSource) {
+        let (id, opener) = {
+            let mut state = shared.borrow_mut();
+            let opener = state
+                .document
+                .get_element_by_id("card-menu")
+                .and_then(|menu| menu.get_attribute("data-return"));
+            hide_menu(&state);
+            (state.card_menu_node.take(), opener)
+        };
+        if let Some(id) = id {
+            request_source(shared, &id, opener);
+        }
+        return_focus(shared);
+        return;
+    }
     let edit = {
         let mut state = shared.borrow_mut();
         hide_menu(&state);
@@ -407,7 +425,7 @@ pub(crate) fn on_card_menu_click(shared: &Shared, event: &MouseEvent) {
         if selected_here {
             state.selected = None;
         }
-        action.zip(id).map(|(action, id)| action.edit(&id))
+        action.zip(id).and_then(|(action, id)| action.edit(&id))
     };
     match edit {
         Some(edit) => submit(shared, edit),

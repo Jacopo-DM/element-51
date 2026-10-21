@@ -1,6 +1,7 @@
 """Turn a typed function, or a `Node` subclass, into a node type."""
 
 import inspect
+import textwrap
 from collections.abc import Callable, Mapping
 from typing import ClassVar, Protocol, cast, get_type_hints, overload
 
@@ -65,6 +66,24 @@ class Registered(Protocol):
         """
         ...
 
+    def source_text(self) -> str:
+        """Read the source code of the function or class from its file."""
+        ...
+
+
+def _read_source[**P, R](target: Callable[P, R] | type) -> str:
+    """Read the source of a function or class and move it to the left margin.
+
+    `inspect.getsource` raises `OSError` when there is no file to read, as for
+    a function made by `exec`; the caller reports that.
+
+    Returns
+    -------
+    str
+        The code, ending in a newline.
+    """
+    return textwrap.dedent(inspect.getsource(target))
+
 
 class NodeFunction[**P, R]:
     """A function together with the node type built from its hints.
@@ -103,6 +122,16 @@ class NodeFunction[**P, R]:
             Whatever the function returns.
         """
         return cast("NamedCall", self.func)(**inputs)
+
+    def source_text(self) -> str:
+        """Read the function's source, decorator included.
+
+        Returns
+        -------
+        str
+            The code as written in its file.
+        """
+        return _read_source(self.func)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         """Call the wrapped function.
@@ -204,6 +233,17 @@ class Node(Model):
             Whatever `run` returns.
         """
         return cls(**inputs).run()
+
+    @classmethod
+    def source_text(cls) -> str:
+        """Read the class's source.
+
+        Returns
+        -------
+        str
+            The class as written in its file.
+        """
+        return _read_source(cls)
 
 
 def _build_node[**P, R](
@@ -402,3 +442,14 @@ class PlotNode:
         """
         del inputs
         return None
+
+    @classmethod
+    def source_text(cls) -> str:
+        """Read this class's source.
+
+        Returns
+        -------
+        str
+            The class as written in its file.
+        """
+        return _read_source(cls)

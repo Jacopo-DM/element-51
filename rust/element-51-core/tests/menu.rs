@@ -109,16 +109,26 @@ fn empty_or_unmatched_text_finds_nothing() {
 }
 
 #[test]
-fn a_card_offers_one_action_and_it_deletes_the_node() {
+fn a_card_offers_to_view_its_source_and_to_delete_the_node_last() {
     use element_51_core::Edit;
     use element_51_core::menu::{CardAction, card_actions};
     let actions = card_actions();
-    assert_eq!(actions, vec![CardAction::DeleteNode]);
+    assert_eq!(
+        actions,
+        vec![CardAction::ViewSource, CardAction::DeleteNode]
+    );
+    assert_eq!(CardAction::ViewSource.label(), "View source code");
     assert_eq!(CardAction::DeleteNode.label(), "Delete node");
     assert_eq!(
         CardAction::DeleteNode.edit("n3"),
-        Edit::DeleteNode { id: "n3".into() }
+        Some(Edit::DeleteNode { id: "n3".into() })
     );
+}
+
+#[test]
+fn viewing_the_source_is_not_an_edit() {
+    use element_51_core::menu::CardAction;
+    assert_eq!(CardAction::ViewSource.edit("n3"), None);
 }
 
 mod placement {

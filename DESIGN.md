@@ -454,6 +454,34 @@ plot. This spec covers `visual-ports` only; `job-nodes`, `auto-run` and
     (h) The example `g1_picture_and_plot.py` now has `loss_curve` (with `steps` and
     `blow_up`) and a `Plot` node.
 
+### card-polish (approved 2026-10-21, done 2026-10-21)
+
+Three small changes from the user's feedback on the picture example. Decisions, with
+the reason:
+
+- Wires are drawn twice: solid under the cards, so they show on the canvas, and again
+    over the cards at `wire_over_card` (0.5), clipped to the cards. Chosen over one
+    faint pass (the user's choice: a wire off the cards should stay easy to follow).
+    The second pass strokes every wire, not only those that cross a card; culling was
+    not done (about 0.15 ms at 200 nodes).
+- A linked input shows `21.0 [n1.out]` after a run: the value in the box text colour,
+    the source in the dim colour, the source cut first (`share_room`). Chosen over
+    source first and over a value on hover (the user's choice). A picture or series
+    source has no text value, so only its name shows.
+- `View source code` is always available (the user's choice). The reply carries the
+    code of the node type's function or class read with `inspect.getsource`, moved to
+    the left margin; a function made by `exec`, or a missing file, gives a reason and no
+    code. Anyone who can open the page can read the code of every node type, which is
+    why the user was asked; an opt-in switch for embedding hosts was offered and not
+    chosen. The panel is a non-modal `role="dialog"`: the code takes the focus, Tab
+    reaches Dismiss, Escape or Dismiss closes it and the focus goes back to where it
+    was when the request was made (a keyboard-opened menu remembers it). The method on
+    nodes is `source_text`, not `source`, because a `Node` field may be called `source`.
+- Rejected: renaming a node. The id (`n1`) is what links and saved files refer to, so
+    a rename would be a separate optional display name in the saved file and both test
+    suites; judged useful (24 nodes of one type are hard to tell apart) and left for
+    after the experiment goals.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1241,6 +1269,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | visual-ports task 35: a series and a one-line chart | tests: 14 more test functions in `tests/test_visuals.py` (36 in all there: the `Series` record, NaN as `null` and back, 100,000 points at most with a clear error, text or a number instead of a list refused, the `series` kind links only to itself, `-> Series` gives one output and no display, a series input takes no default, `PlotNode` has one input and a chart display, a series reaches the next node, a plot shows the linked series by input name, an unlinked plot is ok and shows nothing, a gap reaches the page as `null`, `shown` reads back as the right record), 1 in `test_protocol.py` and 1 in `test_examples.py` for the chart; 21 more in `rust/element-51-core/tests/display.rs` (the `Series` and `Shown` records, the chart card's height and area, `short_number`, `nice_ticks`, `thin` (short series, gaps, min and max kept, an empty part breaks the line), `last_value`, `line_style`, `chart_layout` (plot inside the area, a falling line runs top left to bottom right, two lines share a scale, a flat series, one point, a gap, nothing to draw, 100,000 points thinned to about twice the width)) and 2 in `tests/access.rs` (the plot label with one and two lines, no value yet, an empty chart); 280 Python tests at 100%, 238 Rust tests, the keyboard walk-through 82 of 82; by hand in the browser pane with `examples/g_experiments/g1_picture_and_plot.py`: Run draws the falling ripple on `n5` with a scale on both axes and "out 0.0842" at its end, `steps` 300 makes the line longer and the x axis reach 300, `blow_up` stops the line at step 40 with a gap and no error, the hidden tree says "Shows a plot of 1 line, out last 0.0842.". Draw time, same script and pane as the task 34 row (`tools/bench_page.js` batches on a test server with one `big` node of 100,000 points linked to a Plot): the redraw median is 0.53 ms before Run (the chart area empty) and 2.1 ms after (3 sets: 2.10, 2.13, 2.15), so the 100,000-point chart costs about 1.6 ms a frame against a budget of 4 ms. axe-core was not run: task 38 scans the new states. To try it: `uv run python tools/build_wasm.py`, then `uv run python examples/g_experiments/g1_picture_and_plot.py` and press Run |
 | 2026-10-21 | card-polish task 39: wires see-through over cards | native test: every built-in theme has `wire_over_card` strictly between 0 and 1 (0.5) and a theme file can change it (the docs test already needs its row in `docs/themes.md`); 239 Rust tests; by hand in the browser pane with the picture example after Run: the wire from `n1` to `n3` is solid on the canvas and, where it crosses `n2`, the `source` and `out` boxes show through it. Redraw, the 200-node page, same script and pane as the task 34 row, three sets: medians 1.59, 1.53 and 1.57 ms (ranges 1.40 to 2.07, 1.49 to 1.57, 1.23 to 1.85) against 1.33 to 1.46 before: about 0.15 ms more, because every wire is now stroked twice; the second pass is clipped to the cards but not culled. Not verified: the other two themes by eye (the key is the same in all three) |
 | 2026-10-21 | card-polish task 40: a linked input shows its value | native tests: 8 more in `tests/fields.rs` (14 there): before a run only `n1.out`, after a run `21.0` then `[n1.out]` (a string keeps its quotes), a source that failed or was skipped, a picture or series source and a port the outcome lacks show only the source, `share_room` keeps both widths when they fit, cuts the source first, and leaves it nothing when the value fills the box; 247 Rust tests; by hand in the browser pane with `examples/a_basics/a3_arithmetic.py`: before Run the boxes say `n1.out`, after Run `3.0 [n1.out]`, `7.0 [n3.out]`, `21.0 [n4.out]` with the value in the box text colour and the source dimmer. Redraw, the 200-node page, same script and pane: median 1.52 ms before Run and 1.61 to 1.64 after (values drawn in every linked box in view), about 0.1 ms more |
+| 2026-10-21 | card-polish task 41: View source code in the card menu | tests: 8 in Python (`test_session.py`: the source of a function node with its decorator, of a class node, of `PlotNode`, dedented when defined inside a function, an unreadable one gives a reason and no code, a node that is not there; `test_server_websocket.py`: the reply goes to the asking page only; `test_protocol.py`: the request and both replies round trip through the shared `messages.json`, and the client union takes a source request), 7 in Rust (`tests/source.rs`: the shared fixture on both sides, the request text, the title, line count and sentence for code, a reason, and a reply with neither; `tests/menu.rs`: the card offers View source code then Delete node and a view is not an edit); 288 Python tests at 100%, 254 Rust tests; the keyboard walk-through 89 of 89 (7 new rows: the first entry is View source code, the panel opens with the code focused, its title and sentence, the code is shown, Escape closes it and returns to the node, "Source closed" is said, Dismiss closes it); by hand in the browser pane on `tools/ui_states.py`: Shift+F10, Enter on View source code opens "Source of n2 (zero)" with the decorated function in a read-only box with Dismiss and the focus ring on the code; axe-core 4.14.0: 0 violations with the panel open and closed, and with it open in all three themes. Not verified: a real screen reader, and the panel on a narrow window. The goal is done: wires, linked values and source (tasks 39 to 41); renaming was left out on purpose |
 
 ## Gotchas
 

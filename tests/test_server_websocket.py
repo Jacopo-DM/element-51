@@ -12,7 +12,7 @@ from websockets.sync.client import connect
 
 from element_51 import server
 from element_51.engine import RunResult
-from element_51.protocol import Ack, Reject, Snapshot
+from element_51.protocol import Ack, Reject, Snapshot, SourceReply
 from element_51.session import App
 
 REQUEST_ID_7 = 7
@@ -182,6 +182,29 @@ def test_a_run_request_returns_the_outcome_of_every_node(web_dir: Path) -> None:
         result = RunResult.model_validate_json(websocket.recv())
     assert [(o.node, o.status) for o in result.outcomes] == [("n1", "error")]
     assert result.outcomes[0].error == "input 'a' has no value"
+
+
+def test_a_source_request_is_answered_to_the_asking_page_only(
+    web_dir: Path,
+) -> None:
+    """The reply holds the node's code and reaches no other page."""
+    assert web_dir.exists()
+    app = App([add])
+    app.add_node(add, x=0.0, y=0.0)
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as asker,
+        connect(f"ws://{server.HOST}:{port}/ws") as other,
+    ):
+        asker.recv()
+        other.recv()
+        asker.send('{"op": "source", "node": "n1"}')
+        reply = SourceReply.model_validate_json(asker.recv())
+        with pytest.raises(TimeoutError):
+            other.recv(timeout=SILENCE)
+    assert reply.node == "n1"
+    assert reply.source is not None
+    assert "def add(" in reply.source
 
 
 def test_a_script_edit_reaches_a_page_that_is_already_open(

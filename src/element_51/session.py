@@ -8,7 +8,7 @@ from element_51.edits import AddLink, AddNode, AnyEdit, apply_edit
 from element_51.engine import RunResult, run_graph
 from element_51.model import Graph, NodeType, PortRef
 from element_51.nodes import Registered
-from element_51.protocol import Snapshot
+from element_51.protocol import Snapshot, SourceReply
 from element_51.store import load_graph, save_graph
 from element_51.theme import ThemeChanges, ThemeFile, resolve_theme
 from element_51.visuals import Carried
@@ -227,6 +227,37 @@ class App:
             outcome.node: {**outcome.outputs, **outcome.shown}
             for outcome in result.outcomes
         }
+
+    def source(self, node: str) -> SourceReply:
+        """Read the source code of the type of node `node`.
+
+        Parameters
+        ----------
+        node
+            The node's id.
+
+        Returns
+        -------
+        SourceReply
+            The code, or the reason there is none: the node is not in the
+            graph, or its code cannot be read (a function made by `exec`, or a
+            file that is gone).
+        """
+        with self._lock:
+            placed = next((n for n in self.graph.nodes if n.id == node), None)
+            function = (
+                self.node_functions.get(placed.node_type) if placed else None
+            )
+        if placed is None or function is None:
+            return SourceReply(node=node, reason=f"There is no node {node}")
+        try:
+            return SourceReply(node=node, source=function.source_text())
+        except (OSError, TypeError) as error:
+            reason = (
+                f"The source of node type {placed.node_type} "
+                f"cannot be read: {error}"
+            )
+            return SourceReply(node=node, reason=reason)
 
     def snapshot(self) -> Snapshot:
         """Describe the whole state for a browser that just connected.

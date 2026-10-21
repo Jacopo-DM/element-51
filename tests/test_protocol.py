@@ -22,6 +22,8 @@ from element_51.protocol import (
     EditRequest,
     Reject,
     RunRequest,
+    SourceReply,
+    SourceRequest,
 )
 from element_51.visuals import Image, Series
 
@@ -30,7 +32,16 @@ MESSAGES = json.loads(FIXTURE.read_text())
 
 
 def round_trip(
-    model: type[EditRequest | Ack | Reject | RunRequest | RunResult], key: str
+    model: type[
+        EditRequest
+        | Ack
+        | Reject
+        | RunRequest
+        | RunResult
+        | SourceRequest
+        | SourceReply
+    ],
+    key: str,
 ) -> object:
     """Parse the fixture message `key` and check it dumps back unchanged.
 
@@ -131,11 +142,30 @@ def test_a_result_with_a_chart_round_trips() -> None:
     assert math.isnan(series.values[2])
 
 
+def test_a_source_request_and_its_replies_round_trip() -> None:
+    """Asking for a node's source, and both ways the answer can go."""
+    request = round_trip(SourceRequest, "source")
+    assert isinstance(request, SourceRequest)
+    assert request.node == "n2"
+    reply = round_trip(SourceReply, "source_reply")
+    assert isinstance(reply, SourceReply)
+    assert reply.source is not None
+    assert reply.source.startswith("@node\ndef add")
+    assert reply.reason is None
+    unreadable = round_trip(SourceReply, "source_reply_unreadable")
+    assert isinstance(unreadable, SourceReply)
+    assert unreadable.source is None
+    assert unreadable.reason is not None
+    assert "cannot be read" in unreadable.reason
+
+
 def test_client_messages_are_told_apart_by_op() -> None:
-    """The server parses one union: an edit or a run request."""
+    """The server parses one union: an edit, a run or a source request."""
     edit = ClientMessage.validate_python(MESSAGES["edit_add_node"])
     run = ClientMessage.validate_python(MESSAGES["run"])
     assert isinstance(edit, EditRequest)
     assert isinstance(run, RunRequest)
+    source = ClientMessage.validate_python(MESSAGES["source"])
+    assert isinstance(source, SourceRequest)
     with pytest.raises(ValidationError):
         ClientMessage.validate_python(MESSAGES["ack"])

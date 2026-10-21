@@ -321,6 +321,29 @@ async function uiKeys() {
     check("the Menu key opens it too", !cardMenu.hidden, cardMenu.hidden);
     await pressWith("Escape", {});
 
+    // Task 41: View source code from the card menu.
+    const sourcePanel = document.getElementById("source-panel");
+    const sourceText = document.getElementById("source-text");
+    nodes()[0].focus();
+    await wait(60);
+    const sourceOpener = active().id;
+    await pressWith("F10", { shiftKey: true });
+    check("the first card menu entry is View source code", active().textContent === "View source code", active().textContent);
+    // A synthetic Enter does not press a button, so click the focused entry (a real Enter does the same).
+    active().click();
+    await wait(700);
+    check("the source panel opens with the code focused", !sourcePanel.hidden && active() === sourceText, active().id);
+    check("it has a title and says how long the code is", /^Source of n\d+ \(/.test(document.getElementById("source-title").textContent) && /^Source of n\d+, \S+, \d+ lines?\./.test(status.textContent), status.textContent);
+    check("the code is shown", sourceText.textContent.length > 0, sourceText.textContent.slice(0, 30));
+    await pressWith("Escape", {});
+    check("Escape closes it and returns to the node", sourcePanel.hidden && active().id === sourceOpener, active().id);
+    check("closing is said", status.textContent === "Source closed", status.textContent);
+    await pressWith("F10", { shiftKey: true });
+    active().click();
+    await wait(700);
+    document.getElementById("source-close").click();
+    check("Dismiss closes it too", sourcePanel.hidden, sourcePanel.hidden);
+
     // Task 32: value boxes by keyboard.
     const boxPort = ports.find((port) => port.side === "input" && /not linked|linked from/.test(port.label) && document.getElementById("field-" + port.node + "-" + port.id.split("-input-")[1]));
     const linkedPort = ports.find((port) => port.side === "input" && /linked from/.test(port.label) && !document.getElementById("field-" + port.node + "-" + port.id.split("-input-")[1]));

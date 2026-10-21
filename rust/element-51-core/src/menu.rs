@@ -89,26 +89,31 @@ pub fn search(node_types: &[NodeType], text: &str) -> Vec<Match> {
 /// Something the menu on a card's header icon can do to that card's node.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CardAction {
+    /// Show the node type's source code. Not an edit.
+    ViewSource,
     DeleteNode,
 }
 
 /// The entries of the card menu, in the order shown.
 pub fn card_actions() -> Vec<CardAction> {
-    vec![CardAction::DeleteNode]
+    vec![CardAction::ViewSource, CardAction::DeleteNode]
 }
 
 impl CardAction {
     /// The words on the menu entry.
     pub fn label(self) -> &'static str {
         match self {
+            CardAction::ViewSource => "View source code",
             CardAction::DeleteNode => "Delete node",
         }
     }
 
-    /// The edit that carries out this action on node `id`.
-    pub fn edit(self, id: &str) -> Edit {
+    /// The edit that carries out this action on node `id`, or None for an
+    /// action that changes nothing in the graph.
+    pub fn edit(self, id: &str) -> Option<Edit> {
         match self {
-            CardAction::DeleteNode => Edit::DeleteNode { id: id.to_string() },
+            CardAction::ViewSource => None,
+            CardAction::DeleteNode => Some(Edit::DeleteNode { id: id.to_string() }),
         }
     }
 }

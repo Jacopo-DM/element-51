@@ -4,14 +4,20 @@ import sys
 import threading
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import pytest
 from sample_nodes import add, show
 
 from element_51.edits import AddLink, AddNode, EditError
 from element_51.model import Link, PortRef, PortType
-from element_51.nodes import Registered, node
+from element_51.nodes import (
+    Node,
+    NodeFunction,
+    PlotNode,
+    Registered,
+    node,
+)
 from element_51.session import App
 
 if TYPE_CHECKING:
@@ -301,3 +307,78 @@ def test_listeners_hear_the_changes_in_the_order_they_were_made() -> None:
     _hammer(work)
     assert sizes == sorted(sizes)
     assert len(sizes) == THREADS * NODES_PER_THREAD
+
+
+class Doubler(Node):
+    x: float = 1.0
+
+    @override
+    def run(self) -> float:  # pragma: no cover  # only its source is read
+        return self.x * 2
+
+
+def test_the_source_of_a_function_node_is_its_code() -> None:
+    """The reply holds the function as written, decorator included."""
+    app = App([add])
+    node_id = app.add_node(add, x=0.0, y=0.0)
+    reply = app.source(node_id)
+    assert reply.node == node_id
+    assert reply.reason is None
+    assert reply.source is not None
+    assert reply.source.startswith("@node\ndef add(a: float, b: float)")
+    assert "return a + b" in reply.source
+
+
+def test_the_source_of_a_class_node_is_its_class() -> None:
+    """A `Node` subclass shows the whole class."""
+    app = App([Doubler])
+    node_id = app.add_node(Doubler, x=0.0, y=0.0)
+    reply = app.source(node_id)
+    assert reply.source is not None
+    assert reply.source.startswith("class Doubler(Node):")
+    assert "return self.x * 2" in reply.source
+
+
+def test_the_source_of_the_plot_node_is_its_class() -> None:
+    """The built-in node can be read like any other."""
+    app = App([PlotNode])
+    node_id = app.add_node(PlotNode, x=0.0, y=0.0)
+    reply = app.source(node_id)
+    assert reply.source is not None
+    assert "class PlotNode" in reply.source
+
+
+def test_source_inside_a_function_is_dedented() -> None:
+    """A node defined in a function still reads from the left margin."""
+
+    @node
+    def inner(a: float) -> float:  # pragma: no cover  # only its source is read
+        return a
+
+    app = App([inner])
+    node_id = app.add_node(inner, x=0.0, y=0.0)
+    reply = app.source(node_id)
+    assert reply.source is not None
+    assert reply.source.startswith("@node\ndef inner")
+
+
+def test_an_unreadable_source_says_why_and_shows_no_code() -> None:
+    """A function made by `exec` has no file to read."""
+    namespace: dict[str, object] = {"node": node}
+    exec("@node\ndef made(a: float) -> float:\n    return a", namespace)  # ruff: ignore[exec-builtin]  # a node with no source file is the case under test
+    made = namespace["made"]
+    assert isinstance(made, NodeFunction)
+    app = App([made])
+    node_id = app.add_node(made, x=0.0, y=0.0)
+    reply = app.source(node_id)
+    assert reply.source is None
+    assert reply.reason is not None
+    assert "made" in reply.reason
+    assert "cannot be read" in reply.reason
+
+
+def test_the_source_of_a_node_that_is_not_there_says_so() -> None:
+    """The browser may ask after another page deleted the node."""
+    reply = App([add]).source("n9")
+    assert reply.source is None
+    assert reply.reason == "There is no node n9"

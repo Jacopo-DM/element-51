@@ -172,5 +172,21 @@
                 "error": null
             }
         ]
+    },
+    "source": {
+        "op": "source",
+        "node": "n2"
+    },
+    "source_reply": {
+        "op": "source_reply",
+        "node": "n2",
+        "source": "@node\ndef add(a: float, b: float) -> float:\n    return a + b\n",
+        "reason": null
+    },
+    "source_reply_unreadable": {
+        "op": "source_reply",
+        "node": "n3",
+        "source": null,
+        "reason": "The source of node type f cannot be read: could not get source code"
     }
 }

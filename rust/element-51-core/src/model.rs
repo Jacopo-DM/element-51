@@ -322,6 +322,22 @@ impl RunResult {
     }
 }
 
+/// The browser asks for the source code of one node's type.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourceRequest {
+    pub node: String,
+}
+
+/// Python answers a `SourceRequest`: the code, or the reason there is none.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SourceReply {
+    pub node: String,
+    pub source: Option<String>,
+    pub reason: Option<String>,
+}
+
 /// A message in either direction, tagged by its `op` field.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
@@ -332,6 +348,8 @@ pub enum Message {
     Reject(Reject),
     Run(RunRequest),
     RunResult(RunResult),
+    Source(SourceRequest),
+    SourceReply(SourceReply),
 }
 
 impl Message {

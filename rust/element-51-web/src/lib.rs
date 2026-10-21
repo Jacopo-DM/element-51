@@ -10,6 +10,7 @@ mod fields_ui;
 mod input;
 mod menu_ui;
 mod pictures;
+mod source_ui;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -43,6 +44,7 @@ use menu_ui::{
     on_palette_submit, on_select_theme, on_theme_click, on_try_palette,
 };
 use pictures::Pictures;
+use source_ui::{close_source, on_source_key, show_source};
 
 /// Everything the event handlers share.
 struct State {
@@ -229,6 +231,18 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&card_menu, "keydown", move |event: KeyboardEvent| {
             on_card_menu_key(&shared, &event)
+        })?;
+    }
+    if let Some(close) = document.get_element_by_id("source-close") {
+        let shared = state.clone();
+        listen(&close, "click", move |_event: MouseEvent| {
+            close_source(&shared)
+        })?;
+    }
+    if let Some(panel) = document.get_element_by_id("source-panel") {
+        let shared = state.clone();
+        listen(&panel, "keydown", move |event: KeyboardEvent| {
+            on_source_key(&shared, &event)
         })?;
     }
     if let Some(search) = document.get_element_by_id("menu-search") {
@@ -476,6 +490,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
         .as_string()
         .ok_or_else(|| "Python sent a message that is not text".to_string())
         .and_then(|text| Message::from_json(&text).map_err(|error| error.to_string()));
+    let mut source_reply = None;
     {
         let mut state = shared.borrow_mut();
         match parsed {
@@ -533,7 +548,8 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                 state.tree_stale = true;
                 state.run = Some(result);
             }
-            Ok(Message::Edit(_) | Message::Run(_)) => {
+            Ok(Message::SourceReply(reply)) => source_reply = Some(reply),
+            Ok(Message::Edit(_) | Message::Run(_) | Message::Source(_)) => {
                 show_error(
                     &state.document,
                     "Python sent a message only the browser should send.",
@@ -543,6 +559,11 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
         }
     }
     redraw(shared);
+    // The panel moves the focus, which runs handlers that borrow the state, so
+    // it is shown once the borrow above has ended.
+    if let Some(reply) = source_reply {
+        show_source(shared, &reply);
+    }
 }
 
 fn on_run(shared: &Shared) {
