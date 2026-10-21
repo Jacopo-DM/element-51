@@ -170,7 +170,11 @@ No tool ignore or deny file exists in this repo, so none was changed.
     before building the docs.
 - After moving the repo folder, run `uv sync --reinstall` and `uv run
     pre-commit install`: the virtual environment and the installed git hook both
-    hold the old absolute path.
+    hold the old absolute path. `pre-commit install` also sets up the pre-push hook, which
+    runs every functional notebook (about 10 s), so a push is slower than a commit.
+- The browser pane's redraw timing is not repeatable between page loads (one build gave 0.10,
+    7.0 and 1.5 ms). Compare two versions only inside one page session, with a switch and
+    interleaved rounds (DESIGN.md, Gotchas).
 - `cargo fmt` rewraps struct literals, so a scripted text replacement in a Rust
     file that ran after formatting silently matched nothing twice. Check that a
     replacement applied, or use a regex.

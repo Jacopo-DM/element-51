@@ -605,9 +605,9 @@ Oldest first.
     the tests avoid this with a fake folder. The workflows ran on GitHub for the
     first time on 2026-10-21 (see the results in DESIGN.md, Results); every push
     from `527571e` to `3c67a10` passed CI, Docs and Rust and WASM (read 2026-10-21).
-    The push `825a608` (the property tests, the first run that installs `hypothesis`): CI passed;
-    Docs and Rust and WASM were still running when this was written, so read them next session
-    (`gh run list --limit 6`).
+    The push `825a608` (the property tests, the first run that installs `hypothesis`) passed CI,
+    Docs and Rust and WASM, and so did every push after it up to `916243c` (read 2026-10-21 with
+    `gh run list --limit 9`).
 - `element-51-web` has no automated test; it is checked by hand in the browser.
 - A browser edit and a script edit that propose the same node id still collide
     (the browser picks ids from its own copy); Python refuses the later one and the
