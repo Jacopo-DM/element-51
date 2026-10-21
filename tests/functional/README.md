@@ -36,7 +36,7 @@ a row (a test fails without it).
 | `session` | `nodes_and_running.ipynb` |
 | `store` | `save_and_load.ipynb` |
 | `theme` | `themes.ipynb` |
-| `visuals` | none yet |
+| `visuals` | `pictures_and_series.ipynb` |
 | `edits` | none yet |
 | `protocol` | none yet |
 | `server` | none yet |
