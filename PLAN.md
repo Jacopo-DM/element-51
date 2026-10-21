@@ -611,81 +611,81 @@ and by eye in the browser pane, as the first pass did.
 Findings (file, what I saw):
 
 1. `rust/element-51-web/src/menu_ui.rs` lines 609 to 617 and 680 to 688, and 633
-   to 641 and 697 to 705 (jscpd, 2 clones, 18 lines): `on_menu_key` and
-   `on_card_menu_key` both pick the target button, then run the same
-   Arrow/Home/End step over `menu_items` and `focus_element`. They must change
-   together (one keyboard rule for both menus), so this is a real clone.
+    to 641 and 697 to 705 (jscpd, 2 clones, 18 lines): `on_menu_key` and
+    `on_card_menu_key` both pick the target button, then run the same
+    Arrow/Home/End step over `menu_items` and `focus_element`. They must change
+    together (one keyboard rule for both menus), so this is a real clone.
 2. `menu_ui.rs` (805 lines, 9 imports) holds four concerns: the add menu and its
-   search (lines 26 to 260), the card menu (265 to 306, 425 to 476, 680 to 717),
-   the app menu with the theme and palette entries (320 to 424), and the keyboard
-   and focus code for flyouts (515 to 805).
+    search (lines 26 to 260), the card menu (265 to 306, 425 to 476, 680 to 717),
+    the app menu with the theme and palette entries (320 to 424), and the keyboard
+    and focus code for flyouts (515 to 805).
 3. `a11y_ui.rs` (826 lines): the hidden tree's building and focus handling (30
-   to 340) and its keyboard actions and field return (378 to 826) are two
-   concerns; `restore_field` and `return_from_field` (653 to 688) belong beside
-   `fields_ui.rs`.
+    to 340) and its keyboard actions and field return (378 to 826) are two
+    concerns; `restore_field` and `return_from_field` (653 to 688) belong beside
+    `fields_ui.rs`.
 4. `draw.rs` (932 lines, 8 imports): the first pass left it alone at 497 lines
-   as "one concern". It has since gained the chart with its legend, the job row
-   and the focus ring. `card` (465 to 648), `chart` (649 to 792) and `job_row`
-   (793 to 851) draw the contents of a card; wires, grid and focus ring are the
-   canvas. The earlier reason no longer holds at this size.
+    as "one concern". It has since gained the chart with its legend, the job row
+    and the focus ring. `card` (465 to 648), `chart` (649 to 792) and `job_row`
+    (793 to 851) draw the contents of a card; wires, grid and focus ring are the
+    canvas. The earlier reason no longer holds at this size.
 5. web `lib.rs` (703 lines, 7 imports): `State`, `start()` (about 200 lines of
-   listener set-up), the edit flow, and the run and job flow (`clear_run`,
-   `show_jobs`, `on_job_update`, `send_job_request`, `on_run`, `set_running`, 492
-   to 548 and 665 to 703) in one file.
+    listener set-up), the edit flow, and the run and job flow (`clear_run`,
+    `show_jobs`, `on_job_update`, `send_job_request`, `on_run`, `set_running`, 492
+    to 548 and 665 to 703) in one file.
 6. core `access.rs` (583 lines, 6 imports): describing the graph (`describe_*`,
-   `neighbour`, `with_displays`, `with_jobs`) is one concern; the status-line
-   sentences (`edit_text` to `run_text`, about 250 lines) and the keyboard step
-   sizes (`moved_to`, `pan_delta`, `ZOOM_STEP`) are others. The sentences moving
-   to a new module changes the `use` line in `tests/access.rs`, the web crate's
-   `lib.rs` and `a11y_ui.rs`; no test body changes.
+    `neighbour`, `with_displays`, `with_jobs`) is one concern; the status-line
+    sentences (`edit_text` to `run_text`, about 250 lines) and the keyboard step
+    sizes (`moved_to`, `pan_delta`, `ZOOM_STEP`) are others. The sentences moving
+    to a new module changes the `use` line in `tests/access.rs`, the web crate's
+    `lib.rs` and `a11y_ui.rs`; no test body changes.
 7. `session.py` 435 lines and 9 imports (7 at the first pass, "the facade"), then
-   `engine.py` 502, `nodes.py` 473, `jobs.py` 438: each is one concern a little
-   over the line limit; I found no second concern to split out.
+    `engine.py` 502, `nodes.py` 473, `jobs.py` 438: each is one concern a little
+    over the line limit; I found no second concern to split out.
 8. Dead code: `cargo clippy -D warnings` and ruff report none; I did not find
-   unused exports by reading.
+    unused exports by reading.
 
 Tasks, ranked by benefit over risk (none approved):
 
 1. Extract one `step_menu_focus(items, target, key)` in `menu_ui.rs` that both key
-   handlers call (finding 1). Files: `menu_ui.rs`. Risk low. Verify: `cargo test`,
-   clippy, `uiKeys` (90 rows) before and after, jscpd 2 clones to 0.
+    handlers call (finding 1). Files: `menu_ui.rs`. Risk low. Verify: `cargo test`,
+    clippy, `uiKeys` (90 rows) before and after, jscpd 2 clones to 0.
 2. Split `menu_ui.rs` (finding 2): `theme_ui.rs` (app menu, theme, palette; about
-   105 lines) and `menu_keys.rs` (flyout open and close, keyboard handlers, focus
-   return; about 290 lines); `menu_ui.rs` keeps the add menu, the card menu and
-   placement (about 410, so likely just over; the card menu's click handler may
-   move to `menu_keys` if it must come under). Risk low, a pure move; verify as
-   in task 1. Result: one module over five imports less, one 805-line file gone.
+    105 lines) and `menu_keys.rs` (flyout open and close, keyboard handlers, focus
+    return; about 290 lines); `menu_ui.rs` keeps the add menu, the card menu and
+    placement (about 410, so likely just over; the card menu's click handler may
+    move to `menu_keys` if it must come under). Risk low, a pure move; verify as
+    in task 1. Result: one module over five imports less, one 805-line file gone.
 3. Split `a11y_ui.rs` (finding 3): the tree's keyboard actions to `tree_keys.rs`
-   (about 440 lines, so a second cut is likely: link and delete actions apart);
-   `restore_field` and `return_from_field` into `fields_ui.rs`. Risk medium (the
-   tree has the most shared state; `sync_tree` and the focus handlers call
-   private helpers from both halves); verify with `uiKeys`, `uiKeysDisplay`,
-   `uiKeysJob` and the axe scan.
+    (about 440 lines, so a second cut is likely: link and delete actions apart);
+    `restore_field` and `return_from_field` into `fields_ui.rs`. Risk medium (the
+    tree has the most shared state; `sync_tree` and the focus handlers call
+    private helpers from both halves); verify with `uiKeys`, `uiKeysDisplay`,
+    `uiKeysJob` and the axe scan.
 4. Split `draw.rs` (finding 4): `draw_card.rs` (`card`, `job_row`, `card_path`,
-   `round_rect_path`, about 330 lines) and `draw_chart.rs` (`chart`, about 145
-   lines, used by `save_png.rs` too). `fit_text` and `marker` stay shared. Risk
-   low to medium; verify with `cargo clippy`, the redraw benchmark (budget 4 ms;
-   now 2.1 ms) before and after, and the display and job walk-throughs. This
-   reverses a first-pass decision, so it needs your word.
+    `round_rect_path`, about 330 lines) and `draw_chart.rs` (`chart`, about 145
+    lines, used by `save_png.rs` too). `fit_text` and `marker` stay shared. Risk
+    low to medium; verify with `cargo clippy`, the redraw benchmark (budget 4 ms;
+    now 2.1 ms) before and after, and the display and job walk-throughs. This
+    reverses a first-pass decision, so it needs your word.
 5. Split web `lib.rs` (finding 5): the run and job flow into `run_ui.rs` (about
-   130 lines). Risk low; verify with `uiKeysJob` and a live Start, Stop, Run.
+    130 lines). Risk low; verify with `uiKeysJob` and a live Start, Stop, Run.
 6. Split core `access.rs` (finding 6): the sentences into `announce.rs` (about
-   250 lines), `access.rs` keeps the description and movement. Risk low
-   (native tests pin every sentence); only `use` lines change. Needs your word
-   because three `use` lines in tests and the web crate change.
+    250 lines), `access.rs` keeps the description and movement. Risk low
+    (native tests pin every sentence); only `use` lines change. Needs your word
+    because three `use` lines in tests and the web crate change.
 7. Regenerate CODEMAP.md, add the new modules to `element-51-web/README.md` (and
-   the core README for task 6), and record the end numbers.
+    the core README for task 6), and record the end numbers.
 
 Left alone, with the reason (to record in DESIGN.md once you confirm):
 - core `theme.rs` (561) and `model.rs` (539): one concern each (a struct per theme
-  section plus merge code; the wire records), as at the first pass.
+    section plus merge code; the wire records), as at the first pass.
 - `session.py`, `engine.py`, `nodes.py`, `jobs.py` (finding 7): one concern each;
-  a split adds a layer with one call site.
+    a split adds a layer with one call site.
 - `tools/run_notebooks.py` and `tools/compress_images.py`: copies of the user's
-  templates that a project does not edit.
+    templates that a project does not edit.
 - The 11 test files over 400 lines: each mirrors one module; a test file moves
-  only if the module it tests is split (tasks 2 to 6 would leave `tests/access.rs`
-  at 913 lines; I would split it by the same line as task 6 only if you ask).
+    only if the module it tests is split (tasks 2 to 6 would leave `tests/access.rs`
+    at 913 lines; I would split it by the same line as task 6 only if you ask).
 - `__init__.py` with 7 imports: it is the package's public surface by design.
 
 ### Tier 3: listed, not executed
