@@ -308,6 +308,12 @@ impl NodeOutcome {
             .map(ToString::to_string)
             .or_else(|| self.shown.get(port).map(crate::display::shown_summary))
     }
+
+    /// What the box of output `port` is a summary of, for a hover text. None if
+    /// the port holds a plain value, which needs no explanation.
+    pub fn output_tooltip(&self, port: &str) -> Option<String> {
+        self.shown.get(port).map(crate::display::shown_tooltip)
+    }
 }
 
 /// The outcome of every node, in the order they ran.

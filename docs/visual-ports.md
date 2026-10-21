@@ -45,9 +45,10 @@ class Curves(element_51.Model):
 def training(steps: int = 60) -> Curves: ...
 ```
 
-The output box of a series says the last number it holds, such as
-`last 0.0842`. A linked input shows the same text, and the name of the output
-it is linked to after it, such as `last 0.0842 [n4.loss]`.
+The output box of a series shows the last number it holds, such as `0.0842`;
+hover over the box to read what it is (`last of 282 points`). A linked input
+shows the same number, and the name of the output it is linked to after it,
+such as `0.0842 [n4.loss]`.
 
 ## Plot
 

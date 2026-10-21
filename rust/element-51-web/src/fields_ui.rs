@@ -2,9 +2,9 @@
 
 use element_51_core::PortType;
 use element_51_core::fields::{field_label, format_value, parse_input};
-use element_51_core::layout::{Side, node_rect};
+use element_51_core::layout::{Side, node_rect, output_row};
 use element_51_core::rows::{find_input, type_of};
-use element_51_core::{Edit, PlacedNode, Port};
+use element_51_core::{Edit, PlacedNode, Port, Status};
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlInputElement};
 
@@ -15,7 +15,7 @@ use crate::a11y_ui::node_element_id;
 use crate::a11y_ui::port_element_id;
 use crate::draw::field_box;
 use crate::input::dragged_graph;
-use crate::{Shared, listen, redraw, show_error, submit};
+use crate::{Shared, State, listen, redraw, show_error, submit};
 
 /// Make the input boxes over the canvas match the graph: one per unlinked
 /// input, placed on its node's row under the current pan and zoom.
@@ -220,4 +220,61 @@ pub(crate) fn return_from_field(shared: &Shared, field: &HtmlInputElement) {
         expand_for(&item);
         focus(&item);
     }
+}
+
+/// The hover text for the value box under the graph point `(x, y)`, if that box
+/// holds a picture or a series: what its short text is a summary of. A linked
+/// input also says which output it is linked to.
+pub(crate) fn tip_at(state: &State, x: f64, y: f64) -> Option<String> {
+    let replica = state.replica.as_ref()?;
+    let run = state.run.as_ref()?;
+    let graph = replica.graph();
+    let metrics = &state.theme.metrics;
+    for node in &graph.nodes {
+        let Some(node_type) = type_of(graph, replica.node_types(), node) else {
+            continue;
+        };
+        let rect = node_rect(node, &node_type, metrics);
+        if x < rect.x || x > rect.x + rect.w || y < rect.y || y > rect.y + rect.h {
+            continue;
+        }
+        let inputs = node_type.inputs.iter().enumerate().map(|(row, port)| {
+            let tip = graph
+                .links
+                .iter()
+                .find(|link| link.target.node == node.id && link.target.port == port.name)
+                .and_then(|link| {
+                    let outcome = run.outcome_for(&link.source.node)?;
+                    let tip = (outcome.status == Status::Ok)
+                        .then(|| outcome.output_tooltip(&link.source.port))??;
+                    Some(format!(
+                        "{tip}, from {}.{}",
+                        link.source.node, link.source.port
+                    ))
+                });
+            (row, tip)
+        });
+        let outputs = node_type.outputs.iter().enumerate().map(|(index, port)| {
+            let tip = run
+                .outcome_for(&node.id)
+                .filter(|outcome| outcome.status == Status::Ok)
+                .and_then(|outcome| outcome.output_tooltip(&port.name));
+            (output_row(&node_type, index), tip)
+        });
+        state.context.set_font(&state.theme.fonts.card);
+        for (row, tip) in inputs.chain(outputs) {
+            let Some(tip) = tip else {
+                continue;
+            };
+            let Ok((left, top, width, height)) =
+                field_box(&state.context, &node_type, &rect, row, metrics)
+            else {
+                continue;
+            };
+            if x >= left && x <= left + width && y >= top && y <= top + height {
+                return Some(tip);
+            }
+        }
+    }
+    None
 }

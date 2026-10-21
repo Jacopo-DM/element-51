@@ -11,7 +11,7 @@ use web_sys::{HtmlInputElement, KeyboardEvent, MouseEvent, WheelEvent};
 use crate::a11y_ui::announce;
 use crate::draw::Focus;
 use crate::draw::{Drag, Selected};
-use crate::fields_ui::{restore_field, return_from_field};
+use crate::fields_ui::{restore_field, return_from_field, tip_at};
 use crate::menu_ui::{hide_menu, open_card_menu};
 use crate::source_ui::{close_source, source_open};
 use crate::{Shared, State, redraw, send_job_request, step_history, submit};
@@ -161,6 +161,15 @@ pub(crate) fn on_mouse_move(shared: &Shared, event: &MouseEvent) {
         let screen = screen_point(event);
         let (x, y) = state.view.to_graph(screen.0, screen.1);
         state.hover = port_under(&state, x, y);
+        // The canvas's own hover text names what a picture or series box shows.
+        match tip_at(&state, x, y) {
+            Some(tip) => state.canvas.set_title(&tip),
+            None => {
+                if !state.canvas.title().is_empty() {
+                    state.canvas.set_title("");
+                }
+            }
+        }
         match &mut state.gesture {
             Gesture::None => return,
             Gesture::Link(drag) => {

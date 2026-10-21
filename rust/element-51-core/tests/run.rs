@@ -125,6 +125,11 @@ fn output_text_summarises_a_picture_and_a_series() {
         }),
     );
     assert_eq!(outcome.output_text("pic").as_deref(), Some("2 x 2 grey"));
-    assert_eq!(outcome.output_text("curve").as_deref(), Some("last 0.5"));
+    assert_eq!(outcome.output_text("curve").as_deref(), Some("0.5"));
     assert_eq!(outcome.output_text("n").as_deref(), Some("3"));
+    assert_eq!(
+        outcome.output_tooltip("curve").as_deref(),
+        Some("last of 2 points")
+    );
+    assert_eq!(outcome.output_tooltip("n"), None);
 }

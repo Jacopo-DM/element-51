@@ -139,8 +139,8 @@ pub fn last_value(series: &Series) -> Option<f64> {
 }
 
 /// One line about a picture or a series, for the box of the port that has it:
-/// `28 x 28 grey`, `last 0.05`. A series with no number in it (all gaps) says
-/// how many gaps. The box is about a dozen characters wide, so the part that
+/// `28 x 28 grey`, `0.05` (a series shows its last number). A series with no
+/// number in it (all gaps) says how many gaps. The box is about a dozen characters wide, so the part that
 /// matters comes first and the line is short.
 pub fn shown_summary(shown: &Shown) -> String {
     match shown {
@@ -153,12 +153,35 @@ pub fn shown_summary(shown: &Shown) -> String {
             format!("{} x {} {kind}", image.width, image.height)
         }
         Shown::Series(series) => match last_value(series) {
-            Some(last) => format!("last {}", short_number(last)),
+            Some(last) => short_number(last),
             None => {
                 let count = series.values.len();
                 format!("{count} {}", if count == 1 { "gap" } else { "gaps" })
             }
         },
+    }
+}
+
+/// The hover text for the box of a picture or a series, which says what the box's
+/// short text is a summary of: `last of 282 points`, `grey picture, 28 x 28`.
+pub fn shown_tooltip(shown: &Shown) -> String {
+    match shown {
+        Shown::Image(image) => {
+            let kind = if image.channels == 1 {
+                "grey"
+            } else {
+                "colour"
+            };
+            format!("{kind} picture, {} x {}", image.width, image.height)
+        }
+        Shown::Series(series) => {
+            let count = series.values.len();
+            let points = format!("{count} {}", if count == 1 { "point" } else { "points" });
+            match last_value(series) {
+                Some(_) => format!("last of {points}"),
+                None => format!("{points}, none of them a number"),
+            }
+        }
     }
 }
 

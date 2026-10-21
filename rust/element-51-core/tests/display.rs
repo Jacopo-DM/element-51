@@ -241,7 +241,7 @@ fn an_older_message_without_display_or_shown_still_reads() {
 
 use element_51_core::display::{
     CHART_LINE_STYLES, chart_layout, chart_rect, last_value, legend_slots, line_style, nice_ticks,
-    short_number, shown_summary, thin,
+    short_number, shown_summary, shown_tooltip, thin,
 };
 use element_51_core::{Series, Shown};
 
@@ -580,14 +580,11 @@ fn a_picture_summary_gives_its_size_and_whether_it_is_grey() {
 }
 
 #[test]
-fn a_series_summary_gives_its_last_number() {
+fn a_series_summary_is_its_last_number() {
     let series = |values: Vec<Option<f64>>| Shown::Series(Series { values });
-    assert_eq!(
-        shown_summary(&series(vec![Some(1.0), Some(0.05)])),
-        "last 0.05"
-    );
+    assert_eq!(shown_summary(&series(vec![Some(1.0), Some(0.05)])), "0.05");
     // A trailing gap or NaN is skipped, as the chart's end label does.
-    assert_eq!(shown_summary(&series(vec![Some(2.0), None])), "last 2");
+    assert_eq!(shown_summary(&series(vec![Some(2.0), None])), "2");
     assert_eq!(shown_summary(&series(vec![None, None])), "2 gaps");
     assert_eq!(shown_summary(&series(vec![None])), "1 gap");
     assert_eq!(shown_summary(&series(vec![])), "0 gaps");
@@ -628,4 +625,32 @@ fn a_series_that_runs_from_nothing_to_one_gets_at_least_four_y_labels() {
     let accuracy = series(&some(&[0.05, 0.3, 0.6, 0.9, 0.95]));
     let chart = chart_layout(&area(), &m(), &[&accuracy]).unwrap();
     assert!(chart.y_ticks.len() >= 4, "{:?}", chart.y_ticks);
+}
+
+#[test]
+fn the_tooltip_says_what_the_box_is_a_summary_of() {
+    let series = |values: Vec<Option<f64>>| Shown::Series(Series { values });
+    assert_eq!(
+        shown_tooltip(&series(vec![Some(1.0), Some(0.05)])),
+        "last of 2 points"
+    );
+    assert_eq!(shown_tooltip(&series(vec![Some(1.0)])), "last of 1 point");
+    assert_eq!(
+        shown_tooltip(&series(vec![None, None])),
+        "2 points, none of them a number"
+    );
+    let grey = Shown::Image(Image {
+        width: 28,
+        height: 20,
+        channels: 1,
+        pixels: vec![0; 560],
+    });
+    assert_eq!(shown_tooltip(&grey), "grey picture, 28 x 20");
+    let colour = Shown::Image(Image {
+        width: 1,
+        height: 2,
+        channels: 3,
+        pixels: vec![0; 6],
+    });
+    assert_eq!(shown_tooltip(&colour), "colour picture, 1 x 2");
 }

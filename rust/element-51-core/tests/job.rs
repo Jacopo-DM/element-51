@@ -273,7 +273,7 @@ fn a_jobs_outputs_and_the_series_it_feeds_a_chart_join_the_run_result() {
     );
     assert_eq!(job.error, None);
     assert_eq!(job.outputs["total"], json!(11));
-    assert_eq!(job.output_text("loss").as_deref(), Some("last 0.5"));
+    assert_eq!(job.output_text("loss").as_deref(), Some("0.5"));
     let chart = run.outcome_for("n3").unwrap();
     assert_eq!(chart.status, Status::Ok);
     assert_eq!(chart.shown["series_1"], Shown::Series(series(&[0.9, 0.5])));
