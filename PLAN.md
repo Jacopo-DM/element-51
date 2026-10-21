@@ -166,15 +166,32 @@ met (spec and decisions in DESIGN.md; `docs/jobs.md`, "A job in its own process"
 - Goal: a `Run automatically` checkbox next to Run, so results refresh as you edit.
     Independent of the other three goals.
 - Kind: new behaviour.
-- Success measure:
+- Success measure (revised 2026-10-21 after the spec questions; items 5 to 8 are new):
     1. The checkbox is unticked at every page load and is not saved.
     2. Ticked, a change that alters a result (add or delete a node, link or unlink,
         typing a value, undo or redo, a change pushed from Python) runs the graph
         once, 300 ms after the last change; moving a node does not.
-    3. It never starts a `JobNode`.
+    3. It never starts a `JobNode`: plain nodes refresh, a job's boxes keep their last
+        result until the user presses Start.
     4. It is labelled, operable by keyboard, AA in all themes, and axe reports 0
         violations; a native test covers the debounce rule.
-- Status: approved 2026-10-21; no spec yet. Independent: it can start any time
+    5. While ticked, the Run button is disabled (and says so to assistive
+        technology); unticking enables it again.
+    6. A change that arrives during a run is remembered; the status line says
+        "Still running, will run again" (also announced to screen readers, no banner),
+        and one fresh run starts with the newest graph when the current one ends.
+        Runs never overlap or pile up.
+    7. A failed run shows the error banner, one at a time: a new failing run replaces
+        its text, a passing run clears it; it keeps its Dismiss button and never
+        vanishes on a timer.
+    8. Every run (automatic or the Run button) puts a red border on each node whose
+        own last outcome is an error, until its next successful run. The colour is a
+        new theme key (both theme files, `docs/themes.md`, `contrast_pairs`, 3:1
+        against the canvas, checked for every palette); the border is never the only
+        signal (the banner and the node's text say it too).
+- Status: approved 2026-10-21 (items 1 to 4). Items 5 to 8 were chosen by the user
+    on 2026-10-21 in the spec round and need approval in words as part of the goal;
+    the architecture and task list are not written yet. Independent: it can start any time
     after `canvas-accessibility`.
 - Added: 2026-10-21
 
