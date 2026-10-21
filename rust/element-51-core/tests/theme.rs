@@ -6,6 +6,10 @@ const DRAW: &str = include_str!("../../element-51-web/src/draw.rs");
 const WEB: &str = include_str!("../../element-51-web/src/lib.rs");
 const FIELDS_UI: &str = include_str!("../../element-51-web/src/fields_ui.rs");
 const INPUT: &str = include_str!("../../element-51-web/src/input.rs");
+const DRAW_CARD: &str = include_str!("../../element-51-web/src/draw_card.rs");
+const DRAW_CHART: &str = include_str!("../../element-51-web/src/draw_chart.rs");
+const DRAW_FOCUS: &str = include_str!("../../element-51-web/src/draw_focus.rs");
+const DRAW_WIRES: &str = include_str!("../../element-51-web/src/draw_wires.rs");
 const MENU_UI: &str = include_str!("../../element-51-web/src/menu_ui.rs");
 const MENU_KEYS: &str = include_str!("../../element-51-web/src/menu_keys.rs");
 const THEME_UI: &str = include_str!("../../element-51-web/src/theme_ui.rs");
@@ -96,6 +100,10 @@ fn has_hex_colour(text: &str) -> Option<String> {
 fn no_colour_is_written_in_the_drawing_code_or_the_page() {
     for (name, text) in [
         ("draw.rs", DRAW),
+        ("draw_card.rs", DRAW_CARD),
+        ("draw_chart.rs", DRAW_CHART),
+        ("draw_focus.rs", DRAW_FOCUS),
+        ("draw_wires.rs", DRAW_WIRES),
         ("lib.rs", WEB),
         ("fields_ui.rs", FIELDS_UI),
         ("input.rs", INPUT),

@@ -10,7 +10,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, HtmlElement};
 
 use crate::a11y_ui::announce;
-use crate::draw::chart;
+use crate::draw_chart::chart;
 use crate::{Shared, State, show_error};
 
 /// How many pixels a chart gets for each pixel of the card, so the file is

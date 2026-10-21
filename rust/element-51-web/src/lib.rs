@@ -6,6 +6,10 @@
 
 mod a11y_ui;
 mod draw;
+mod draw_card;
+mod draw_chart;
+mod draw_focus;
+mod draw_wires;
 mod fields_ui;
 mod input;
 mod menu_keys;
