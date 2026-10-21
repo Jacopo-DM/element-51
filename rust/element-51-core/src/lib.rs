@@ -24,9 +24,10 @@ pub mod view;
 
 pub use edit::{EditError, apply_edit, value_fits};
 pub use model::{
-    Ack, CardDisplay, Edit, EditRequest, Graph, Image, Link, Message, NodeOutcome, NodeType,
-    PlacedNode, Port, PortRef, PortType, Reject, RunRequest, RunResult, Series, Shown, Snapshot,
-    SourceReply, SourceRequest, Status, Variadic,
+    Ack, CardDisplay, Edit, EditRequest, Graph, Image, JobRefusal, JobStatus, JobUpdate, Link,
+    LinkedSeries, Message, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType, Reject,
+    RunRequest, RunResult, Series, Shown, Snapshot, SourceReply, SourceRequest, StartRequest,
+    Status, StopRequest, Variadic,
 };
 pub use replica::Replica;
 

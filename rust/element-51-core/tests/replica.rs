@@ -21,6 +21,7 @@ fn replica() -> Replica {
             nodes: vec![],
             links: vec![],
         },
+        jobs: vec![],
     })
 }
 
@@ -139,6 +140,7 @@ fn snapshot_with(ids: &[&str]) -> Snapshot {
             nodes,
             links: vec![],
         },
+        jobs: vec![],
     }
 }
 

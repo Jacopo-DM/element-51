@@ -202,6 +202,9 @@ pub struct Snapshot {
     pub theme_changes: serde_json::Value,
     pub node_types: Vec<NodeType>,
     pub graph: Graph,
+    /// How each job that has been started stands.
+    #[serde(default)]
+    pub jobs: Vec<JobUpdate>,
 }
 
 impl Snapshot {
@@ -312,9 +315,24 @@ impl NodeOutcome {
 #[serde(deny_unknown_fields)]
 pub struct RunResult {
     pub outcomes: Vec<NodeOutcome>,
+    /// True when the result covers only some nodes (the ones after a job that
+    /// ended): merge it into the last result with `merge`, do not replace it.
+    #[serde(default)]
+    pub partial: bool,
 }
 
 impl RunResult {
+    /// Put the outcomes of `other` into this result: a node that is already
+    /// here is replaced in place, any other is added at the end.
+    pub fn merge(&mut self, other: &RunResult) {
+        for outcome in &other.outcomes {
+            match self.outcomes.iter_mut().find(|o| o.node == outcome.node) {
+                Some(here) => *here = outcome.clone(),
+                None => self.outcomes.push(outcome.clone()),
+            }
+        }
+    }
+
     /// The outcome for node `id`, if it is in the result.
     pub fn outcome_for(&self, id: &str) -> Option<&NodeOutcome> {
         self.outcomes.iter().find(|outcome| outcome.node == id)
@@ -358,6 +376,67 @@ pub struct SourceReply {
     pub reason: Option<String>,
 }
 
+/// The browser asks Python to start the job of one node.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StartRequest {
+    pub node: String,
+}
+
+/// The browser asks Python to stop the job of one node.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StopRequest {
+    pub node: String,
+}
+
+/// Python refuses a start or a stop; the reason is for a person.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct JobRefusal {
+    pub node: String,
+    pub reason: String,
+}
+
+/// Where a job is. A node with no job update is idle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum JobStatus {
+    Running,
+    Stopping,
+    Finished,
+    Stopped,
+    Failed,
+}
+
+/// A series that reaches an input of a chart node straight from a job.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LinkedSeries {
+    pub node: String,
+    pub port: String,
+    pub series: Series,
+}
+
+/// How one job stands: its state, progress and the outputs reported so far.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct JobUpdate {
+    pub node: String,
+    pub state: JobStatus,
+    /// Steps done.
+    pub step: u32,
+    /// Steps in all, or None for a job that works in one call.
+    pub steps: Option<u32>,
+    pub error: Option<String>,
+    /// The plain values reported, by output port name.
+    pub outputs: BTreeMap<String, serde_json::Value>,
+    /// The pictures and series reported, by output port name.
+    pub shown: BTreeMap<String, Shown>,
+    /// The series now reaching chart nodes from this job.
+    pub linked: Vec<LinkedSeries>,
+}
+
 /// A message in either direction, tagged by its `op` field.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
@@ -370,6 +449,11 @@ pub enum Message {
     RunResult(RunResult),
     Source(SourceRequest),
     SourceReply(SourceReply),
+    Start(StartRequest),
+    Stop(StopRequest),
+    JobUpdate(JobUpdate),
+    #[serde(rename = "job_refused")]
+    JobRefused(JobRefusal),
 }
 
 impl Message {

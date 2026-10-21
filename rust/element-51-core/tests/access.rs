@@ -575,7 +575,10 @@ fn outcome(node: &str, status: Status, error: Option<&str>) -> NodeOutcome {
 }
 
 fn result(outcomes: Vec<NodeOutcome>) -> RunResult {
-    RunResult { outcomes }
+    RunResult {
+        outcomes,
+        partial: false,
+    }
 }
 
 #[test]

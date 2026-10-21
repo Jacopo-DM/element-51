@@ -537,12 +537,29 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                     show_error(&state.document, &summary);
                 }
                 announce(&state.document, &run_text(&result));
-                state.pictures = Pictures::from_result(&state.document, &result);
+                // A partial result covers the nodes after a job that ended; it
+                // joins the last result instead of replacing it.
+                let whole = match (result.partial, state.run.take()) {
+                    (true, Some(mut run)) => {
+                        run.merge(&result);
+                        run
+                    }
+                    _ => result,
+                };
+                state.pictures = Pictures::from_result(&state.document, &whole);
                 state.tree_stale = true;
-                state.run = Some(result);
+                state.run = Some(whole);
             }
             Ok(Message::SourceReply(reply)) => source_reply = Some(reply),
-            Ok(Message::Edit(_) | Message::Run(_) | Message::Source(_)) => {
+            // The card that shows a job comes with `job-nodes` task 4.
+            Ok(Message::JobUpdate(_) | Message::JobRefused(_)) => {}
+            Ok(
+                Message::Edit(_)
+                | Message::Run(_)
+                | Message::Source(_)
+                | Message::Start(_)
+                | Message::Stop(_),
+            ) => {
                 show_error(
                     &state.document,
                     "Python sent a message only the browser should send.",

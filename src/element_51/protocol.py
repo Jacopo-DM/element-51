@@ -5,8 +5,34 @@ from typing import Annotated, Literal
 from pydantic import Field, TypeAdapter
 
 from element_51.edits import Edit
+from element_51.jobs import JobState
 from element_51.model import Graph, Model, NodeType
 from element_51.theme import ThemeChanges
+from element_51.visuals import Series
+
+
+class LinkedSeries(Model):
+    """A series now reaching an input of a chart node, from a running job."""
+
+    node: str
+    port: str
+    series: Series
+
+
+class JobView(JobState):
+    """How one job stands, as a snapshot lists it.
+
+    `linked` holds the series that reach a chart node's inputs straight from
+    this job, so the page can redraw those charts without a run.
+    """
+
+    linked: tuple[LinkedSeries, ...] = ()
+
+
+class JobUpdate(JobView):
+    """Python tells every page how one job stands (the Rust `JobUpdate`)."""
+
+    op: Literal["job_update"] = "job_update"
 
 
 class Snapshot(Model):
@@ -18,6 +44,7 @@ class Snapshot(Model):
     theme_changes: ThemeChanges = ThemeChanges()
     node_types: tuple[NodeType, ...]
     graph: Graph
+    jobs: tuple[JobView, ...] = ()
 
 
 class EditRequest(Model):
@@ -49,6 +76,28 @@ class RunRequest(Model):
     op: Literal["run"] = "run"
 
 
+class StartRequest(Model):
+    """The browser asks Python to start the job of one node."""
+
+    op: Literal["start"] = "start"
+    node: str
+
+
+class StopRequest(Model):
+    """The browser asks Python to stop the job of one node."""
+
+    op: Literal["stop"] = "stop"
+    node: str
+
+
+class JobRefusal(Model):
+    """Python refuses a start or a stop. It goes to the asking page only."""
+
+    op: Literal["job_refused"] = "job_refused"
+    node: str
+    reason: str
+
+
 class SourceRequest(Model):
     """The browser asks for the source code of one node's type."""
 
@@ -69,11 +118,11 @@ class SourceReply(Model):
     reason: str | None = None
 
 
-ClientMessage: TypeAdapter[EditRequest | RunRequest | SourceRequest] = (
-    TypeAdapter(
-        Annotated[
-            EditRequest | RunRequest | SourceRequest,
-            Field(discriminator="op"),
-        ]
-    )
+ClientMessage: TypeAdapter[
+    EditRequest | RunRequest | SourceRequest | StartRequest | StopRequest
+] = TypeAdapter(
+    Annotated[
+        EditRequest | RunRequest | SourceRequest | StartRequest | StopRequest,
+        Field(discriminator="op"),
+    ]
 )

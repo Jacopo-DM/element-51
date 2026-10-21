@@ -1,9 +1,10 @@
 """Job nodes shared by the tests."""
 
 import threading
+import time
 from typing import ClassVar, override
 
-from element_51.job_node import JobNode
+from element_51.job_node import JobNode, Report
 from element_51.model import Model
 from element_51.visuals import Series
 
@@ -52,3 +53,19 @@ class Steps(JobNode[int]):
         if i == self.pause_at:
             Pause.wait()
         return Out(loss=Series(values=(float(i),)), total=state + i)
+
+
+class Stamp:
+    """When `Timed` last reported, on this process's monotonic clock."""
+
+    at = 0.0
+
+
+class Timed(JobNode[None]):
+    """A work job that notes the time just before it reports once."""
+
+    @override
+    def work(self, report: Report) -> int:
+        Stamp.at = time.monotonic()
+        report(out=1)
+        return 1

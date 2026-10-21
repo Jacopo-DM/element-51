@@ -18,15 +18,21 @@ from element_51.edits import (
     SetValue,
 )
 from element_51.engine import RunResult
-from element_51.model import PortRef
+from element_51.model import Graph, PortRef
 from element_51.protocol import (
     Ack,
     ClientMessage,
     EditRequest,
+    JobRefusal,
+    JobUpdate,
+    JobView,
     Reject,
     RunRequest,
+    Snapshot,
     SourceReply,
     SourceRequest,
+    StartRequest,
+    StopRequest,
 )
 from element_51.visuals import Image, Series
 
@@ -43,6 +49,10 @@ def round_trip(
         | RunResult
         | SourceRequest
         | SourceReply
+        | StartRequest
+        | StopRequest
+        | JobUpdate
+        | JobRefusal
     ],
     key: str,
 ) -> object:
@@ -170,21 +180,76 @@ def test_client_messages_are_told_apart_by_op() -> None:
     assert isinstance(run, RunRequest)
     source = ClientMessage.validate_python(MESSAGES["source"])
     assert isinstance(source, SourceRequest)
+    start = ClientMessage.validate_python(MESSAGES["start"])
+    stop = ClientMessage.validate_python(MESSAGES["stop"])
+    assert isinstance(start, StartRequest)
+    assert isinstance(stop, StopRequest)
     with pytest.raises(ValidationError):
         ClientMessage.validate_python(MESSAGES["ack"])
+
+
+def test_job_messages_round_trip() -> None:
+    """The start and stop requests, a job update and a refusal match Rust."""
+    start = round_trip(StartRequest, "start")
+    stop = round_trip(StopRequest, "stop")
+    assert isinstance(start, StartRequest)
+    assert isinstance(stop, StopRequest)
+    update = round_trip(JobUpdate, "job_update")
+    assert isinstance(update, JobUpdate)
+    assert update.state == "running"
+    assert (update.step, update.steps) == (2, 5)
+    assert update.linked[0].node == "n3"
+    assert math.isnan(update.linked[0].series.values[1])
+    failed = round_trip(JobUpdate, "job_update_failed")
+    assert isinstance(failed, JobUpdate)
+    assert failed.steps is None
+    assert failed.error == "RuntimeError: boom"
+    refused = round_trip(JobRefusal, "job_refused")
+    assert isinstance(refused, JobRefusal)
+    assert refused.reason == "Node n1 is already running"
+
+
+def test_a_job_in_a_snapshot_has_no_op() -> None:
+    """The `op` tags a message; a job listed in a snapshot is the bare view."""
+    bare = {k: v for k, v in MESSAGES["job_update"].items() if k != "op"}
+    snapshot = Snapshot(
+        theme="antimony",
+        node_types=(),
+        graph=Graph(nodes=(), links=()),
+        jobs=(JobView.model_validate(bare),),
+    )
+    dumped = json.loads(snapshot.model_dump_json())
+    assert "op" not in dumped["jobs"][0]
+    assert dumped["jobs"][0]["node"] == "n1"
+    assert Snapshot.model_validate(dumped) == snapshot
+
+
+def test_a_partial_run_result_says_so() -> None:
+    """A result with `partial` set covers some nodes; the others stay."""
+    partial = round_trip(RunResult, "run_result_partial")
+    assert isinstance(partial, RunResult)
+    assert partial.partial
+    whole = round_trip(RunResult, "run_result")
+    assert isinstance(whole, RunResult)
+    assert not whole.partial
 
 
 @given(st.text())
 @example(json.dumps(MESSAGES["edit_add_node"]))
 @example(json.dumps(MESSAGES["run"]))
 @example(json.dumps(MESSAGES["source"]))
+@example(json.dumps(MESSAGES["start"]))
+@example(json.dumps(MESSAGES["stop"]))
 def test_client_message_boundary(raw: str) -> None:
     """Any text from the page is a client message or a ValidationError."""
     try:
         message = ClientMessage.validate_json(raw)
     except ValidationError:
         return
-    assert isinstance(message, EditRequest | RunRequest | SourceRequest)
+    assert isinstance(
+        message,
+        EditRequest | RunRequest | SourceRequest | StartRequest | StopRequest,
+    )
 
 
 NODE_IDS = st.from_regex(r"n[0-9]+", fullmatch=True)

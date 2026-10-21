@@ -126,7 +126,8 @@
                 "shown": {},
                 "error": null
             }
-        ]
+        ],
+        "partial": false
     },
     "run_result_picture": {
         "op": "run_result",
@@ -150,7 +151,8 @@
                 },
                 "error": null
             }
-        ]
+        ],
+        "partial": false
     },
     "run_result_chart": {
         "op": "run_result",
@@ -171,7 +173,8 @@
                 },
                 "error": null
             }
-        ]
+        ],
+        "partial": false
     },
     "source": {
         "op": "source",
@@ -188,5 +191,77 @@
         "node": "n3",
         "source": null,
         "reason": "The source of node type f cannot be read: could not get source code"
+    },
+    "run_result_partial": {
+        "op": "run_result",
+        "outcomes": [
+            {
+                "node": "n2",
+                "status": "ok",
+                "outputs": {
+                    "out": 12
+                },
+                "shown": {},
+                "error": null
+            }
+        ],
+        "partial": true
+    },
+    "start": {
+        "op": "start",
+        "node": "n1"
+    },
+    "stop": {
+        "op": "stop",
+        "node": "n1"
+    },
+    "job_update": {
+        "node": "n1",
+        "state": "running",
+        "step": 2,
+        "steps": 5,
+        "error": null,
+        "outputs": {
+            "total": 11
+        },
+        "shown": {
+            "loss": {
+                "values": [
+                    0.9,
+                    null,
+                    0.25
+                ]
+            }
+        },
+        "op": "job_update",
+        "linked": [
+            {
+                "node": "n3",
+                "port": "series_1",
+                "series": {
+                    "values": [
+                        0.9,
+                        null,
+                        0.25
+                    ]
+                }
+            }
+        ]
+    },
+    "job_update_failed": {
+        "node": "n1",
+        "state": "failed",
+        "step": 0,
+        "steps": null,
+        "error": "RuntimeError: boom",
+        "outputs": {},
+        "shown": {},
+        "op": "job_update",
+        "linked": []
+    },
+    "job_refused": {
+        "op": "job_refused",
+        "node": "n1",
+        "reason": "Node n1 is already running"
     }
 }

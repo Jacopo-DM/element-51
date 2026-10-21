@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import socket
 import webbrowser
+from enum import Enum
 from pathlib import Path
 from typing import Protocol, override
 
@@ -17,19 +18,29 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from element_51.edits import EditError
 from element_51.engine import RunResult
+from element_51.jobs import JobRefusedError
 from element_51.protocol import (
     Ack,
     ClientMessage,
+    JobRefusal,
     Reject,
     RunRequest,
     SourceReply,
     SourceRequest,
+    StartRequest,
+    StopRequest,
 )
 from element_51.session import App
 
 WEB_DIR = Path(__file__).parent / "web"
 HOST = "127.0.0.1"
 INVALID_PAYLOAD = 1007  # websocket close code: data could not be parsed
+
+
+class NoReply(Enum):
+    """What `reply_to` returns when the message was fine and needs no answer."""
+
+    NONE = "none"
 
 
 class Sender(Protocol):
@@ -87,7 +98,7 @@ class Hub:
 
 async def reply_to(
     app: App, text: str
-) -> Ack | Reject | RunResult | SourceReply | None:
+) -> Ack | Reject | RunResult | SourceReply | JobRefusal | NoReply | None:
     """Act on a message from the browser and say how it went.
 
     Parameters
@@ -99,10 +110,12 @@ async def reply_to(
 
     Returns
     -------
-    Ack | Reject | RunResult | SourceReply | None
+    Ack | Reject | RunResult | SourceReply | JobRefusal | NoReply | None
         `Ack` if an edit was applied, `Reject` with a reason if the rules
         refused it, `RunResult` for a run request, `SourceReply` for a source
-        request, `None` if the message is not valid.
+        request, `JobRefusal` if a start or stop was refused, `NoReply.NONE`
+        if it was accepted (the job's updates are broadcast), `None` if the
+        message is not valid.
     """
     try:
         message = ClientMessage.validate_json(text)
@@ -112,11 +125,33 @@ async def reply_to(
         return await run_in_threadpool(app.execute)
     if isinstance(message, SourceRequest):
         return await run_in_threadpool(app.source, message.node)
+    if isinstance(message, StartRequest | StopRequest):
+        return await _job_request(app, message)
     try:
         app.apply(message.edit)
     except EditError as error:
         return Reject(id=message.id, reason=error.reason)
     return Ack(id=message.id)
+
+
+async def _job_request(
+    app: App, message: StartRequest | StopRequest
+) -> JobRefusal | NoReply:
+    """Start or stop a job and say whether it was refused.
+
+    Returns
+    -------
+    JobRefusal | NoReply
+        The refusal with its reason, or `NoReply.NONE`.
+    """
+    try:
+        if isinstance(message, StartRequest):
+            await run_in_threadpool(app.start_job, message.node)
+        else:
+            app.stop_job(message.node)
+    except JobRefusedError as error:
+        return JobRefusal(node=message.node, reason=error.reason)
+    return NoReply.NONE
 
 
 def asgi_app(app: App, theme: str | Path | None = None) -> Starlette:
@@ -142,6 +177,7 @@ def asgi_app(app: App, theme: str | Path | None = None) -> Starlette:
         app.theme = theme
     hub = Hub()
     app.subscribe(lambda snapshot: hub.broadcast(snapshot.model_dump_json()))
+    app.subscribe_jobs(lambda event: hub.broadcast(event.model_dump_json()))
 
     async def connect(websocket: WebSocket) -> None:
         await websocket.accept()
@@ -158,6 +194,8 @@ def asgi_app(app: App, theme: str | Path | None = None) -> Starlette:
                         code=INVALID_PAYLOAD, reason="malformed message"
                     )
                     return
+                if reply is NoReply.NONE:
+                    continue
                 connection.send(reply.model_dump_json())
                 if isinstance(reply, Ack):
                     # Other pages learn of the edit; the sender has it already.

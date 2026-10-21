@@ -37,10 +37,16 @@ class NodeOutcome(Model):
 
 
 class RunResult(Model):
-    """The outcome of every node, in the order they ran."""
+    """The outcome of every node, in the order they ran.
+
+    A `partial` result covers only some nodes (the ones after a job that
+    ended): the page merges it into its last result, node by node, instead of
+    replacing that result.
+    """
 
     op: Literal["run_result"] = "run_result"
     outcomes: tuple[NodeOutcome, ...]
+    partial: bool = False
 
 
 NO_OUTPUT = "no output yet: press Start"

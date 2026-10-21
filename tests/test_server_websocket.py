@@ -1,18 +1,29 @@
 """Tests for the editor server's websocket."""
 
 import asyncio
+import json
+import time
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from sample_jobs import WAIT, Pause, Stamp, Steps, Timed
 from sample_nodes import add, show
 from server_support import running
 from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosed
-from websockets.sync.client import connect
+from websockets.sync.client import ClientConnection, connect
 
 from element_51 import server
 from element_51.engine import RunResult
-from element_51.protocol import Ack, Reject, Snapshot, SourceReply
+from element_51.protocol import (
+    Ack,
+    JobRefusal,
+    JobUpdate,
+    Reject,
+    Snapshot,
+    SourceReply,
+)
 from element_51.session import App
 
 REQUEST_ID_7 = 7
@@ -362,3 +373,133 @@ def test_a_value_set_in_the_browser_is_applied_and_pushed(
             pushed = Snapshot.model_validate_json(watcher.recv(timeout=5))
     assert app.graph.nodes[0].values == {"a": 4.5}
     assert pushed.graph.nodes[0].values == {"a": 4.5}
+
+
+MAX_LATENCY = 0.1
+
+
+def read_until(
+    websocket: ClientConnection, wanted: Callable[[dict[str, object]], bool]
+) -> dict[str, object]:
+    """Read messages until one satisfies `wanted`.
+
+    Returns
+    -------
+    dict[str, object]
+        That message, parsed.
+    """
+    for _ in range(1000):
+        message: dict[str, object] = json.loads(websocket.recv(timeout=WAIT))
+        if wanted(message):
+            return message
+    pytest.fail("the message never came")  # pragma: no cover  # only on failure
+
+
+def test_a_start_from_the_page_runs_the_job_and_pushes_updates(
+    web_dir: Path,
+) -> None:
+    """The page sends start; the updates and the run after the job come back."""
+    assert web_dir.exists()
+    app = App([Steps, show])
+    app.add_node(Steps, x=0.0, y=0.0)
+    app.add_node(show, x=100.0, y=0.0)
+    app.add_link("n1", "total", "n2", "value")
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        websocket.send(json.dumps({"op": "start", "node": "n1"}))
+        update = read_until(websocket, lambda m: m["op"] == "job_update")
+        assert update["state"] == "running"
+        done = read_until(
+            websocket,
+            lambda m: m["op"] == "job_update" and m["state"] == "finished",
+        )
+        result = RunResult.model_validate(
+            read_until(websocket, lambda m: m["op"] == "run_result")
+        )
+    assert JobUpdate.model_validate(done).step == done["steps"]
+    assert result.partial
+    assert [o.node for o in result.outcomes] == ["n2"]
+
+
+def test_a_report_reaches_the_page_within_a_tenth_of_a_second(
+    web_dir: Path,
+) -> None:
+    """From the job's `report` call to the page's receive: 100 ms at most."""
+    assert web_dir.exists()
+    app = App([Timed])
+    app.add_node(Timed, x=0.0, y=0.0)
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as websocket,
+    ):
+        websocket.recv()
+        websocket.send(json.dumps({"op": "start", "node": "n1"}))
+        read_until(
+            websocket,
+            lambda m: m["op"] == "job_update" and bool(m["outputs"]),
+        )
+        arrived = time.monotonic()
+    assert 0 < arrived - Stamp.at < MAX_LATENCY
+
+
+def test_a_refused_start_or_stop_goes_back_to_the_asking_page_only(
+    web_dir: Path,
+) -> None:
+    """The reason comes in a `job_refused` message; nobody else hears it."""
+    assert web_dir.exists()
+    app = App([Steps, show])
+    app.add_node(Steps, x=0.0, y=0.0)
+    app.add_node(show, x=100.0, y=0.0)
+    with running(server.asgi_app(app)) as port:
+        url = f"ws://{server.HOST}:{port}/ws"
+        with connect(url) as asking, connect(url) as other:
+            asking.recv()
+            other.recv()
+            asking.send(json.dumps({"op": "start", "node": "n2"}))
+            first = JobRefusal.model_validate_json(asking.recv(timeout=WAIT))
+            asking.send(json.dumps({"op": "stop", "node": "n1"}))
+            second = JobRefusal.model_validate_json(asking.recv(timeout=WAIT))
+            with pytest.raises(TimeoutError):
+                other.recv(timeout=SILENCE)
+    assert "not a job" in first.reason
+    assert "no running job" in second.reason
+
+
+def test_a_stop_from_the_page_ends_the_job_and_a_new_page_sees_it(
+    web_dir: Path,
+) -> None:
+    """Stop moves the job to stopping then stopped; a reload shows its state."""
+    assert web_dir.exists()
+    app = App([Steps])
+    app.add_node(Steps, x=0.0, y=0.0)
+    Pause.reset()
+    Steps.pause_at = 1
+    try:
+        with running(server.asgi_app(app)) as port:
+            url = f"ws://{server.HOST}:{port}/ws"
+            with connect(url) as websocket:
+                websocket.recv()
+                websocket.send(json.dumps({"op": "start", "node": "n1"}))
+                assert Pause.entered.wait(WAIT)
+                websocket.send(json.dumps({"op": "stop", "node": "n1"}))
+                read_until(
+                    websocket,
+                    lambda m: (
+                        m["op"] == "job_update" and m["state"] == "stopping"
+                    ),
+                )
+                with connect(url) as reloaded:
+                    snapshot = Snapshot.model_validate_json(reloaded.recv())
+                Pause.release.set()
+                read_until(
+                    websocket,
+                    lambda m: (
+                        m["op"] == "job_update" and m["state"] == "stopped"
+                    ),
+                )
+    finally:
+        Steps.pause_at = -1
+    assert [(j.node, j.state) for j in snapshot.jobs] == [("n1", "stopping")]

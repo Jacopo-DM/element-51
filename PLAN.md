@@ -631,7 +631,7 @@ Tier 1, the walking skeleton and what the rest needs:
     runs unlocked). Cost: about 350 lines, new rules for locking and for the timer.
     Verify: fake jobs and a fake clock, no real sleeps beyond a few ms; Stop, failure,
     delete, load, double Start and the merge rule each have a test; coverage stays 100%.
-3. **Messages and server (Python and Rust core).** What: `StartRequest`, `StopRequest`,
+3. **DONE 2026-10-21. Messages and server (Python and Rust core).** What: `StartRequest`, `StopRequest`,
     `JobUpdate`, `JobRefusal`, partial `RunResult`, `Snapshot.jobs` in `protocol.py` and the
     Rust `Message`; `reply_to` and `connect` in `server.py`; the shared fixtures; Rust
     `RunResult::merge`. Files: `protocol.py`, `server.py`, `tests/fixtures/messages.json`,

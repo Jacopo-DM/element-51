@@ -9,13 +9,19 @@ from element_51.engine import RunResult, closure, descendants, run_graph
 from element_51.jobs import JobRunner, JobState
 from element_51.model import Graph, NodeType, PortRef
 from element_51.nodes import Registered
-from element_51.protocol import Snapshot, SourceReply
+from element_51.protocol import (
+    JobUpdate,
+    JobView,
+    LinkedSeries,
+    Snapshot,
+    SourceReply,
+)
 from element_51.store import load_graph, save_graph
 from element_51.theme import ThemeChanges, ThemeFile, resolve_theme
-from element_51.visuals import Carried
+from element_51.visuals import Carried, Series
 
-type JobEvent = JobState | RunResult
-"""What `App.subscribe_jobs` listeners hear: a job's state, or the outcomes of
+type JobEvent = JobUpdate | RunResult
+"""What `App.subscribe_jobs` listeners hear: a job's update, or the outcomes of
 the nodes after a job that has ended."""
 
 
@@ -215,9 +221,9 @@ class App:
     def subscribe_jobs(self, listener: Callable[[JobEvent], None]) -> None:
         """Call `listener` as jobs change.
 
-        It hears a `JobState` after each change of a job, at most 20 a second
+        It hears a `JobUpdate` after each change of a job, at most 20 a second
         for one job and at once when a job ends, and then, when a job finished
-        or was stopped, a `RunResult` with the nodes after it run once.
+        or was stopped, a partial `RunResult` with the nodes after it run once.
 
         Parameters
         ----------
@@ -256,22 +262,61 @@ class App:
         """
         self._jobs.stop(node)
 
-    def job_states(self) -> tuple[JobState, ...]:
+    def job_states(self) -> tuple[JobView, ...]:
         """Describe every job that has been started.
 
         Returns
         -------
-        tuple[JobState, ...]
-            One state per job node that has a job.
+        tuple[JobView, ...]
+            One view per job node that has a job.
         """
-        return self._jobs.states()
+        return tuple(self._job_view(s) for s in self._jobs.states())
+
+    def _job_view(self, state: JobState) -> JobView:
+        """Add to a job's state the series that reach chart nodes from it.
+
+        Returns
+        -------
+        JobView
+            The state with its `linked` series.
+        """
+        with self._lock:
+            graph = self.graph
+            charts = {
+                n.id
+                for n in graph.nodes
+                if self.node_functions[n.node_type].node_type.display == "chart"
+            }
+        linked = tuple(
+            LinkedSeries(
+                node=link.target.node, port=link.target.port, series=series
+            )
+            for link in graph.links
+            if link.source.node == state.node
+            and link.target.node in charts
+            and isinstance(series := state.shown.get(link.source.port), Series)
+        )
+        return JobView(
+            node=state.node,
+            state=state.state,
+            step=state.step,
+            steps=state.steps,
+            error=state.error,
+            outputs=state.outputs,
+            shown=state.shown,
+            linked=linked,
+        )
 
     def _job_published(self, state: JobState) -> None:
-        """Tell the job listeners a job's state."""
+        """Tell the job listeners a job's update."""
+        view = self._job_view(state)
+        update = JobUpdate(**{
+            name: getattr(view, name) for name in JobView.model_fields
+        })
         with self._lock:
             listeners = tuple(self._job_listeners)
         for listener in listeners:
-            listener(state)
+            listener(update)
 
     def _job_ended(self, node: str) -> None:
         """Run the nodes after an ended job once and tell the listeners."""
@@ -289,7 +334,8 @@ class App:
             fixed=self._jobs.results(),
         )
         shown = RunResult(
-            outcomes=tuple(o for o in result.outcomes if o.node in after)
+            outcomes=tuple(o for o in result.outcomes if o.node in after),
+            partial=True,
         )
         for listener in listeners:
             listener(shown)
@@ -385,4 +431,5 @@ class App:
                     f.node_type for f in self.node_functions.values()
                 ),
                 graph=self.graph,
+                jobs=self.job_states(),
             )

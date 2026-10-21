@@ -1,6 +1,6 @@
 //! The wire messages, read from the file the Python tests also use.
 
-use element_51_core::{Edit, Message};
+use element_51_core::{Edit, JobStatus, Message};
 use serde_json::Value;
 
 const MESSAGES: &str = include_str!("../../../tests/fixtures/messages.json");
@@ -61,4 +61,104 @@ fn to_json_writes_what_from_json_reads() {
     let fixture = fixture();
     let message = Message::from_json(&fixture["edit_add_link"].to_string()).unwrap();
     assert_eq!(Message::from_json(&message.to_json()).unwrap(), message);
+}
+
+#[test]
+fn job_requests_and_a_refusal_carry_their_node() {
+    let fixture = fixture();
+    let start = Message::from_json(&fixture["start"].to_string()).unwrap();
+    assert!(matches!(start, Message::Start(ref s) if s.node == "n1"));
+    let stop = Message::from_json(&fixture["stop"].to_string()).unwrap();
+    assert!(matches!(stop, Message::Stop(ref s) if s.node == "n1"));
+    let refused = Message::from_json(&fixture["job_refused"].to_string()).unwrap();
+    let Message::JobRefused(refusal) = refused else {
+        panic!("not a refusal")
+    };
+    assert_eq!(
+        (refusal.node.as_str(), refusal.reason.as_str()),
+        ("n1", "Node n1 is already running")
+    );
+}
+
+#[test]
+fn a_job_update_carries_progress_outputs_and_the_series_it_feeds_a_chart() {
+    let fixture = fixture();
+    let running = Message::from_json(&fixture["job_update"].to_string()).unwrap();
+    let Message::JobUpdate(update) = running else {
+        panic!("not a job update")
+    };
+    assert_eq!(update.state, JobStatus::Running);
+    assert_eq!((update.step, update.steps), (2, Some(5)));
+    assert_eq!(update.outputs["total"], 11);
+    assert_eq!(update.linked.len(), 1);
+    assert_eq!(update.linked[0].node, "n3");
+    assert_eq!(
+        update.linked[0].series.values,
+        [Some(0.9), None, Some(0.25)]
+    );
+    let failed = Message::from_json(&fixture["job_update_failed"].to_string()).unwrap();
+    let Message::JobUpdate(update) = failed else {
+        panic!("not a job update")
+    };
+    assert_eq!(update.state, JobStatus::Failed);
+    assert_eq!(update.steps, None);
+    assert_eq!(update.error.as_deref(), Some("RuntimeError: boom"));
+}
+
+#[test]
+fn a_snapshot_carries_the_jobs_and_one_without_them_still_reads() {
+    let fixture = fixture();
+    // A job in a snapshot is the update without its `op`, which only tags a message.
+    let mut job = fixture["job_update"].clone();
+    job.as_object_mut().unwrap().remove("op");
+    let update = job.to_string();
+    let snapshot = format!(
+        r#"{{"op": "snapshot", "version": 2, "theme": "antimony", "node_types": [],
+            "graph": {{"nodes": [], "links": []}}, "jobs": [{update}]}}"#
+    );
+    let Message::Snapshot(with_jobs) = Message::from_json(&snapshot).unwrap() else {
+        panic!("not a snapshot")
+    };
+    assert_eq!(with_jobs.jobs.len(), 1);
+    assert_eq!(with_jobs.jobs[0].node, "n1");
+    let bare = r#"{"op": "snapshot", "version": 2, "theme": "antimony", "node_types": [],
+        "graph": {"nodes": [], "links": []}}"#;
+    let Message::Snapshot(without) = Message::from_json(bare).unwrap() else {
+        panic!("not a snapshot")
+    };
+    assert!(without.jobs.is_empty());
+}
+
+#[test]
+fn a_partial_result_is_marked_and_merging_replaces_in_place_and_adds_the_rest() {
+    let fixture = fixture();
+    let whole = Message::from_json(&fixture["run_result"].to_string()).unwrap();
+    let Message::RunResult(mut last) = whole else {
+        panic!("not a run result")
+    };
+    assert!(!last.partial);
+    let partial = Message::from_json(&fixture["run_result_partial"].to_string()).unwrap();
+    let Message::RunResult(after) = partial else {
+        panic!("not a run result")
+    };
+    assert!(after.partial);
+    let before: Vec<String> = last.outcomes.iter().map(|o| o.node.clone()).collect();
+    last.merge(&after);
+    let nodes: Vec<String> = last.outcomes.iter().map(|o| o.node.clone()).collect();
+    assert_eq!(
+        nodes, before,
+        "n2 was already there, so it is replaced in place"
+    );
+    assert_eq!(
+        last.outcome_for("n2").unwrap().outputs["out"],
+        serde_json::json!(12)
+    );
+    let mut empty = last.clone();
+    empty.outcomes.clear();
+    empty.merge(&after);
+    assert_eq!(
+        empty.outcomes.len(),
+        1,
+        "a node that was not there is added"
+    );
 }

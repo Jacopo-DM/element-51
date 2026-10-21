@@ -620,13 +620,17 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
     clock is a constructor argument so tests need no sleep. Deleting a job node stops its
     job and drops its state; loading a graph stops every job and clears all state.
 - Messages (`protocol.py`, mirrored in `element-51-core`): client to Python `StartRequest`
-    and `StopRequest` (`node`); Python to client `JobUpdate` (`node`, `state`, `step`,
+    and `StopRequest` (`node`); Python to client `JobUpdate` (`JobView` plus `op`: `node`, `state`, `step`,
     `steps`, `error`, `outputs`, `shown`, and `linked`: the series now reaching each chart
     node input linked directly from this job, as (node, input port, series)), `JobRefusal`
     (`node`, `reason`, to the asking page only; the page shows the banner with Dismiss and
     announces it) and a partial `RunResult` (`partial: true`) that the page merges into
     its last run by node id instead of replacing it. `Snapshot` gains `jobs` (default
-    empty) so a page opened mid-run shows state and data. `JobUpdate` goes to every open
+    empty; a tuple of `JobView`, the same fields as `JobUpdate` without `op`, because the
+    Rust side tags a message by `op` and a snapshot's job list is untagged) so a page
+    opened mid-run shows state and data. A start or stop that is accepted gets no
+    reply (the broadcast `JobUpdate` is the answer), which `reply_to` says with
+    `NoReply.NONE`; `None` still means a malformed message. `JobUpdate` goes to every open
     page through `Hub.broadcast` from the job's thread (`Connection.send` is thread-safe).
 - End of a job: on finished or stopped, the server runs `closure(descendants(node))` once
     with the job's results as `fixed` and broadcasts the outcomes as a partial
