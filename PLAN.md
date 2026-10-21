@@ -177,7 +177,8 @@ the library (datasets live in examples), and running two jobs of one node at onc
     7. Nothing that works today changes: both suites pass apart from the new tests,
         and redraw time at 200 nodes stays within its recorded spread.
 - Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
-    "visual-ports spec"); the task list awaits approval. Starts after `canvas-accessibility`.
+    "visual-ports spec"); the task list (tasks 34 to 38) approved 2026-10-21. Starts after `canvas-accessibility`
+    task 33.
 - Added: 2026-10-21
 
 ### job-nodes
@@ -535,7 +536,7 @@ focus in view. Detail, numbers and the changes from the spec are in DESIGN.md
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `visual-ports` (draft task list, proposed 2026-10-21, awaiting the user's approval)
+### Goal `visual-ports` (task list approved 2026-10-21)
 
 All five tasks wait for `canvas-accessibility` task 33 (the user's order). The web
 crate has no automated tests, so each task puts its logic in `element-51-core`
