@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use element_51_core::{Message, NodeOutcome, RunResult, Status};
+use element_51_core::{Image, Message, NodeOutcome, RunResult, Series, Shown, Status};
 use serde_json::{Value, json};
 
 const MESSAGES: &str = include_str!("../../../tests/fixtures/messages.json");
@@ -104,4 +104,27 @@ fn output_text_is_none_for_a_port_without_a_value() {
         ..outcome
     };
     assert_eq!(none.output_text("q"), None);
+}
+
+#[test]
+fn output_text_summarises_a_picture_and_a_series() {
+    let mut outcome = ok_with(&[("n", json!(3))]);
+    outcome.shown.insert(
+        "pic".to_string(),
+        Shown::Image(Image {
+            width: 2,
+            height: 2,
+            channels: 1,
+            pixels: vec![0, 85, 170, 255],
+        }),
+    );
+    outcome.shown.insert(
+        "curve".to_string(),
+        Shown::Series(Series {
+            values: vec![Some(1.0), Some(0.5)],
+        }),
+    );
+    assert_eq!(outcome.output_text("pic").as_deref(), Some("2 x 2 grey"));
+    assert_eq!(outcome.output_text("curve").as_deref(), Some("last 0.5"));
+    assert_eq!(outcome.output_text("n").as_deref(), Some("3"));
 }

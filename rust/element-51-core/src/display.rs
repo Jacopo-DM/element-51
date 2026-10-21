@@ -3,7 +3,7 @@
 
 use crate::layout::Rect;
 use crate::theme::Metrics;
-use crate::{CardDisplay, NodeType, PortType, Series};
+use crate::{CardDisplay, NodeType, PortType, Series, Shown};
 
 /// The height of a chart area as a fraction of the card's width.
 const CHART_HEIGHT_RATIO: f64 = 0.6;
@@ -124,6 +124,30 @@ pub fn last_value(series: &Series) -> Option<f64> {
         .flatten()
         .copied()
         .find(|value| value.is_finite())
+}
+
+/// One line about a picture or a series, for the box of the port that has it:
+/// `28 x 28 grey`, `last 0.05`. A series with no number in it (all gaps) says
+/// how many gaps. The box is about a dozen characters wide, so the part that
+/// matters comes first and the line is short.
+pub fn shown_summary(shown: &Shown) -> String {
+    match shown {
+        Shown::Image(image) => {
+            let kind = if image.channels == 1 {
+                "grey"
+            } else {
+                "colour"
+            };
+            format!("{} x {} {kind}", image.width, image.height)
+        }
+        Shown::Series(series) => match last_value(series) {
+            Some(last) => format!("last {}", short_number(last)),
+            None => {
+                let count = series.values.len();
+                format!("{count} {}", if count == 1 { "gap" } else { "gaps" })
+            }
+        },
+    }
 }
 
 /// A number in about three significant digits, for ticks and for the last

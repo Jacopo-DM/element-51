@@ -133,8 +133,8 @@ def _outcome(
     """Split a node's values into plain outputs and what its card shows.
 
     A node with a picture output shows its pictures. A chart node shows the
-    series linked to its inputs. A series output is carried to the next node
-    and shown nowhere.
+    series linked to its inputs. A series output is also sent, so the page can
+    write its length and last value in the output's box; only a chart draws it.
 
     Parameters
     ----------
@@ -154,9 +154,9 @@ def _outcome(
     plain: dict[str, PortValue] = {}
     shown: dict[str, Shown] = {}
     for name, value in outputs.items():
-        if isinstance(value, Image):
+        if isinstance(value, Image | Series):
             shown[name] = value
-        elif not isinstance(value, Series):
+        else:
             plain[name] = value
     if node_type.display == "chart":
         shown.update({

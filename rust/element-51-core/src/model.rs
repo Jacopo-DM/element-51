@@ -292,10 +292,14 @@ pub struct NodeOutcome {
 }
 
 impl NodeOutcome {
-    /// The value of output `port` as JSON text, for showing beside the port.
-    /// Strings keep their quotes. None if the port has no value.
+    /// The value of output `port` as text, for showing beside the port.
+    /// Strings keep their quotes; a picture or a series is a one-line summary.
+    /// None if the port has no value.
     pub fn output_text(&self, port: &str) -> Option<String> {
-        self.outputs.get(port).map(ToString::to_string)
+        self.outputs
+            .get(port)
+            .map(ToString::to_string)
+            .or_else(|| self.shown.get(port).map(crate::display::shown_summary))
     }
 }
 

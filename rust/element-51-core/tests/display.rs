@@ -240,7 +240,7 @@ fn an_older_message_without_display_or_shown_still_reads() {
 
 use element_51_core::display::{
     CHART_LINE_STYLES, chart_layout, chart_rect, last_value, line_style, nice_ticks, short_number,
-    thin,
+    shown_summary, thin,
 };
 use element_51_core::{Series, Shown};
 
@@ -554,4 +554,36 @@ fn a_very_long_series_is_thinned_to_about_twice_the_plot_width() {
     let points: usize = chart.lines[0].iter().map(Vec::len).sum();
     assert!(points <= 2 * chart.plot.w as usize + 2, "{points}");
     assert!(points > chart.plot.w as usize);
+}
+
+#[test]
+fn a_picture_summary_gives_its_size_and_whether_it_is_grey() {
+    let grey = Shown::Image(Image {
+        width: 28,
+        height: 20,
+        channels: 1,
+        pixels: vec![0; 560],
+    });
+    assert_eq!(shown_summary(&grey), "28 x 20 grey");
+    let colour = Shown::Image(Image {
+        width: 1,
+        height: 2,
+        channels: 3,
+        pixels: vec![0; 6],
+    });
+    assert_eq!(shown_summary(&colour), "1 x 2 colour");
+}
+
+#[test]
+fn a_series_summary_gives_its_last_number() {
+    let series = |values: Vec<Option<f64>>| Shown::Series(Series { values });
+    assert_eq!(
+        shown_summary(&series(vec![Some(1.0), Some(0.05)])),
+        "last 0.05"
+    );
+    // A trailing gap or NaN is skipped, as the chart's end label does.
+    assert_eq!(shown_summary(&series(vec![Some(2.0), None])), "last 2");
+    assert_eq!(shown_summary(&series(vec![None, None])), "2 gaps");
+    assert_eq!(shown_summary(&series(vec![None])), "1 gap");
+    assert_eq!(shown_summary(&series(vec![])), "0 gaps");
 }

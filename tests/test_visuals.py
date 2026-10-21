@@ -460,7 +460,8 @@ def test_a_series_reaches_the_node_it_is_linked_to() -> None:
     )
     by_id = {outcome.node: outcome for outcome in result.outcomes}
     assert by_id["n1"].outputs == {}
-    assert by_id["n1"].shown == {}
+    # Sent so the page can write its length and last value in the output's box.
+    assert by_id["n1"].shown == {"out": Series(values=LOSS)}
     assert by_id["n2"].outputs == {"out": LOSS[-1]}
 
 

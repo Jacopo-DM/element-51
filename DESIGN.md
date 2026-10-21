@@ -430,8 +430,10 @@ plot. This spec covers `visual-ports` only; `job-nodes`, `auto-run` and
     and an output). The engine lets a node with no outputs run, and a chart node
     ignores a series input that has no link (an empty row is a place to link, not a
     missing value). (c) `NodeOutcome.shown` is `Image | Series` (`Shown`); a series
-    output is carried to the next node and shown nowhere, a chart node's `shown`
-    holds its linked series by input port name. On the Rust side `Shown` is an
+    output is carried to the next node and is also in the producing node's `shown`
+    by output port name (added by `box-summaries`, so the page can write `last 0.05` in
+    the box; only a chart draws it), a chart node's `shown` holds its linked series
+    by input port name. On the Rust side `Shown` is an
     untagged enum and both records refuse unknown fields, so a picture and a series
     cannot be mistaken for each other. (d) The chart area is filled with the `field`
     colour like a picture area (the spec said the card colour); the plot has room on
@@ -467,7 +469,18 @@ the reason:
 - A linked input shows `21.0 [n1.out]` after a run: the value in the box text colour,
     the source in the dim colour, the source cut first (`share_room`). Chosen over
     source first and over a value on hover (the user's choice). A picture or series
-    source has no text value, so only its name shows.
+    source has no text value, so only its name shows (until `box-summaries`, below).
+- `box-summaries` (2026-10-21, the user's choice after seeing `output` and `n1.out`
+    where a picture or series is): after a run the box of a picture output says
+    `28 x 28 grey` (`colour` for 3 channels) and of a series output `last 0.0842`
+    (the last finite number, as the chart's end label); a linked input shows the same
+    text then `[n4.loss]`. The text is worked out on the page from the data (`display::shown_summary`,
+    used by `NodeOutcome::output_text`), nothing in Python says what to write. A
+    series with no number says `2 gaps`. First drafted as `100 values, last 0.05`;
+    the box holds about a dozen characters, so it cut to `100 values, la`; the last
+    value comes first and the count is gone (the chart's x axis shows it). Cost:
+    Python now sends a series once more for the node that makes it (up to about 2 MB
+    at 100,000 points, with every Plot it feeds repeating it as before).
 - `View source code` is always available (the user's choice). The reply carries the
     code of the node type's function or class read with `inspect.getsource`, moved to
     the left margin; a function made by `exec`, or a missing file, gives a reason and no
@@ -1296,6 +1309,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | card-polish task 40: a linked input shows its value | native tests: 8 more in `tests/fields.rs` (14 there): before a run only `n1.out`, after a run `21.0` then `[n1.out]` (a string keeps its quotes), a source that failed or was skipped, a picture or series source and a port the outcome lacks show only the source, `share_room` keeps both widths when they fit, cuts the source first, and leaves it nothing when the value fills the box; 247 Rust tests; by hand in the browser pane with `examples/a_basics/a3_arithmetic.py`: before Run the boxes say `n1.out`, after Run `3.0 [n1.out]`, `7.0 [n3.out]`, `21.0 [n4.out]` with the value in the box text colour and the source dimmer. Redraw, the 200-node page, same script and pane: median 1.52 ms before Run and 1.61 to 1.64 after (values drawn in every linked box in view), about 0.1 ms more |
 | 2026-10-21 | card-polish task 41: View source code in the card menu | tests: 8 in Python (`test_session.py`: the source of a function node with its decorator, of a class node, of `PlotNode`, dedented when defined inside a function, an unreadable one gives a reason and no code, a node that is not there; `test_server_websocket.py`: the reply goes to the asking page only; `test_protocol.py`: the request and both replies round trip through the shared `messages.json`, and the client union takes a source request), 7 in Rust (`tests/source.rs`: the shared fixture on both sides, the request text, the title, line count and sentence for code, a reason, and a reply with neither; `tests/menu.rs`: the card offers View source code then Delete node and a view is not an edit); 288 Python tests at 100%, 254 Rust tests; the keyboard walk-through 89 of 89 (7 new rows: the first entry is View source code, the panel opens with the code focused, its title and sentence, the code is shown, Escape closes it and returns to the node, "Source closed" is said, Dismiss closes it); by hand in the browser pane on `tools/ui_states.py`: Shift+F10, Enter on View source code opens "Source of n2 (zero)" with the decorated function in a read-only box with Dismiss and the focus ring on the code; axe-core 4.14.0: 0 violations with the panel open and closed, and with it open in all three themes. Not verified: a real screen reader, and the panel on a narrow window. The goal is done: wires, linked values and source (tasks 39 to 41); renaming was left out on purpose |
 | 2026-10-21 | visual-ports task 36: rows that grow with links | tests: 14 in `rust/element-51-core/tests/rows.rs` (the row number rule, `find_input` for a row that is not listed, a type that does not grow is borrowed, a plot with nothing linked has one empty row, each link adds a row, rows follow their numbers and the empty row is one past the highest, removing a middle link keeps the other names, deleting the feeding nodes shrinks the card, inputs that are not rows stay first, the resolved type, the card is one row taller per link, the empty row can be hit and a link lands on it, a link ends on the row it names after the rows above it change, line names with and without a shared name), 3 in `tests/access.rs` (the grown plot's ports and its "2 inputs" label, two lines with one name get node ids, row 10 follows row 9), 7 shared cases in `link_cases.json` run on both sides (rows 1 and 3 accepted, `series_0`, `series_01`, `other_1` and `series_x` refused as unknown ports, float to a row refused), 11 test functions in `tests/test_visuals.py` (the row rule, `find_input`, a plot shows every linked row, row 2 alone); the existing `layout.rs` tests pass unchanged; 310 Python tests at 100%, 271 Rust tests, the keyboard walk-through 89 of 89; by hand in the browser pane with `examples/g_experiments/g1_picture_and_plot.py`: the Plot card shows `series_1`, `series_2` and an empty `series_3` with two named lines (`loss`, `accuracy`), dragging `accuracy` onto the empty row grows the card to `series_4` and Run draws a third line with the two equal names told apart (`n4 accuracy`), Delete on the `series_2` port in the hidden tree removes the link and its row, the card shrinks and the rows read `series_1`, `series_3`, `series_4`. Redraw, 200-node page, same script and pane: 1.51 to 1.54 ms (three sets, 1.44 to 1.59), the same as before the change (1.52 to 1.64 with values shown), so looking a type up through `type_of` costs nothing measurable. axe-core was not run: task 38 scans the new states. Not verified: undo and redo of a link to a row by eye (the edits are the same ones undo already handles) |
+| 2026-10-21 | box-summaries: a picture or series says what it holds | tests: 3 in `rust/element-51-core/tests/display.rs` and `run.rs` (a grey and a colour picture, a series gives its last number, skips a trailing gap or NaN, all gaps, and `output_text` for a picture, a series and a plain value), 1 Python test changed (`test_a_series_reaches_the_node_it_is_linked_to`: the producer's `shown` now holds the series); 310 Python tests at 100%, Rust tests pass and clippy is clean; by hand in the browser pane with `g1_picture_and_plot.py` on port 8766 after Run: `ramp` out `28 x 28 grey`, `invert` source `28 x 28 grey [n...`, `training` loss `last 0.0842` and accuracy `last 0.906`, the Plot inputs `last 0.0842 [n4...`. Not verified: redraw time (no new drawing, one string per linked box), a narrow window |
 
 ## Gotchas
 
