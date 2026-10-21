@@ -322,3 +322,49 @@ pub fn link_cancelled_text() -> String {
 pub fn no_link_started_text() -> String {
     "No link started. Press Enter on an output port first".to_string()
 }
+
+/// How far the arrow keys pan the view, in screen pixels.
+const PAN_STEP: f64 = 48.0;
+/// How much one zoom key press scales the view. A wheel notch is about 1.22.
+pub const ZOOM_STEP: f64 = 1.25;
+/// How many grid steps a big move (Alt held) takes.
+const BIG_MOVE_STEPS: f64 = 4.0;
+
+/// Where a node at `(x, y)` goes when moved from the keyboard: one grid step
+/// in `direction`, or four with `big`.
+pub fn moved_to(x: f64, y: f64, direction: Direction, big: bool, metrics: &Metrics) -> (f64, f64) {
+    let step = metrics.grid_step * if big { BIG_MOVE_STEPS } else { 1.0 };
+    match direction {
+        Direction::Left => (x - step, y),
+        Direction::Right => (x + step, y),
+        Direction::Up => (x, y - step),
+        Direction::Down => (x, y + step),
+    }
+}
+
+/// How much to pan, in screen pixels, for an Alt+arrow key. The view moves
+/// toward the key, so the graph moves the other way.
+pub fn pan_delta(direction: Direction) -> (f64, f64) {
+    match direction {
+        Direction::Left => (PAN_STEP, 0.0),
+        Direction::Right => (-PAN_STEP, 0.0),
+        Direction::Up => (0.0, PAN_STEP),
+        Direction::Down => (0.0, -PAN_STEP),
+    }
+}
+
+/// The sentence after the view panned.
+pub fn pan_text(direction: Direction) -> String {
+    let word = match direction {
+        Direction::Left => "left",
+        Direction::Right => "right",
+        Direction::Up => "up",
+        Direction::Down => "down",
+    };
+    format!("Panned {word}")
+}
+
+/// The sentence after the zoom changed to `zoom` (1.0 is 100 percent).
+pub fn zoom_text(zoom: f64) -> String {
+    format!("Zoom {} percent", (zoom * 100.0).round())
+}

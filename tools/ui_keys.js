@@ -219,6 +219,46 @@ async function uiKeys() {
         check("two Ctrl+Z put the graph back as it was", status.textContent === "Undid the last change", status.textContent);
     }
 
+    // Task 30: move, pan and zoom by keyboard.
+    const pressWith = async (key, modifiers) => {
+        document.activeElement.dispatchEvent(
+            new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...modifiers }),
+        );
+        await wait(150);
+    };
+    nodes()[0].focus();
+    await wait(60);
+    const movedId = active().dataset.node;
+    await pressWith("ArrowRight", { shiftKey: true });
+    check("Shift+Arrow moves the node one step and says so", status.textContent === "Moved " + movedId, status.textContent);
+    await pressWith("ArrowDown", { shiftKey: true, altKey: true });
+    check("Alt+Shift+Arrow moves it four steps and says so", status.textContent === "Moved " + movedId, status.textContent);
+    check("the node keeps the keyboard focus after a move", tree.contains(active()) && active().dataset.node === movedId, active().id);
+    for (let i = 0; i < 2; i++) {
+        document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+        await wait(300);
+    }
+    check("two Ctrl+Z undo the two moves", status.textContent === "Undid the last change", status.textContent);
+    document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(300);
+    check("each move was one undo step (nothing is left to undo)", status.textContent === "Nothing to undo", status.textContent);
+
+    await pressWith("ArrowLeft", { altKey: true });
+    check("Alt+Arrow pans and says which way", status.textContent === "Panned left", status.textContent);
+    await pressWith("ArrowUp", { altKey: true });
+    check("Alt+Up pans up", status.textContent === "Panned up", status.textContent);
+    await pressWith("+", { shiftKey: true });
+    check("+ zooms in", status.textContent === "Zoom 125 percent", status.textContent);
+    await pressWith("+", { shiftKey: true });
+    check("a second + zooms again", status.textContent === "Zoom 156 percent", status.textContent);
+    await pressWith("-");
+    check("- zooms out", status.textContent === "Zoom 125 percent", status.textContent);
+    await pressWith("0");
+    check("0 goes back to 100 percent", status.textContent === "Zoom 100 percent", status.textContent);
+    await pressWith("ArrowRight", { altKey: true });
+    await pressWith("ArrowDown", { altKey: true });
+    check("panning back leaves the tree focused", tree.contains(active()), active().id);
+
     // Leave focus on a port of the first node, for a screenshot of the ring.
     first.focus();
     await wait(60);

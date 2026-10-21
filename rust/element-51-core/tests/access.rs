@@ -2,13 +2,14 @@
 //! around it.
 
 use element_51_core::access::{
-    Direction, cannot_delete_text, describe_graph, describe_ports, edit_text, link_cancelled_text,
-    link_edit, link_started_text, list_nodes, neighbour, no_link_started_text, pan_to_show,
-    refusal_text, selected_text, undo_text,
+    Direction, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
+    link_cancelled_text, link_edit, link_started_text, list_nodes, moved_to, neighbour,
+    no_link_started_text, pan_delta, pan_text, pan_to_show, refusal_text, selected_text, undo_text,
+    zoom_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
-use element_51_core::view::View;
+use element_51_core::view::{MAX_ZOOM, MIN_ZOOM, View};
 use element_51_core::{
     Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType, apply_edit,
 };
@@ -486,4 +487,67 @@ fn the_link_sentences_say_what_to_do_next() {
         no_link_started_text(),
         "No link started. Press Enter on an output port first"
     );
+}
+
+#[test]
+fn a_node_moves_one_grid_step_or_four() {
+    let metrics = m();
+    let step = metrics.grid_step;
+    assert_eq!(
+        moved_to(100.0, 100.0, Direction::Right, false, &metrics),
+        (100.0 + step, 100.0)
+    );
+    assert_eq!(
+        moved_to(100.0, 100.0, Direction::Left, false, &metrics),
+        (100.0 - step, 100.0)
+    );
+    assert_eq!(
+        moved_to(100.0, 100.0, Direction::Down, false, &metrics),
+        (100.0, 100.0 + step)
+    );
+    assert_eq!(
+        moved_to(100.0, 100.0, Direction::Up, false, &metrics),
+        (100.0, 100.0 - step)
+    );
+    assert_eq!(
+        moved_to(100.0, 100.0, Direction::Up, true, &metrics),
+        (100.0, 100.0 - 4.0 * step)
+    );
+    assert_eq!(
+        moved_to(0.0, 0.0, Direction::Right, true, &metrics),
+        (4.0 * step, 0.0)
+    );
+}
+
+#[test]
+fn the_view_pans_toward_the_key_so_the_graph_moves_the_other_way() {
+    assert_eq!(pan_delta(Direction::Right), (-48.0, 0.0));
+    assert_eq!(pan_delta(Direction::Left), (48.0, 0.0));
+    assert_eq!(pan_delta(Direction::Down), (0.0, -48.0));
+    assert_eq!(pan_delta(Direction::Up), (0.0, 48.0));
+}
+
+#[test]
+fn repeated_zoom_steps_stop_at_the_limits() {
+    let mut view = View::default();
+    for _ in 0..30 {
+        view.zoom_at(400.0, 300.0, ZOOM_STEP);
+    }
+    assert_eq!(view.zoom(), MAX_ZOOM);
+    for _ in 0..60 {
+        view.zoom_at(400.0, 300.0, 1.0 / ZOOM_STEP);
+    }
+    assert_eq!(view.zoom(), MIN_ZOOM);
+}
+
+#[test]
+fn the_zoom_and_pan_sentences_give_whole_percentages_and_directions() {
+    assert_eq!(zoom_text(1.0), "Zoom 100 percent");
+    assert_eq!(zoom_text(1.25), "Zoom 125 percent");
+    assert_eq!(zoom_text(0.25), "Zoom 25 percent");
+    assert_eq!(zoom_text(1.5625), "Zoom 156 percent");
+    assert_eq!(pan_text(Direction::Left), "Panned left");
+    assert_eq!(pan_text(Direction::Right), "Panned right");
+    assert_eq!(pan_text(Direction::Up), "Panned up");
+    assert_eq!(pan_text(Direction::Down), "Panned down");
 }

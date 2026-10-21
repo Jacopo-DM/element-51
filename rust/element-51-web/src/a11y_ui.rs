@@ -3,8 +3,9 @@
 //! focused node or port, and the view pans to keep it in sight.
 
 use element_51_core::access::{
-    Direction, NodeItem, cannot_delete_text, describe_ports, link_cancelled_text, link_edit,
-    link_started_text, list_nodes, neighbour, no_link_started_text, pan_to_show, selected_text,
+    Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_ports, link_cancelled_text,
+    link_edit, link_started_text, list_nodes, moved_to, neighbour, no_link_started_text, pan_delta,
+    pan_text, pan_to_show, selected_text, zoom_text,
 };
 use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
 use element_51_core::{Edit, PortRef};
@@ -306,9 +307,35 @@ pub(crate) fn on_tree_focus_out(shared: &Shared, event: &FocusEvent) {
     }
 }
 
-/// Arrow keys, Home, End, PageUp and PageDown inside the tree.
+/// Arrow keys, Home, End, PageUp and PageDown inside the tree; with Shift an
+/// arrow key moves the node, with Alt it pans the view, and `+`, `-` and `0`
+/// zoom.
 pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
-    if event.alt_key() || event.ctrl_key() || event.meta_key() || event.shift_key() {
+    if event.ctrl_key() || event.meta_key() {
+        return;
+    }
+    let key = event.key();
+    if let Some(direction) = arrow_direction(&key)
+        && (event.alt_key() || event.shift_key())
+    {
+        event.prevent_default();
+        event.stop_propagation();
+        if event.shift_key() {
+            move_focused(shared, event, direction);
+        } else {
+            pan_view(shared, direction);
+        }
+        return;
+    }
+    if !event.alt_key()
+        && let Some(factor) = zoom_key(shared, &key)
+    {
+        event.prevent_default();
+        event.stop_propagation();
+        zoom_view(shared, factor);
+        return;
+    }
+    if event.alt_key() || event.shift_key() {
         return;
     }
     let Some(item) = event
@@ -370,6 +397,87 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
     if let Some(next) = next {
         expand_for(&next);
         focus(&next);
+    }
+}
+
+fn arrow_direction(key: &str) -> Option<Direction> {
+    match key {
+        "ArrowLeft" => Some(Direction::Left),
+        "ArrowRight" => Some(Direction::Right),
+        "ArrowUp" => Some(Direction::Up),
+        "ArrowDown" => Some(Direction::Down),
+        _ => None,
+    }
+}
+
+/// The zoom factor a key asks for, if it is a zoom key: `+` or `=` in, `-` or
+/// `_` out, `0` back to 100 percent.
+fn zoom_key(shared: &Shared, key: &str) -> Option<f64> {
+    match key {
+        "+" | "=" => Some(ZOOM_STEP),
+        "-" | "_" => Some(1.0 / ZOOM_STEP),
+        "0" => Some(1.0 / shared.borrow().view.zoom()),
+        _ => None,
+    }
+}
+
+/// Zoom about the middle of the window and say the new zoom.
+fn zoom_view(shared: &Shared, factor: f64) {
+    let (document, zoom) = {
+        let mut state = shared.borrow_mut();
+        let centre = (
+            f64::from(state.canvas.client_width()) / 2.0,
+            f64::from(state.canvas.client_height()) / 2.0,
+        );
+        state.view.zoom_at(centre.0, centre.1, factor);
+        (state.document.clone(), state.view.zoom())
+    };
+    announce(&document, &zoom_text(zoom));
+    redraw(shared);
+}
+
+/// Pan the view toward `direction` and say so.
+fn pan_view(shared: &Shared, direction: Direction) {
+    let document = {
+        let mut state = shared.borrow_mut();
+        let (dx, dy) = pan_delta(direction);
+        state.view.pan_by(dx, dy);
+        state.document.clone()
+    };
+    announce(&document, &pan_text(direction));
+    redraw(shared);
+}
+
+/// Shift+arrow on a node moves it one grid step, Alt+Shift+arrow four; each
+/// press is one edit and so one undo step. A port item does nothing.
+fn move_focused(shared: &Shared, event: &KeyboardEvent, direction: Direction) {
+    let Some(Focus::Node(id)) = event
+        .target()
+        .and_then(|target| target.dyn_into::<Element>().ok())
+        .and_then(|item| focus_of(&item))
+    else {
+        return;
+    };
+    let edit = {
+        let state = shared.borrow();
+        state.replica.as_ref().and_then(|replica| {
+            let node = replica.graph().nodes.iter().find(|node| node.id == id)?;
+            let (x, y) = moved_to(
+                node.x,
+                node.y,
+                direction,
+                event.alt_key(),
+                &state.theme.metrics,
+            );
+            Some(Edit::MoveNode {
+                id: id.clone(),
+                x,
+                y,
+            })
+        })
+    };
+    if let Some(edit) = edit {
+        submit(shared, edit);
     }
 }
 
