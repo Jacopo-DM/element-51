@@ -2,6 +2,8 @@
 //!
 //! Every colour, size and font comes from the `Theme` in the frame.
 
+use crate::pictures::Pictures;
+use element_51_core::display::{fit_picture, picture_rect};
 use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_controls,
@@ -64,6 +66,7 @@ pub struct Frame<'a> {
     pub hover: Option<&'a PortHit>,
     pub focus: Option<&'a Focus>,
     pub run: Option<&'a RunResult>,
+    pub pictures: &'a Pictures,
 }
 
 /// A wire is drawn in the colour of the port it leaves, as in Antimony.
@@ -153,6 +156,7 @@ pub fn draw(
         hover,
         focus,
         run,
+        pictures,
     } = *frame;
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
@@ -199,7 +203,14 @@ pub fn draw(
             continue;
         }
         let is_selected = selected == Some(&Selected::Node(node.id.clone()));
-        card(context, theme, graph, (node, node_type), run, is_selected)?;
+        card(
+            context,
+            theme,
+            graph,
+            (node, node_type),
+            (run, pictures),
+            is_selected,
+        )?;
     }
 
     context.set_line_cap("round");
@@ -374,7 +385,7 @@ fn card(
     theme: &Theme,
     graph: &Graph,
     (node, node_type): (&PlacedNode, &NodeType),
-    run: Option<&RunResult>,
+    (run, pictures): (Option<&RunResult>, &Pictures),
     selected: bool,
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
@@ -499,6 +510,21 @@ fn card(
                     context.fill_text("output", text_x, baseline)?;
                 }
             }
+        }
+    }
+    if let Some(area) = picture_rect(&rect, node_type, metrics) {
+        context.set_fill_style_str(&colours.field);
+        round_rect_path(context, &area, metrics.box_radius);
+        context.fill();
+        let shown = pictures.of(&node.id).filter(|_| status == Some(Status::Ok));
+        if let Some(picture) = shown {
+            let at = fit_picture(&area, picture.width(), picture.height());
+            // Crisp pixels: a 28 by 28 picture is meant to look like 28 by 28.
+            context.set_image_smoothing_enabled(false);
+            let drawn = context
+                .draw_image_with_html_canvas_element_and_dw_and_dh(picture, at.x, at.y, at.w, at.h);
+            context.set_image_smoothing_enabled(true);
+            drawn?;
         }
     }
     Ok(())

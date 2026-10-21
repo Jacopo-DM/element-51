@@ -7,13 +7,19 @@ from typing import ClassVar, Protocol, cast, get_type_hints, overload
 from pydantic import BaseModel
 
 from element_51.model import Model, NodeType, Port, PortValue, value_fits
-from element_51.ports import NO_DEFAULT, input_port, output_ports
+from element_51.ports import (
+    NO_DEFAULT,
+    display_of,
+    input_port,
+    output_ports,
+)
+from element_51.visuals import Carried
 
 
 class NamedCall(Protocol):
     """A function called with every input by name."""
 
-    def __call__(self, **inputs: PortValue) -> object:
+    def __call__(self, **inputs: Carried) -> object:
         """Call the function.
 
         Parameters
@@ -42,7 +48,7 @@ class Registered(Protocol):
         """The model that holds the outputs, or None for a single `out`."""
         ...
 
-    def call(self, inputs: Mapping[str, PortValue]) -> object:
+    def call(self, inputs: Mapping[str, Carried]) -> object:
         """Call the node with every input by name.
 
         Parameters
@@ -73,7 +79,7 @@ class NodeFunction[**P, R]:
         self.defaults = defaults
         self.output_model = output_model
 
-    def call(self, inputs: Mapping[str, PortValue]) -> object:
+    def call(self, inputs: Mapping[str, Carried]) -> object:
         """Call the function with every input by name.
 
         `node` has checked that every parameter is a keyword parameter with a
@@ -161,6 +167,7 @@ class Node(Model):
             outputs=outputs,
             defaults=defaults,
             category=_check_category(cls.category, name),
+            display=display_of(outputs),
         )
         cls.defaults = defaults
         cls.output_model = output_model
@@ -176,7 +183,7 @@ class Node(Model):
         raise NotImplementedError
 
     @classmethod
-    def call(cls, inputs: Mapping[str, PortValue]) -> object:
+    def call(cls, inputs: Mapping[str, Carried]) -> object:
         """Build the node from its inputs and run it.
 
         Parameters
@@ -257,6 +264,7 @@ def _build_node[**P, R](
         outputs=outputs,
         defaults=defaults,
         category=_check_category(category, name),
+        display=display_of(outputs),
     )
     return NodeFunction(func, node_type, defaults, output_model)
 

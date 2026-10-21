@@ -54,6 +54,7 @@ fn error_summary_joins_several_errors_and_is_none_without_any() {
         node: "n4".to_string(),
         status: Status::Error,
         outputs: BTreeMap::new(),
+        shown: BTreeMap::new(),
         error: Some("input 'a' has no value".to_string()),
     });
     assert_eq!(
@@ -81,6 +82,7 @@ fn ok_with(outputs: &[(&str, Value)]) -> NodeOutcome {
             .iter()
             .map(|(port, value)| (port.to_string(), value.clone()))
             .collect(),
+        shown: BTreeMap::new(),
         error: None,
     }
 }

@@ -23,7 +23,11 @@ PROTOCOL_VERSION = 2
 def test_shared_fixture_parses_into_a_snapshot() -> None:
     """The file the Rust side also parses is valid on the Python side."""
     snapshot = Snapshot.model_validate_json(FIXTURE.read_text())
-    assert [t.name for t in snapshot.node_types] == ["add", "show"]
+    assert [t.name for t in snapshot.node_types] == [
+        "add",
+        "show",
+        "picture",
+    ]
     assert snapshot.graph.links[0].source.node == "n1"
 
 

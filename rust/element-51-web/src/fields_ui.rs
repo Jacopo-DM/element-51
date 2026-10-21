@@ -38,7 +38,7 @@ pub(crate) fn sync_fields(shared: &Shared) {
         };
         let rect = node_rect(node, node_type, metrics);
         for (row, port) in node_type.inputs.iter().enumerate() {
-            if graph.is_linked(&node.id, &port.name) {
+            if graph.is_linked(&node.id, &port.name) || port.kind == PortType::Image {
                 continue;
             }
             let id = format!("field-{}-{}", node.id, port.name);

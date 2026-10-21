@@ -10,6 +10,7 @@ fn kind(name: &str, category: &str) -> NodeType {
         outputs: vec![],
         defaults: Default::default(),
         category: category.to_string(),
+        display: Default::default(),
     }
 }
 

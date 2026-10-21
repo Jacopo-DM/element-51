@@ -33,7 +33,8 @@
             "defaults": {
                 "b": 2.5
             },
-            "category": "Math/Basic"
+            "category": "Math/Basic",
+            "display": "none"
         },
         {
             "name": "show",
@@ -45,7 +46,21 @@
             ],
             "outputs": [],
             "defaults": {},
-            "category": ""
+            "category": "",
+            "display": "none"
+        },
+        {
+            "name": "picture",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "image"
+                }
+            ],
+            "defaults": {},
+            "category": "",
+            "display": "image"
         }
     ],
     "graph": {

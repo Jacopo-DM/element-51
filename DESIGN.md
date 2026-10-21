@@ -391,6 +391,35 @@ plot. This spec covers `visual-ports` only; `job-nodes`, `auto-run` and
     more than 100,000 points fails (live growth belongs to `job-nodes`, which will
     send partial updates instead of whole series); images up to 256 by 256.
 
+- Task 34 outcome (2026-10-21), changes from the spec above: (a) Only `image` was added
+    to `PortType`; `series`, `Series` and the `series` theme colour come with task 35,
+    so the AA pairs cover five kinds now and six after task 35. (b) `NodeOutcome.outputs`
+    keeps the plain values and `shown` holds the pictures, so a picture is sent once
+    and the output box beside a picture port shows the placeholder `output`;
+    `App.run()` merges both and returns `Carried` values, and `element_51.Image` is
+    exported. `carries(value, kind)` in `visuals.py` replaces `value_fits` wherever an
+    `Image` can occur; `value_fits` stays the four plain kinds (it cannot import
+    `visuals`, which imports `model`). (c) `Image.pixels` is `bytes` in Python (a
+    before-validator reads the JSON list, a JSON serializer writes it) and `Vec<u8>` in
+    Rust. (d) The picture area is inset by `title_pad`, so no new metric exists; a card
+    is `rows + side + title_pad` tall (`display::display_height`, by type only); the
+    area is filled with the `field` colour, so no new colour exists, and the picture
+    is fitted into it keeping its shape (`fit_picture`). A card shows the first picture
+    of its node, in port name order. (e) Pictures are drawn once onto off-screen
+    canvases when a run result arrives (`pictures.rs`) and dropped with the result;
+    a card draws its picture only while its node's outcome is ok. (f) The hidden
+    tree says "Shows a 28 by 28 picture." only after a run (`access::with_pictures`,
+    and the tree is rebuilt when a result arrives); Enter on an unlinked picture input
+    says it can only be linked (`picture_input_text`). (g) The picture colour is
+    `#d98cc4` and the shape a diamond, in all three themes (the cards are dark in all
+    three, so one colour passes 3:1 on each, and the shape is a second cue). (h) The
+    shared fixtures: `snapshot.json` has a `picture` node type, `link_cases.json` a
+    `picture` and an `invert` node (so the next node id there is `n8`) and three
+    cases, `messages.json` a run result with a picture. Node types carry `display` and
+    outcomes `shown` on the wire, both with defaults on the Rust side, so a message
+    without them still reads. (i) The two measurement budgets are not met or not
+    reproducible in this pane: see Results, 2026-10-21, task 34.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1174,9 +1203,15 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | canvas-accessibility task 31: the add-node and card menus by keyboard | native tests: 4 more in `tests/menu.rs` (18 in all there): `step_menu` steps down and up and stops at the ends, with nothing focused down goes to the first and up to the last, an empty list has none, a stale position is brought back in; by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 71 of 71 rows pass (N opens the add-node menu with the cursor in the search box and says so, Down goes to the first item, Right opens a category's flyout and moves into it, Left closes it, Escape closes the flyout first and then the menu and the focus returns to the tree item it came from, picking an item adds a node and says "Added node n7, ten" and the focus comes back, Ctrl+Z removes it, Shift+F10 and the Menu key open the card menu beside the node's icon and say "Actions for n1", Escape closes it and returns to the node); a screenshot shows the menu with Math open, its flyout beside it and the ring on the focused item; axe-core 4.14.0: 0 violations in the default theme with the add-node menu open at the search box, on an item and with a flyout open, and with the card menu open (the other two themes were not rescanned: no new colour); suites unchanged apart from the new tests. Decisions: a menu closes on Tab (the focus goes back first); menus open by mouse leave no `data-return`, so they never move the focus; the list stops at its ends (no wrap), and Up from the first item goes to the search box; the states graph has a card menu with one action (Delete node), so the walk-through checks Down only stays inside it |
 | 2026-10-21 | canvas-accessibility task 32: value boxes by keyboard | native tests: the two new sentences in `tests/access.rs` (33 in all; the "no link started" sentence went, because Enter on an input with no link pending now edits it); by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 80 of 80 rows pass (Enter on an unlinked input puts the cursor in its box, which is named "text of node n6", Escape puts the old text back and returns to the port, Enter after a value sends it and says "Set text of n6 to 7" and returns to the port, Ctrl+Z takes it away, Enter on a linked input says it has no box and stays); with real typing from the browser pane's keyboard ("real typing" then Return) the value was sent, the status line said "Set text of n6 to real typing" and the focus was on the input port again; axe-core 4.14.0: 0 violations with a value box focused and back on the port, default theme; suites unchanged apart from the new tests. Decisions: the box remembers its text in `data-original` only when the keyboard opened it, so a box the mouse focused behaves as before (Enter blurs, Escape does nothing); the walk-through fires `change` by hand because the browser does not when a script sets a value |
 | 2026-10-21 | canvas-accessibility task 33: the end of a run is said through the status line | native tests: 4 more in `tests/access.rs` (37 in all): a clean run ("Run finished: 2 ok"), a mixed run with counts, plural errors, skipped and the first error ("Run finished: 2 ok, 2 errors, 1 skipped. First error: n3: ZeroDivisionError: float division by zero"), one error without a message ("failed") and an empty graph; by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 82 of 82 rows pass, and a run said "Run finished: 3 ok, 2 errors, 1 skipped. First error: n5: returned str, expected float" while the banner listed both errors with Dismiss; axe-core 4.14.0: 0 violations after Run in the default theme. The goal is done: see PLAN.md and the outcome notes in the spec. To try it with VoiceOver (not verified here): turn it on with Cmd+F5, open an example (for example `uv run examples/d_editor/d2_values.py`), press Tab until VoiceOver says "Graph", use the arrow keys, Enter on an output port then on an input port to link, Delete to remove, `N` for the add-node menu |
+| 2026-10-21 | visual-ports task 34: a picture on a card, end to end | tests: 22 in `tests/test_visuals.py` (the `Image` record: size and pixel count checks, 256 by 256 at most, pixels as a JSON list both ways, frozen; the `image` kind links only to itself; `-> Image` gives one output `out` and `display` image; a picture input takes no default; a run puts the picture in `shown` and not in `outputs`; a picture reaches the next node; an unlinked picture input and a bad picture are errors), 17 in `rust/element-51-core/tests/display.rs` (the geometry, `rgba` for grey and colour and for pixels that do not fill the picture, the wire shape, the link rule, no box and no typed value, the shared fixtures, messages without the new fields still read), 4 more in `tests/access.rs` (the "Shows a 28 by 28 picture" label, two pictures, a list with none, the picture input sentence), the AA test now covers the image colour in every theme and palette, three new cases in `link_cases.json` on both sides, `messages.json` and `snapshot.json` carry a picture; 262 Python tests at 100%, 215 Rust tests; by hand in the browser pane with `examples/g_experiments/g1_picture_and_plot.py`: the cards have an empty picture area before a run, Run draws a left-to-right ramp on `n1` and its negative on `n2` with crisp pixels and `n3` shows 784, dragging a picture output to an int input is refused with "cannot link image to int" and Dismiss, the hidden tree says "Shows a 28 by 28 picture." on `n1` and `n2` and not on `n3`, the console had no errors; the keyboard walk-through (`tools/ui_keys.js`) passes all 82 rows. Redraw, same script (`tools/bench_page.js` batches: 11 sets of 100 wheel events) in this pane (1024 by 768 CSS pixels at device ratio 2): the 200-node page gives 1.33 to 1.40 ms (range 1.17 to 1.92) with task 34, 1.40 (1.17 to 1.63) on `main` before it and 1.46 (1.31 to 1.76) at `e90563a`, before the accessibility work; so the 0.21 ms recorded on 2026-10-20 does not reproduce at any of them (cause not found) and task 34 changes nothing within the spread. 12 picture cards in view (a test server, three sets): 2.6 to 2.85 ms with value boxes under them; with no value boxes, 2.35 to 2.45 before Run (empty areas) and 2.25 to 2.40 after Run (pictures drawn), so drawing a picture costs nothing measurable and the card itself is what costs (about 0.15 ms each, not isolated); the budget of 1.0 ms is not met. axe-core was not run: task 38 scans the new states. To try it: `uv run python tools/build_wasm.py`, then `uv run python examples/g_experiments/g1_picture_and_plot.py` and press Run |
 
 ## Gotchas
 
+- `cargo test` stops at the first test file that fails, so the files after it never run
+    and the total looks smaller: a count of 166 instead of 215 once hid `theme.rs`.
+    Run `cargo test --no-fail-fast` to see every failure.
+- A change to the shared `link_cases.json` graph changes `next_id` there (now `n8`), which
+    `rules.rs` and `test_edits.py` pin; add nodes there only with a reason.
 - `uv publish` asks for the username first. Type `__token__`, then paste the token at
     the password prompt (nothing is echoed). A token pasted at the username prompt is
     echoed on screen and refused (happened 2026-10-21; that token had to be revoked).

@@ -79,6 +79,37 @@
             ],
             "defaults": {},
             "category": ""
+        },
+        {
+            "name": "picture",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "image"
+                }
+            ],
+            "defaults": {},
+            "category": "",
+            "display": "image"
+        },
+        {
+            "name": "invert",
+            "inputs": [
+                {
+                    "name": "source",
+                    "kind": "image"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "image"
+                }
+            ],
+            "defaults": {},
+            "category": "",
+            "display": "image"
         }
     ],
     "graph": {
@@ -114,6 +145,20 @@
             {
                 "id": "n5",
                 "node_type": "divmod",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n6",
+                "node_type": "picture",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n7",
+                "node_type": "invert",
                 "x": 0.0,
                 "y": 0.0,
                 "values": {}
@@ -324,6 +369,42 @@
                 "port": "b"
             },
             "result": "unknown_port"
+        },
+        {
+            "name": "a picture feeds a picture input",
+            "source": {
+                "node": "n6",
+                "port": "out"
+            },
+            "target": {
+                "node": "n7",
+                "port": "source"
+            },
+            "result": "ok"
+        },
+        {
+            "name": "a picture does not feed a float input",
+            "source": {
+                "node": "n6",
+                "port": "out"
+            },
+            "target": {
+                "node": "n2",
+                "port": "b"
+            },
+            "result": "type_mismatch"
+        },
+        {
+            "name": "a float does not feed a picture input",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n7",
+                "port": "source"
+            },
+            "result": "type_mismatch"
         }
     ]
 }

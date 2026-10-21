@@ -5,10 +5,11 @@
 use element_51_core::access::{
     Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_ports, editing_text,
     link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes, moved_to,
-    neighbour, pan_delta, pan_text, pan_to_show, selected_text, zoom_text,
+    neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, selected_text, with_pictures,
+    zoom_text,
 };
 use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
-use element_51_core::{Edit, PortRef};
+use element_51_core::{Edit, PortRef, PortType, Replica};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, FocusEvent, HtmlElement, HtmlInputElement, KeyboardEvent};
 
@@ -130,9 +131,13 @@ pub(crate) fn sync_tree(shared: &Shared) {
         if !state.tree_stale {
             return;
         }
+        let items = list_nodes(replica.graph(), replica.node_types());
         (
             state.document.clone(),
-            list_nodes(replica.graph(), replica.node_types()),
+            match state.run.as_ref() {
+                Some(result) => with_pictures(items, result),
+                None => items,
+            },
         )
     };
     let Some(tree) = document.get_element_by_id("graph-tree") else {
@@ -528,13 +533,44 @@ fn press_port(shared: &Shared, end: PortRef, side: Side) {
 
 /// Enter on an input port with no link started: move the focus into its value
 /// box, panned into view first, or say that a linked input has none.
+/// The type of the input `end` names, if its node and port exist.
+fn input_kind(replica: &Replica, end: &PortRef) -> Option<PortType> {
+    let node = replica
+        .graph()
+        .nodes
+        .iter()
+        .find(|node| node.id == end.node)?;
+    let node_type = replica
+        .node_types()
+        .iter()
+        .find(|known| known.name == node.node_type)?;
+    node_type
+        .inputs
+        .iter()
+        .find(|port| port.name == end.port)
+        .map(|port| port.kind)
+}
+
 fn edit_value(shared: &Shared, end: &PortRef) {
     let document = shared.borrow().document.clone();
     let field = document
         .get_element_by_id(&format!("field-{}-{}", end.node, end.port))
         .and_then(|field| field.dyn_into::<HtmlInputElement>().ok());
     let Some(field) = field else {
-        announce(&document, &linked_input_text());
+        let is_picture = shared
+            .borrow()
+            .replica
+            .as_ref()
+            .and_then(|replica| input_kind(replica, end))
+            == Some(PortType::Image);
+        announce(
+            &document,
+            &if is_picture {
+                picture_input_text()
+            } else {
+                linked_input_text()
+            },
+        );
         return;
     };
     pan_to_node(&mut shared.borrow_mut(), &end.node);

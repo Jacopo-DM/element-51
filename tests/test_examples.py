@@ -66,6 +66,11 @@ EXPECTED: dict[str, Expected] = {
     "c_python_api/c2_live_push.py": [("n1", "ok", {"out": 1.0})],
     "d_editor/d4_menu.py": [("n1", "ok", {"out": 3.0})],
     "f_embedding/f1_fastapi_host.py": [("n1", "ok", {"out": 3.0})],
+    "g_experiments/g1_picture_and_plot.py": [
+        ("n1", "ok", {}),
+        ("n2", "ok", {}),
+        ("n3", "ok", {"out": 784}),
+    ],
     "f_embedding/f2_nicegui_host.py": [("n1", "ok", {"out": 3.0})],
     "e_look/e2_theme_file.py": [
         ("n1", "ok", {"out": 3.0}),
@@ -260,3 +265,13 @@ def test_the_theme_file_example_changes_the_dark_theme() -> None:
     assert snapshot.theme == "antimony"
     assert snapshot.theme_changes.colours["canvas"] == "#101820"
     assert snapshot.theme_changes.metrics == {"node_width": 260.0}
+
+
+def test_the_picture_example_shows_a_ramp_and_its_negative() -> None:
+    """The two picture nodes show 28 by 28 pictures that add up to white."""
+    result = build("g_experiments/g1_picture_and_plot.py").execute()
+    first, second = (outcome.shown["out"] for outcome in result.outcomes[:2])
+    assert (first.width, first.height) == (28, 28)
+    assert [
+        a + b for a, b in zip(first.pixels, second.pixels, strict=True)
+    ] == [255] * (28 * 28)

@@ -2,17 +2,17 @@
 //! around it.
 
 use element_51_core::access::{
-    Direction, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
+    Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
     editing_text, link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes,
-    moved_to, neighbour, pan_delta, pan_text, pan_to_show, refusal_text, run_text, selected_text,
-    undo_text, zoom_text,
+    moved_to, neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, refusal_text,
+    run_text, selected_text, undo_text, with_pictures, zoom_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::view::{MAX_ZOOM, MIN_ZOOM, View};
 use element_51_core::{
-    Edit, Graph, Link, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType, RunResult,
-    Status, apply_edit,
+    Edit, Graph, Image, Link, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType,
+    RunResult, Status, apply_edit,
 };
 use serde::Deserialize;
 
@@ -34,6 +34,7 @@ fn types() -> Vec<NodeType> {
         outputs,
         defaults: Default::default(),
         category: String::new(),
+        display: Default::default(),
     };
     vec![
         make("number", vec![], vec![port("out", PortType::Float)]),
@@ -566,6 +567,7 @@ fn outcome(node: &str, status: Status, error: Option<&str>) -> NodeOutcome {
         node: node.to_string(),
         status,
         outputs: Default::default(),
+        shown: Default::default(),
         error: error.map(str::to_string),
     }
 }
@@ -614,4 +616,73 @@ fn one_error_is_not_plural_and_an_error_without_a_message_says_failed() {
 #[test]
 fn a_run_of_an_empty_graph_says_so() {
     assert_eq!(run_text(&result(vec![])), "Run finished: no nodes");
+}
+
+fn picture_outcome(node: &str, sizes: &[(&str, u32, u32)]) -> NodeOutcome {
+    NodeOutcome {
+        shown: sizes
+            .iter()
+            .map(|(port, width, height)| {
+                (
+                    port.to_string(),
+                    Image {
+                        width: *width,
+                        height: *height,
+                        channels: 1,
+                        pixels: vec![0; (width * height) as usize],
+                    },
+                )
+            })
+            .collect(),
+        ..outcome(node, Status::Ok, None)
+    }
+}
+
+fn label_of<'a>(items: &'a [NodeItem], id: &str) -> &'a str {
+    &items.iter().find(|item| item.id == id).unwrap().label
+}
+
+#[test]
+fn a_node_that_shows_a_picture_says_its_size() {
+    let items = list_nodes(&graph(), &types());
+    let shown = with_pictures(
+        items.clone(),
+        &result(vec![picture_outcome("n1", &[("out", 28, 28)])]),
+    );
+    assert_eq!(
+        label_of(&shown, "n1"),
+        format!("{} Shows a 28 by 28 picture.", label_of(&items, "n1"))
+    );
+    assert_eq!(label_of(&shown, "n2"), label_of(&items, "n2"));
+}
+
+#[test]
+fn a_node_with_two_pictures_names_each_size() {
+    let items = list_nodes(&graph(), &types());
+    let two = picture_outcome("n1", &[("a", 2, 3), ("b", 4, 5)]);
+    let shown = with_pictures(items.clone(), &result(vec![two]));
+    assert_eq!(
+        label_of(&shown, "n1"),
+        format!(
+            "{} Shows a 2 by 3 picture and a 4 by 5 picture.",
+            label_of(&items, "n1")
+        )
+    );
+}
+
+#[test]
+fn a_list_is_unchanged_when_nothing_was_shown() {
+    let items = list_nodes(&graph(), &types());
+    let plain = result(vec![outcome("n1", Status::Ok, None)]);
+    assert_eq!(with_pictures(items.clone(), &plain), items);
+}
+
+#[test]
+fn a_picture_input_says_it_can_only_be_linked() {
+    let text = picture_input_text();
+    assert!(
+        text.contains("picture") && text.contains("linked"),
+        "{text}"
+    );
+    assert_ne!(text, linked_input_text());
 }

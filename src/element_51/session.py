@@ -6,11 +6,12 @@ from pathlib import Path
 
 from element_51.edits import AddLink, AddNode, AnyEdit, apply_edit
 from element_51.engine import RunResult, run_graph
-from element_51.model import Graph, NodeType, PortRef, PortValue
+from element_51.model import Graph, NodeType, PortRef
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot
 from element_51.store import load_graph, save_graph
 from element_51.theme import ThemeChanges, ThemeFile, resolve_theme
+from element_51.visuals import Carried
 
 
 class App:
@@ -209,7 +210,7 @@ class App:
         """
         return run_graph(self.graph, self.node_functions, raise_errors=False)
 
-    def run(self) -> dict[str, dict[str, PortValue]]:
+    def run(self) -> dict[str, dict[str, Carried]]:
         """Run the graph and return every node's outputs.
 
         A node that fails raises its own exception, with a note naming the
@@ -217,12 +218,14 @@ class App:
 
         Returns
         -------
-        dict[str, dict[str, PortValue]]
+        dict[str, dict[str, Carried]]
             For each node id, the value of each of its output ports by name.
+            A picture is an `Image`.
         """
         result = run_graph(self.graph, self.node_functions, raise_errors=True)
         return {
-            outcome.node: dict(outcome.outputs) for outcome in result.outcomes
+            outcome.node: {**outcome.outputs, **outcome.shown}
+            for outcome in result.outcomes
         }
 
     def snapshot(self) -> Snapshot:

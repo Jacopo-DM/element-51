@@ -118,7 +118,7 @@ fn a_palette_changes_colours_only() {
     for name in ["metrics", "page", "fonts"] {
         assert_eq!(section(&theme, name), section(&base, name), "{name}");
     }
-    for kind in ["int", "float", "text", "bool"] {
+    for kind in ["int", "float", "text", "bool", "image"] {
         for side in ["in", "out"] {
             assert_eq!(
                 section(&theme, "ports")[kind][side]["shape"],

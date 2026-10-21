@@ -40,7 +40,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Python tests, 100% coverage | `uv run --locked pytest` | about 2 s |
 | Rust format check | `R cargo fmt --all --check --manifest-path rust/Cargo.toml` | under 1 s; `cargo fmt --all` rewrites |
 | Rust lint | `R cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings` | about 1 s warm |
-| Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml` | about 1 s warm |
+| Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml --no-fail-fast` | about 1 s warm; without the flag the files after a failing one do not run |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
 | Structure numbers | `uv run python tools/measure_structure.py [--jscpd <binary>]` | under 1 s; files and lines, files over 400 lines, modules over 5 imports; jscpd is not a dependency (downloaded by hand, see DESIGN.md) |
 | Time the Python side | `uv run python tools/bench_python.py` | about 30 s; build, run and snapshot of a 2000-node chain, median and range of 11 runs; `--profile` prints a cProfile |
@@ -78,7 +78,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
     for graphics); `tests/palette.rs` then checks it for every palette too.
 - A feature the user can try gets a runnable example in `examples/`, in the group
     folder it belongs to (`a_basics`, `b_node_types`, `c_python_api`, `d_editor`,
-    `e_look`, `f_embedding`; the file is named with the folder's letter and the next
+    `e_look`, `f_embedding`, `g_experiments`; the file is named with the folder's letter and the next
     number), laid out like
     `examples/template.py` (the project template; copy it, it is not an example
     of the library): a docstring with a `Notes` section that

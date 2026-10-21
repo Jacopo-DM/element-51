@@ -56,15 +56,15 @@ def test_link_rules_match_the_shared_cases(case: Case) -> None:
 
 def test_add_node_places_a_node() -> None:
     """A valid add_node returns a graph that holds the new node."""
-    edit = AddNode(id="n6", node_type="add", x=1.0, y=2.0)
+    edit = AddNode(id="n8", node_type="add", x=1.0, y=2.0)
     graph = apply_edit(CASES.graph, NODE_TYPES, edit)
-    assert graph.nodes[-1] == PlacedNode(id="n6", node_type="add", x=1.0, y=2.0)
+    assert graph.nodes[-1] == PlacedNode(id="n8", node_type="add", x=1.0, y=2.0)
     assert graph.links == CASES.graph.links
 
 
 def test_add_node_of_an_unknown_type_is_refused() -> None:
     """The browser can only place types Python announced."""
-    edit = AddNode(id="n6", node_type="nope", x=0.0, y=0.0)
+    edit = AddNode(id="n8", node_type="nope", x=0.0, y=0.0)
     with pytest.raises(EditError) as raised:
         apply_edit(CASES.graph, NODE_TYPES, edit)
     assert raised.value.kind is EditErrorKind.UNKNOWN_NODE_TYPE

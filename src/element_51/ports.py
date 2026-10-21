@@ -1,16 +1,19 @@
 """Map type hints to ports: the part of `@node` and `Node` shared by both."""
 
 import inspect
+from typing import Literal
 
 from pydantic import BaseModel
 
-from element_51.model import Port, PortType, value_fits
+from element_51.model import Port, PortType
+from element_51.visuals import Image, carries
 
 PORT_TYPES: dict[type, PortType] = {
     float: PortType.FLOAT,
     int: PortType.INT,
     str: PortType.STR,
     bool: PortType.BOOL,
+    Image: PortType.IMAGE,
 }
 
 NO_DEFAULT = inspect.Parameter.empty
@@ -34,11 +37,11 @@ def port_type(annotation: object, where: str) -> PortType:
     Raises
     ------
     TypeError
-        If the hint is not float, int, str or bool.
+        If the hint is not float, int, str, bool or Image.
     """
     if isinstance(annotation, type) and annotation in PORT_TYPES:
         return PORT_TYPES[annotation]
-    msg = f"{where}: {annotation!r} is not one of float, int, str, bool"
+    msg = f"{where}: {annotation!r} is not one of float, int, str, bool, Image"
     raise TypeError(msg)
 
 
@@ -58,10 +61,28 @@ def input_port(
         If the type is unsupported or the default does not fit it.
     """
     kind = port_type(annotation, where)
-    if default is not NO_DEFAULT and not value_fits(default, kind):
+    if default is not NO_DEFAULT and not carries(default, kind):
         msg = f"{where}: default {default!r} is not a {kind}"
         raise TypeError(msg)
+    if default is not NO_DEFAULT and kind is PortType.IMAGE:
+        msg = (
+            f"{where}: an image input can only be linked, so it has no default"
+        )
+        raise TypeError(msg)
     return Port(name=name, kind=kind)
+
+
+def display_of(outputs: tuple[Port, ...]) -> Literal["none", "image"]:
+    """Say what the card of a node with these outputs shows.
+
+    Returns
+    -------
+    Literal["none", "image"]
+        `"image"` if any output is a picture, else `"none"`.
+    """
+    if any(port.kind is PortType.IMAGE for port in outputs):
+        return "image"
+    return "none"
 
 
 def output_ports(
@@ -70,14 +91,18 @@ def output_ports(
     """Build the output ports from a return hint.
 
     A pydantic model gives one port per field, in the order declared. Any
-    other hint gives the single port `out`.
+    other hint, `Image` included, gives the single port `out`.
 
     Returns
     -------
     tuple[tuple[Port, ...], type[BaseModel] | None]
         The ports, and the model if there is one.
     """
-    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+    if (
+        isinstance(annotation, type)
+        and issubclass(annotation, BaseModel)
+        and annotation not in PORT_TYPES
+    ):
         return (
             tuple(
                 Port(

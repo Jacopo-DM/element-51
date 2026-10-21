@@ -10,17 +10,23 @@ from element_51.model import (
     Model,
     PlacedNode,
     PortValue,
-    value_fits,
 )
 from element_51.nodes import Registered
+from element_51.visuals import Carried, Image, carries
 
 
 class NodeOutcome(Model):
-    """What happened to one node in a run."""
+    """What happened to one node in a run.
+
+    `outputs` holds the plain values by output port name. `shown` holds what
+    the card displays, by port name: the pictures a node produced. The page
+    reads `shown` for the card and `outputs` for the boxes beside the ports.
+    """
 
     node: str
     status: Literal["ok", "error", "skipped"]
     outputs: Mapping[str, PortValue] = {}
+    shown: Mapping[str, Image] = {}
     error: str | None = None
 
 
@@ -81,7 +87,7 @@ def run_graph(
             )
         )
     outcomes: dict[str, NodeOutcome] = {}
-    outputs_by_node: dict[str, Mapping[str, PortValue]] = {}
+    outputs_by_node: dict[str, Mapping[str, Carried]] = {}
     # Indexed once, so each node finds its links without scanning them all.
     into: dict[str, list[Link]] = {}
     for link in graph.links:
@@ -107,10 +113,26 @@ def run_graph(
             )
             continue
         outputs_by_node[node.id] = outputs
-        outcomes[node.id] = NodeOutcome(
-            node=node.id, status="ok", outputs=outputs
-        )
+        outcomes[node.id] = _outcome(node.id, outputs)
     return RunResult(outcomes=tuple(outcomes.values()))
+
+
+def _outcome(node: str, outputs: Mapping[str, Carried]) -> NodeOutcome:
+    """Split a node's outputs into plain values and pictures.
+
+    Returns
+    -------
+    NodeOutcome
+        An `ok` outcome.
+    """
+    plain: dict[str, PortValue] = {}
+    shown: dict[str, Image] = {}
+    for name, value in outputs.items():
+        if isinstance(value, Image):
+            shown[name] = value
+        else:
+            plain[name] = value
+    return NodeOutcome(node=node, status="ok", outputs=plain, shown=shown)
 
 
 class _MissingInputError(ValueError):
@@ -170,13 +192,13 @@ def _evaluate(
     node: PlacedNode,
     incoming: Sequence[Link],
     function: Registered,
-    outputs_by_node: Mapping[str, Mapping[str, PortValue]],
-) -> Mapping[str, PortValue]:
+    outputs_by_node: Mapping[str, Mapping[str, Carried]],
+) -> Mapping[str, Carried]:
     """Call one node's function and check what comes back.
 
     Returns
     -------
-    Mapping[str, PortValue]
+    Mapping[str, Carried]
         The value of each of the node's output ports.
 
     Raises
@@ -184,7 +206,7 @@ def _evaluate(
     _MissingInputError
         If an input has neither a link nor a default.
     """
-    inputs: dict[str, PortValue] = {}
+    inputs: dict[str, Carried] = {}
     for port in function.node_type.inputs:
         link = next(
             (link for link in incoming if link.target.port == port.name),
@@ -206,12 +228,12 @@ def _evaluate(
 
 def _collect_outputs(
     function: Registered, result: object
-) -> Mapping[str, PortValue]:
+) -> Mapping[str, Carried]:
     """Check what a node returned and turn it into a value per output port.
 
     Returns
     -------
-    Mapping[str, PortValue]
+    Mapping[str, Carried]
         The value of each output port, by port name.
 
     Raises
@@ -222,17 +244,17 @@ def _collect_outputs(
     model = function.output_model
     if model is None:
         port = function.node_type.outputs[0]
-        if value_fits(result, port.kind):
+        if carries(result, port.kind):
             return {port.name: result}
         msg = f"returned {type(result).__name__}, expected {port.kind}"
         raise _BadReturnError(msg)
     if not isinstance(result, model):
         msg = f"returned {type(result).__name__}, expected {model.__name__}"
         raise _BadReturnError(msg)
-    outputs: dict[str, PortValue] = {}
+    outputs: dict[str, Carried] = {}
     for port in function.node_type.outputs:
         value = getattr(result, port.name)
-        if not value_fits(value, port.kind):
+        if not carries(value, port.kind):
             msg = (
                 f"output {port.name!r} is {type(value).__name__}, "
                 f"expected {port.kind}"

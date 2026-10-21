@@ -139,6 +139,8 @@ pub struct Ports {
     pub text: PortSides,
     /// Bool ports.
     pub bool: PortSides,
+    /// Picture ports.
+    pub image: PortSides,
 }
 
 /// Sizes, in graph units (one unit is one pixel at zoom 1).
@@ -334,6 +336,7 @@ impl Theme {
             PortType::Float => &self.ports.float,
             PortType::Str => &self.ports.text,
             PortType::Bool => &self.ports.bool,
+            PortType::Image => &self.ports.image,
         };
         if output { &sides.output } else { &sides.input }
     }
@@ -478,6 +481,7 @@ impl Theme {
             (PortType::Float, "float"),
             (PortType::Str, "text"),
             (PortType::Bool, "bool"),
+            (PortType::Image, "image"),
         ] {
             for (output, side) in [(false, "in"), (true, "out")] {
                 let colour = &self.port_style(kind, output).colour;

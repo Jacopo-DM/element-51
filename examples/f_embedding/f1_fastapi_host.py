@@ -30,7 +30,7 @@ from rich.traceback import install
 
 # Local libraries
 import element_51
-from element_51.model import PortValue
+from element_51.visuals import Carried
 
 # --- Globals --- #
 PORT = 8765
@@ -120,7 +120,7 @@ def build_host(app: element_51.App) -> FastAPI:
         return HTMLResponse(PAGE)
 
     @host.post("/api/run")
-    def run_graph() -> dict[str, dict[str, PortValue]]:
+    def run_graph() -> dict[str, dict[str, Carried]]:
         return app.run()
 
     @host.post("/api/add-node")

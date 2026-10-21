@@ -1,5 +1,6 @@
 //! Where a node box sits and how big it is.
 
+use crate::display::display_height;
 use crate::theme::Metrics;
 use crate::{Graph, Link, NodeType, PlacedNode, PortRef};
 
@@ -34,14 +35,16 @@ impl Rect {
 }
 
 /// The box for `node`: a header, then one row per input, then one row per
-/// output.
+/// output, then the picture area if the node type has one.
 pub fn node_rect(node: &PlacedNode, node_type: &NodeType, metrics: &Metrics) -> Rect {
     let rows = node_type.inputs.len() + node_type.outputs.len();
     Rect {
         x: node.x,
         y: node.y,
         w: metrics.node_width,
-        h: metrics.header_height + metrics.row_height * rows as f64,
+        h: metrics.header_height
+            + metrics.row_height * rows as f64
+            + display_height(node_type, metrics),
     }
 }
 

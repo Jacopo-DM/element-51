@@ -12,6 +12,7 @@ pub enum PortType {
     Int,
     Str,
     Bool,
+    Image,
 }
 
 impl std::fmt::Display for PortType {
@@ -21,6 +22,7 @@ impl std::fmt::Display for PortType {
             PortType::Int => "int",
             PortType::Str => "str",
             PortType::Bool => "bool",
+            PortType::Image => "image",
         };
         formatter.write_str(name)
     }
@@ -48,6 +50,52 @@ pub struct NodeType {
     /// `/` between levels.
     #[serde(default)]
     pub category: String,
+    /// What the card shows below its ports.
+    #[serde(default)]
+    pub display: CardDisplay,
+}
+
+/// What a card shows below its ports.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CardDisplay {
+    /// Only the ports.
+    #[default]
+    None,
+    /// A picture from one of the node's outputs.
+    Image,
+}
+
+/// A grey or colour picture a node produced: `width * height * channels` bytes
+/// of pixels, rows from the top, written on the wire as a list of integers.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Image {
+    pub width: u32,
+    pub height: u32,
+    /// 1 for grey, 3 for red, green and blue.
+    pub channels: u8,
+    pub pixels: Vec<u8>,
+}
+
+impl Image {
+    /// The pixels as opaque RGBA bytes, which is what a canvas takes. None if
+    /// the channel count is not 1 or 3 or the pixels do not fill the picture.
+    pub fn rgba(&self) -> Option<Vec<u8>> {
+        let channels = usize::from(self.channels);
+        let count = self.width as usize * self.height as usize;
+        if !matches!(channels, 1 | 3) || self.pixels.len() != count * channels {
+            return None;
+        }
+        let mut out = Vec::with_capacity(count * 4);
+        for pixel in self.pixels.chunks_exact(channels) {
+            match pixel {
+                [grey] => out.extend_from_slice(&[*grey, *grey, *grey, 255]),
+                other => out.extend_from_slice(&[other[0], other[1], other[2], 255]),
+            }
+        }
+        Some(out)
+    }
 }
 
 /// One end of a link: a port on a node in the graph.
@@ -186,6 +234,9 @@ pub struct NodeOutcome {
     pub status: Status,
     /// The value of each output port, by port name. Empty unless `status` is ok.
     pub outputs: BTreeMap<String, serde_json::Value>,
+    /// The pictures the card displays, by output port name.
+    #[serde(default)]
+    pub shown: BTreeMap<String, Image>,
     pub error: Option<String>,
 }
 

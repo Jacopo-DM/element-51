@@ -78,6 +78,16 @@
                 "colour": "#6fa8dc",
                 "shape": "box"
             }
+        },
+        "image": {
+            "in": {
+                "colour": "#d98cc4",
+                "shape": "diamond"
+            },
+            "out": {
+                "colour": "#d98cc4",
+                "shape": "diamond"
+            }
         }
     },
     "metrics": {

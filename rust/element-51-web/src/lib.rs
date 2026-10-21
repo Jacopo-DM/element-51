@@ -9,6 +9,7 @@ mod draw;
 mod fields_ui;
 mod input;
 mod menu_ui;
+mod pictures;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -41,6 +42,7 @@ use menu_ui::{
     on_menu_click, on_menu_hover, on_menu_key, on_menu_search, on_menu_search_key, on_palette_key,
     on_palette_submit, on_select_theme, on_theme_click, on_try_palette,
 };
+use pictures::Pictures;
 
 /// Everything the event handlers share.
 struct State {
@@ -64,6 +66,8 @@ struct State {
     hover: Option<PortHit>,
     /// The last run's outcome. Cleared when the graph changes.
     run: Option<RunResult>,
+    /// The pictures of the last run, drawn once.
+    pictures: Pictures,
     /// Where the right-click menu was opened: new nodes are placed here.
     menu_at: (f64, f64),
     /// The node whose card menu is open, if any.
@@ -120,6 +124,7 @@ pub fn start() -> Result<(), JsValue> {
         gesture: Gesture::None,
         hover: None,
         run: None,
+        pictures: Pictures::default(),
         menu_at: (0.0, 0.0),
         card_menu_node: None,
         theme_key: String::new(),
@@ -358,6 +363,7 @@ fn draw_canvas(state: &Shared) {
         },
         focus: state.focus.as_ref(),
         run: state.run.as_ref(),
+        pictures: &state.pictures,
     };
     let result = draw(&state.canvas, &state.context, &frame);
     if let Err(error) = result {
@@ -523,6 +529,8 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                     show_error(&state.document, &summary);
                 }
                 announce(&state.document, &run_text(&result));
+                state.pictures = Pictures::from_result(&state.document, &result);
+                state.tree_stale = true;
                 state.run = Some(result);
             }
             Ok(Message::Edit(_) | Message::Run(_)) => {

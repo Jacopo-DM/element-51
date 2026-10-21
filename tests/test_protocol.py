@@ -111,6 +111,14 @@ def test_run_request_and_result_round_trip() -> None:
     ]
 
 
+def test_a_result_with_a_picture_round_trips() -> None:
+    """A picture in `shown` is a list of pixels on the wire."""
+    result = round_trip(RunResult, "run_result_picture")
+    assert isinstance(result, RunResult)
+    picture = result.outcomes[0].shown["out"]
+    assert picture.pixels == bytes([0, 85, 170, 255])
+
+
 def test_client_messages_are_told_apart_by_op() -> None:
     """The server parses one union: an edit or a run request."""
     edit = ClientMessage.validate_python(MESSAGES["edit_add_node"])

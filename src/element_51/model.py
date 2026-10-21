@@ -7,7 +7,7 @@ is the format the browser layer reads, so field names are a contract with
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Annotated, TypeGuard
+from typing import Annotated, Literal, TypeGuard
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,12 +25,14 @@ class PortType(StrEnum):
     INT = "int"
     STR = "str"
     BOOL = "bool"
+    IMAGE = "image"
 
 
 def can_link(source: PortType, target: PortType) -> bool:
     """Whether an output of type `source` may feed an input of type `target`.
 
-    Equal types link. An int output may also feed a float input.
+    Equal types link. An int output may also feed a float input. A picture
+    links only to a picture.
 
     Parameters
     ----------
@@ -102,6 +104,7 @@ class NodeType(Model):
     outputs: tuple[Port, ...]
     defaults: Mapping[str, PortValue] = {}
     category: str = ""
+    display: Literal["none", "image"] = "none"
 
 
 class PortRef(Model):

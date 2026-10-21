@@ -60,6 +60,34 @@ pub fn describe_graph(graph: &Graph, node_types: &[NodeType]) -> Vec<NodeItem> {
         .collect()
 }
 
+/// The list with what each node showed in `result` added to its label, for
+/// example `Shows a 28 by 28 picture.`. A node that showed nothing keeps its
+/// label.
+pub fn with_pictures(items: Vec<NodeItem>, result: &RunResult) -> Vec<NodeItem> {
+    items
+        .into_iter()
+        .map(|item| {
+            let sizes: Vec<String> = result
+                .outcome_for(&item.id)
+                .map(|outcome| {
+                    outcome
+                        .shown
+                        .values()
+                        .map(|image| format!("a {} by {} picture", image.width, image.height))
+                        .collect()
+                })
+                .unwrap_or_default();
+            if sizes.is_empty() {
+                return item;
+            }
+            NodeItem {
+                label: format!("{} Shows {}.", item.label, join_names(&sizes)),
+                ..item
+            }
+        })
+        .collect()
+}
+
 /// The same list without the ports, which is cheap enough to rebuild after
 /// every edit of a big graph; `describe_ports` gives a node's ports when the
 /// keyboard enters it.
@@ -327,6 +355,13 @@ pub fn editing_text(node: &str, port: &str) -> String {
 /// The sentence when Enter on a linked input finds no value box to edit.
 pub fn linked_input_text() -> String {
     "That input is linked, so it has no value box. Press Delete to remove the link".to_string()
+}
+
+/// The sentence when Enter on an unlinked picture input finds no value box:
+/// a picture has no typed value, so it can only be linked.
+pub fn picture_input_text() -> String {
+    "That input takes a picture, which can only be linked. Start a link from a picture output"
+        .to_string()
 }
 
 /// How far the arrow keys pan the view, in screen pixels.

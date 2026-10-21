@@ -99,18 +99,21 @@
                 "outputs": {
                     "out": 3.0
                 },
+                "shown": {},
                 "error": null
             },
             {
                 "node": "n2",
                 "status": "error",
                 "outputs": {},
+                "shown": {},
                 "error": "ZeroDivisionError: float division by zero"
             },
             {
                 "node": "n3",
                 "status": "skipped",
                 "outputs": {},
+                "shown": {},
                 "error": null
             },
             {
@@ -119,6 +122,31 @@
                 "outputs": {
                     "q": 3,
                     "r": 1
+                },
+                "shown": {},
+                "error": null
+            }
+        ]
+    },
+    "run_result_picture": {
+        "op": "run_result",
+        "outcomes": [
+            {
+                "node": "n1",
+                "status": "ok",
+                "outputs": {},
+                "shown": {
+                    "out": {
+                        "width": 2,
+                        "height": 2,
+                        "channels": 1,
+                        "pixels": [
+                            0,
+                            85,
+                            170,
+                            255
+                        ]
+                    }
                 },
                 "error": null
             }

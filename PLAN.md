@@ -96,9 +96,9 @@ the canvas now has a keyboard route (the keys are in DESIGN.md, under "canvas-ac
 spec"), a hidden tree mirrors the graph for screen readers, and a status line says what
 happened, including refusals and the end of a run. Measures, numbers and the changes from
 the spec are in DESIGN.md (Results, and the spec's task outcomes). Left alone on purpose:
-the Tier 3 items below. Not verified: a real screen reader (VoiceOver), axe-core in the other
-two themes for tasks 28 to 33 (no new colour), and the redraw median at 200 nodes after
-tasks 28 to 33.
+the Tier 3 items below. Not verified: a real screen reader (VoiceOver) and axe-core in the other
+two themes for tasks 28 to 33 (no new colour). The redraw median at 200 nodes was measured
+on 2026-10-21 (Known problems).
 
 ### Experiment goals (approved 2026-10-21)
 
@@ -250,9 +250,11 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 34 of `visual-ports` (approved 2026-10-21): a picture on a card, end to
-end. `canvas-accessibility` is done, so every new part of the experiment goals is built to be
-reachable by keyboard from the start. The user's own try-out (below) is still pending, and so
+Next step: task 35 of `visual-ports` (approved 2026-10-21): a series and a one-line chart.
+Task 34 (a picture on a card, end to end) is done: see DESIGN.md, Results and the spec's task 34
+outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
+after `uv run python tools/build_wasm.py`. `canvas-accessibility` is done, so every new part of
+the experiment goals is built to be reachable by keyboard from the start. The user's own try-out (below) is still pending, and so
 is trying the keyboard use with VoiceOver (Cmd+F5 on this Mac: Tab to the graph, then the arrow
 keys).
 `examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
@@ -271,10 +273,10 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
-`main` equals `origin/main` (`1488eb2`, pushed 2026-10-21 at the user's say-so, 13 commits:
-the experiment goals and tasks, keyboard access and the one-node `a1_hello_world`); the
-GitHub workflows for that push (CI, Rust and WASM, Docs) all finished with success
-(checked 2026-10-21). The notes commit `efc4af6` and the commit after it are not pushed.
+`main` was pushed to `origin/main` at `e151401` on 2026-10-21 at the user's say-so (the
+experiment goals and tasks, keyboard access and the one-node `a1_hello_world`); the
+GitHub workflows for `1488eb2` (CI, Rust and WASM, Docs) all finished with success
+(checked 2026-10-21). Task 34 of `visual-ports` is committed on `main` and not pushed.
 No other local branch is left: every merged branch was deleted on 2026-10-21 at the
 user's say-so.
 In `~/Functions`, the VS Code profile settings and the project template
@@ -464,7 +466,7 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `visual-ports` (task list approved 2026-10-21)
+### Goal `visual-ports` (task list approved 2026-10-21; task 34 done 2026-10-21)
 
 All five tasks come after `canvas-accessibility` (done; the user's order). The web
 crate has no automated tests, so each task puts its logic in `element-51-core`
@@ -481,24 +483,9 @@ first. The example for these tasks is `examples/g_experiments/g1_picture_and_plo
 
 #### Tier 1: walking skeleton (criteria 1, 2, 4 for images, 6 in part)
 
-34. **A picture on a card, end to end.** What changes: `Image` and `Carried` in
-    `visuals.py`; the `image` port kind in Python and Rust (`PortType`, `can_link`,
-    `value_fits`, `parse_input` refuses it, no input box); `-> Image` gives one output
-    `out`; `NodeType.display` (none or image, set from an `Image` output);
-    `NodeOutcome.shown` built by the engine; the card's picture area in `layout.rs`
-    and `display.rs` (geometry only); the picture drawn crisp and cached in `draw.rs`;
-    `image` colour and shape in all three theme files, `docs/themes.md`,
-    `contrast_pairs` and the palette mapping; the hidden tree label "Shows a W by H
-    picture"; fixtures; the example. Files: `src/element_51/{visuals,model,ports,
-    nodes,engine,protocol}.py`, `rust/element-51-core/src/{model,layout,display,
-    theme,fields,access,palette}.rs`, the theme JSONs, `rust/element-51-web/src/
-    {draw,fields_ui}.rs`, `tests/fixtures/*.json`, `docs/themes.md`,
-    `examples/g_experiments/g1_picture_and_plot.py`, `tests/test_examples.py`. Risk:
-    medium (it touches every layer and every theme). Cost: about 600 lines, no new
-    dependency. Verify: native and Python tests for each rule (the link rule, the
-    size check, the geometry, the AA pairs for six kinds in all palettes, the
-    fixtures in both suites), the example by hand in the pane, redraw median at 200
-    nodes within its spread and at 12 picture cards in view at 1.0 ms or less.
+34. Done 2026-10-21: a picture on a card, end to end (DESIGN.md, Results; the spec's task 34
+    outcome lists what changed from the plan, including that `series` moved to task 35 and
+    that two measurement budgets are open, see Known problems).
 
 #### Tier 2 (ordered by value over risk plus cost)
 
@@ -565,6 +552,18 @@ Oldest first.
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
     fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
+- The redraw time at 200 nodes (`tools/bench_page.js`) is 1.3 to 1.5 ms per wheel event in
+    the browser pane today (1024 by 768 CSS pixels at device ratio 2; measured 2026-10-21 on
+    `main` before task 34, with it, and at `e90563a` before the accessibility work), not the
+    0.21 to 0.22 ms recorded on 2026-10-20 (Baseline). The cause is not found; it is not
+    task 34 or the accessibility work. With 12 picture cards in view it is 2.3 to 2.8 ms,
+    and drawing the pictures adds nothing measurable, so the spec's budget of 1.0 ms for
+    12 picture cards is missed: the cost is in drawing a card (about 0.15 ms each).
+    Next step: profile one frame (`columns` measures text, every row fills and clips) and
+    decide whether to cut it; needs the user's say-so as a new task. Task 35 (a chart on
+    a card) adds to the same frame.
+- A node's picture output box says `output`, and a card shows only the first picture of
+    its node.
 - The Run button has no running state: nothing shows while a run is in progress (the
     end of a run is announced to screen readers; the goal `job-nodes` adds the state).
 - A node's empty output box says `output`, the same word as the port name.

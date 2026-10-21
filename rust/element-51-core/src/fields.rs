@@ -7,13 +7,15 @@ use crate::PortType;
 /// Read what a person typed for an input of type `kind`.
 ///
 /// Empty text means the node has no value of its own (`Ok(None)`), so the
-/// input falls back to its default. Anything else must fit the type.
+/// input falls back to its default. Anything else must fit the type. A picture
+/// has no typed value, so anything but empty text is refused.
 pub fn parse_input(text: &str, kind: PortType) -> Result<Option<Value>, String> {
     if text.trim().is_empty() {
         return Ok(None);
     }
     let trimmed = text.trim();
     match kind {
+        PortType::Image => Err("a picture can only be linked".to_string()),
         PortType::Str => Ok(Some(Value::String(text.to_string()))),
         PortType::Float => trimmed
             .parse::<f64>()

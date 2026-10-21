@@ -120,6 +120,7 @@ Each port type has an `in` style for its inputs and an `out` style for its outpu
 | `float` | decimal numbers | `#edc27b` | `box` |
 | `text` | text | `#94a95f` | `box` |
 | `bool` | true or false | `#6fa8dc` | `box` |
+| `image` | a picture | `#d98cc4` | `diamond` |
 
 ### `metrics`
 
