@@ -148,3 +148,16 @@ pub fn flyout_at(
     let (_, y) = clamp_into((x, top - raise), size, window, margin);
     (x, y)
 }
+
+/// The item the arrow keys reach from `current` in a list of `len` items:
+/// down (`forward`) or up one, stopping at the ends. With nothing focused,
+/// down goes to the first item and up to the last. An empty list has none.
+pub fn step_menu(current: Option<usize>, len: usize, forward: bool) -> Option<usize> {
+    let last = len.checked_sub(1)?;
+    Some(match (current, forward) {
+        (None, true) => 0,
+        (None, false) => last,
+        (Some(index), true) => (index + 1).min(last),
+        (Some(index), false) => index.saturating_sub(1).min(last),
+    })
+}

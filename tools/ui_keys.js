@@ -259,6 +259,64 @@ async function uiKeys() {
     await pressWith("ArrowDown", { altKey: true });
     check("panning back leaves the tree focused", tree.contains(active()), active().id);
 
+    // Task 31: the add-node menu and the card menu by keyboard.
+    const menu = document.getElementById("menu");
+    const cardMenu = document.getElementById("card-menu");
+    nodes()[0].focus();
+    await wait(60);
+    const opener = active().id;
+    await pressWith("n", {});
+    check("N opens the add-node menu with the cursor in its search box", !menu.hidden && active().id === "menu-search", active().id);
+    check("opening it is announced", /^Add node menu/.test(status.textContent), status.textContent);
+    await pressWith("ArrowDown", {});
+    check("Down from the search box goes to the first item", active().closest("#menu-tree") !== null && active().tagName === "BUTTON", active().textContent);
+    const category = menu.querySelector("#menu-tree button[data-category]");
+    check("the menu has a category to open", category !== null, category && category.dataset.category);
+    if (category) {
+        category.focus();
+        await wait(60);
+        await pressWith("ArrowRight", {});
+        const panel = category.parentElement.querySelector(":scope > .panel");
+        check("Right opens the flyout and moves into it", category.getAttribute("aria-expanded") === "true" && panel.contains(active()), active().textContent);
+        check("the flyout is shown", getComputedStyle(panel).display !== "none", getComputedStyle(panel).display);
+        await pressWith("ArrowDown", {});
+        await pressWith("ArrowLeft", {});
+        check("Left closes it and goes back to the category", active() === category && category.getAttribute("aria-expanded") === "false", active().textContent);
+        await pressWith("ArrowRight", {});
+        await pressWith("Escape", {});
+        check("Escape closes only the flyout first", !menu.hidden && active() === category, active().textContent);
+    }
+    await pressWith("Escape", {});
+    check("Escape closes the menu and returns to where the focus was", menu.hidden && active().id === opener, active().id + " vs " + opener);
+
+    await pressWith("n", {});
+    await pressWith("ArrowDown", {});
+    await pressWith("ArrowRight", {});
+    for (let i = 0; i < 12 && active().dataset.nodeType === undefined; i++) await pressWith("ArrowDown", {});
+    const picked = active().dataset.nodeType;
+    const countBefore = nodes().length;
+    if (picked !== undefined) active().click();
+    await wait(400);
+    check("picking an item adds a node and says so", nodes().length === countBefore + 1 && /^Added node n\d+, /.test(status.textContent), nodes().length + " / " + status.textContent);
+    check("the menu closed and the focus came back", menu.hidden && tree.contains(active()), active().id);
+    document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(300);
+    check("Ctrl+Z removes the added node", nodes().length === countBefore, nodes().length);
+
+    nodes()[0].focus();
+    await wait(60);
+    const cardOpener = active().id;
+    await pressWith("F10", { shiftKey: true });
+    check("Shift+F10 opens the node's card menu", !cardMenu.hidden && cardMenu.contains(active()), active().textContent);
+    check("it says which node", /^Actions for n\d+$/.test(status.textContent), status.textContent);
+    await pressWith("ArrowDown", {});
+    check("Down stays inside the card menu", cardMenu.contains(active()), active().textContent);
+    await pressWith("Escape", {});
+    check("Escape closes it and returns to the node", cardMenu.hidden && active().id === cardOpener, active().id);
+    await pressWith("ContextMenu", {});
+    check("the Menu key opens it too", !cardMenu.hidden, cardMenu.hidden);
+    await pressWith("Escape", {});
+
     // Leave focus on a port of the first node, for a screenshot of the ring.
     first.focus();
     await wait(60);

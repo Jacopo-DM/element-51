@@ -123,7 +123,7 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
     cannot run one here; it stays listed as not verified until the user tries
     VoiceOver), keyboard shortcuts that can be rebound, and any change to the look.
 - Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
-    "canvas-accessibility spec"); the task list (tasks 27 to 33) approved 2026-10-21; tasks 27 to 30 are done. The user's answers (2026-10-21): everything the
+    "canvas-accessibility spec"); the task list (tasks 27 to 33) approved 2026-10-21; tasks 27 to 31 are done. The user's answers (2026-10-21): everything the
     mouse does by keyboard; a hidden list beside the canvas for the screen
     reader; a live status line; checked with axe plus a keyboard walk-through by
     me.
@@ -279,7 +279,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 31 of `canvas-accessibility` (approved). The experiment goals are
+Next step: task 32 of `canvas-accessibility` (approved). The experiment goals are
 approved (2026-10-21; `visual-ports` has its spec and tasks 34 to 38); they start after
 task 33, as the user chose. Open question 4 is answered (the goals are the answer). The user's own try-out
 (below) is still pending.
@@ -492,16 +492,11 @@ of Rust and 60 of CSS and HTML per task of this size); nothing is measured yet.
 
 Done: task 27 (2026-10-21), the hidden tree, the focus ring and the pan to keep
 focus in view. Task 28 is done too (2026-10-21): the status line, Enter or Space to
-select, Delete on a node or a linked input port, undo and redo announced. Task 29 is done too (2026-10-21): link by keyboard. Task 30 is done too (2026-10-21): move, pan and zoom by keyboard. Detail, numbers and the changes from the spec are in DESIGN.md
+select, Delete on a node or a linked input port, undo and redo announced. Task 29 is done too (2026-10-21): link by keyboard. Task 30 is done too (2026-10-21): move, pan and zoom by keyboard. Task 31 is done too (2026-10-21): the menus by keyboard. Detail, numbers and the changes from the spec are in DESIGN.md
 (Results, and the spec's "Task 27 outcome").
 
 #### Tier 2 (ordered by value over risk plus cost)
 
-31. **Keyboard menus.** `N` and Shift+F10 or the Menu key open the add-node and
-    card menus; arrow keys, flyouts, Enter and Escape work inside them; focus returns
-    to where it was. Files: `menu_ui.rs`, `a11y_ui.rs`, `static/index.html`. Criterion
-    1. Risk: medium (the flyouts are placed by hover code). Cost: about 250 lines.
-    Verify: `ui_keys.js`, axe on the open states (new `ui_states.js` states).
 32. **Value boxes by keyboard.** Enter on an unlinked input port pans to its box and
     focuses it; Enter in the box returns focus to the port (the box already blurs on
     Enter). Files: `a11y_ui.rs`, `fields_ui.rs`. Criterion 1. Risk: low. Cost: about

@@ -14,6 +14,7 @@ use web_sys::{Document, Element, FocusEvent, HtmlElement, KeyboardEvent};
 
 use crate::State;
 use crate::draw::{Drag, Focus, Selected};
+use crate::menu_ui::{open_add_menu_from_keyboard, open_card_menu_from_keyboard};
 use crate::{Shared, redraw, submit};
 
 /// The least gap, in pixels, between a focused node and the window edge. It is
@@ -315,6 +316,26 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
         return;
     }
     let key = event.key();
+    if !event.alt_key() {
+        if key.eq_ignore_ascii_case("n") {
+            event.prevent_default();
+            event.stop_propagation();
+            open_add_menu_from_keyboard(shared);
+            return;
+        }
+        if key == "ContextMenu" || (key == "F10" && event.shift_key()) {
+            event.prevent_default();
+            event.stop_propagation();
+            let node = event
+                .target()
+                .and_then(|target| target.dyn_into::<Element>().ok())
+                .and_then(|item| item.get_attribute("data-node"));
+            if let Some(node) = node {
+                open_card_menu_from_keyboard(shared, &node);
+            }
+            return;
+        }
+    }
     if let Some(direction) = arrow_direction(&key)
         && (event.alt_key() || event.shift_key())
     {

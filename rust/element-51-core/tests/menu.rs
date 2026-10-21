@@ -1,7 +1,7 @@
 //! The add-node menu: nested categories, and search across all of them.
 
 use element_51_core::NodeType;
-use element_51_core::menu::{Entry, build_menu, search};
+use element_51_core::menu::{Entry, build_menu, search, step_menu};
 
 fn kind(name: &str, category: &str) -> NodeType {
     NodeType {
@@ -174,4 +174,30 @@ mod placement {
         let high = flyout_at((100.0, 2.0, 260.0), (160.0, 120.0), WINDOW, 4.0, 8.0);
         assert_eq!(high, (260.0, 8.0));
     }
+}
+
+#[test]
+fn the_arrow_keys_step_through_a_list_and_stop_at_its_ends() {
+    assert_eq!(step_menu(Some(1), 4, true), Some(2));
+    assert_eq!(step_menu(Some(1), 4, false), Some(0));
+    assert_eq!(step_menu(Some(3), 4, true), Some(3));
+    assert_eq!(step_menu(Some(0), 4, false), Some(0));
+}
+
+#[test]
+fn with_nothing_focused_down_goes_to_the_first_and_up_to_the_last() {
+    assert_eq!(step_menu(None, 4, true), Some(0));
+    assert_eq!(step_menu(None, 4, false), Some(3));
+}
+
+#[test]
+fn an_empty_list_has_nowhere_to_step() {
+    assert_eq!(step_menu(None, 0, true), None);
+    assert_eq!(step_menu(Some(0), 0, false), None);
+}
+
+#[test]
+fn a_stale_position_past_the_end_is_brought_back_in() {
+    assert_eq!(step_menu(Some(9), 3, true), Some(2));
+    assert_eq!(step_menu(Some(9), 3, false), Some(2));
 }

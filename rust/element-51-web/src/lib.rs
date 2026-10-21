@@ -37,9 +37,9 @@ use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
 };
 use menu_ui::{
-    fill_menu, on_app_menu_button, on_card_menu_click, on_context_menu, on_menu_click,
-    on_menu_hover, on_menu_search, on_menu_search_key, on_palette_key, on_palette_submit,
-    on_select_theme, on_theme_click, on_try_palette,
+    fill_menu, on_app_menu_button, on_card_menu_click, on_card_menu_key, on_context_menu,
+    on_menu_click, on_menu_hover, on_menu_key, on_menu_search, on_menu_search_key, on_palette_key,
+    on_palette_submit, on_select_theme, on_theme_click, on_try_palette,
 };
 
 /// Everything the event handlers share.
@@ -198,6 +198,10 @@ pub fn start() -> Result<(), JsValue> {
         listen(&menu, "click", move |event: MouseEvent| {
             on_menu_click(&shared, &event)
         })?;
+        let shared = state.clone();
+        listen(&menu, "keydown", move |event: KeyboardEvent| {
+            on_menu_key(&shared, &event)
+        })?;
     }
     if let Some(menu) = document.get_element_by_id("menu") {
         let shared = state.clone();
@@ -216,6 +220,10 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&card_menu, "click", move |event: MouseEvent| {
             on_card_menu_click(&shared, &event)
+        })?;
+        let shared = state.clone();
+        listen(&card_menu, "keydown", move |event: KeyboardEvent| {
+            on_card_menu_key(&shared, &event)
         })?;
     }
     if let Some(search) = document.get_element_by_id("menu-search") {
