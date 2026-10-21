@@ -535,6 +535,78 @@ focus in view. Detail, numbers and the changes from the spec are in DESIGN.md
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
+### Goal `visual-ports` (draft task list, proposed 2026-10-21, awaiting the user's approval)
+
+All five tasks wait for `canvas-accessibility` task 33 (the user's order). The web
+crate has no automated tests, so each task puts its logic in `element-51-core`
+(`display.rs`, `layout.rs`, `edit.rs`, `access.rs`) with native tests written first,
+and checks the page by hand in the browser pane and with axe-core. The shared
+fixtures in `tests/fixtures/` change with every wire record, so both suites
+read them. Estimates are by analogy with the menu work (about 300 lines of Rust
+and 60 of Python per task of this size); nothing is measured yet. Existing
+behaviour near the changes is pinned by `layout.rs`, `rules.rs`, `fields.rs`,
+`theme.rs` and `palette.rs` in the core tests and by `test_engine.py`,
+`test_nodes.py`, `test_edits.py` in Python; no characterisation tests are needed
+first. The example for these tasks is `examples/g_experiments/g1_picture_and_plot.py`
+(a new group `g_experiments`; the MNIST example is `g2_mnist.py`).
+
+#### Tier 1: walking skeleton (criteria 1, 2, 4 for images, 6 in part)
+
+34. **A picture on a card, end to end.** What changes: `Image` and `Carried` in
+    `visuals.py`; the `image` port kind in Python and Rust (`PortType`, `can_link`,
+    `value_fits`, `parse_input` refuses it, no input box); `-> Image` gives one output
+    `out`; `NodeType.display` (none or image, set from an `Image` output);
+    `NodeOutcome.shown` built by the engine; the card's picture area in `layout.rs`
+    and `display.rs` (geometry only); the picture drawn crisp and cached in `draw.rs`;
+    `image` colour and shape in all three theme files, `docs/themes.md`,
+    `contrast_pairs` and the palette mapping; the hidden tree label "Shows a W by H
+    picture"; fixtures; the example. Files: `src/element_51/{visuals,model,ports,
+    nodes,engine,protocol}.py`, `rust/element-51-core/src/{model,layout,display,
+    theme,fields,access,palette}.rs`, the theme JSONs, `rust/element-51-web/src/
+    {draw,fields_ui}.rs`, `tests/fixtures/*.json`, `docs/themes.md`,
+    `examples/g_experiments/g1_picture_and_plot.py`, `tests/test_examples.py`. Risk:
+    medium (it touches every layer and every theme). Cost: about 600 lines, no new
+    dependency. Verify: native and Python tests for each rule (the link rule, the
+    size check, the geometry, the AA pairs for six kinds in all palettes, the
+    fixtures in both suites), the example by hand in the pane, redraw median at 200
+    nodes within its spread and at 12 picture cards in view at 1.0 ms or less.
+
+#### Tier 2 (ordered by value over risk plus cost)
+
+35. **A series and a one-line chart.** `Series` and the `series` kind (NaN as
+    `null`, 100,000 points at most); `PlotNode` with one `series_1` input and a
+    chart area; `display.rs` ticks, scale, thinning (min and max per bucket) and the
+    "last value" text; the chart drawn in `draw.rs` on the card colour with the
+    theme's port colours; `shown` carries a chart node's series inputs; the hidden
+    tree says "Plot of 1 line, loss last 0.31". Files as for task 34 plus
+    `nodes.py` (`PlotNode`). Criteria 1, 3 (one line), 4. Risk: medium. Cost: about
+    500 lines. Verify: native tests for ticks, scale, thinning and the NaN gap,
+    Python tests for the limits and the engine, the example by hand, a 100,000-point
+    chart drawn in 4 ms or less.
+36. **Rows that grow with links.** `NodeType.variadic`; the effective rows
+    (`layout::effective_inputs`: linked `series_k` in order, then one empty row) used
+    by `node_rect`, hit-testing, drawing, the hidden tree and `neighbour`; `edit.rs`
+    and `edits.py` accept a link to a `series_k` port; line names after the source
+    port (node id prefixed on duplicates), dashes from the sixth line, names at the
+    line ends. Files: `layout.rs`, `edit.rs`, `access.rs`, `display.rs`, `draw.rs`,
+    `edits.py`, `engine.py`, `nodes.py`, fixtures (`edit_cases.json`,
+    `link_cases.json`). Criterion 3. Risk: high (card height now depends on the graph;
+    every layout call takes the links). Cost: about 450 lines. Verify: native tests
+    for the rows rule (grow, shrink, a gap in the middle, a deleted node), the same
+    rules in Python against the shared fixtures, hit-tests on a grown card, the
+    existing `layout.rs` tests unchanged.
+37. **Save as PNG.** `CardAction::Save` (enabled for a node with a picture or
+    chart); the picture or chart drawn at full size on an off-screen canvas and
+    downloaded as `<node>-<port>.png`; a native test for the file name and the
+    action's availability. Files: `menu.rs`, `menu_ui.rs`, `draw.rs`. Criterion 5.
+    Risk: low. Cost: about 150 lines. Verify: native tests, by hand (the downloaded
+    file opens and matches the card).
+38. **Accessibility and docs.** New `ui_states.py` states (a picture, a chart with
+    three lines, a grown Plot node), axe-core in all three themes, `ui_keys.js` rows
+    for the new labels, a docs page `docs/visual-ports.md`. Files: `tools/ui_states.py`,
+    `tools/ui_keys.js`, `docs/`. Criteria 6, 7. Risk: low. Cost: about 150 lines and
+    one page. Verify: axe 0 violations, redraw baseline, `uv-docs build`.
+
 ### Tier 3: listed, not executed
 
 - Automated browser tests for `element-51-web`: large setup, and the logic is
