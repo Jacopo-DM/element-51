@@ -203,7 +203,7 @@ screen reader were not tried, and the narrow window and touch were not checked.
 
 Four notebooks in `tests/functional/` (`nodes_and_running`, `save_and_load`, `themes`,
 `pictures_and_series`), the runner `tools/run_notebooks.py`, pre-commit hooks at commit
-and at push, and a coverage table with a test (commits `688e548` to `42e5b35`). Left out
+and at push, and a coverage table with a test (commits `0988e97` to `6b48b32`). Left out
 on purpose (user's answer, 2026-10-21): `edits`, `protocol` and `server` (the live-push
 and websocket part); `tests/test_server_websocket.py` covers it, and a notebook there
 needs a local port. The table says "none yet" for them. Decisions are in DESIGN.md.
