@@ -1,15 +1,24 @@
 """Tests for saving and loading a graph as versioned JSON."""
 
 import json
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
 from sample_nodes import add, show
 
 from element_51.edits import SetValue
+from element_51.model import Graph, Link, PlacedNode, PortRef
 from element_51.session import App
-from element_51.store import FORMAT_VERSION, StoreError
+from element_51.store import (
+    FORMAT_VERSION,
+    StoreError,
+    load_graph,
+    save_graph,
+)
 
 if TYPE_CHECKING:
     from element_51.protocol import Snapshot
@@ -181,3 +190,95 @@ def test_a_value_that_does_not_fit_its_port_is_refused(tmp_path: Path) -> None:
     )
     with pytest.raises(StoreError, match="not a float"):
         App([add]).load(path)
+
+
+NODE_TYPES = {"add": add.node_type, "show": show.node_type}
+SAVED_GRAPH = json.dumps({
+    "format_version": FORMAT_VERSION,
+    "nodes": [
+        {"id": "n1", "node_type": "add", "x": 1.0, "y": 2.0},
+        {"id": "n2", "node_type": "show", "x": 3.0, "y": 4.0},
+    ],
+    "links": [
+        {
+            "source": {"node": "n1", "port": "out"},
+            "target": {"node": "n2", "port": "value"},
+        }
+    ],
+})
+
+
+@given(st.text())
+@example(SAVED_GRAPH)
+@example(json.dumps({"format_version": 1, "nodes": [], "links": []}))
+def test_load_graph_boundary(text: str) -> None:
+    """Any file text is a graph or a StoreError, nothing else."""
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "g.json"
+        path.write_text(text, "utf-8")
+        try:
+            graph = load_graph(path, NODE_TYPES)
+        except StoreError:
+            return
+    assert isinstance(graph, Graph)
+
+
+@st.composite
+def graphs(draw: st.DrawFn) -> Graph:
+    """Draw a graph of `add` and `show` nodes that follows the link rules.
+
+    Returns
+    -------
+    Graph
+        Nodes at finite positions, some with typed values, and links from
+        `add` outputs to `show` inputs.
+    """
+    coordinate = st.floats(allow_nan=False, allow_infinity=False)
+    value = st.one_of(
+        st.floats(allow_nan=False, allow_infinity=False), st.integers()
+    )
+    adds = draw(st.integers(min_value=1, max_value=4))
+    shows = draw(st.integers(min_value=0, max_value=3))
+    nodes: list[PlacedNode] = []
+    for index in range(adds):
+        values = draw(
+            st.dictionaries(st.sampled_from(["a", "b"]), value, max_size=2)
+        )
+        nodes.append(
+            PlacedNode(
+                id=f"n{index + 1}",
+                node_type="add",
+                x=draw(coordinate),
+                y=draw(coordinate),
+                values=values,
+            )
+        )
+    links: list[Link] = []
+    for index in range(shows):
+        shown_id = f"n{adds + index + 1}"
+        nodes.append(
+            PlacedNode(
+                id=shown_id,
+                node_type="show",
+                x=draw(coordinate),
+                y=draw(coordinate),
+            )
+        )
+        if draw(st.booleans()):
+            source = f"n{draw(st.integers(min_value=1, max_value=adds))}"
+            links.append(
+                Link(
+                    source=PortRef(node=source, port="out"),
+                    target=PortRef(node=shown_id, port="value"),
+                )
+            )
+    return Graph(nodes=tuple(nodes), links=tuple(links))
+
+
+@given(graphs())
+def test_graph_file_round_trip(graph: Graph) -> None:
+    """A saved graph loads back as the same graph, values and links included."""
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "g.json"
+        save_graph(graph, path)
+        assert load_graph(path, NODE_TYPES) == graph
