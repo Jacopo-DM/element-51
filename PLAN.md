@@ -193,7 +193,9 @@ and the light theme's red border were not checked.
     4. A `dataset` choice also offers Fashion-MNIST, with its own checked download.
     5. The docstring lists what to try; a row in `tests/test_examples.py` (with the
         fake data); a docs page.
-- Status: approved 2026-10-21; no spec yet (it comes last).
+- Status: approved 2026-10-21. Spec written 2026-10-21 (DESIGN.md, "mnist-experiment spec"),
+    with these choices from the user: the dataset is a text box `dataset`, one plot point per 100
+    batches, the default run may take up to two minutes. Tasks below wait for approval in words.
 - Added: 2026-10-21
 
 ### speed-up-frame: done (2026-10-21)
@@ -598,6 +600,47 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
+
+### Goal `mnist-experiment`: tasks (written 2026-10-21, awaiting approval)
+
+All in `examples/g_experiments/g3_mnist.py` and its tests; no new dependency (`numpy` is in the
+`examples` group). No task changes the library.
+
+Tier 1 (a working example on fake data):
+
+1. The data part: `Idx`, `load_images`, `load_labels`, the `DATASETS` table and `fetch` with its
+    `.part` and sha256 step (hashes left empty until task 4). Serves criterion 2. Risk low, about
+    120 lines. Verified by `tests/test_mnist_example.py`: fake gzip IDX files parse, a bad magic number
+    or a wrong count is an error, `fetch` is skipped when the files exist and refuses a file whose
+    hash differs (with the download function replaced by a stub, no network).
+2. The network: `init`, `forward`, `backward`, `accuracy`, in numpy. Serves criterion 3. Risk medium
+    (a wrong gradient trains badly and is hard to see). About 80 lines. Verified by a finite-difference
+    gradient check on a tiny network, the same seed giving the same weights and curves, and a
+    separable fake set reaching 100%.
+3. The nodes and the graph: `MnistSample`, `Train`, `PlotNode`, `build_app()`, the row in
+    `tests/test_examples.py` (fake data folder; Start on `Train` fills the Plot, `dataset = "fashion"`
+    picks the other folder, a bad word is an error naming both). Serves criteria 1, 4 and 5. Risk
+    medium, about 120 lines. Verified by those tests and the keyboard walk-through still passing
+    (the example is not in it, so by hand in the browser pane: the sample's picture changes with
+    `index` under auto-run, Start fills the plot).
+
+Tier 2:
+
+4. The real data: needs the user's yes, by name, source and size (MNIST 11.6 MB from Google's
+    cvdf-datasets bucket and from PyTorch's S3 bucket as the cross-check; Fashion-MNIST 30.9 MB
+    from Zalando's GitHub repository). Download into `__data__/`, pin the sha256 of each file in the
+    example, add the `fetch` calls to `main()`, then measure: the default settings' test accuracy and
+    time on MNIST (the goal says at least 95%, at most two minutes) and the same for Fashion.
+    Serves criteria 2 to 4. Risk medium (the 95% target is measured, not assumed; if it is missed,
+    I tune `epochs` or the learning rate and say so). A native or Python test cannot run it, so the
+    numbers are recorded in DESIGN.md under Results.
+5. The docs and the notes: the docstring's `Notes` section, a docs page `docs/experiments.md` in the
+    toctree, the example's row in CODEMAP.md, and the commands in CLAUDE.md if any. Serves criterion 5.
+    Risk low, about 60 lines of prose; the docs build must stay free of warnings.
+
+Tier 3 (listed, not executed): Adam or momentum; a saved trained network; a prediction or confusion
+node; data augmentation; a convolutional layer. Each is outside the goal and adds code that hides
+what the example shows.
 
 ### Tier 3: listed, not executed
 

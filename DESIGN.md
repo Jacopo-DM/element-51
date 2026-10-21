@@ -776,6 +776,73 @@ approved in words on 2026-10-21.
     values and red borders blank for about 300 ms and come back with the result. This
     keeps the existing rule; softening it is a separate decision.
 
+### mnist-experiment spec (answers of 2026-10-21, awaiting approval)
+
+Part of the experiment goals (PLAN.md). The goal and its five criteria were approved on
+2026-10-21; this spec fills in what the criteria leave open.
+
+- Users: a Python author who wants to see the editor do real work: pick a picture, train a
+    small network on it while watching the curves, change a setting and train again.
+    Non-goals: a better model (no convolutions, no Adam, no augmentation), saving a trained
+    network, a confusion matrix or a prediction node, a GPU, a new dependency.
+- Integration points: `JobNode` (`steps`, `begin`, `step`, as `Training` in `g2_job_nodes.py`;
+    a job's inputs come from the nodes it needs, which Start runs first), `element_51.Image` (grey,
+    28 by 28, one channel) and `element_51.Series`, `PlotNode`, auto-run (the sample node refreshes
+    when `index` changes), `tests/test_examples.py` (a row per example, no network), and the
+    `examples` group, which already holds `numpy` (so mypy and the example both see it).
+- Data: four gzip files of the IDX format per dataset. MNIST from
+    `https://storage.googleapis.com/cvdf-datasets/mnist/` (11.6 MB: train images 9,912,422,
+    train labels 28,881, test images 1,648,877, test labels 4,542 bytes) and Fashion-MNIST from
+    `https://github.com/zalandoresearch/fashion-mnist/raw/master/data/fashion/` (30.9 MB: 26,421,880,
+    29,515, 4,422,102 and 5,148 bytes), both read-only checked on 2026-10-21. The original MNIST site
+    (`yann.lecun.com`) answered 404 that day; PyTorch's `ossci-datasets` S3 bucket serves the same
+    four MNIST files and is the cross-check for the pinned hashes. Files go in
+    `__data__/mnist/` and `__data__/fashion/` (git-ignored). The sha256 of each file is pinned in
+    the example after one approved download (trust on first use, plus the MNIST cross-check against
+    the second host); a download goes to `<name>.part`, is hashed, and is renamed only if it matches,
+    so a file on disk is always a verified one and a re-run does not hash again.
+- Architecture, all in `examples/g_experiments/g3_mnist.py` so the example reads top to bottom
+    (about 300 lines, the pieces named in this order):
+    * `Idx` (a pydantic `Model`: magic, count, rows, columns, validated with `model_validate` from the
+        header) and `load_images`, `load_labels`: parse a gzip file into a numpy array.
+    * `DATASETS`: a table of name, folder, base address, and the four files with size and sha256;
+        `fetch(name, folder)` downloads what is missing (standard library `urllib`, no new dependency).
+        `main()` calls it for both datasets before serving, printing name, source and size, so Run never
+        downloads and a user sees what is fetched. Tests give a folder of fake files and never fetch.
+    * The network: `784 -> hidden -> 10`, ReLU, softmax with cross-entropy, plain minibatch SGD
+        (batch 64, the learning rate as given), He-style initial weights from a fixed seed, written as
+        plain numpy functions (`init`, `forward`, `backward`, `accuracy`).
+    * `MnistSample` (plain node): inputs `index: int = 0` and `dataset: str = "mnist"` (a text box
+        holding `mnist` or `fashion`; anything else is an error naming both words); outputs an
+        `Image`, the `label: int` and the `dataset` word, so `Train`'s own `dataset` box can be linked to it.
+    * `Train` (`JobNode`): fields `hidden: int = 64`, `learning_rate: float = 0.1`, `epochs: int = 10`,
+        `dataset: str = "mnist"`; one step is 100 batches (938 batches make an epoch, so about 94 steps
+        for 10 epochs); each step returns one new point of `loss` (mean over the step) and of
+        `accuracy` (on the first 1,000 test pictures, and on all 10,000 in the last step); the job's
+        outputs are the two series.
+    * `PlotNode` after `Train`.
+- Acceptance (the criteria in PLAN.md, made testable): a tiny fake dataset (200 pictures written as real
+    gzip IDX files into a temporary folder) drives every test; a gradient check against finite
+    differences pins `backward`; the same seed gives the same curves twice; a separable fake set
+    trains to 100% in the test; Start on `Train` fills a `Plot` with `loss` falling and `accuracy`
+    rising on the fake set; `dataset = "fashion"` selects the other folder; a bad word is a clear
+    error. By hand, with the real data after an approved download: the default settings reach at
+    least 95% test accuracy on MNIST, in at most two minutes on this Mac (expected 20 to 40 s and
+    about 97%); no accuracy target is set for Fashion-MNIST (about 85% is normal for this network).
+- Existing behaviour that must not regress: every other example still builds and runs; `g2_job_nodes.py`
+    is untouched; the library gets no new dependency and no new public name.
+- Open points decided by the user on 2026-10-21: the sources above; a text box `dataset` (not a tick
+    box); one plot point per 100 batches; a two-minute budget for the default run.
+- Decided by me: both datasets download in `main()` before the page opens (42.5 MB once) instead of on
+    first use in a node, because a Run or Start that waits on the network with no sign on the card is a
+    worse surprise than a printed line at startup; the data helper lives in the example, not in the
+    library, because it is example code (the library stays free of numpy and of any dataset).
+- Rejected alternatives: `torchvision` or `scikit-learn` loaders (a large new dependency for 40 lines of
+    parsing); a library module for datasets (the library would grow a public API for one example); one
+    point per epoch (10 points, the plot jumps); a tick box for the dataset (the goal said a `dataset`
+    choice and the user chose the text box); a convolutional network (slow in plain numpy and beside
+    the point of the example); Adam (more code, no better demo than a visibly falling SGD loss).
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
