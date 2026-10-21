@@ -63,6 +63,21 @@
     criteria 1 to 5 are met); the goal waits only for the user's look at task 18.
 - Added: 2026-10-19
 
+### restructure-2
+
+- Goal: any one feature of the editor can be read and changed with a few files
+    in context again; the files the design and job work made large are split by
+    concern, and the one real copy of code is removed.
+- Kind: improvement (behaviour unchanged).
+- Success measure: source files over 400 lines 13 to at most 6 (tests counted
+    apart, see Baseline); jscpd clones (`--min-lines 8 --min-tokens 70`) 2 to 0;
+    no web module over five imports except `lib.rs`; every Rust and Python test
+    passing unchanged (397 Python tests and the Rust suites; only a `use` line may
+    move with code).
+- Status: draft (2026-10-21), waits for the task list below to be approved in
+    words. Thresholds are the first pass's: 400 lines, 5 imports.
+- Added: 2026-10-21
+
 ### restructure: done (2026-10-20)
 
 Commits `71f466e..HEAD` on branch `restructure` (measure `08438ca`, web split
@@ -255,7 +270,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
+Next step: the `restructure-2` task list (PLAN.md, Tasks) waits for the user's approval in words; no code changes until then. Before it: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -326,6 +341,24 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
     `rust/element-51-core/src/theme.rs` 525, `rust/element-51-web/src/draw.rs` 517,
     `rust/element-51-web/src/lib.rs` 480, `tools/compress_images.py` 470,
     `rust/element-51-core/tests/layout.rs` 405); modules over five imports still 2.
+- Structure, measured 2026-10-21 for `restructure-2` (`tools/measure_structure.py`,
+    branch `restructure-2` at `4c80f9e`): 121 tracked files, 27,405 lines; 24 files over 400 lines, of which 13 are
+    source and 11 are tests (source: web `draw.rs` 932, `a11y_ui.rs` 826,
+    `menu_ui.rs` 805, `lib.rs` 703, core `access.rs` 583, `theme.rs` 561,
+    `model.rs` 539, `engine.py` 502, `run_notebooks.py` 495 and
+    `compress_images.py` 470 (template copies), `nodes.py` 473, `jobs.py` 438,
+    `session.py` 435; tests: Rust `access.rs` 913, `theme.rs` 678, `display.rs`
+    631, `layout.rs` 473, `job.rs` 413; Python `test_visuals.py` 735,
+    `test_jobs.py` 563, `test_session.py` 515, `test_server_websocket.py` 505,
+    `test_engine.py` 450, `test_examples.py` 402); 11 modules over five imports
+    (web `menu_ui.rs` 9, `draw.rs` 8, `lib.rs` 7, `input.rs`, `save_png.rs` and
+    `a11y_ui.rs` 6, core `access.rs` 6; Python `session.py` 9, `jobs.py` 7,
+    `__init__.py` 7 (the public surface), `tests/test_session.py` 6). jscpd 5.4.2
+    (`--min-lines 8 --min-tokens 70`, over `src`, `rust/element-51-core/src` and
+    `rust/element-51-web/src`: 45 files, 12,053 lines): 2 clones, 18 lines,
+    0.15% duplicated (Python 0, Rust 0.22%), both in `menu_ui.rs`. Before the
+    first pass this was 0 clones; the first pass ended with 5 large files, the
+    audit of 2026-10-20 with 6.
 - Speed, measured 2026-10-20 after the speed-up pass (Apple silicon arm64, macOS
     27.0, Python 3.13 under uv, WASM built with the release profile, the page in
     the built-in browser pane; before in brackets):
@@ -563,6 +596,97 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
+
+### Goal `restructure-2`: findings and ranked tasks (draft, 2026-10-21)
+
+Boundaries: unchanged since the first pass (CODEMAP.md, "Boundaries between
+languages": the JSON wire shared by Python and `element-51-core`, pinned by
+`tests/fixtures/`; the WASM boundary; the pickled messages to an isolated job's
+process). None of the tasks below touches a boundary. Pinning: the Python
+modules are covered by 397 tests at 100%; `element-51-core` by native tests;
+`element-51-web` has no automated test, so every task that moves web code is
+checked by the 90-row key walk-through (`uiKeys`, `uiKeysDisplay`, `uiKeysJob`)
+and by eye in the browser pane, as the first pass did.
+
+Findings (file, what I saw):
+
+1. `rust/element-51-web/src/menu_ui.rs` lines 609 to 617 and 680 to 688, and 633
+   to 641 and 697 to 705 (jscpd, 2 clones, 18 lines): `on_menu_key` and
+   `on_card_menu_key` both pick the target button, then run the same
+   Arrow/Home/End step over `menu_items` and `focus_element`. They must change
+   together (one keyboard rule for both menus), so this is a real clone.
+2. `menu_ui.rs` (805 lines, 9 imports) holds four concerns: the add menu and its
+   search (lines 26 to 260), the card menu (265 to 306, 425 to 476, 680 to 717),
+   the app menu with the theme and palette entries (320 to 424), and the keyboard
+   and focus code for flyouts (515 to 805).
+3. `a11y_ui.rs` (826 lines): the hidden tree's building and focus handling (30
+   to 340) and its keyboard actions and field return (378 to 826) are two
+   concerns; `restore_field` and `return_from_field` (653 to 688) belong beside
+   `fields_ui.rs`.
+4. `draw.rs` (932 lines, 8 imports): the first pass left it alone at 497 lines
+   as "one concern". It has since gained the chart with its legend, the job row
+   and the focus ring. `card` (465 to 648), `chart` (649 to 792) and `job_row`
+   (793 to 851) draw the contents of a card; wires, grid and focus ring are the
+   canvas. The earlier reason no longer holds at this size.
+5. web `lib.rs` (703 lines, 7 imports): `State`, `start()` (about 200 lines of
+   listener set-up), the edit flow, and the run and job flow (`clear_run`,
+   `show_jobs`, `on_job_update`, `send_job_request`, `on_run`, `set_running`, 492
+   to 548 and 665 to 703) in one file.
+6. core `access.rs` (583 lines, 6 imports): describing the graph (`describe_*`,
+   `neighbour`, `with_displays`, `with_jobs`) is one concern; the status-line
+   sentences (`edit_text` to `run_text`, about 250 lines) and the keyboard step
+   sizes (`moved_to`, `pan_delta`, `ZOOM_STEP`) are others. The sentences moving
+   to a new module changes the `use` line in `tests/access.rs`, the web crate's
+   `lib.rs` and `a11y_ui.rs`; no test body changes.
+7. `session.py` 435 lines and 9 imports (7 at the first pass, "the facade"), then
+   `engine.py` 502, `nodes.py` 473, `jobs.py` 438: each is one concern a little
+   over the line limit; I found no second concern to split out.
+8. Dead code: `cargo clippy -D warnings` and ruff report none; I did not find
+   unused exports by reading.
+
+Tasks, ranked by benefit over risk (none approved):
+
+1. Extract one `step_menu_focus(items, target, key)` in `menu_ui.rs` that both key
+   handlers call (finding 1). Files: `menu_ui.rs`. Risk low. Verify: `cargo test`,
+   clippy, `uiKeys` (90 rows) before and after, jscpd 2 clones to 0.
+2. Split `menu_ui.rs` (finding 2): `theme_ui.rs` (app menu, theme, palette; about
+   105 lines) and `menu_keys.rs` (flyout open and close, keyboard handlers, focus
+   return; about 290 lines); `menu_ui.rs` keeps the add menu, the card menu and
+   placement (about 410, so likely just over; the card menu's click handler may
+   move to `menu_keys` if it must come under). Risk low, a pure move; verify as
+   in task 1. Result: one module over five imports less, one 805-line file gone.
+3. Split `a11y_ui.rs` (finding 3): the tree's keyboard actions to `tree_keys.rs`
+   (about 440 lines, so a second cut is likely: link and delete actions apart);
+   `restore_field` and `return_from_field` into `fields_ui.rs`. Risk medium (the
+   tree has the most shared state; `sync_tree` and the focus handlers call
+   private helpers from both halves); verify with `uiKeys`, `uiKeysDisplay`,
+   `uiKeysJob` and the axe scan.
+4. Split `draw.rs` (finding 4): `draw_card.rs` (`card`, `job_row`, `card_path`,
+   `round_rect_path`, about 330 lines) and `draw_chart.rs` (`chart`, about 145
+   lines, used by `save_png.rs` too). `fit_text` and `marker` stay shared. Risk
+   low to medium; verify with `cargo clippy`, the redraw benchmark (budget 4 ms;
+   now 2.1 ms) before and after, and the display and job walk-throughs. This
+   reverses a first-pass decision, so it needs your word.
+5. Split web `lib.rs` (finding 5): the run and job flow into `run_ui.rs` (about
+   130 lines). Risk low; verify with `uiKeysJob` and a live Start, Stop, Run.
+6. Split core `access.rs` (finding 6): the sentences into `announce.rs` (about
+   250 lines), `access.rs` keeps the description and movement. Risk low
+   (native tests pin every sentence); only `use` lines change. Needs your word
+   because three `use` lines in tests and the web crate change.
+7. Regenerate CODEMAP.md, add the new modules to `element-51-web/README.md` (and
+   the core README for task 6), and record the end numbers.
+
+Left alone, with the reason (to record in DESIGN.md once you confirm):
+- core `theme.rs` (561) and `model.rs` (539): one concern each (a struct per theme
+  section plus merge code; the wire records), as at the first pass.
+- `session.py`, `engine.py`, `nodes.py`, `jobs.py` (finding 7): one concern each;
+  a split adds a layer with one call site.
+- `tools/run_notebooks.py` and `tools/compress_images.py`: copies of the user's
+  templates that a project does not edit.
+- The 11 test files over 400 lines: each mirrors one module; a test file moves
+  only if the module it tests is split (tasks 2 to 6 would leave `tests/access.rs`
+  at 913 lines; I would split it by the same line as task 6 only if you ask).
+- `__init__.py` with 7 imports: it is the package's public surface by design.
 
 ### Tier 3: listed, not executed
 
