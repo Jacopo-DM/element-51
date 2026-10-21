@@ -499,7 +499,10 @@ fn the_page_stays_hidden_until_the_first_snapshot_has_set_the_theme() {
         PAGE.contains("html:not(.ready)"),
         "the page paints before its theme is known"
     );
-    assert!(WEB.contains("fn mark_ready"), "nothing reveals the page");
+    assert!(
+        CANVAS_UI.contains("fn mark_ready"),
+        "nothing reveals the page"
+    );
     // A failure must also reveal it, or the error banner would stay invisible.
     let show_error = &WEB[WEB.find("fn show_error").unwrap()..];
     let body = &show_error[..show_error.find("\n}\n").unwrap()];
