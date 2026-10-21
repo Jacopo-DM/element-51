@@ -112,13 +112,17 @@ pub(crate) fn open_flyout(shared: &Shared, label: &Element) {
     }
 }
 
-/// Arrow keys, Home, End, Enter and Escape on a button of the add-node menu.
-pub(crate) fn on_menu_key(shared: &Shared, event: &KeyboardEvent) {
-    let Some(target) = event
+/// The button a key press went to, if it went to one.
+fn button_target(event: &KeyboardEvent) -> Option<Element> {
+    event
         .target()
         .and_then(|target| target.dyn_into::<Element>().ok())
         .filter(|target| target.tag_name() == "BUTTON")
-    else {
+}
+
+/// Arrow keys, Home, End, Enter and Escape on a button of the add-node menu.
+pub(crate) fn on_menu_key(shared: &Shared, event: &KeyboardEvent) {
+    let Some(target) = button_target(event) else {
         return;
     };
     let key = event.key();
@@ -191,11 +195,7 @@ pub(crate) fn close_enclosing_flyout(panel: Option<&Element>) {
 
 /// Arrow keys, Home, End and Escape on a button of the card menu.
 pub(crate) fn on_card_menu_key(shared: &Shared, event: &KeyboardEvent) {
-    let Some(target) = event
-        .target()
-        .and_then(|target| target.dyn_into::<Element>().ok())
-        .filter(|target| target.tag_name() == "BUTTON")
-    else {
+    let Some(target) = button_target(event) else {
         return;
     };
     let key = event.key();
