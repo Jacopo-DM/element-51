@@ -20,6 +20,12 @@ async function uiKeys() {
         );
         await wait(60);
     };
+    const pressWith = async (key, modifiers) => {
+        document.activeElement.dispatchEvent(
+            new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...modifiers }),
+        );
+        await wait(150);
+    };
     const active = () => document.activeElement;
     const nodes = () => [...tree.children];
 
@@ -180,7 +186,9 @@ async function uiKeys() {
         await wait(300);
         await goTo(target);
         await press("Enter");
-        check("Enter on an input with no link started says so", /^No link started/.test(status.textContent), status.textContent);
+        check("Enter on a free input with no link started opens its value box", active().id === `field-${target.node}-${target.id.split("-input-")[1]}` && /^Type a value for /.test(status.textContent), active().id + " / " + status.textContent);
+        await pressWith("Escape", {});
+        check("Escape in the box goes back to the port", active().id === target.id, active().id);
         await goTo(source);
         await press("Enter");
         check("Enter on an output starts a link", /^Link from n\d+ \w+ started/.test(status.textContent), status.textContent);
@@ -188,7 +196,8 @@ async function uiKeys() {
         check("Escape cancels it", status.textContent === "Link cancelled", status.textContent);
         await goTo(target);
         await press("Enter");
-        check("after Escape an input finds no link started", /^No link started/.test(status.textContent), status.textContent);
+        check("with the link cancelled, Enter on an input opens its box again", /^Type a value for /.test(status.textContent), status.textContent);
+        await pressWith("Escape", {});
 
         if (clashing) {
             document.getElementById("error").setAttribute("hidden", "");
@@ -200,7 +209,8 @@ async function uiKeys() {
             check("a link the rules refuse is refused with the reason", /^Refused: /.test(status.textContent), status.textContent);
             check("the refusal also shows in the banner", !document.getElementById("error").hidden, document.getElementById("error").hidden);
             await press("Enter");
-            check("a refused link ends the pending link", /^No link started/.test(status.textContent), status.textContent);
+            check("a refused link ends the pending link", /^Type a value for /.test(status.textContent), status.textContent);
+            await pressWith("Escape", {});
             document.getElementById("error").setAttribute("hidden", "");
         }
 
@@ -220,12 +230,6 @@ async function uiKeys() {
     }
 
     // Task 30: move, pan and zoom by keyboard.
-    const pressWith = async (key, modifiers) => {
-        document.activeElement.dispatchEvent(
-            new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...modifiers }),
-        );
-        await wait(150);
-    };
     nodes()[0].focus();
     await wait(60);
     const movedId = active().dataset.node;
@@ -316,6 +320,39 @@ async function uiKeys() {
     await pressWith("ContextMenu", {});
     check("the Menu key opens it too", !cardMenu.hidden, cardMenu.hidden);
     await pressWith("Escape", {});
+
+    // Task 32: value boxes by keyboard.
+    const boxPort = ports.find((port) => port.side === "input" && /not linked|linked from/.test(port.label) && document.getElementById("field-" + port.node + "-" + port.id.split("-input-")[1]));
+    const linkedPort = ports.find((port) => port.side === "input" && /linked from/.test(port.label) && !document.getElementById("field-" + port.node + "-" + port.id.split("-input-")[1]));
+    check("an input with a value box and a linked input were found", Boolean(boxPort && linkedPort), (boxPort && boxPort.id) + " / " + (linkedPort && linkedPort.id));
+    if (boxPort && linkedPort) {
+        const fieldId = "field-" + boxPort.node + "-" + boxPort.id.split("-input-")[1];
+        await goTo(boxPort);
+        await press("Enter");
+        const box = document.getElementById(fieldId);
+        check("Enter on an unlinked input puts the cursor in its value box", active() === box, active().id);
+        check("the box is named for its port and node", /of node n\d+$/.test(box.getAttribute("aria-label")), box.getAttribute("aria-label"));
+        const was = box.value;
+        box.value = "9";
+        await pressWith("Escape", {});
+        check("Escape puts the old value back and returns to the port", box.value === was && active().id === boxPort.id, box.value + " / " + active().id);
+        await press("Enter");
+        const box2 = document.getElementById(fieldId);
+        box2.value = "7";
+        // A script-set value does not make the browser fire `change` when the
+        // box blurs (typing does), so fire it by hand.
+        box2.dispatchEvent(new Event("change", { bubbles: true }));
+        await pressWith("Enter", {});
+        await wait(300);
+        check("Enter in the box sends the value and says so", /^Set .+ of n\d+ to 7$/.test(status.textContent), status.textContent);
+        check("and returns to the input port", active().id === boxPort.id, active().id);
+        document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+        await wait(300);
+        check("Ctrl+Z takes the value away", status.textContent === "Undid the last change", status.textContent);
+        await goTo(linkedPort);
+        await press("Enter");
+        check("Enter on a linked input says it has no box", /^That input is linked/.test(status.textContent) && active().id === linkedPort.id, status.textContent);
+    }
 
     // Leave focus on a port of the first node, for a screenshot of the ring.
     first.focus();

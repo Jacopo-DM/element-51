@@ -3,14 +3,14 @@
 //! focused node or port, and the view pans to keep it in sight.
 
 use element_51_core::access::{
-    Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_ports, link_cancelled_text,
-    link_edit, link_started_text, list_nodes, moved_to, neighbour, no_link_started_text, pan_delta,
-    pan_text, pan_to_show, selected_text, zoom_text,
+    Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_ports, editing_text,
+    link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes, moved_to,
+    neighbour, pan_delta, pan_text, pan_to_show, selected_text, zoom_text,
 };
 use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
 use element_51_core::{Edit, PortRef};
 use wasm_bindgen::prelude::*;
-use web_sys::{Document, Element, FocusEvent, HtmlElement, KeyboardEvent};
+use web_sys::{Document, Element, FocusEvent, HtmlElement, HtmlInputElement, KeyboardEvent};
 
 use crate::State;
 use crate::draw::{Drag, Focus, Selected};
@@ -269,25 +269,30 @@ pub(crate) fn on_tree_focus_in(shared: &Shared, event: &FocusEvent) {
         let node_id = match &focus {
             Focus::Node(id) | Focus::Port { node: id, .. } => id.clone(),
         };
-        let size = (
-            f64::from(state.canvas.client_width()),
-            f64::from(state.canvas.client_height()),
-        );
-        let rect = state.replica.as_ref().and_then(|replica| {
-            let node = replica.graph().nodes.iter().find(|n| n.id == node_id)?;
-            let node_type = replica
-                .node_types()
-                .iter()
-                .find(|known| known.name == node.node_type)?;
-            Some(node_rect(node, node_type, &state.theme.metrics))
-        });
-        if let Some(rect) = rect {
-            let (dx, dy) = pan_to_show(&state.view, &rect, size, FOCUS_MARGIN);
-            state.view.pan_by(dx, dy);
-        }
+        pan_to_node(&mut state, &node_id);
         state.focus = Some(focus);
     }
     redraw(shared);
+}
+
+/// Pan the view, if it has to, so node `id` is fully in the window.
+fn pan_to_node(state: &mut State, id: &str) {
+    let size = (
+        f64::from(state.canvas.client_width()),
+        f64::from(state.canvas.client_height()),
+    );
+    let rect = state.replica.as_ref().and_then(|replica| {
+        let node = replica.graph().nodes.iter().find(|n| n.id == id)?;
+        let node_type = replica
+            .node_types()
+            .iter()
+            .find(|known| known.name == node.node_type)?;
+        Some(node_rect(node, node_type, &state.theme.metrics))
+    });
+    if let Some(rect) = rect {
+        let (dx, dy) = pan_to_show(&state.view, &rect, size, FOCUS_MARGIN);
+        state.view.pan_by(dx, dy);
+    }
 }
 
 /// The focus left the tree: the canvas ring goes away.
@@ -515,9 +520,69 @@ fn press_port(shared: &Shared, end: PortRef, side: Side) {
             let source = shared.borrow_mut().pending_link.take();
             match source {
                 Some(source) => submit(shared, link_edit(&source, &end)),
-                None => announce(&document, &no_link_started_text()),
+                None => edit_value(shared, &end),
             }
         }
+    }
+}
+
+/// Enter on an input port with no link started: move the focus into its value
+/// box, panned into view first, or say that a linked input has none.
+fn edit_value(shared: &Shared, end: &PortRef) {
+    let document = shared.borrow().document.clone();
+    let field = document
+        .get_element_by_id(&format!("field-{}-{}", end.node, end.port))
+        .and_then(|field| field.dyn_into::<HtmlInputElement>().ok());
+    let Some(field) = field else {
+        announce(&document, &linked_input_text());
+        return;
+    };
+    pan_to_node(&mut shared.borrow_mut(), &end.node);
+    redraw(shared);
+    // Keep what the box held, so Escape can put it back.
+    let original = if field.type_() == "checkbox" {
+        field.checked().to_string()
+    } else {
+        field.value()
+    };
+    let _ = field.set_attribute("data-original", &original);
+    focus(&field);
+    announce(&document, &editing_text(&end.node, &end.port));
+}
+
+/// Escape in a value box that the keyboard opened: put back what it held.
+pub(crate) fn restore_field(field: &HtmlInputElement) {
+    if let Some(original) = field.get_attribute("data-original") {
+        if field.type_() == "checkbox" {
+            field.set_checked(original == "true");
+        } else {
+            field.set_value(&original);
+        }
+    }
+}
+
+/// A value box that the keyboard opened was left (Enter or Escape): give the
+/// focus back to the input port it came from. A box the mouse focused has no
+/// such memory, and nothing happens.
+pub(crate) fn return_from_field(shared: &Shared, field: &HtmlInputElement) {
+    if field.get_attribute("data-original").is_none() {
+        return;
+    }
+    let _ = field.remove_attribute("data-original");
+    let (Some(node), Some(port)) = (
+        field.get_attribute("data-node"),
+        field.get_attribute("data-port"),
+    ) else {
+        return;
+    };
+    let document = shared.borrow().document.clone();
+    let Some(node_item) = document.get_element_by_id(&node_element_id(&node)) else {
+        return;
+    };
+    let _ = ensure_ports(shared, &node_item);
+    if let Some(item) = document.get_element_by_id(&port_element_id(&node, &port, Side::Input)) {
+        expand_for(&item);
+        focus(&item);
     }
 }
 

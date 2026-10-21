@@ -3,8 +3,8 @@
 
 use element_51_core::access::{
     Direction, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
-    link_cancelled_text, link_edit, link_started_text, list_nodes, moved_to, neighbour,
-    no_link_started_text, pan_delta, pan_text, pan_to_show, refusal_text, selected_text, undo_text,
+    editing_text, link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes,
+    moved_to, neighbour, pan_delta, pan_text, pan_to_show, refusal_text, selected_text, undo_text,
     zoom_text,
 };
 use element_51_core::layout::{Rect, Side};
@@ -483,9 +483,17 @@ fn the_link_sentences_say_what_to_do_next() {
         "Link from n1 out started. Move to an input port and press Enter, or Escape to cancel"
     );
     assert_eq!(link_cancelled_text(), "Link cancelled");
+}
+
+#[test]
+fn the_value_box_sentences_say_what_to_do() {
     assert_eq!(
-        no_link_started_text(),
-        "No link started. Press Enter on an output port first"
+        editing_text("n3", "a"),
+        "Type a value for a of n3, then press Enter. Escape leaves it unchanged"
+    );
+    assert_eq!(
+        linked_input_text(),
+        "That input is linked, so it has no value box. Press Delete to remove the link"
     );
 }
 

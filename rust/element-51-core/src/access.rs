@@ -318,9 +318,15 @@ pub fn link_cancelled_text() -> String {
     "Link cancelled".to_string()
 }
 
-/// The sentence when Enter on an input port finds no link started.
-pub fn no_link_started_text() -> String {
-    "No link started. Press Enter on an output port first".to_string()
+/// The sentence when Enter on an unlinked input moved the focus into its value
+/// box.
+pub fn editing_text(node: &str, port: &str) -> String {
+    format!("Type a value for {port} of {node}, then press Enter. Escape leaves it unchanged")
+}
+
+/// The sentence when Enter on a linked input finds no value box to edit.
+pub fn linked_input_text() -> String {
+    "That input is linked, so it has no value box. Press Delete to remove the link".to_string()
 }
 
 /// How far the arrow keys pan the view, in screen pixels.

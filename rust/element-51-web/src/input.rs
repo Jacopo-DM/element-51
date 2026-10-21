@@ -6,6 +6,7 @@ use element_51_core::{Edit, Graph, PortRef, apply_edit};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlInputElement, KeyboardEvent, MouseEvent, WheelEvent};
 
+use crate::a11y_ui::{restore_field, return_from_field};
 use crate::draw::{Drag, Selected};
 use crate::menu_ui::{hide_menu, open_card_menu};
 use crate::{Shared, State, redraw, step_history, submit};
@@ -217,8 +218,19 @@ pub(crate) fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
         .target()
         .and_then(|target| target.dyn_into::<HtmlInputElement>().ok())
     {
-        if event.key() == "Enter" && field.id().starts_with("field-") {
-            let _ = field.blur();
+        if field.id().starts_with("field-") {
+            match event.key().as_str() {
+                "Enter" => {
+                    let _ = field.blur();
+                    return_from_field(shared, &field);
+                }
+                "Escape" if field.has_attribute("data-original") => {
+                    restore_field(&field);
+                    let _ = field.blur();
+                    return_from_field(shared, &field);
+                }
+                _ => {}
+            }
         }
         return;
     }
