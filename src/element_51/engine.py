@@ -1,7 +1,8 @@
 """Run a graph: call each node's function in dependency order."""
 
 from collections import deque
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Set as AbstractSet
 from typing import Literal
 
 from element_51.model import (
@@ -42,11 +43,16 @@ class RunResult(Model):
     outcomes: tuple[NodeOutcome, ...]
 
 
+NO_OUTPUT = "no output yet: press Start"
+
+
 def run_graph(
     graph: Graph,
     functions: Mapping[str, Registered],
     *,
     raise_errors: bool,
+    only: AbstractSet[str] | None = None,
+    fixed: Mapping[str, Mapping[str, Carried]] | None = None,
 ) -> RunResult:
     """Run every node once, upstream nodes first.
 
@@ -54,6 +60,9 @@ def run_graph(
     user gave the node, or else from its function's default. A node that fails
     is marked `error`; every node downstream of it is `skipped`; independent
     nodes still run.
+
+    A job node is never run here. If `fixed` holds outputs for it they are used
+    as if it had run; otherwise it is `skipped`, with the reason in `error`.
 
     Parameters
     ----------
@@ -64,44 +73,51 @@ def run_graph(
     raise_errors
         If true, the first failure is raised, with a note naming the node,
         instead of being recorded.
+    only
+        Run just these nodes, and report just these. It must hold everything
+        its nodes need, or those nodes must be in `fixed` (see `closure`).
+        None runs the whole graph.
+    fixed
+        Nodes that are not run, with their outputs by port name. Nodes that
+        link from them take these values.
 
     Returns
     -------
     RunResult
         One outcome per node.
 
-    Raises
-    ------
-    ValueError
-        If `raise_errors` is true and the graph has a cycle or a node has an
-        input with no value.
+    With `raise_errors`, a cycle, an input with no value or a job node with no
+    outputs in `fixed` raises a `ValueError`.
     """
+    fixed = fixed or {}
     order = _order(graph)
     if len(order) < len(graph.nodes):
-        if raise_errors:
-            msg = "the graph has a cycle"
-            raise ValueError(msg)
-        return RunResult(
-            outcomes=tuple(
-                NodeOutcome(
-                    node=node.id,
-                    status="error",
-                    error="the graph has a cycle",
-                )
-                for node in graph.nodes
-            )
-        )
+        return _cycle(graph, raise_errors=raise_errors)
     outcomes: dict[str, NodeOutcome] = {}
     outputs_by_node: dict[str, Mapping[str, Carried]] = {}
     # Indexed once, so each node finds its links without scanning them all.
     into: dict[str, list[Link]] = {}
     for link in graph.links:
         into.setdefault(link.target.node, []).append(link)
-    for node in order:
+    for node in _visited(order, only, fixed):
+        if node.id in fixed:
+            outputs_by_node[node.id] = fixed[node.id]
+            outcomes[node.id] = _outcome(
+                node.id,
+                functions[node.node_type].node_type,
+                (fixed[node.id], {}),
+            )
+            continue
         incoming = into.get(node.id, ())
         upstream = (link.source.node for link in incoming)
         if any(outcomes[source].status != "ok" for source in upstream):
             outcomes[node.id] = NodeOutcome(node=node.id, status="skipped")
+            continue
+        if (
+            node.node_type in functions
+            and functions[node.node_type].node_type.job
+        ):
+            outcomes[node.id] = _no_output(node, raise_errors=raise_errors)
             continue
         try:
             function = functions[node.node_type]
@@ -122,7 +138,129 @@ def run_graph(
         outcomes[node.id] = _outcome(
             node.id, function.node_type, (outputs, inputs)
         )
-    return RunResult(outcomes=tuple(outcomes.values()))
+    return RunResult(
+        outcomes=tuple(
+            outcome
+            for node_id, outcome in outcomes.items()
+            if only is None or node_id in only
+        )
+    )
+
+
+def _cycle(graph: Graph, *, raise_errors: bool) -> RunResult:
+    """Report a graph with a cycle: every node is an error.
+
+    Returns
+    -------
+    RunResult
+        One `error` outcome per node.
+
+    Raises
+    ------
+    ValueError
+        If `raise_errors` is true.
+    """
+    msg = "the graph has a cycle"
+    if raise_errors:
+        raise ValueError(msg)
+    return RunResult(
+        outcomes=tuple(
+            NodeOutcome(node=node.id, status="error", error=msg)
+            for node in graph.nodes
+        )
+    )
+
+
+def _visited(
+    order: list[PlacedNode],
+    only: AbstractSet[str] | None,
+    fixed: Mapping[str, Mapping[str, Carried]],
+) -> list[PlacedNode]:
+    """Pick the nodes a run goes through: those in `only`, and the fixed ones.
+
+    Returns
+    -------
+    list[PlacedNode]
+        The nodes of `order` to visit, in that order.
+    """
+    if only is None:
+        return order
+    return [node for node in order if node.id in only or node.id in fixed]
+
+
+def _no_output(node: PlacedNode, *, raise_errors: bool) -> NodeOutcome:
+    """Say that a job node has no outputs to give.
+
+    With `raise_errors` it raises a `ValueError` with a note naming the node.
+
+    Returns
+    -------
+    NodeOutcome
+        A `skipped` outcome whose `error` is the reason.
+    """
+    if raise_errors:
+        error = ValueError(NO_OUTPUT)
+        error.add_note(f"in node {node.id} ({node.node_type})")
+        raise error
+    return NodeOutcome(node=node.id, status="skipped", error=NO_OUTPUT)
+
+
+def ancestors(graph: Graph, node: str) -> frozenset[str]:
+    """Return the nodes `node` needs, directly or not.
+
+    Returns
+    -------
+    frozenset[str]
+        The ids of every node with a path of links to `node`, not `node`.
+    """
+    return _reach(graph, [node], upstream=True) - {node}
+
+
+def descendants(graph: Graph, node: str) -> frozenset[str]:
+    """Return the nodes that need `node`, directly or not.
+
+    Returns
+    -------
+    frozenset[str]
+        The ids of every node `node` has a path of links to, not `node`.
+    """
+    return _reach(graph, [node], upstream=False) - {node}
+
+
+def closure(graph: Graph, nodes: Iterable[str]) -> frozenset[str]:
+    """Return `nodes` and everything they need.
+
+    Returns
+    -------
+    frozenset[str]
+        The given ids and the ids of all their ancestors.
+    """
+    return _reach(graph, nodes, upstream=True)
+
+
+def _reach(
+    graph: Graph, start: Iterable[str], *, upstream: bool
+) -> frozenset[str]:
+    """Follow links from `start`, against their direction if `upstream`.
+
+    Returns
+    -------
+    frozenset[str]
+        `start` and every node reached.
+    """
+    next_to: dict[str, list[str]] = {}
+    for link in graph.links:
+        source, target = link.source.node, link.target.node
+        key, value = (target, source) if upstream else (source, target)
+        next_to.setdefault(key, []).append(value)
+    seen = set(start)
+    todo = list(seen)
+    while todo:
+        for found in next_to.get(todo.pop(), ()):
+            if found not in seen:
+                seen.add(found)
+                todo.append(found)
+    return frozenset(seen)
 
 
 def _outcome(

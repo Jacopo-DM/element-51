@@ -140,7 +140,8 @@ class NodeType(Model):
     between levels (`"Math/Trig"` is `Trig` inside `Math`). `display` says what
     the card shows below its ports: `"image"` for a node with a picture output,
     `"chart"` for a node that plots the series linked to it, else `"none"`.
-    `variadic` makes the inputs grow: see `Variadic`.
+    `variadic` makes the inputs grow: see `Variadic`. `job` is true for a node
+    that is started and stopped by hand and works in the background.
     """
 
     name: str
@@ -150,6 +151,7 @@ class NodeType(Model):
     category: str = ""
     display: Literal["none", "image", "chart"] = "none"
     variadic: Variadic | None = None
+    job: bool = False
 
 
 def find_input(node_type: NodeType, name: str) -> Port | None:

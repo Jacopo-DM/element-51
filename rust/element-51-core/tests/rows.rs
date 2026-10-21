@@ -20,6 +20,7 @@ fn series_port(name: &str) -> Port {
 
 fn plot() -> NodeType {
     NodeType {
+        job: false,
         name: "Plot".to_string(),
         inputs: vec![series_port("series_1")],
         outputs: vec![],
@@ -35,6 +36,7 @@ fn plot() -> NodeType {
 
 fn curve() -> NodeType {
     NodeType {
+        job: false,
         name: "curve".to_string(),
         inputs: vec![],
         outputs: vec![series_port("out")],

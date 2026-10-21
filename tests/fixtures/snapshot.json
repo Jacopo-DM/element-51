@@ -35,7 +35,8 @@
             },
             "category": "Math/Basic",
             "display": "none",
-            "variadic": null
+            "variadic": null,
+            "job": false
         },
         {
             "name": "show",
@@ -49,7 +50,8 @@
             "defaults": {},
             "category": "",
             "display": "none",
-            "variadic": null
+            "variadic": null,
+            "job": false
         },
         {
             "name": "picture",
@@ -63,7 +65,8 @@
             "defaults": {},
             "category": "",
             "display": "image",
-            "variadic": null
+            "variadic": null,
+            "job": false
         },
         {
             "name": "Plot",
@@ -80,7 +83,30 @@
             "variadic": {
                 "prefix": "series",
                 "kind": "series"
-            }
+            },
+            "job": false
+        },
+        {
+            "name": "train",
+            "inputs": [
+                {
+                    "name": "epochs",
+                    "kind": "int"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "loss",
+                    "kind": "series"
+                }
+            ],
+            "defaults": {
+                "epochs": 5
+            },
+            "category": "",
+            "display": "none",
+            "variadic": null,
+            "job": true
         }
     ],
     "graph": {

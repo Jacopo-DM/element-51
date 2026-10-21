@@ -30,6 +30,7 @@ fn node_at(x: f64, y: f64) -> PlacedNode {
 
 fn node_type(inputs: &[&str], outputs: &[&str]) -> NodeType {
     NodeType {
+        job: false,
         name: "t".to_string(),
         inputs: inputs.iter().map(|n| port(n)).collect(),
         outputs: outputs.iter().map(|n| port(n)).collect(),

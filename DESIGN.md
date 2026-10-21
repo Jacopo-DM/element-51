@@ -576,11 +576,14 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
     * A step job defines `steps(self) -> int`, `begin(self) -> State` and
         `step(self, state: State, i: int) -> Out`. A job that cannot be split defines
         `work(self, report: Report) -> Out` instead. Defining both, or neither, is a
-        `TypeError` at class creation. The step form is built on the work form: the
-        base class's `work` loops `begin`, then `step` for each `i`, and reports each
-        return value.
+        `TypeError` at class creation. The runner (`jobs.py`, task 2) drives a step job
+        itself: `begin`, then `step` for each `i`, checking Stop between steps and
+        publishing each return value; a `work` job it calls once. The same driving
+        function serves the child process of `job-isolation`.
     * `Out` is the return hint of `step` (or `work`), read like `Node.run`'s: a plain
-        type gives one output `out`, a pydantic model one output per field.
+        type gives one output `out`, a pydantic model one output per field. The class
+        lives in `job_node.py` (`nodes.py` was over 400 lines); the engine only reads
+        `NodeType.job`.
     * An update (a step's return value, a `report(...)` call, or `work`'s return value)
         sets a series output to its old points plus the new ones, and replaces any other
         output. `report(**fields)` takes a subset of the output fields; an unknown name
@@ -589,10 +592,12 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
     * `Stopped` derives from `BaseException`, so a job's own `except Exception` does not
         swallow it. `report` raises it on the first call after Stop; a job may catch it to
         clean up and must then end. `report.stopped` is the same fact as a flag.
-    * How `State` is typed (a PEP 695 generic `JobNode[State]` under pydantic 2.14.1, or
-        `begin` returning an object with a `step` method) is settled by a spike in task
-        `job-nodes` 1; mypy strict forbids `Any`, and a subclass narrowing a parameter
-        breaks the override rule, so the plain version cannot be used.
+    * `State` is typed by a PEP 695 generic, `JobNode[State]` (spike done in task 1:
+        pydantic 2.14.1 builds `JobNode[Net]` as an intermediate class and
+        `get_type_hints` on a subclass's `step` gives the right hints; mypy strict passes
+        with no `Any`). The intermediate class and the unparametrised base build no node
+        type: `Node`'s hook returns early when `__pydantic_generic_metadata__` shows
+        parameters or an origin.
 - Engine (`engine.py`): `NodeType` gains `job: bool` (default false; on the wire and in
     Rust). `run_graph` gains `only: frozenset[str] | None` (run just these nodes) and
     `fixed: Mapping[str, Mapping[str, Carried]]` (nodes that are not run; their outputs
@@ -600,8 +605,9 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
     so Run never starts a job and a node after a job sees its latest values; a job node
     without results is skipped, with the reason `no output yet: press Start`.
     `ancestors(graph, node)` and `closure(graph, nodes)` (the nodes and everything they
-    need) pick the subsets below. `NodeOutcome` gains `reason: str | None` for a skipped
-    node (the page shows it in the box and the hidden tree).
+    need) pick the subsets below. A skipped job node carries its reason in the
+    existing `NodeOutcome.error` (`NO_OUTPUT`); the Rust side reads `error` only for an
+    `error` status, so nothing there changes and no `reason` field is added.
 - Runner (`jobs.py`, new): `JobState` (pydantic: `node`, `state` of idle, running,
     stopping, finished, stopped or failed, `step`, `steps`, `outputs`, `error`) and
     `JobRunner`, which owns one thread per running job. `start(graph, node)` refuses with a

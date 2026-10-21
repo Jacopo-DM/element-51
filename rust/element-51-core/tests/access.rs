@@ -29,6 +29,7 @@ fn port(name: &str, kind: PortType) -> Port {
 
 fn types() -> Vec<NodeType> {
     let make = |name: &str, inputs: Vec<Port>, outputs: Vec<Port>| NodeType {
+        job: false,
         name: name.to_string(),
         inputs,
         outputs,
@@ -692,6 +693,7 @@ fn a_picture_input_says_it_can_only_be_linked() {
 fn plot_world() -> (Graph, Vec<NodeType>) {
     let mut node_types = types();
     node_types.push(NodeType {
+        job: false,
         name: "curves".to_string(),
         inputs: vec![],
         outputs: vec![
@@ -704,6 +706,7 @@ fn plot_world() -> (Graph, Vec<NodeType>) {
         variadic: Default::default(),
     });
     node_types.push(NodeType {
+        job: false,
         name: "Plot".to_string(),
         inputs: vec![
             port("series_1", PortType::Series),

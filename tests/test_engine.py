@@ -4,7 +4,14 @@ from typing import cast, override
 
 import pytest
 
-from element_51.engine import run_graph
+from element_51.engine import (
+    NO_OUTPUT,
+    ancestors,
+    closure,
+    descendants,
+    run_graph,
+)
+from element_51.job_node import JobNode, Report
 from element_51.model import Graph, Link, Model, PlacedNode, PortRef
 from element_51.nodes import Node, node
 
@@ -87,6 +94,17 @@ class Explode(Node):
         raise RuntimeError(msg)
 
 
+class Training(JobNode[None]):
+    epochs: int = 3
+
+    @override
+    def work(
+        self, report: Report
+    ) -> float:  # pragma: no cover  # a job is never run here
+        report(out=1.0)
+        return float(self.epochs)
+
+
 @node
 def wrong_field(a: int = 1) -> DivModResult:
     return DivModResult.model_construct(q=cast("int", "bad"), r=a)
@@ -109,6 +127,7 @@ FUNCTIONS = {
         wrong_field,
         Triple,
         Explode,
+        Training,
     )
 }
 
@@ -349,3 +368,83 @@ def test_a_value_on_the_node_fills_an_input_that_has_no_default() -> None:
     )
     (outcome,) = run_graph(graph, FUNCTIONS, raise_errors=False).outcomes
     assert outcome.outputs["out"] == pytest.approx(3.0)
+
+
+def job_graph() -> Graph:
+    """Build a job feeding `double`, with two unrelated nodes beside them.
+
+    Returns
+    -------
+    Graph
+        The graph.
+    """
+    return graph_of(
+        {"n1": "one", "n2": "Training", "n3": "double", "n4": "two"},
+        [("n2", "out", "n3", "x")],
+    )
+
+
+def test_a_plain_run_skips_a_job_and_what_follows_it_with_the_reason() -> None:
+    """Run never starts a job; the job says why it has no value."""
+    result = run_graph(job_graph(), FUNCTIONS, raise_errors=False)
+    by_id = {o.node: o for o in result.outcomes}
+    assert by_id["n2"].status == "skipped"
+    assert by_id["n2"].error == NO_OUTPUT
+    assert by_id["n3"].status == "skipped"
+    assert by_id["n3"].error is None
+    assert by_id["n1"].status == "ok"
+    assert by_id["n4"].status == "ok"
+
+
+def test_a_script_run_raises_for_a_job_with_no_output() -> None:
+    """With `raise_errors` the job's missing output is an error with a note."""
+    with pytest.raises(ValueError, match="no output yet") as caught:
+        run_graph(job_graph(), FUNCTIONS, raise_errors=True)
+    assert "in node n2 (Training)" in caught.value.__notes__
+
+
+def test_fixed_outputs_stand_in_for_a_node_that_is_not_run() -> None:
+    """A node after a job takes the job's latest values from `fixed`."""
+    result = run_graph(
+        job_graph(),
+        FUNCTIONS,
+        raise_errors=False,
+        fixed={"n2": {"out": 5.0}},
+    )
+    by_id = {o.node: o for o in result.outcomes}
+    assert by_id["n2"].status == "ok"
+    assert by_id["n2"].outputs == {"out": 5.0}
+    assert by_id["n3"].outputs == {"out": pytest.approx(10.0)}
+
+
+def test_only_runs_and_reports_just_the_named_nodes() -> None:
+    """A subset run leaves the rest out and takes fixed values from outside."""
+    result = run_graph(
+        job_graph(),
+        FUNCTIONS,
+        raise_errors=False,
+        only={"n3"},
+        fixed={"n2": {"out": 4.0}},
+    )
+    assert [o.node for o in result.outcomes] == ["n3"]
+    assert result.outcomes[0].outputs == {"out": pytest.approx(8.0)}
+    nothing = run_graph(
+        job_graph(), FUNCTIONS, raise_errors=False, only=frozenset()
+    )
+    assert nothing.outcomes == ()
+
+
+def test_ancestors_descendants_and_closure_follow_the_links() -> None:
+    """Reach follows links either way and leaves the start out."""
+    graph = graph_of(
+        {"n1": "one", "n2": "double", "n3": "double", "n4": "two"},
+        [
+            ("n1", "out", "n2", "x"),
+            ("n2", "out", "n3", "x"),
+            ("n1", "out", "n3", "y"),
+        ],
+    )
+    assert ancestors(graph, "n3") == {"n1", "n2"}
+    assert descendants(graph, "n1") == {"n2", "n3"}
+    assert ancestors(graph, "n1") == frozenset()
+    assert closure(graph, ["n3", "n4"]) == {"n1", "n2", "n3", "n4"}

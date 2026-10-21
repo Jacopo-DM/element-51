@@ -5,6 +5,7 @@ use element_51_core::menu::{Entry, build_menu, search, step_menu};
 
 fn kind(name: &str, category: &str) -> NodeType {
     NodeType {
+        job: false,
         name: name.to_string(),
         inputs: vec![],
         outputs: vec![],

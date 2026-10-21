@@ -58,6 +58,10 @@ pub struct NodeType {
     /// Inputs that grow as they are linked, if the type has them.
     #[serde(default)]
     pub variadic: Option<Variadic>,
+    /// True for a node that is started and stopped by hand and works in the
+    /// background (a Python `JobNode`).
+    #[serde(default)]
+    pub job: bool,
 }
 
 /// The rows of a node type whose inputs grow: `<prefix>_1`, `<prefix>_2`, and so

@@ -610,7 +610,7 @@ tasks 4 to 6 are checked in the browser pane (a recorded walk-through).
 
 Tier 1, the walking skeleton and what the rest needs:
 
-1. **`JobNode` and subset runs (Python, plus the one Rust field).** What: `JobNode` in
+1. **DONE 2026-10-21. `JobNode` and subset runs (Python, plus the one Rust field).** What: `JobNode` in
     `nodes.py` (step form, work form, the checks, `Stopped`, `Report`), `NodeType.job` in
     `model.py` and `NodeType` in Rust (serde default false), `run_graph(only=, fixed=)`,
     `ancestors` and `closure` in `engine.py`, `NodeOutcome.reason` for a skipped job, a

@@ -31,6 +31,7 @@ fn card(display: CardDisplay) -> (PlacedNode, NodeType) {
         PortType::Float
     };
     let node_type = NodeType {
+        job: false,
         name: "t".to_string(),
         inputs: vec![Port {
             name: "a".to_string(),
@@ -328,6 +329,7 @@ fn plot_card() -> (PlacedNode, NodeType) {
         values: Default::default(),
     };
     let node_type = NodeType {
+        job: false,
         name: "Plot".to_string(),
         inputs: vec![Port {
             name: "series_1".to_string(),

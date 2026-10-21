@@ -18,7 +18,9 @@ fn shared_fixture_parses() {
         .iter()
         .map(|t| t.name.as_str())
         .collect();
-    assert_eq!(names, ["add", "show", "picture", "Plot"]);
+    assert_eq!(names, ["add", "show", "picture", "Plot", "train"]);
+    let jobs: Vec<bool> = snapshot.node_types.iter().map(|t| t.job).collect();
+    assert_eq!(jobs, [false, false, false, false, true]);
     let add = &snapshot.node_types[0];
     assert_eq!(add.inputs.len(), 2);
     assert_eq!(add.inputs[0].kind, PortType::Float);

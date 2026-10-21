@@ -162,6 +162,7 @@ class Node(Model):
 
     node_type: ClassVar[NodeType]
     category: ClassVar[str] = ""
+    is_job: ClassVar[bool] = False
     defaults: ClassVar[Mapping[str, PortValue]]
     output_model: ClassVar[type[BaseModel] | None]
 
@@ -180,6 +181,9 @@ class Node(Model):
             If a field or the return hint is not a supported port type.
         """
         super().__pydantic_init_subclass__(**kwargs)
+        generic = cls.__pydantic_generic_metadata__
+        if generic["parameters"] or generic["origin"] is not None:
+            return  # a generic base such as JobNode[State]; not a node type
         name = cls.__name__
         inputs: list[Port] = []
         defaults: dict[str, PortValue] = {}
@@ -193,7 +197,7 @@ class Node(Model):
             inputs.append(port)
             if value_fits(default, port.kind):
                 defaults[field_name] = default
-        hints = get_type_hints(cls.run)
+        hints = cls._hints()
         if "return" not in hints:
             msg = f"{name}, return: no type hint"
             raise TypeError(msg)
@@ -205,9 +209,21 @@ class Node(Model):
             defaults=defaults,
             category=_check_category(cls.category, name),
             display=display_of(outputs),
+            job=cls.is_job,
         )
         cls.defaults = defaults
         cls.output_model = output_model
+
+    @classmethod
+    def _hints(cls) -> dict[str, object]:
+        """Return the type hints that give the outputs: those of `run`.
+
+        Returns
+        -------
+        dict[str, object]
+            The hints by parameter name, and `return`.
+        """
+        return dict(get_type_hints(cls.run))
 
     def run(self) -> object:
         """Compute the outputs from the inputs. Subclasses override this.
