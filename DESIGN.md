@@ -545,6 +545,19 @@ the reason:
     chart and in the hidden tree label. (h) The example `g1_picture_and_plot.py` now has
     `training` (two outputs, `loss` and `accuracy`) feeding rows 1 and 2 of its Plot.
 
+### speed-up-frame spec (2026-10-21)
+
+Metric chosen by the user: redraw time per frame, the median over batches of 100 wheel
+events from `tools/bench_page.js`, in the built-in browser pane (1024 by 768 CSS pixels,
+device ratio 2, tab fronted). Budgets per workload (`tools/bench_page.py --workload`):
+`nodes` (200 chained nodes, 12 in view): lower than the 1.51 to 1.55 ms of 2026-10-21;
+`pictures` (12 picture cards with a value box each, Run pressed): 1.0 ms or less, as the
+visual-ports spec says (1.16 to 1.22 ms before); `chart` (a 100,000-point series on a
+Plot): 4 ms or less, as the visual-ports spec says (2.36 to 2.55 ms after Run), and no
+slower than before. The benchmark times the work the page does to record a frame, not the
+browser's painting of it, so a change that only cuts painting work may not show. The
+profile and the tasks are in PLAN.md.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,

@@ -199,6 +199,18 @@ screen reader were not tried, and the narrow window and touch were not checked.
 - Status: approved 2026-10-21; no spec yet (it comes last).
 - Added: 2026-10-21
 
+### speed-up-frame
+
+- Goal: the page redraws faster per wheel event (zoom or pan), measured by
+    `tools/bench_page.js`. Third speed pass; the first (`speed-up`, 2026-10-20) is done.
+- Kind: improvement (behaviour unchanged; the picture of every frame stays the same).
+- Success measure (the user chose redraw time per frame, 2026-10-21): 12 picture cards in
+    view at or under the 1.0 ms budget already in DESIGN.md (now 1.16 to 1.22 ms); the
+    200-node page lower than today's 1.51 to 1.55 ms; the 100,000-point chart no slower
+    than 2.4 to 2.6 ms after Run and 0.5 to 0.6 ms before. Any gain under the spread
+    (about 0.1 ms between sets) does not count.
+- Status: in progress, task list awaiting approval. Added: 2026-10-21.
+
 ### functional-notebooks: done (2026-10-21)
 
 Four notebooks in `tests/functional/` (`nodes_and_running`, `save_and_load`, `themes`,
@@ -244,7 +256,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes`, `auto-run` and `mnist-experiment` are approved but have no spec: the user runs `/zz-02-project-plan` for the next one (`job-nodes` first, because the Start button the user asked for belongs to it, and the two others build on it). The user's own try-out of the editor and the new features comes first.
+Next step: the `speed-up-frame` task list (below) awaits approval; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes`, `auto-run` and `mnist-experiment` are approved but have no spec: the user runs `/zz-02-project-plan` for the next one (`job-nodes` first, because the Start button the user asked for belongs to it, and the two others build on it). The user's own try-out of the editor and the new features comes first.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -366,6 +378,20 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
         so fine detail is lost; 768 and 1920 wide and the card menu in the light
         theme were not captured (the matrix is cut because the page has one screen
         whose states differ only in the page parts).
+- Redraw time per frame, measured 2026-10-21 before the speed-up-frame pass (Apple
+    silicon arm64, macOS 27.0, WASM built with the release profile, the built-in browser
+    pane at 1024 by 768 CSS pixels, device ratio 2, tab fronted, `document.hidden` false;
+    4 sets of 11 batches of 100 wheel events, median per set, range of the batches in
+    brackets): 200 chained nodes (`uv run python tools/bench_page.py`) 1.55, 1.55, 1.51,
+    1.52 ms [1.18 to 1.88]; 12 picture cards, each with a `side` value box and Run
+    pressed (`--workload pictures`) 1.22, 1.22, 1.16, 1.16 ms [0.86 to 1.41]; one
+    100,000-point series linked to a Plot (`--workload chart`) 0.62, 0.52, 0.59, 0.58 ms
+    before Run and 2.36, 2.55, 2.48, 2.44 ms after Run [2.13 to 3.41]. Between sets the
+    medians differ by up to 0.1 ms, so a gain has to be bigger than that. Without value
+    boxes the 12 pictures take 0.85 to 0.95 ms (0.57 to 1.61), so the value boxes cost
+    about 0.3 ms. The 0.21 ms recorded on 2026-10-20 still does not reproduce; the
+    ablation below shows where today's 1.5 ms goes. This benchmark times the page's own
+    work to record each frame (JS and WASM time), not the browser's later painting.
 - ruff format, ruff check, mypy, ty: pass.
 - pytest: 221 passed, 100% coverage, about 8 s (includes every example).
 - cargo fmt, clippy (`-D warnings`), test: pass, 153 tests.
@@ -463,6 +489,71 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
+### Goal `speed-up-frame`: proposed, awaiting approval
+
+Profile, 2026-10-21 (a throwaway build that timed each part of `redraw` with
+`performance.now()` and turned parts off from a `data-skip` attribute on the canvas;
+reverted, not committed). Timing the parts alone misleads (canvas calls are queued and the
+cost lands in whichever call flushes), so the table is by ablation: the median redraw with
+the part switched off, interleaved, two or three rounds, the instrumented build running
+about 0.2 ms above the clean one. Instrumented, 200 nodes: all on 1.73 to 1.80 ms; no grid
+1.09 to 1.15 (grid about 0.6 to 0.7, 38%); no links 1.30 to 1.41 (all 190 wires, drawn
+twice, only 12 cards in view: 0.4, 24%); no cards 0.69 (cards and the wire overlay about
+1.05); no grid, links or cards 0.09 (the rest of the frame). Instrumented, 12 pictures:
+all on 1.45 to 1.52; no grid 0.83 to 0.98 (about 0.6, 40%); no cards 0.80 to 0.95; neither
+0.33 to 0.35. `sync_fields` took 0.22 ms of the 12-picture frame and 0.04 ms of the
+200-node one; `sync_tree` nothing (the tree is rebuilt only when stale). Costs of single
+canvas calls in the page: `measureText` 0.43 us, setting the same font 0.39 us, `arc` plus
+`fill` 0.16 us, `fillText` 0.36 us, `fillRect` 0.16 us.
+
+Tier 1:
+
+1. Draw only the wires that can reach the view. `draw_links` in
+    `rust/element-51-web/src/draw.rs` loops over every link of the graph, twice (solid
+    under the cards, again over them at the wire opacity); in the 200-node page 190 wires
+    are drawn for the 12 cards in view. Skip a link whose box (both anchors, grown by the
+    curve's bulge and the line width) does not overlap the view, using `Rect::overlaps` and
+    `Rect::grown` that task 3 of the first pass added. Share: 24% of the 200-node frame;
+    gain measured by ablation 0.4 ms (the ceiling; wires that cross the view stay); none on
+    the 12 pictures (no links) and the chart. Risk low. Cost: about 25 lines and a helper
+    in `element-51-core` for the link's box. Verified by native tests on the helper (a link
+    inside, crossing with both ends outside, wholly outside on each side) and by comparing
+    screenshots of the 200-node page panned to several places; benchmark: `bench_page.js`
+    on the `nodes` workload.
+
+Tier 2:
+
+2. Draw the grid's dots as one path with one fill (`grid` in `draw.rs`: now one
+    `begin_path`, `arc` and `fill` per dot, about 1,400 dots per frame). Gain measured in the
+    ablation build: 12 pictures 1.65 to 1.48 ms (0.17, 10%),
+    200 nodes 1.75 to 1.73 to 1.80 (none within the spread). Risk low, 5 lines, no look
+    change expected (verify by screenshot). It is the cheapest step toward the 1.0 ms
+    budget but does not reach it alone.
+3. Needs the user's decision: make the grid much cheaper. The grid is 0.6 to 0.7 ms (38 to
+    40%) of both pages and the ceiling of any grid change. Options: a pattern fill of a
+    small tile (one `fill_rect` of the canvas; the tile is a bitmap scaled by the zoom, so
+    the dots get a little soft at some zooms), or a cached bitmap of the grid that only
+    helps frames where the view did not change (dragging a node, hover) and not zoom or pan.
+    Both change how the dots look, however slightly, so they are not "behaviour unchanged"
+    without the user's say. Expected gain at most 0.5 ms (30%), probably less because the
+    benchmark measures recording time, not painting.
+
+Tier 3 (listed, not executed unless the user says so):
+
+4. Cache text widths (`measure_text`) and skip repeated `set_font` calls in `card` and
+    `columns`: about 150 calls a frame at 0.4 us is about 0.06 ms, 4% of the frame, and it
+    needs a cache that is invalidated when the theme's fonts change.
+5. Draw a card's title bar without the clip (`card`, `save`, `clip`, `restore` per card):
+    ablation showed no gain beyond the spread (+0.03 with the grid on, -0.18 with it off),
+    so the clip is not the cost.
+6. Update the page's value boxes (`sync_fields`) only when their box moved: 0.22 ms of the
+    12-picture frame, but zoom and pan move every box every frame, so a benchmark of
+    wheel events would not improve.
+
+No test pins the pixels of a frame (the web crate has no tests); the browser-pane
+screenshots and the keyboard walk-through are the check for tasks 1 and 2, and the
+geometry helper in `element-51-core` gets native tests.
+
 ### Goal `visual-ports`: done
 
 Tasks 34 to 38 are done (DESIGN.md, Results and the spec's task outcomes).
@@ -499,8 +590,8 @@ Oldest first.
     task 34 or the accessibility work. With 12 picture cards in view it is 2.3 to 2.8 ms,
     and drawing the pictures adds nothing measurable, so the spec's budget of 1.0 ms for
     12 picture cards is missed: the cost is in drawing a card (about 0.15 ms each).
-    Next step: profile one frame (`columns` measures text, every row fills and clips) and
-    decide whether to cut it; needs the user's say-so as a new task. Task 35 (a chart on
+    The profile of one frame is in the `speed-up-frame` goal (grid 38 to 40%, unculled
+    wires 24% on 200 nodes, cards about 0.6 ms); its task list awaits approval. Task 35 (a chart on
     a card) added to the same frame: a 100,000-point chart costs about 1.6 ms a frame.
 - A card shows only the first picture of its node (the one first in port name order).
 - Not checked on a narrow window or by touch: the source panel, the growing Plot card, the

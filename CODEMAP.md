@@ -13,7 +13,7 @@ the ignore list in CLAUDE.md.
 - `uv run python tools/build_wasm.py`: build the browser layer.
 - `tools/ui_states.py`, `tools/ui_states.js`, `tools/ui_axe.js` and `tools/ui_keys.js`: serve a fixed graph (`--graph display`: a picture, its negative, two series and a Plot) and put the page in
     each state, for screenshots and accessibility scans, and walk the hidden tree by keyboard (`uiKeys` on the standard graph, `uiKeysDisplay` on the display one; commands in CLAUDE.md).
-- `tools/bench_python.py`, `tools/bench_page.py` and `tools/bench_page.js`: the speed
+- `tools/bench_python.py`, `tools/bench_page.py` (workloads `nodes`, `pictures`, `chart`) and `tools/bench_page.js`: the speed
     benchmarks (see the commands in CLAUDE.md).
 - `uv run python tools/run_notebooks.py [file ...]`: run the functional notebooks in `tests/functional/` and print PASS, FAIL or SKIP for each (the shared copy from `~/Functions/_rsync/python/tools/`; commands in CLAUDE.md).
 - `uv run python tools/check_wheel.py`: build the wheel in a temporary folder and
