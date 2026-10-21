@@ -245,12 +245,11 @@ is trying the keyboard use with VoiceOver (Cmd+F5 on this Mac: Tab to the graph,
 keys).
 `examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
 `examples/template.py`); it serves with `uvicorn` on `HOST` and `PORT` set at its top, so a
-script can choose the address (`element_51.serve` always uses `127.0.0.1`). The user has
-`a1_hello_world.py` no longer running: they asked Claude to stop it (pid 2151) on 2026-10-21 to
-free port 8765, which is a one-off leave, not a standing one. They then ran
-`examples/g_experiments/g1_picture_and_plot.py` in their own terminal on port 8765 (pid 56292,
-started after task 34, so it holds Python from before tasks 35 to 41 and needs a restart);
-never kill a process of theirs unless they ask, and use another port for Claude's own checks.
+script can choose the address (`element_51.serve` always uses `127.0.0.1`). On 2026-10-21 the user asked
+Claude twice to stop their own example to free port 8765 (`a1_hello_world.py`, pid 2151, then
+`g1_picture_and_plot.py`, pid 56292); each was a one-off leave, not a standing one. No example of
+theirs was running at the end of that day. Never kill a process of theirs unless they ask, and use
+another port for Claude's own checks (8766 to 8769).
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
 the menu button at the top right, choose Load palette from Coolors link and paste
@@ -510,8 +509,9 @@ Oldest first.
     the tests avoid this with a fake folder. The workflows ran on GitHub for the
     first time on 2026-10-21 (see the results in DESIGN.md, Results); every push
     from `527571e` to `3c67a10` passed CI, Docs and Rust and WASM (read 2026-10-21).
-    The push `825a608` (the property tests, the first run that installs `hypothesis`) was
-    still queued when this was written.
+    The push `825a608` (the property tests, the first run that installs `hypothesis`): CI passed;
+    Docs and Rust and WASM were still running when this was written, so read them next session
+    (`gh run list --limit 6`).
 - `element-51-web` has no automated test; it is checked by hand in the browser.
 - A browser edit and a script edit that propose the same node id still collide
     (the browser picks ids from its own copy); Python refuses the later one and the
