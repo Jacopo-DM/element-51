@@ -161,38 +161,17 @@ path, typed into a notebook or a prompt) is refused at Start with a reason. All 
 met (spec and decisions in DESIGN.md; `docs/jobs.md`, "A job in its own process"; `Stubborn` in
 `examples/g_experiments/g2_job_nodes.py`; the last section of `tests/functional/jobs.ipynb`).
 
-### auto-run
+### auto-run: done (2026-10-21)
 
-- Goal: a `Run automatically` checkbox next to Run, so results refresh as you edit.
-    Independent of the other three goals.
-- Kind: new behaviour.
-- Success measure (revised 2026-10-21 after the spec questions; items 5 to 8 are new):
-    1. The checkbox is unticked at every page load and is not saved.
-    2. Ticked, a change that alters a result (add or delete a node, link or unlink,
-        typing a value, undo or redo, a change pushed from Python) runs the graph
-        once, 300 ms after the last change; moving a node does not.
-    3. It never starts a `JobNode`: plain nodes refresh, a job's boxes keep their last
-        result until the user presses Start.
-    4. It is labelled, operable by keyboard, AA in all themes, and axe reports 0
-        violations; a native test covers the debounce rule.
-    5. While ticked, the Run button is disabled (and says so to assistive
-        technology); unticking enables it again.
-    6. A change that arrives during a run is remembered; the status line says
-        "Still running, will run again" (also announced to screen readers, no banner),
-        and one fresh run starts with the newest graph when the current one ends.
-        Runs never overlap or pile up.
-    7. A failed run shows the error banner, one at a time: a new failing run replaces
-        its text, a passing run clears it; it keeps its Dismiss button and never
-        vanishes on a timer.
-    8. Every run (automatic or the Run button) puts a red border on each node whose
-        own last outcome is an error, until its next successful run. The colour is a
-        new theme key (both theme files, `docs/themes.md`, `contrast_pairs`, 3:1
-        against the canvas, checked for every palette); the border is never the only
-        signal (the banner and the node's text say it too).
-- Status: approved 2026-10-21, criteria 1 to 8 (the user's words). Spec in DESIGN.md,
-    "auto-run spec". Tasks written below; they wait for approval in words. Independent: it can start any time
-    after `canvas-accessibility`.
-- Added: 2026-10-21
+Commits `f26351e..f941456`. A `Run automatically` box next to Run: unticked at every load,
+runs the graph 300 ms after the last change that alters a result (never a move, never a
+job), Run is `aria-disabled` while ticked, a change during a run says "Still running, will
+run again" and starts one more run when it ends, one replaceable error banner that a
+passing run clears, and a red `card_error_border` on every failed node. The rule is
+`autorun.rs` in the core crate (8 native tests); the page side is `autorun_ui.rs`;
+`tools/ui_keys.js` has `uiKeysAuto` (19 rows). The user's own try-out is still to come
+(`examples/d_editor/d6_auto_run.py`); axe, a real screen reader, a narrow window or touch
+and the light theme's red border were not checked.
 
 ### mnist-experiment
 
@@ -284,7 +263,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `restructure-2` is done, merged to `main` and pushed (2026-10-21, `main` is at `origin/main`; the merged branch `restructure-2` is not deleted yet and needs the user's say-so; GitHub's CI, Docs and Rust and WASM runs for it were not read); the user's try-out comes first. `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` has its spec (DESIGN.md) and four tasks that wait for approval in words; `mnist-experiment` is approved but has no spec (the user runs `/zz-02-project-plan` for it). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
+Next step: `restructure-2` is done, merged to `main` and pushed (2026-10-21, `main` is at `origin/main`; the merged branch `restructure-2` is not deleted yet and needs the user's say-so; GitHub's CI, Docs and Rust and WASM runs for it were not read); the user's try-out comes first. `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` is done (2026-10-21, the user's try-out of `d6_auto_run.py` still to come); `mnist-experiment` is approved but has no spec (the user runs `/zz-02-project-plan` for it). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -623,21 +602,6 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
-
-### Goal `auto-run`: tasks (written 2026-10-21, awaiting approval)
-
-Tier 1 (the walking skeleton: a ticked box runs the graph after an edit):
-
-1. Done (2026-10-21). The auto-run rule in `element-51-core` (`autorun.rs`, `tests/autorun.rs`, 8 tests).
-2. Done (2026-10-21). The checkbox and its wiring (`autorun_ui.rs`, `index.html`, the edit, snapshot and run paths). Checked in the browser pane: `uiKeys` 90 of 90, `uiKeysAuto` 19 of 19 (new rows in `tools/ui_keys.js`), dark and light look. Not run: axe (it is a download that needs the user's yes), a real screen reader, a narrow window or touch, and the banner clearing after a passing run (the default graph always fails; the code clears it only if the banner holds a run failure).
-
-Tier 2:
-
-3. Done (2026-10-21). The red node border (`card_error_border`: `theme.rs`, the three theme JSON files, `docs/themes.md`, `palette.rs`, `draw_card.rs`). Colours `#e05252` (`antimony`, 4.56:1 on the canvas), `#c0392b` (`antimony-light`, 4.69:1), `#ff6b6b` (`purple-synthwave`, 7.41:1). The native theme and palette tests cover the key, the docs row and the 3:1 pair for every palette; by eye in the dark theme: failed nodes n3 and n5 have the border and the red bar. Redraw at 200 nodes 1.52, 1.53 and 1.67 ms (three sets of eleven, 2026-10-21; no failed node on that page, so the stroke is not in it). Not looked at by eye: the light theme and the palettes.
-4. Done (2026-10-21). `examples/d_editor/d6_auto_run.py` (a failing `share` node until `parts` is set), its row in `tests/test_examples.py` (`n1` ok 6.0, `n2` error), the CODEMAP entry and a two-line paragraph in `docs/index.md`.
-
-Tier 3: none. Nothing here has tests that pin the page code (the web crate has none);
-task 2 relies on the walk-throughs and the browser pane, as the earlier page tasks did.
 
 ### Tier 3: listed, not executed
 
