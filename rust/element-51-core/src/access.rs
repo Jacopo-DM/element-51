@@ -86,14 +86,17 @@ pub fn with_displays(items: Vec<NodeItem>, graph: &Graph, result: &RunResult) ->
                         parts.push(format!("a {} by {} picture", image.width, image.height));
                     }
                     Shown::Series(series) => {
-                        let source = graph
+                        // A chart's series is shown by the input port it is linked to. A
+                        // series a node made is shown by its output port: no link ends
+                        // there, and the node plots nothing.
+                        let Some(link) = graph
                             .links
                             .iter()
                             .find(|link| link.target.node == item.id && &link.target.port == port)
-                            .map_or((item.id.as_str(), port.as_str()), |link| {
-                                (link.source.node.as_str(), link.source.port.as_str())
-                            });
-                        sources.push(source);
+                        else {
+                            continue;
+                        };
+                        sources.push((link.source.node.as_str(), link.source.port.as_str()));
                         lasts.push(last_value(series));
                     }
                 }

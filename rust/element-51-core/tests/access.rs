@@ -790,6 +790,31 @@ fn a_line_with_no_numbers_says_so_and_an_empty_chart_says_nothing() {
     assert_eq!(label_of(&shown, "n2"), label_of(&items, "n2"));
 }
 
+#[test]
+fn a_node_that_made_a_series_does_not_say_it_plots() {
+    // `curves` has series outputs, which the page receives for the box text. It
+    // draws nothing, so its label stays as it is; only the Plot that they feed
+    // says "a plot".
+    let (graph, node_types) = plot_world();
+    let items = list_nodes(&graph, &node_types);
+    let made = NodeOutcome {
+        shown: [("loss", &[Some(0.9)][..]), ("accuracy", &[Some(0.5)][..])]
+            .into_iter()
+            .map(|(port, values)| {
+                (
+                    port.to_string(),
+                    Shown::Series(Series {
+                        values: values.to_vec(),
+                    }),
+                )
+            })
+            .collect(),
+        ..outcome("n1", Status::Ok, None)
+    };
+    let shown = with_displays(items.clone(), &graph, &result(vec![made]));
+    assert_eq!(label_of(&shown, "n1"), label_of(&items, "n1"));
+}
+
 fn growing_plot_world(rows: &[(&str, &str, &str)]) -> (Graph, Vec<NodeType>) {
     let (_, mut node_types) = plot_world();
     let plot = node_types.iter_mut().find(|t| t.name == "Plot").unwrap();
