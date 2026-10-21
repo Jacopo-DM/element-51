@@ -1,21 +1,17 @@
 //! Save as PNG: the picture or chart on a card, as a file the browser
 //! downloads. Python is not involved.
 
-use element_51_core::display::chart_rect;
-use element_51_core::layout::node_rect;
 use element_51_core::menu::png_file_name;
+use element_51_core::paper::{PAPER_HEIGHT, PAPER_WIDTH, paper_chart, picture_scale};
 use element_51_core::rows::type_of;
 use element_51_core::{CardDisplay, Status};
 use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, HtmlElement};
 
 use crate::a11y_ui::announce;
-use crate::draw_chart::chart;
+use crate::draw_chart::plotted;
+use crate::paper_ui::{draw_chart, draw_picture, page, to_paper_url};
 use crate::{Shared, State, show_error};
-
-/// How many pixels a chart gets for each pixel of the card, so the file is
-/// sharp when it is zoomed.
-const CHART_SCALE: f64 = 4.0;
 
 /// Save what node `id` shows. A node with nothing to save yet (no run, or a
 /// run that failed for it) gets a banner that says so, with Dismiss.
@@ -46,7 +42,7 @@ fn render(state: &State, id: &str) -> Result<(String, String), String> {
         .and_then(|result| result.outcome_for(id))
         .filter(|outcome| outcome.status == Status::Ok)
         .ok_or_else(nothing)?;
-    let failed = |_| "The browser could not make the picture.".to_string();
+    let failed = || "The browser could not make the picture.".to_string();
     match node_type.display {
         CardDisplay::None => Err(format!("{id} shows no picture or chart.")),
         CardDisplay::Image => {
@@ -57,49 +53,43 @@ fn render(state: &State, id: &str) -> Result<(String, String), String> {
                 .find(|(_, shown)| shown.as_image().is_some())
                 .map(|(port, _)| port)
                 .ok_or_else(nothing)?;
-            let canvas = state.pictures.of(id).ok_or_else(nothing)?;
-            let url = canvas.to_data_url().map_err(failed)?;
-            Ok((png_file_name(id, port), url))
+            let picture = state.pictures.of(id).ok_or_else(nothing)?;
+            let (_, width, height) = picture_scale(picture.width(), picture.height());
+            let canvas = paper_canvas(&state.document, width, height).ok_or_else(failed)?;
+            let context = context_of(&canvas).ok_or_else(failed)?;
+            draw_picture(&context, picture, (width, height)).map_err(|_| failed())?;
+            Ok((png_file_name(id, port), to_paper_url(&canvas)?))
         }
         CardDisplay::Chart => {
-            let rect = node_rect(node, &node_type, &state.theme.metrics);
-            let area = chart_rect(&rect, &node_type, &state.theme.metrics)
-                .ok_or("This card has no chart.")?;
-            let canvas = new_canvas(
-                &state.document,
-                (area.w * CHART_SCALE).round() as u32,
-                (area.h * CHART_SCALE).round() as u32,
-            )
-            .ok_or("The browser could not make the picture.")?;
-            let context: CanvasRenderingContext2d = canvas
-                .get_context("2d")
-                .ok()
-                .flatten()
-                .and_then(|context| context.dyn_into().ok())
-                .ok_or("The browser could not make the picture.")?;
-            context.scale(CHART_SCALE, CHART_SCALE).map_err(failed)?;
-            context.translate(-area.x, -area.y).map_err(failed)?;
-            context.set_fill_style_str(&state.theme.colours.field);
-            context.fill_rect(area.x, area.y, area.w, area.h);
-            chart(
-                &context,
-                &state.theme,
-                graph,
-                (node, &node_type),
-                (&area, outcome),
-            )
-            .map_err(failed)?;
-            let url = canvas.to_data_url().map_err(failed)?;
-            Ok((png_file_name(id, "chart"), url))
+            let lines = plotted(graph, (node, &node_type), outcome);
+            let series: Vec<(&str, &element_51_core::Series)> = lines
+                .iter()
+                .map(|(name, series)| (name.as_str(), *series))
+                .collect();
+            let chart = paper_chart(&series).ok_or("The chart has no numbers to save.")?;
+            let canvas =
+                paper_canvas(&state.document, PAPER_WIDTH, PAPER_HEIGHT).ok_or_else(failed)?;
+            let context = context_of(&canvas).ok_or_else(failed)?;
+            page(&context);
+            draw_chart(&context, &chart).map_err(|_| failed())?;
+            Ok((png_file_name(id, "chart"), to_paper_url(&canvas)?))
         }
     }
 }
 
-fn new_canvas(document: &Document, width: u32, height: u32) -> Option<HtmlCanvasElement> {
+fn paper_canvas(document: &Document, width: u32, height: u32) -> Option<HtmlCanvasElement> {
     let canvas: HtmlCanvasElement = document.create_element("canvas").ok()?.dyn_into().ok()?;
     canvas.set_width(width);
     canvas.set_height(height);
     Some(canvas)
+}
+
+fn context_of(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContext2d> {
+    canvas
+        .get_context("2d")
+        .ok()
+        .flatten()
+        .and_then(|context| context.dyn_into().ok())
 }
 
 /// Hand the browser a link to download, and click it.

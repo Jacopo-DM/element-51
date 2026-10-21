@@ -19,6 +19,8 @@ pub mod layout;
 pub mod menu;
 mod model;
 pub mod palette;
+pub mod paper;
+pub mod png;
 mod replica;
 pub mod rows;
 pub mod source;

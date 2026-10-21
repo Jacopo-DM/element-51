@@ -195,21 +195,12 @@ try-out is still to come; the keyboard walk-throughs do not cover this example.
 - Status: draft, nothing approved, no spec.
 - Added: 2026-10-22
 
-### png-paper (draft, asked 2026-10-22)
+### png-paper: done (2026-10-22)
 
-- Goal: Save as PNG gives a picture that is ready for an academic paper, not what it saves today.
-- Kind: new behaviour (changes what the card menu saves).
-- Look (the user's reference, 2026-10-22: the PGFPlots gallery, `pgfplots.sourceforge.net/gallery.html`,
-    saved by the user outside the repo; they like these plots): a white page, a thin black frame
-    with ticks, numbers in a Computer Modern style serif, a rotated y label and an x label,
-    optional light grey grid, lines in blue and red with markers (circle, cross, square) so they
-    differ in greyscale, a boxed legend in a corner, no title, log axes. Independent of the
-    editor theme.
-- Open, for the user: the size (about 2100 x 1400 px, 7 inches at 300 dpi; or a single column
-    about 1000 x 700 px; the file should record its dpi), and where the axis labels come from
-    (a series has only its port name, so the x label would be fixed text such as `step`).
-- Status: draft, nothing approved, no spec.
-- Added: 2026-10-22
+Save as PNG gives a paper figure in the PGFPlots look (2100 by 1400 pixels at 300 dpi, white page, serif text,
+blue and red lines with markers, boxed legend); a picture is enlarged by a whole number with a thin frame. The
+size and labels were my choices when the user said go (DESIGN.md, "png-paper spec"); the user's own look at
+the saved files, and in Word or LaTeX, is still to come.
 
 ### readme-gif (approved by the user's words 2026-10-22, not started)
 

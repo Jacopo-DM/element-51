@@ -847,6 +847,36 @@ Part of the experiment goals (PLAN.md). The goal and its five criteria were appr
     choice and the user chose the text box); a convolutional network (slow in plain numpy and beside
     the point of the example); Adam (more code, no better demo than a visibly falling SGD loss).
 
+### png-paper spec (the user's request, 2026-10-22; choices made by me on "go")
+
+The user asked for Save as PNG to be "academic paper ready" and pointed to the PGFPlots gallery
+as the look they like (`pgfplots.sourceforge.net/gallery.html`, saved by them, 525 plots). They
+did not answer my two questions (size, and where labels come from) and said "go", so I chose:
+
+- Look: a white page, a thin black frame with short inward ticks on all four sides, serif text
+    (Latin Modern or Computer Modern if the system has one, Times otherwise), a faint grey
+    grid, blue circles and red crosses as in the gallery, then green squares, orange diamonds,
+    purple triangles and black pluses, dashed after six; a boxed legend in the top right for more
+    than one line. Independent of the editor theme. Why: it is the user's reference, and
+    markers keep the lines apart in greyscale print.
+- Size: 2100 by 1400 pixels, 7 inches at 300 dpi, full page width. Why: it is what journals
+    ask for (300 dpi) and it shrinks cleanly to a single column; a single-column file cannot be
+    enlarged without blur. The PNG carries a `pHYs` chunk (11811 pixels per metre) so Word and
+    LaTeX place it at its real size.
+- Labels: x is `index`; y is the line's name when there is one line, and none when there are
+    several (the legend names them). Why: a series carries no axis names; fixed words are
+    honest and the user can edit them in the paper. Axis names would need a new field on a
+    series, which is a separate decision.
+- A picture is enlarged by the largest whole number that fits 2100 by 1400 (a 28 by 28 digit
+    becomes 1400 by 1400), nearest neighbour, with a thin black frame and the same 300 dpi.
+- Where the code lives: the layout and numbers in `element-51-core/src/paper.rs` (native tests in
+    `tests/paper.rs`), the resolution chunk in `src/png.rs` (`tests/png.rs`, the CRC against the
+    standard test value), the drawing in `element-51-web/src/paper_ui.rs`, the entry in `save_png.rs`.
+- Rejected: log axes (the gallery has some; a chart has no log mode yet), a vector file (SVG or
+    PDF; the user asked for a PNG), exporting the editor's themed chart larger (dark backgrounds
+    rarely suit paper), and a LaTeX font file (a download for a font that is only a nicety;
+    the font stack uses it when the system has it).
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1776,6 +1806,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | `auto-run` task 3: a red border on a node whose last run failed | native theme tests (key in all three themes, docs row, `card_error_border on canvas` at 3:1, every palette at 0 failures); by hand in the browser pane (dark): `n3` and `n5` get the border beside the red title bar; the banner replaced its text on a new failing run (`n4: input 'angle' has no value`) and hid after a passing run (`Run finished: 3 ok`); redraw at 200 nodes 1.52, 1.53 and 1.67 ms, inside the known 1.3 to 1.6 ms plus its spread; the light theme and palettes not looked at by eye |
 | 2026-10-21 | `mnist-experiment`: `examples/g_experiments/g3_mnist.py` | 31 tests in `tests/test_mnist_example.py` on fake data (reader errors, `.part` and sha256 refusal, finite-difference gradients, seed, learning a separable set, sample, settings, a Start that fills the Plot) and a row in `tests/test_examples.py`; real data downloaded after the user's yes (MNIST 11.6 MB from Google's cvdf-datasets, identical sha256 to PyTorch's S3 copy; Fashion-MNIST 30.9 MB from Zalando's GitHub, md5 equal to the dataset README's), sha256 pinned in the example; measured on this Mac (numpy 2.5.4): MNIST at 64 hidden, 10 epochs 1.8 s 97.21%; Fashion the same 1.7 s 86.72%; defaults (128 hidden, 30 epochs, 282 points) MNIST 6.8 s 97.73% (first point 85.8%, loss 0.887 to 0.0106), Fashion 7.1 s 87.77%; hidden 16 3.2 s 95.36%; learning rate 0.01 6.8 s 96.20%; 1.0 6.9 s 97.52%; by hand in the browser pane: Run automatically shows the digit, Start fills the Plot live (step 77 of 282 seen), `fashion` in the sample swaps to a boot and its linked `dataset` follows, `epochs` 0 fails with its reason |
 | 2026-10-22 | a series box shows a bare number, the words are a hover text (the user's request) | native tests: `shown_summary` gives `0.05`, `shown_tooltip` gives `last of 2 points`, `grey picture, 28 x 20`, `2 points, none of them a number`, and `NodeOutcome::output_tooltip` is None for a plain value; by hand in the browser pane (MNIST example): the loss box reads `0.0106`, hovering it sets the canvas's `title` to `last of 282 points`, and the Plot's linked box says `last of 282 points, from n2.loss`; the hidden tree and the status line keep the word `last` (`access.rs`), so a keyboard or screen-reader user loses nothing, and touch has no hover text |
+| 2026-10-22 | Save as PNG is paper ready (the user's request, PGFPlots look) | native tests: 10 in `tests/paper.rs` (plot inside the figure, y label only for one line, blue circle then red cross then dashed again after six, ticks inside the plot with a true minus, about ten markers spread along a long line and all on a short one, a gap breaks the line and has no marker, no numbers gives no chart, a flat line has a scale, points are pixels at 300 dpi, a 28 by 28 picture is enlarged 50 times) and 3 in `tests/png.rs` (CRC-32 standard value, the `pHYs` chunk of 11811 pixels per metre placed after IHDR with a valid CRC, a non-PNG refused); by hand in the browser pane on the MNIST example: the chart saves as `n3-chart.png`, 2100 by 1400 with `pHYs` 11811, and looks like the gallery (white page, frame, serif numbers, blue circles and red crosses, boxed legend); the digit saves as `n1-image.png`, 1400 by 1400; not checked: opening the file in Word or LaTeX, a font that is really Latin Modern (this Mac's fallback was a Times-like serif) |
 
 ## Gotchas
 

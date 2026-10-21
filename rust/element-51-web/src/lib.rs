@@ -18,6 +18,7 @@ mod input;
 mod menu_keys;
 mod menu_ui;
 mod messages;
+mod paper_ui;
 mod pictures;
 mod run_ui;
 mod save_png;

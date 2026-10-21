@@ -18,28 +18,7 @@ pub(crate) fn chart(
     (area, outcome): (&Rect, &NodeOutcome),
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
-    let sourced: Vec<((&str, &str), &Series)> = node_type
-        .inputs
-        .iter()
-        .filter_map(|port| {
-            let series = outcome.shown.get(&port.name)?.as_series()?;
-            let source = graph
-                .links
-                .iter()
-                .find(|link| link.target.node == node.id && link.target.port == port.name)?;
-            Some((
-                (source.source.node.as_str(), source.source.port.as_str()),
-                series,
-            ))
-        })
-        .collect();
-    let sources: Vec<(&str, &str)> = sourced.iter().map(|(source, _)| *source).collect();
-    let names = line_names(&sources);
-    let lines: Vec<(&str, &Series)> = names
-        .iter()
-        .map(String::as_str)
-        .zip(sourced.iter().map(|(_, series)| *series))
-        .collect();
+    let lines = plotted(graph, (node, node_type), outcome);
     let series: Vec<&Series> = lines.iter().map(|(_, series)| *series).collect();
     let Some(layout) = chart_layout(area, metrics, &series) else {
         return Ok(());
@@ -148,6 +127,35 @@ pub(crate) fn chart(
         )?;
     }
     Ok(())
+}
+
+/// The lines of a plot node: each linked series with its name (the output port's
+/// name, or `n3 loss` when two lines share one), in input order.
+pub(crate) fn plotted<'a>(
+    graph: &Graph,
+    (node, node_type): (&PlacedNode, &NodeType),
+    outcome: &'a NodeOutcome,
+) -> Vec<(String, &'a Series)> {
+    let sourced: Vec<((&str, &str), &Series)> = node_type
+        .inputs
+        .iter()
+        .filter_map(|port| {
+            let series = outcome.shown.get(&port.name)?.as_series()?;
+            let source = graph
+                .links
+                .iter()
+                .find(|link| link.target.node == node.id && link.target.port == port.name)?;
+            Some((
+                (source.source.node.as_str(), source.source.port.as_str()),
+                series,
+            ))
+        })
+        .collect();
+    let sources: Vec<(&str, &str)> = sourced.iter().map(|(source, _)| *source).collect();
+    line_names(&sources)
+        .into_iter()
+        .zip(sourced.iter().map(|(_, series)| *series))
+        .collect()
 }
 
 /// A chart line's width as a fraction of a wire's.

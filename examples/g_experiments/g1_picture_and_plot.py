@@ -24,10 +24,11 @@ Notes
         with its last value at its end. Its inputs grow: every link adds a
         row, and a new empty row waits below for the next line.
     * Open the card menu (the three bars) of `ramp` and choose Save as PNG: the
-        browser downloads `n1-out.png`, the picture at its own size. On the
-        `Plot` card the same entry saves `n5-chart.png`, the chart larger and
-        sharper than on the card. Before you press Run there is nothing to save,
-        and the page says so.
+        browser downloads `n1-out.png`, the picture enlarged to fill a page
+        with crisp pixels. On the `Plot` card the same entry saves
+        `n5-chart.png`, a figure ready for a paper: white page, serif text, blue
+        and red lines with markers, 300 dpi. Before you press Run there is
+        nothing to save, and the page says so.
     * Drag the `accuracy` link off its row (or delete it with the link's
         card menu or the Delete key): the row goes and the card shrinks.
     * Change `steps` in `training` to 300 and press Run: the lines get longer

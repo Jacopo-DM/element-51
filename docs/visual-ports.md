@@ -76,9 +76,15 @@ highest number of each part, so a spike is never lost.
 
 The card menu (the three bars on a card, or Shift+F10 with the node focused)
 has Save as PNG on a card that shows a picture or a chart. The browser downloads
-`n1-out.png` for a picture, at its own size, and `n5-chart.png` for a chart,
-drawn four times larger than on the card. Before a run there is nothing to
-save, and the page says so with a message you can dismiss.
+`n1-out.png` for a picture, and `n5-chart.png` for a chart. Both are made to be
+put in a paper, whatever theme the editor has: a chart is 2100 by 1400 pixels
+(7 by 4 2/3 inches at 300 dpi) on a white page, with a thin black frame, serif
+numbers and labels, a faint grid, blue and red lines with different markers so
+they differ in greyscale, and a boxed legend when there is more than one line. A
+picture is enlarged by a whole number, with crisp pixels and a thin frame (a 28
+by 28 digit becomes 1400 by 1400). The file says it is 300 dpi, so Word and
+LaTeX place it at its real size. Before a run there is nothing to save, and the page
+says so with a message you can dismiss.
 
 ## Keyboard and screen readers
 

@@ -17,6 +17,7 @@ const CANVAS_UI: &str = include_str!("../../element-51-web/src/canvas_ui.rs");
 const MENU_UI: &str = include_str!("../../element-51-web/src/menu_ui.rs");
 const MENU_KEYS: &str = include_str!("../../element-51-web/src/menu_keys.rs");
 const THEME_UI: &str = include_str!("../../element-51-web/src/theme_ui.rs");
+const PAPER_UI: &str = include_str!("../../element-51-web/src/paper_ui.rs");
 const PAGE: &str = include_str!("../../element-51-web/static/index.html");
 
 #[test]
@@ -118,6 +119,7 @@ fn no_colour_is_written_in_the_drawing_code_or_the_page() {
         ("menu_ui.rs", MENU_UI),
         ("menu_keys.rs", MENU_KEYS),
         ("theme_ui.rs", THEME_UI),
+        ("paper_ui.rs", PAPER_UI),
         ("index.html", PAGE),
     ] {
         assert_eq!(has_hex_colour(text), None, "{name} holds a colour literal");
