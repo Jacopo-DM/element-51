@@ -558,6 +558,113 @@ slower than before. The benchmark times the work the page does to record a frame
 browser's painting of it, so a change that only cuts painting work may not show. The
 profile and the tasks are in PLAN.md.
 
+### job-nodes spec (approved 2026-10-21)
+
+Part of the experiment goals (PLAN.md). The success measure is in PLAN.md; this is the
+design behind it. The separate-process variant is the goal `job-isolation` (spec below).
+
+- Users: Python authors who write a long task (a training run, a simulation) and want
+    to start it from a card, watch its curves or pictures fill in, and stop it. Non-goals:
+    PLAN.md, "Experiment goals" (no resume from a checkpoint, no two jobs of one node at
+    once), and no global `report()`.
+- Existing behaviour that must not change: `Node`, `@node`, Run, the saved graph format
+    (`FORMAT_VERSION` stays 2; a job's state and results are not saved, so old files load
+    unchanged), the snapshot version (stays 2; `jobs` has a default), the redraw time
+    budgets of `speed-up-frame`, and every current test (fixtures only gain fields with
+    defaults).
+- Python surface (`element_51.JobNode`, a subclass of `Node`, so fields are inputs):
+    * A step job defines `steps(self) -> int`, `begin(self) -> State` and
+        `step(self, state: State, i: int) -> Out`. A job that cannot be split defines
+        `work(self, report: Report) -> Out` instead. Defining both, or neither, is a
+        `TypeError` at class creation. The step form is built on the work form: the
+        base class's `work` loops `begin`, then `step` for each `i`, and reports each
+        return value.
+    * `Out` is the return hint of `step` (or `work`), read like `Node.run`'s: a plain
+        type gives one output `out`, a pydantic model one output per field.
+    * An update (a step's return value, a `report(...)` call, or `work`'s return value)
+        sets a series output to its old points plus the new ones, and replaces any other
+        output. `report(**fields)` takes a subset of the output fields; an unknown name
+        raises `ValueError` naming the outputs. `Report` is a `Protocol`:
+        `__call__(**fields: Carried)` and `stopped: bool`.
+    * `Stopped` derives from `BaseException`, so a job's own `except Exception` does not
+        swallow it. `report` raises it on the first call after Stop; a job may catch it to
+        clean up and must then end. `report.stopped` is the same fact as a flag.
+    * How `State` is typed (a PEP 695 generic `JobNode[State]` under pydantic 2.14.1, or
+        `begin` returning an object with a `step` method) is settled by a spike in task
+        `job-nodes` 1; mypy strict forbids `Any`, and a subclass narrowing a parameter
+        breaks the override rule, so the plain version cannot be used.
+- Engine (`engine.py`): `NodeType` gains `job: bool` (default false; on the wire and in
+    Rust). `run_graph` gains `only: frozenset[str] | None` (run just these nodes) and
+    `fixed: Mapping[str, Mapping[str, Carried]]` (nodes that are not run; their outputs
+    are taken from here). A plain Run passes every job node's stored results as `fixed`,
+    so Run never starts a job and a node after a job sees its latest values; a job node
+    without results is skipped, with the reason `no output yet: press Start`.
+    `ancestors(graph, node)` and `closure(graph, nodes)` (the nodes and everything they
+    need) pick the subsets below. `NodeOutcome` gains `reason: str | None` for a skipped
+    node (the page shows it in the box and the hidden tree).
+- Runner (`jobs.py`, new): `JobState` (pydantic: `node`, `state` of idle, running,
+    stopping, finished, stopped or failed, `step`, `steps`, `outputs`, `error`) and
+    `JobRunner`, which owns one thread per running job. `start(graph, node)` refuses with a
+    reason when the node is not a job, its job is running or stopping, or an ancestor
+    fails; otherwise it runs `ancestors(node)` once, copies the inputs (an edit made while
+    the job runs does not reach it), and starts a daemon thread (Ctrl+C must end the
+    process). `stop(node)` sets the flag and the state to stopping. Every update is merged
+    into the results under the lock and published at most every 50 ms (a timer sends the
+    last one if updates stop coming; finished, stopped and failed are sent at once). The
+    clock is a constructor argument so tests need no sleep. Deleting a job node stops its
+    job and drops its state; loading a graph stops every job and clears all state.
+- Messages (`protocol.py`, mirrored in `element-51-core`): client to Python `StartRequest`
+    and `StopRequest` (`node`); Python to client `JobUpdate` (`node`, `state`, `step`,
+    `steps`, `error`, `outputs`, `shown`, and `linked`: the series now reaching each chart
+    node input linked directly from this job, as (node, input port, series)), `JobRefusal`
+    (`node`, `reason`, to the asking page only; the page shows the banner with Dismiss and
+    announces it) and a partial `RunResult` (`partial: true`) that the page merges into
+    its last run by node id instead of replacing it. `Snapshot` gains `jobs` (default
+    empty) so a page opened mid-run shows state and data. `JobUpdate` goes to every open
+    page through `Hub.broadcast` from the job's thread (`Connection.send` is thread-safe).
+- End of a job: on finished or stopped, the server runs `closure(descendants(node))` once
+    with the job's results as `fixed` and broadcasts the outcomes as a partial
+    `RunResult`. On failed it does not (the results may be incomplete).
+- Page (`element-51-web`, `element-51-core`): a node type with `job` adds one row to the
+    card below its ports, with a Start and a Stop button, the state word and, for a step
+    job, a thin bar and `step 3 of 5` (`node_rect` grows by a height that depends on the
+    type only, as `display_height` does); the buttons and bar use existing theme colours
+    (a new colour needs a contrast pair, CLAUDE.md). A click on Start or Stop sends the
+    request; Stop is shown only while the job runs. `State` keeps a job map by node id,
+    applied from `Snapshot.jobs` and `JobUpdate`; a chart node's lines come from the
+    patch in `linked`. The hidden tree gives a job node two button items and a state
+    text, and announces state changes on the status line (not every report). Start and
+    Stop are reachable by Tab/arrows and Enter like the other items.
+- Interpretation recorded: "display nodes" in criterion 5 means chart nodes (`Plot`)
+    linked directly to a job output. A picture or series on the job's own card follows
+    its own reports. A node between the job and a Plot makes the Plot update when the job
+    ends.
+- Run button state: `Run` is disabled with `aria-busy` and the label `Running` between
+    sending a run and receiving its result.
+- Verification: Python tests with a fake clock and fake jobs (state machine, merge rule,
+    rate limit, refusal reasons, stop, failure, delete and load); a websocket test that a
+    report reaches a connected client within 100 ms (the measure of criterion 5); shared
+    fixtures for the new messages, read by both suites; native tests for layout, merge and
+    hidden-tree text; `ui_states.py --graph job` states, `uiKeys` rows and an axe scan in
+    three themes; a recorded walk-through in the browser pane.
+
+### job-isolation spec (approved 2026-10-21)
+
+- A class with `isolated = True` runs its job in a child process made with
+    `multiprocessing` (spawn, because macOS). The child imports the node's class by module
+    and name, builds the node from the pickled inputs, and runs `work` with a `report`
+    that puts updates on a queue; the parent's thread reads the queue and does what
+    `JobRunner` does for a thread job. A class defined where the child cannot import it
+    (inside a function, or a `__main__` without the usual guard) is refused at Start with
+    a reason.
+- Stop sets the stop event, which makes `report` raise `Stopped` in the child at its
+    next call. If no update arrives within 0.5 s the parent kills the process and the
+    state becomes stopped. A child that exits without a final message becomes failed, with
+    its exit code in the reason.
+- The step form runs inside the child, so its state never crosses the boundary; only the
+    inputs, each update and the result are pickled.
+
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1000,6 +1107,31 @@ public area has a notebook or a row saying none yet", and a test keeps it true.
 - A refused link raises `element_51.edits.EditError`, which is not exported from
     `element_51`, so the notebook imports it from `element_51.edits`.
 
+### Job nodes (2026-10-21, planning talk with the user)
+
+- Stop is cooperative in a thread (the next report or step raises or ends), with the
+    job allowed to catch `Stopped` to clean up; a separate process killed after 0.5 s
+    is built as the goal `job-isolation`, not left for later (the user's choice: both).
+    Reason: Python cannot kill a thread safely, and a hard kill is the only way to
+    keep the 1 s promise for a job that never reports.
+- The shape is steps (`begin`, `step`) on top of `work(report)` (the user's choice).
+    Reason: the framework then owns the loop, so Stop is exact between steps, the
+    progress bar and the report rate limit are free, a test calls `step` directly, and
+    a separate process keeps the state inside the child. `work` stays for a job that
+    is one long call.
+- A series output grows by what an update returns; others are replaced (the user's
+    choice). Reason: a training loop returns its new epoch, and the job keeps no
+    history.
+- A node after a job sees the latest reported values, and results stay until the next
+    Start (the user's choices). Reason: a live plot needs the values mid-run, and a
+    stray keystroke in a box must not lose a long run.
+- Start runs the nodes the job needs, once (the user's choice). Reason: a job started
+    from a stale or never-run upstream value would be wrong with no sign.
+- The progress bar and `step 3 of 5` are shown for step jobs (the user's choice,
+    beyond the first goal text). It costs one more labelled part to check at AA.
+- `fixed` and `only` on `run_graph` (not a second engine function): a plain Run, Start
+    and the end-of-job run are the same loop over different subsets.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -1332,6 +1464,19 @@ have to go through `tools/compress_images.py`).
     - Updating the page's value boxes only when they moved (task 6): `sync_fields` is 0.22
         ms of the 12-picture frame, but zoom and pan move every box every frame, so the
         wheel benchmark could not improve.
+
+- For `job-nodes` (2026-10-21, rejected or left out, with the user): injecting an
+    exception into the thread with `PyThreadState_SetAsyncExc` (it cannot interrupt a
+    numpy call and can fire inside the job's own cleanup, leaving half-written state); a
+    generator job (`yield`; a helper or library callback cannot report without `yield
+    from`); a global `element_51.report()` (hidden state, and the stepper removes most of
+    the need; it can be added later as a thin wrapper); async jobs (a numpy loop blocks
+    the loop, so a thread is needed anyway); a series that a report replaces (the job would
+    keep its whole history and the page would receive the whole curve each time; no job
+    needs it yet); downstream nodes that see only a finished job's outputs (a live plot
+    would stay empty); clearing results when an input changes (one keystroke loses a long
+    run); Start with the last Run's values (can be stale without a sign); a status text
+    line on the card (not asked; `step 3 of 5` covers progress).
 
 ## Results
 
