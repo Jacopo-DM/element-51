@@ -14,14 +14,19 @@ mod save_png;
 mod source_ui;
 
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 use element_51_core::address::websocket_url;
 use element_51_core::history::History;
+use element_51_core::job::JobButton;
 use element_51_core::layout::PortHit;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult};
+use element_51_core::{
+    Edit, EditRequest, JobStatus, JobUpdate, Message, PortRef, Replica, RunRequest, RunResult,
+    StartRequest, StopRequest,
+};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -70,6 +75,8 @@ struct State {
     run: Option<RunResult>,
     /// The pictures of the last run, drawn once.
     pictures: Pictures,
+    /// How each job that has been started stands, by node id.
+    jobs: BTreeMap<String, JobUpdate>,
     /// Where the right-click menu was opened: new nodes are placed here.
     menu_at: (f64, f64),
     /// The node whose card menu is open, if any.
@@ -127,6 +134,7 @@ pub fn start() -> Result<(), JsValue> {
         hover: None,
         run: None,
         pictures: Pictures::default(),
+        jobs: BTreeMap::new(),
         menu_at: (0.0, 0.0),
         card_menu_node: None,
         theme_key: String::new(),
@@ -371,6 +379,7 @@ fn draw_canvas(state: &Shared) {
         focus: state.focus.as_ref(),
         run: state.run.as_ref(),
         pictures: &state.pictures,
+        jobs: &state.jobs,
     };
     let result = draw(&state.canvas, &state.context, &frame);
     if let Err(error) = result {
@@ -434,7 +443,7 @@ fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
                 send(&state, request);
                 state.tree_stale = true;
                 if !keeps_results {
-                    state.run = None;
+                    clear_run(&mut state);
                 }
             }
             Err(error) => {
@@ -477,6 +486,58 @@ fn step_history(shared: &Shared, undo: bool) {
     redraw(shared);
 }
 
+/// Forget the last run, then show what the jobs have reported: a job's results
+/// are not the result of a run, so an edit must not lose them.
+fn clear_run(state: &mut State) {
+    state.run = None;
+    show_jobs(state);
+}
+
+/// Put every job's reported outputs into the run result, and draw its pictures.
+fn show_jobs(state: &mut State) {
+    if state.jobs.is_empty() {
+        return;
+    }
+    let mut run = state.run.take().unwrap_or_default();
+    for update in state.jobs.values() {
+        run.apply_job(update);
+    }
+    state.pictures = Pictures::from_result(&state.document, &run);
+    state.run = Some(run);
+}
+
+/// A job changed: keep it, show what it reported, and tell the person when its
+/// state changes. A failed job also shows its error in the banner.
+fn on_job_update(state: &mut State, update: JobUpdate) {
+    let before = state.jobs.get(&update.node).map(|job| job.state);
+    let changed = before != Some(update.state);
+    if update.state == JobStatus::Failed && changed {
+        let why = update.error.as_deref().unwrap_or("failed");
+        show_error(&state.document, &format!("{}: {why}", update.node));
+    }
+    state.jobs.insert(update.node.clone(), update);
+    state.run = None;
+    show_jobs(state);
+    if changed {
+        state.tree_stale = true;
+    }
+}
+
+/// Ask Python to start or stop the job of node `id`.
+fn send_job_request(state: &State, id: &str, button: JobButton) {
+    let node = id.to_string();
+    let message = match button {
+        JobButton::Start => Message::Start(StartRequest { node }),
+        JobButton::Stop => Message::Stop(StopRequest { node }),
+    };
+    if state.socket.send_with_str(&message.to_json()).is_err() {
+        show_error(
+            &state.document,
+            "Could not send the request: not connected to Python.",
+        );
+    }
+}
+
 fn on_message(shared: &Shared, event: &MessageEvent) {
     let parsed = event
         .data()
@@ -488,7 +549,12 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
         let mut state = shared.borrow_mut();
         match parsed {
             Ok(Message::Snapshot(snapshot)) => {
-                state.run = None;
+                state.jobs = snapshot
+                    .jobs
+                    .iter()
+                    .map(|job| (job.node.clone(), job.clone()))
+                    .collect();
+                clear_run(&mut state);
                 state.selected = None;
                 state.tree_stale = true;
                 let theme_key = format!("{} {}", snapshot.theme, snapshot.theme_changes);
@@ -524,7 +590,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                     .is_some_and(|replica| replica.reject(reject.id));
                 if known {
                     state.tree_stale = true;
-                    state.run = None;
+                    clear_run(&mut state);
                     show_error(
                         &state.document,
                         &format!("Python refused the edit: {}", reject.reason),
@@ -551,8 +617,11 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                 state.run = Some(whole);
             }
             Ok(Message::SourceReply(reply)) => source_reply = Some(reply),
-            // The card that shows a job comes with `job-nodes` task 4.
-            Ok(Message::JobUpdate(_) | Message::JobRefused(_)) => {}
+            Ok(Message::JobUpdate(update)) => on_job_update(&mut state, update),
+            Ok(Message::JobRefused(refusal)) => {
+                show_error(&state.document, &refusal.reason);
+                announce(&state.document, &refusal_text(&refusal.reason));
+            }
             Ok(
                 Message::Edit(_)
                 | Message::Run(_)

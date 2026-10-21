@@ -644,7 +644,7 @@ Tier 1, the walking skeleton and what the rest needs:
 
 Tier 2, in order of value over risk plus cost:
 
-4. **The card (page).** What: the job row (Start, Stop, state word, bar), `node_rect`
+4. **DONE 2026-10-21. The card (page).** What: the job row (Start, Stop, state word, bar), `node_rect`
     growth for job types, hit-testing of the buttons, the job map in `State`, live redraw of
     the job's own picture or chart and of a Plot linked to it (the `linked` patch and
     `RunResult::merge`), the banner for a refusal or failure. Files: `layout.rs`, `display.rs`
@@ -721,6 +721,9 @@ Oldest first.
 
 ## Known problems
 
+- The job buttons work by mouse only until `job-nodes` task 5: the hidden tree does not list Start,
+    Stop or the state yet, and a screen reader hears nothing of a job's progress. A page that is
+    given a job's update does not announce it either.
 - After `job-nodes` tasks 1 and 2, `src/element_51/engine.py` (496 lines), `jobs.py` (500) and
     `nodes.py` (473) are over the 400-line mark. The graph reach helpers (`ancestors`,
     `descendants`, `closure`) could move to their own module if a restructure pass runs again.

@@ -1,6 +1,7 @@
 //! Where a node box sits and how big it is.
 
 use crate::display::display_height;
+use crate::job::job_height;
 use crate::rows::type_of;
 use crate::theme::Metrics;
 use crate::{Graph, Link, NodeType, PlacedNode, PortRef};
@@ -45,6 +46,7 @@ pub fn node_rect(node: &PlacedNode, node_type: &NodeType, metrics: &Metrics) -> 
         w: metrics.node_width,
         h: metrics.header_height
             + metrics.row_height * rows as f64
+            + job_height(node_type, metrics)
             + display_height(node_type, metrics),
     }
 }

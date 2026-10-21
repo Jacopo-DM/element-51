@@ -1,6 +1,7 @@
 //! What a card shows below its ports: where the picture or the chart goes, how a
 //! picture fits, and the chart's scale, ticks and lines.
 
+use crate::job::job_height;
 use crate::layout::Rect;
 use crate::theme::Metrics;
 use crate::{CardDisplay, NodeType, PortType, Series, Shown};
@@ -46,7 +47,10 @@ pub fn picture_rect(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Opt
     let side = picture_side(metrics);
     Some(Rect {
         x: card.x + metrics.title_pad,
-        y: card.y + metrics.header_height + metrics.row_height * rows as f64,
+        y: card.y
+            + metrics.header_height
+            + metrics.row_height * rows as f64
+            + job_height(node_type, metrics),
         w: side,
         h: side,
     })
@@ -74,7 +78,10 @@ pub fn chart_rect(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Optio
     let rows = node_type.inputs.len() + node_type.outputs.len();
     Some(Rect {
         x: card.x + metrics.title_pad,
-        y: card.y + metrics.header_height + metrics.row_height * rows as f64,
+        y: card.y
+            + metrics.header_height
+            + metrics.row_height * rows as f64
+            + job_height(node_type, metrics),
         w: picture_side(metrics),
         h: chart_height(metrics),
     })

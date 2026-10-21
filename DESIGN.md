@@ -635,8 +635,8 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
 - End of a job: on finished or stopped, the server runs `closure(descendants(node))` once
     with the job's results as `fixed` and broadcasts the outcomes as a partial
     `RunResult`. On failed it does not (the results may be incomplete).
-- Page (`element-51-web`, `element-51-core`): a node type with `job` adds one row to the
-    card below its ports, with a Start and a Stop button, the state word and, for a step
+- Page (`element-51-web`, `element-51-core`; built in task 4): a node type with `job` adds two rows to the
+    card below its ports (the buttons and the state word; the bar and `step 3 of 5`), with a Start and a Stop button, the state word and, for a step
     job, a thin bar and `step 3 of 5` (`node_rect` grows by a height that depends on the
     type only, as `display_height` does); the buttons and bar use existing theme colours
     (a new colour needs a contrast pair, CLAUDE.md). A click on Start or Stop sends the

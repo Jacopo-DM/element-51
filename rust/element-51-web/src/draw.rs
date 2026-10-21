@@ -8,6 +8,10 @@ use element_51_core::display::{
     short_number,
 };
 use element_51_core::fields::{linked_text, share_room};
+use element_51_core::job::{
+    JobButton, JobLayout, can_start, can_stop, job_layout, progress_fraction, progress_text,
+    state_text,
+};
 use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_bounds, wire_controls,
@@ -16,9 +20,10 @@ use element_51_core::rows::{find_input, type_of};
 use element_51_core::theme::{Metrics, PortShape, PortStyle, Theme};
 use element_51_core::view::View;
 use element_51_core::{
-    Edit, Graph, Link, NodeOutcome, NodeType, PlacedNode, PortRef, PortType, RunResult, Series,
-    Status, apply_edit,
+    Edit, Graph, JobUpdate, Link, NodeOutcome, NodeType, PlacedNode, PortRef, PortType, RunResult,
+    Series, Status, apply_edit,
 };
+use std::collections::BTreeMap;
 use std::f64::consts::TAU;
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
@@ -73,6 +78,8 @@ pub struct Frame<'a> {
     pub focus: Option<&'a Focus>,
     pub run: Option<&'a RunResult>,
     pub pictures: &'a Pictures,
+    /// How each job that has been started stands, by node id.
+    pub jobs: &'a BTreeMap<String, JobUpdate>,
 }
 
 /// A wire is drawn in the colour of the port it leaves, as in Antimony.
@@ -163,6 +170,7 @@ pub fn draw(
         focus,
         run,
         pictures,
+        jobs,
     } = *frame;
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
@@ -218,7 +226,7 @@ pub fn draw(
             theme,
             graph,
             (node, &node_type),
-            (run, pictures),
+            (run, pictures, jobs.get(&node.id)),
             is_selected,
         )?;
         cards.push(node_rect(node, &node_type, metrics));
@@ -427,7 +435,7 @@ fn card(
     theme: &Theme,
     graph: &Graph,
     (node, node_type): (&PlacedNode, &NodeType),
-    (run, pictures): (Option<&RunResult>, &Pictures),
+    (run, pictures, job): (Option<&RunResult>, &Pictures, Option<&JobUpdate>),
     selected: bool,
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
@@ -436,7 +444,8 @@ fn card(
     let status = outcome.map(|outcome| outcome.status);
     let (header, title, label) = match status {
         Some(Status::Error) => (&colours.header_error, &colours.title, &colours.label),
-        Some(Status::Skipped) => (
+        // A job that has not started has nothing to show yet; that is not a skip.
+        Some(Status::Skipped) if !node_type.job => (
             &colours.header_skipped,
             &colours.text_dim,
             &colours.text_dim,
@@ -572,6 +581,9 @@ fn card(
                 }
             }
         }
+    }
+    if let Some(layout) = job_layout(&rect, node_type, metrics) {
+        job_row(context, theme, &layout, job)?;
     }
     if let Some(area) = picture_rect(&rect, node_type, metrics) {
         context.set_fill_style_str(&colours.field);
@@ -728,6 +740,67 @@ pub(crate) fn chart(
 }
 
 /// Trace the outline of a node card with rounded corners.
+/// The job row of a card: the Start and Stop buttons and the state word, then the
+/// bar and `step 3 of 5`. Stop is drawn only while the job runs; Start is dim
+/// while it cannot be used.
+fn job_row(
+    context: &CanvasRenderingContext2d,
+    theme: &Theme,
+    layout: &JobLayout,
+    job: Option<&JobUpdate>,
+) -> Result<(), JsValue> {
+    let (colours, metrics) = (&theme.colours, &theme.metrics);
+    let button = |rect: &Rect, which: JobButton, usable: bool| -> Result<(), JsValue> {
+        context.set_fill_style_str(&colours.field);
+        round_rect_path(context, rect, metrics.box_radius);
+        context.fill();
+        context.set_stroke_style_str(&colours.field_border);
+        context.set_line_width(1.0);
+        round_rect_path(context, rect, metrics.box_radius);
+        context.stroke();
+        context.set_fill_style_str(if usable {
+            &colours.field_text
+        } else {
+            &colours.placeholder
+        });
+        context.set_text_align("center");
+        context.fill_text(
+            which.label(),
+            rect.x + rect.w / 2.0,
+            rect.y + rect.h / 2.0 + metrics.text_baseline,
+        )
+    };
+    context.set_font(&theme.fonts.card);
+    button(&layout.start, JobButton::Start, can_start(job))?;
+    if can_stop(job) {
+        button(&layout.stop, JobButton::Stop, true)?;
+    }
+    context.set_fill_style_str(&colours.label);
+    context.set_text_align("right");
+    context.fill_text(state_text(job), layout.state_right, layout.state_baseline)?;
+    if let Some(fraction) = progress_fraction(job) {
+        context.set_fill_style_str(&colours.field);
+        round_rect_path(context, &layout.bar, metrics.box_radius);
+        context.fill();
+        context.set_fill_style_str(&colours.field_text);
+        round_rect_path(
+            context,
+            &Rect {
+                w: layout.bar.w * fraction,
+                ..layout.bar
+            },
+            metrics.box_radius,
+        );
+        context.fill();
+    }
+    if let Some(text) = progress_text(job) {
+        context.set_fill_style_str(&colours.label);
+        context.set_text_align("right");
+        context.fill_text(&text, layout.step_right, layout.step_baseline)?;
+    }
+    Ok(())
+}
+
 fn card_path(context: &CanvasRenderingContext2d, rect: &Rect, radius: f64) {
     round_rect_path(context, rect, radius);
 }

@@ -1,6 +1,7 @@
 //! Pointer and key handling on the canvas: pan, zoom, move, link, delete.
 
 use element_51_core::access::link_edit;
+use element_51_core::job::job_button_at;
 use element_51_core::layout::{PortHit, Side, icon_at, link_at, node_at, port_at};
 use element_51_core::{Edit, Graph, PortRef, apply_edit};
 use wasm_bindgen::JsCast;
@@ -9,7 +10,7 @@ use web_sys::{HtmlInputElement, KeyboardEvent, MouseEvent, WheelEvent};
 use crate::a11y_ui::{restore_field, return_from_field};
 use crate::draw::{Drag, Selected};
 use crate::menu_ui::{hide_menu, open_card_menu};
-use crate::{Shared, State, redraw, step_history, submit};
+use crate::{Shared, State, redraw, send_job_request, step_history, submit};
 
 /// What the pointer is doing between a press and a release.
 pub(crate) enum Gesture {
@@ -83,9 +84,21 @@ pub(crate) fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
             .replica
             .as_ref()
             .and_then(|r| icon_at(r.graph(), r.node_types(), x, y, &state.theme.metrics));
+        let button = state.replica.as_ref().and_then(|r| {
+            job_button_at(
+                r.graph(),
+                r.node_types(),
+                &state.jobs,
+                (x, y),
+                &state.theme.metrics,
+            )
+        });
         if let Some(id) = icon {
             state.selected = Some(Selected::Node(id.clone()));
             open_card_menu(&mut state, id, event);
+        } else if let Some((id, button)) = button {
+            state.selected = Some(Selected::Node(id.clone()));
+            send_job_request(&state, &id, button);
         } else if let Some(hit) = port_under(&state, x, y).filter(|hit| hit.side == Side::Output) {
             state.gesture = Gesture::Link(Drag {
                 source: PortRef {

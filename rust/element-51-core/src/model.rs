@@ -311,7 +311,7 @@ impl NodeOutcome {
 }
 
 /// The outcome of every node, in the order they ran.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunResult {
     pub outcomes: Vec<NodeOutcome>,
@@ -322,6 +322,46 @@ pub struct RunResult {
 }
 
 impl RunResult {
+    /// Show what a job has reported: its own node's outputs and pictures, and
+    /// the series that now reach the inputs of chart nodes from it. A node that
+    /// is not in the result yet is added; a job that has reported nothing
+    /// changes nothing.
+    pub fn apply_job(&mut self, update: &JobUpdate) {
+        if !update.outputs.is_empty() || !update.shown.is_empty() {
+            let outcome = self.outcome_entry(&update.node);
+            outcome.status = Status::Ok;
+            outcome.error = None;
+            outcome.outputs = update.outputs.clone();
+            outcome.shown = update.shown.clone();
+        }
+        for linked in &update.linked {
+            let outcome = self.outcome_entry(&linked.node);
+            outcome.status = Status::Ok;
+            outcome.error = None;
+            outcome
+                .shown
+                .insert(linked.port.clone(), Shown::Series(linked.series.clone()));
+        }
+    }
+
+    /// The outcome of node `id`, added as an empty `ok` one if it is missing.
+    fn outcome_entry(&mut self, id: &str) -> &mut NodeOutcome {
+        let index = match self.outcomes.iter().position(|o| o.node == id) {
+            Some(index) => index,
+            None => {
+                self.outcomes.push(NodeOutcome {
+                    node: id.to_string(),
+                    status: Status::Ok,
+                    outputs: BTreeMap::new(),
+                    shown: BTreeMap::new(),
+                    error: None,
+                });
+                self.outcomes.len() - 1
+            }
+        };
+        &mut self.outcomes[index]
+    }
+
     /// Put the outcomes of `other` into this result: a node that is already
     /// here is replaced in place, any other is added at the end.
     pub fn merge(&mut self, other: &RunResult) {
