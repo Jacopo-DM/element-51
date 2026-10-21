@@ -41,6 +41,9 @@ shows 42.0. The same graph is available in Python: `app.run()` returns the
 value of every output, and `app.save("graph.json")` and `app.load("graph.json")`
 keep it between sessions.
 
+Tick `Run automatically` beside Run to run the graph 300 ms after each edit
+instead. A node that failed gets a red border, and the banner says why.
+
 ## What to read next
 
 - [Themes](themes.md): choose a built-in theme, or change colours, sizes, fonts

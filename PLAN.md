@@ -634,9 +634,7 @@ Tier 1 (the walking skeleton: a ticked box runs the graph after an edit):
 Tier 2:
 
 3. Done (2026-10-21). The red node border (`card_error_border`: `theme.rs`, the three theme JSON files, `docs/themes.md`, `palette.rs`, `draw_card.rs`). Colours `#e05252` (`antimony`, 4.56:1 on the canvas), `#c0392b` (`antimony-light`, 4.69:1), `#ff6b6b` (`purple-synthwave`, 7.41:1). The native theme and palette tests cover the key, the docs row and the 3:1 pair for every palette; by eye in the dark theme: failed nodes n3 and n5 have the border and the red bar. Redraw at 200 nodes 1.52, 1.53 and 1.67 ms (three sets of eleven, 2026-10-21; no failed node on that page, so the stroke is not in it). Not looked at by eye: the light theme and the palettes.
-4. A runnable example `examples/d_editor/d6_auto_run.py`, a row in
-    `tests/test_examples.py`, and a line in `docs/` where the Run button is described.
-    Serves criterion 2 for the user's try-out. Risk low, about 60 lines.
+4. Done (2026-10-21). `examples/d_editor/d6_auto_run.py` (a failing `share` node until `parts` is set), its row in `tests/test_examples.py` (`n1` ok 6.0, `n2` error), the CODEMAP entry and a two-line paragraph in `docs/index.md`.
 
 Tier 3: none. Nothing here has tests that pin the page code (the web crate has none);
 task 2 relies on the walk-throughs and the browser pane, as the earlier page tasks did.

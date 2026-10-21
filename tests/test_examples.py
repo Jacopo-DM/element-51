@@ -96,6 +96,10 @@ EXPECTED: dict[str, Expected] = {
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 3.0}),
     ],
+    "d_editor/d6_auto_run.py": [
+        ("n1", "ok", {"out": 6.0}),
+        ("n2", "error", {}),
+    ],
     "d_editor/d5_card_menu.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 5.0}),
