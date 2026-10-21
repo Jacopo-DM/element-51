@@ -5,7 +5,7 @@ use crate::State;
 use crate::a11y_ui::announce;
 use crate::pictures::Pictures;
 use crate::show_error;
-use element_51_core::access::job_announcement;
+use element_51_core::announce::job_announcement;
 use element_51_core::job::JobButton;
 use element_51_core::{JobStatus, JobUpdate, Message, RunRequest, StartRequest, StopRequest};
 use web_sys::Document;

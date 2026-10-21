@@ -3,9 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use element_51_core::access::{
-    NodeItem, job_announcement, job_button_label, job_button_refusal, job_text, run_text, with_jobs,
-};
+use element_51_core::access::{NodeItem, job_text, with_jobs};
+use element_51_core::announce::{job_announcement, job_button_label, job_button_refusal, run_text};
 use element_51_core::display::{chart_rect, picture_rect};
 use element_51_core::job::{
     JobButton, can_start, can_stop, job_button_at, job_height, job_layout, progress_fraction,

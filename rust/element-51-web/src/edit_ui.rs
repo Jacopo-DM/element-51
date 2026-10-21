@@ -6,7 +6,7 @@ use crate::a11y_ui::announce;
 use crate::redraw;
 use crate::run_ui::clear_run;
 use crate::show_error;
-use element_51_core::access::{edit_text, refusal_text, undo_text};
+use element_51_core::announce::{edit_text, refusal_text, undo_text};
 use element_51_core::{Edit, EditRequest, Message};
 
 pub(crate) fn send(state: &State, request: EditRequest) {

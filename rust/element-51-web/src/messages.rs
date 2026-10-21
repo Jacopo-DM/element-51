@@ -10,7 +10,7 @@ use crate::redraw;
 use crate::run_ui::{clear_run, on_job_update, set_running};
 use crate::show_error;
 use crate::source_ui::show_source;
-use element_51_core::access::{refusal_text, run_text};
+use element_51_core::announce::{refusal_text, run_text};
 use element_51_core::theme::Theme;
 use element_51_core::{Message, Replica};
 use web_sys::MessageEvent;

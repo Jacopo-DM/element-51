@@ -3,9 +3,9 @@
 //! focused node or port, and the view pans to keep it in sight.
 
 use element_51_core::access::{
-    NodeItem, describe_ports, job_button_label, job_button_refusal, list_nodes, pan_to_show,
-    with_displays, with_jobs,
+    NodeItem, describe_ports, list_nodes, pan_to_show, with_displays, with_jobs,
 };
+use element_51_core::announce::{job_button_label, job_button_refusal};
 use element_51_core::job::JobButton;
 use element_51_core::layout::{Side, node_rect};
 use element_51_core::rows::type_of;

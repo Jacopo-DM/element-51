@@ -1,6 +1,7 @@
 //! Pointer and key handling on the canvas: pan, zoom, move, link, delete.
 
-use element_51_core::access::{Direction, ZOOM_STEP, link_edit, pan_delta, pan_text, zoom_text};
+use element_51_core::access::{Direction, ZOOM_STEP, link_edit, pan_delta};
+use element_51_core::announce::{pan_text, zoom_text};
 use element_51_core::job::job_button_at;
 use element_51_core::layout::{PortHit, Side, anchor_of, icon_at, link_at, node_at, port_at};
 use element_51_core::{Edit, Graph, PortRef, apply_edit};

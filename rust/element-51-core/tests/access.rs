@@ -2,10 +2,13 @@
 //! around it.
 
 use element_51_core::access::{
-    Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
-    editing_text, link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes,
-    moved_to, neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, refusal_text,
-    run_text, selected_text, undo_text, with_displays, zoom_text,
+    Direction, NodeItem, ZOOM_STEP, describe_graph, describe_ports, link_edit, list_nodes,
+    moved_to, neighbour, pan_delta, pan_to_show, with_displays,
+};
+use element_51_core::announce::{
+    cannot_delete_text, edit_text, editing_text, link_cancelled_text, link_started_text,
+    linked_input_text, pan_text, picture_input_text, refusal_text, run_text, selected_text,
+    undo_text, zoom_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};

@@ -11,10 +11,10 @@ use crate::draw::{Focus, Selected};
 use crate::input::{arrow_direction, pan_view, zoom_key, zoom_view};
 use crate::menu_keys::{open_add_menu_from_keyboard, open_card_menu_from_keyboard};
 use crate::{Shared, redraw, send_job_request, submit};
-use element_51_core::access::{
-    Direction, cannot_delete_text, editing_text, job_button_refusal, link_cancelled_text,
-    link_edit, link_started_text, linked_input_text, moved_to, neighbour, picture_input_text,
-    selected_text,
+use element_51_core::access::{Direction, link_edit, moved_to, neighbour};
+use element_51_core::announce::{
+    cannot_delete_text, editing_text, job_button_refusal, link_cancelled_text, link_started_text,
+    linked_input_text, picture_input_text, selected_text,
 };
 use element_51_core::job::JobButton;
 use element_51_core::layout::Side;
