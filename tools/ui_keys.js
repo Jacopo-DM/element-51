@@ -354,6 +354,14 @@ async function uiKeys() {
         check("Enter on a linked input says it has no box", /^That input is linked/.test(status.textContent) && active().id === linkedPort.id, status.textContent);
     }
 
+    // Task 33: the end of a run is announced.
+    status.textContent = "";
+    document.getElementById("run").click();
+    await wait(800);
+    check("a run says how many nodes were ok, failed and skipped", /^Run finished: \d+ ok(, \d+ errors?)?(, \d+ skipped)?/.test(status.textContent), status.textContent);
+    check("it names the first error when there is one", !/error/.test(status.textContent) || /First error: n\d+: /.test(status.textContent), status.textContent);
+    document.getElementById("error").setAttribute("hidden", "");
+
     // Leave focus on a port of the first node, for a screenshot of the ring.
     first.focus();
     await wait(60);

@@ -31,7 +31,7 @@ use a11y_ui::{
     announce, on_tree_focus_in, on_tree_focus_out, on_tree_key, pending_preview, sync_tree,
 };
 use draw::{Focus, Frame, Selected, draw};
-use element_51_core::access::{edit_text, refusal_text, undo_text};
+use element_51_core::access::{edit_text, refusal_text, run_text, undo_text};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
@@ -522,6 +522,7 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                 if let Some(summary) = result.error_summary() {
                     show_error(&state.document, &summary);
                 }
+                announce(&state.document, &run_text(&result));
                 state.run = Some(result);
             }
             Ok(Message::Edit(_) | Message::Run(_)) => {

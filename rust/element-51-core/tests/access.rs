@@ -4,14 +4,15 @@
 use element_51_core::access::{
     Direction, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
     editing_text, link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes,
-    moved_to, neighbour, pan_delta, pan_text, pan_to_show, refusal_text, selected_text, undo_text,
-    zoom_text,
+    moved_to, neighbour, pan_delta, pan_text, pan_to_show, refusal_text, run_text, selected_text,
+    undo_text, zoom_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::view::{MAX_ZOOM, MIN_ZOOM, View};
 use element_51_core::{
-    Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType, apply_edit,
+    Edit, Graph, Link, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType, RunResult,
+    Status, apply_edit,
 };
 use serde::Deserialize;
 
@@ -558,4 +559,59 @@ fn the_zoom_and_pan_sentences_give_whole_percentages_and_directions() {
     assert_eq!(pan_text(Direction::Right), "Panned right");
     assert_eq!(pan_text(Direction::Up), "Panned up");
     assert_eq!(pan_text(Direction::Down), "Panned down");
+}
+
+fn outcome(node: &str, status: Status, error: Option<&str>) -> NodeOutcome {
+    NodeOutcome {
+        node: node.to_string(),
+        status,
+        outputs: Default::default(),
+        error: error.map(str::to_string),
+    }
+}
+
+fn result(outcomes: Vec<NodeOutcome>) -> RunResult {
+    RunResult { outcomes }
+}
+
+#[test]
+fn a_clean_run_says_how_many_nodes_were_ok() {
+    let all_ok = result(vec![
+        outcome("n1", Status::Ok, None),
+        outcome("n2", Status::Ok, None),
+    ]);
+    assert_eq!(run_text(&all_ok), "Run finished: 2 ok");
+}
+
+#[test]
+fn a_run_with_failures_counts_each_kind_and_names_the_first_error() {
+    let mixed = result(vec![
+        outcome("n1", Status::Ok, None),
+        outcome("n2", Status::Ok, None),
+        outcome(
+            "n3",
+            Status::Error,
+            Some("ZeroDivisionError: float division by zero"),
+        ),
+        outcome("n4", Status::Skipped, None),
+        outcome("n5", Status::Error, Some("input 'x' has no value")),
+    ]);
+    assert_eq!(
+        run_text(&mixed),
+        "Run finished: 2 ok, 2 errors, 1 skipped. First error: n3: ZeroDivisionError: float division by zero"
+    );
+}
+
+#[test]
+fn one_error_is_not_plural_and_an_error_without_a_message_says_failed() {
+    let one = result(vec![outcome("n1", Status::Error, None)]);
+    assert_eq!(
+        run_text(&one),
+        "Run finished: 1 error. First error: n1: failed"
+    );
+}
+
+#[test]
+fn a_run_of_an_empty_graph_says_so() {
+    assert_eq!(run_text(&result(vec![])), "Run finished: no nodes");
 }

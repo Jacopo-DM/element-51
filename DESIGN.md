@@ -239,7 +239,8 @@ theme, with the credit in the README.
     1. `element-51-core/src/access.rs` (new, pure, native-tested): `describe_node`
         and `describe_port` (text such as "n1, hello. Output out, float, linked to n3
         value"), `neighbour` (the nearest node in a direction), `LinkMode` (idle, or
-        "from port X"; `choose(port)` gives an `Edit` or the refusal reason), the
+        "from port X"; `choose(port)` gives an `Edit` or the refusal reason; built as
+        `link_edit` and a `pending_link` field, see the outcome below), the
         status texts (linked, refused with its reason, deleted, moved, added, run
         result), and the move step (the theme's `grid_step`, 24; four times that with
         Alt held).
@@ -289,6 +290,32 @@ theme, with the credit in the README.
     `hidden` while the graph is empty, because axe flags a `role="tree"` with no items.
     (g) Focus events only fire while the page's window has focus, so the browser-pane
     walk-through needs a click on the page first (CLAUDE.md, Commands).
+- Tasks 28 to 33 outcome (2026-10-21), changes from the spec above: (a) There is no
+    `LinkMode` type: a link in progress is `State.pending_link` (the output port it
+    started from), and `access::link_edit` builds the `AddLink` edit for both the mouse
+    and the keyboard, so both meet the same rules and refusal text (a native test runs
+    every case of the shared `link_cases.json` through it). (b) Enter on an input port
+    with no link pending opens its value box, so the "No link started" sentence was
+    dropped; Enter on a linked input says it has no box. (c) Delete acts on the focused
+    item, not on the mouse selection, and moves the focus to a neighbour. (d) The status
+    line says what an edit, an undo, a redo, a refusal, a pan, a zoom, a menu opening
+    and a run did; focus changes are not said (the focused item speaks for itself); undo
+    and redo say only "Undid the last change" or "Redid the last change". (e) Menus:
+    lists stop at their ends (no wrap), Up from the first add-node item goes to the
+    search box, Tab closes a menu, `N` and Shift+F10 or the Menu key work only inside the
+    hidden tree, and a keyboard-opened menu remembers the item to return to in a
+    `data-return` attribute (a mouse-opened one leaves none, so it never moves focus).
+    (f) Shift+Arrow moves a node one grid step (24) and Alt+Shift+Arrow four, each press
+    one undo step; Alt+Arrow pans 48 px toward the key; `+` or `=` zoom in by 1.25, `-`
+    or `_` out, `0` back to 100 percent, about the middle of the window. (g) A value box
+    opened by the keyboard remembers its text in `data-original`, so Escape puts it back
+    and Enter or Escape returns the focus to the port; a box the mouse focused behaves as
+    before. (h) The run sentence counts ok, error and skipped nodes and names the first
+    error only (the banner still lists them all); nothing is said when a run starts.
+    (i) `tools/ui_states.py` was not given new states: `tools/ui_keys.js` reaches the open
+    menus, the focused value box and the pending link, and axe was run on them. (j) axe-core
+    was run in all three themes only for task 27's states; for tasks 28 to 33 it ran in the
+    default theme, because no colour or element type changed.
 
 ### visual-ports spec (approved 2026-10-21)
 
@@ -1146,6 +1173,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | canvas-accessibility task 30: move, pan and zoom by keyboard | native tests: 4 more in `tests/access.rs` (32 in all): a node moves one grid step (24) or four in each direction, the view pans 48 px toward the key (so the graph moves the other way), repeated zoom steps of 1.25 stop at the largest and smallest zoom, the zoom and pan sentences (whole percentages); by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 54 of 54 rows pass (Shift+Arrow and Alt+Shift+Arrow move a node and say "Moved n1", the node keeps the focus, two Ctrl+Z undo the two moves and a third says "Nothing to undo", so each press was one undo step; Alt+Arrow says "Panned left" and "Panned up"; `+` gives 125 and 156 percent, `-` 125, `0` 100); a screenshot after moving n5 down and left by four steps each, panning and zooming shows the card, the wires and the value boxes in their new places; axe-core was not run again (no new element and no new colour); suites unchanged apart from the new tests. Spec detail: Alt+Arrow pans toward the key; the zoom keys act about the middle of the window |
 | 2026-10-21 | canvas-accessibility task 31: the add-node and card menus by keyboard | native tests: 4 more in `tests/menu.rs` (18 in all there): `step_menu` steps down and up and stops at the ends, with nothing focused down goes to the first and up to the last, an empty list has none, a stale position is brought back in; by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 71 of 71 rows pass (N opens the add-node menu with the cursor in the search box and says so, Down goes to the first item, Right opens a category's flyout and moves into it, Left closes it, Escape closes the flyout first and then the menu and the focus returns to the tree item it came from, picking an item adds a node and says "Added node n7, ten" and the focus comes back, Ctrl+Z removes it, Shift+F10 and the Menu key open the card menu beside the node's icon and say "Actions for n1", Escape closes it and returns to the node); a screenshot shows the menu with Math open, its flyout beside it and the ring on the focused item; axe-core 4.14.0: 0 violations in the default theme with the add-node menu open at the search box, on an item and with a flyout open, and with the card menu open (the other two themes were not rescanned: no new colour); suites unchanged apart from the new tests. Decisions: a menu closes on Tab (the focus goes back first); menus open by mouse leave no `data-return`, so they never move the focus; the list stops at its ends (no wrap), and Up from the first item goes to the search box; the states graph has a card menu with one action (Delete node), so the walk-through checks Down only stays inside it |
 | 2026-10-21 | canvas-accessibility task 32: value boxes by keyboard | native tests: the two new sentences in `tests/access.rs` (33 in all; the "no link started" sentence went, because Enter on an input with no link pending now edits it); by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 80 of 80 rows pass (Enter on an unlinked input puts the cursor in its box, which is named "text of node n6", Escape puts the old text back and returns to the port, Enter after a value sends it and says "Set text of n6 to 7" and returns to the port, Ctrl+Z takes it away, Enter on a linked input says it has no box and stays); with real typing from the browser pane's keyboard ("real typing" then Return) the value was sent, the status line said "Set text of n6 to real typing" and the focus was on the input port again; axe-core 4.14.0: 0 violations with a value box focused and back on the port, default theme; suites unchanged apart from the new tests. Decisions: the box remembers its text in `data-original` only when the keyboard opened it, so a box the mouse focused behaves as before (Enter blurs, Escape does nothing); the walk-through fires `change` by hand because the browser does not when a script sets a value |
+| 2026-10-21 | canvas-accessibility task 33: the end of a run is said through the status line | native tests: 4 more in `tests/access.rs` (37 in all): a clean run ("Run finished: 2 ok"), a mixed run with counts, plural errors, skipped and the first error ("Run finished: 2 ok, 2 errors, 1 skipped. First error: n3: ZeroDivisionError: float division by zero"), one error without a message ("failed") and an empty graph; by hand in the browser pane on `tools/ui_states.py` with the page focused: `tools/ui_keys.js` 82 of 82 rows pass, and a run said "Run finished: 3 ok, 2 errors, 1 skipped. First error: n5: returned str, expected float" while the banner listed both errors with Dismiss; axe-core 4.14.0: 0 violations after Run in the default theme. The goal is done: see PLAN.md and the outcome notes in the spec. To try it with VoiceOver (not verified here): turn it on with Cmd+F5, open an example (for example `uv run examples/d_editor/d2_values.py`), press Tab until VoiceOver says "Graph", use the arrow keys, Enter on an output port then on an input port to link, Delete to remove, `N` for the add-node menu |
 
 ## Gotchas
 

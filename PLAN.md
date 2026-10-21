@@ -86,55 +86,26 @@ violations 5 rules to 0 in both themes in every state checked; all theme colour
 pairs at WCAG 2.2 AA, enforced by a native test; focus and press states on every
 page control; the soft modern look in both themes. The numbers and screenshots
 are in DESIGN.md (Results). Left alone on purpose, with reasons, in DESIGN.md.
-The canvas itself has no keyboard or screen-reader access: open question 2.
+The canvas's own keyboard and screen-reader access became the goal `canvas-accessibility` (done 2026-10-21).
 
-### canvas-accessibility
+### canvas-accessibility: done (2026-10-21)
 
-- Goal: a person who cannot use a mouse, or who uses a screen reader, can do
-    everything on the editor's canvas that a mouse user can: select, move, add,
-    link, delete and edit nodes, pan and zoom, run, and undo, and hear what
-    happened. Depends on `skeleton`.
-- Kind: new behaviour.
-- Success measure (each is a test or a recorded walk-through):
-    1. Every canvas action has a keyboard route: select a node or link, move a
-        node, add a node (the add-node menu opens by keyboard too), start and
-        finish a link from port to port, delete a node or link, set a value in a
-        node's box, pan and zoom, open a node's card menu, Run, undo and redo.
-        Each is a test where the logic is native (Rust), and a walk-through by me
-        in the browser pane for the DOM parts.
-    2. The page holds a hidden but real HTML list that mirrors the graph (one
-        item per node with its ports and its links, rebuilt on every change); a
-        focused item outlines the matching node on the canvas; a test checks the
-        list equals the snapshot.
-    3. A live status line announces each result: linked, refused (with the
-        reason), deleted, moved, added, and the end of a run (counts of ok, error
-        and skipped). It never vanishes on a timer for refusals, which also show
-        in the banner with Dismiss.
-    4. Focus is always visible (a 2 px ring in the theme's `focus` colour, 3:1
-        against its background, checked at AA for every theme and palette), and
-        the tab order is Run, the node list, the menu button.
-    5. axe-core 4.14.0 reports 0 violations in every state of `tools/ui_states.py`
-        (a new state per new part), in all three themes; no new colour pair fails
-        the native AA test.
-    6. Nothing a mouse user does today changes: the Rust and Python suites pass
-        unchanged apart from the new tests.
-- Non-goals (proposed): touch input and fit-to-view (a separate goal, PLAN.md
-    known problems), voice control, a tested run with a real screen reader (I
-    cannot run one here; it stays listed as not verified until the user tries
-    VoiceOver), keyboard shortcuts that can be rebound, and any change to the look.
-- Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
-    "canvas-accessibility spec"); the task list (tasks 27 to 33) approved 2026-10-21; tasks 27 to 32 are done. The user's answers (2026-10-21): everything the
-    mouse does by keyboard; a hidden list beside the canvas for the screen
-    reader; a live status line; checked with axe plus a keyboard walk-through by
-    me.
-- Added: 2026-10-21
+Commits `12fc4fe..` (task 27) to the commit "Say when a run ends through the status line"
+(task 33), branches `canvas-access-27` to `canvas-access-33`. Everything a mouse does on
+the canvas now has a keyboard route (the keys are in DESIGN.md, under "canvas-accessibility
+spec"), a hidden tree mirrors the graph for screen readers, and a status line says what
+happened, including refusals and the end of a run. Measures, numbers and the changes from
+the spec are in DESIGN.md (Results, and the spec's task outcomes). Left alone on purpose:
+the Tier 3 items below. Not verified: a real screen reader (VoiceOver), axe-core in the other
+two themes for tasks 28 to 33 (no new colour), and the redraw median at 200 nodes after
+tasks 28 to 33.
 
 ### Experiment goals (approved 2026-10-21)
 
 The user wants to set up a simple experiment visually, for example MNIST
 classification: a node that shows a sample image, a node that starts a training
 run, and a node that plots the live results. Four goals, in this build order.
-They start after `canvas-accessibility` tasks 27 to 33 are done (the user's
+They start after `canvas-accessibility`, which is done (the user's
 choice, 2026-10-21: every new part is then written to be reachable by keyboard
 and screen reader from the start; they touch the same files: `draw.rs`,
 `a11y_ui.rs`, `index.html`, `layout.rs`). Constraints for all four: no new
@@ -178,7 +149,7 @@ the library (datasets live in examples), and running two jobs of one node at onc
         and redraw time at 200 nodes stays within its recorded spread.
 - Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
     "visual-ports spec"); the task list (tasks 34 to 38) approved 2026-10-21. Starts after `canvas-accessibility`
-    task 33.
+    (done).
 - Added: 2026-10-21
 
 ### job-nodes
@@ -279,10 +250,11 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 33 of `canvas-accessibility` (approved). The experiment goals are
-approved (2026-10-21; `visual-ports` has its spec and tasks 34 to 38); they start after
-task 33, as the user chose. Open question 4 is answered (the goals are the answer). The user's own try-out
-(below) is still pending.
+Next step: task 34 of `visual-ports` (approved 2026-10-21): a picture on a card, end to
+end. `canvas-accessibility` is done, so every new part of the experiment goals is built to be
+reachable by keyboard from the start. The user's own try-out (below) is still pending, and so
+is trying the keyboard use with VoiceOver (Cmd+F5 on this Mac: Tab to the graph, then the arrow
+keys).
 `examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
 `examples/template.py`); it serves with `uvicorn` on `HOST` and `PORT` set at its top, so a
 script can choose the address (`element_51.serve` always uses `127.0.0.1`). The user has
@@ -479,41 +451,18 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
     `serve(theme="my_theme.json")`, `docs/themes.md`, example `e2_theme_file`. Detail in
     DESIGN.md.
 
-### Goal `canvas-accessibility` (task list approved 2026-10-21)
+### Goal `canvas-accessibility`: Tier 3, listed and not executed
 
-No test covers the web crate (`element-51-web`), so each task puts its logic in
-`element-51-core/src/access.rs` with native tests written first, and checks the
-page by `tools/ui_keys.js` and axe-core. Existing behaviour near the change is pinned
-by the core suites (`layout.rs`, `history.rs`, `replica.rs`, `menu.rs`); no characterisation
-tests are needed first. Estimates are by analogy with the menu work (about 300 lines
-of Rust and 60 of CSS and HTML per task of this size); nothing is measured yet.
-
-#### Tier 1: walking skeleton (criteria 2, 4, 5)
-
-Done: task 27 (2026-10-21), the hidden tree, the focus ring and the pan to keep
-focus in view. Task 28 is done too (2026-10-21): the status line, Enter or Space to
-select, Delete on a node or a linked input port, undo and redo announced. Task 29 is done too (2026-10-21): link by keyboard. Task 30 is done too (2026-10-21): move, pan and zoom by keyboard. Task 31 is done too (2026-10-21): the menus by keyboard. Task 32 is done too (2026-10-21): value boxes by keyboard. Detail, numbers and the changes from the spec are in DESIGN.md
-(Results, and the spec's "Task 27 outcome").
-
-#### Tier 2 (ordered by value over risk plus cost)
-
-33. **Run result announced.** The end of a run (ok, error and skipped counts, the
-    first error) goes to the status line; the Run button keeps its look. Files:
-    `a11y_ui.rs`, `lib.rs`, `access.rs`. Criterion 3. Risk: low. Cost: about 60 lines.
-    Verify: native test of the text, `ui_keys.js`, axe after Run.
-
-#### Tier 3: listed, not executed
-
-- Limiting the tree to the focused node's neighbourhood: only if task 27 misses the
-    50 ms budget at 2000 nodes.
-- A recorded VoiceOver session: not available here; the user may try it (steps will
-    be given when the goal is done).
+- Limiting the tree to the focused node's neighbourhood: task 27 stayed under the 50 ms
+    budget at 2000 nodes (36 to 42 ms), so it was not needed.
+- A recorded VoiceOver session: not available here; steps for the user are in DESIGN.md
+    (Results, task 33).
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
 ### Goal `visual-ports` (task list approved 2026-10-21)
 
-All five tasks wait for `canvas-accessibility` task 33 (the user's order). The web
+All five tasks come after `canvas-accessibility` (done; the user's order). The web
 crate has no automated tests, so each task puts its logic in `element-51-core`
 (`display.rs`, `layout.rs`, `edit.rs`, `access.rs`) with native tests written first,
 and checks the page by hand in the browser pane and with axe-core. The shared
@@ -602,12 +551,6 @@ Oldest first.
     Monaco). Options not yet tried: a larger card font, or snapping text
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
-2. (2026-10-20; now the draft goal `canvas-accessibility`, 2026-10-21) Canvas accessibility: the user asked for WCAG 2.2 AA including the
-    canvas (nodes, wires, ports) when the design pass started. It is new behaviour and large
-    (keyboard selection, move and link, screen-reader names and live updates).
-    Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
-    Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
-    fix and touch support.
 
 ## Known problems
 
@@ -615,15 +558,11 @@ Oldest first.
     `run-notebooks-all`, a pre-push stage). Left on purpose (2026-10-20): the repo has no
     `tests/functional/` and no `tools/run_notebooks.py`; the pre-push hook would fail
     without the runner. Adopt it together with the first notebooks.
-- The canvas has keyboard and screen-reader access only for moving the focus between
-    nodes and ports (task 27); select, delete, link, move, menus, value boxes and the run
-    result are tasks 28 to 33 of the goal `canvas-accessibility`.
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
     fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
-- The add-node and card menus open only by right-click or a click on the card's
-    icon, and the flyouts only by hover; the menu beside Run works by keyboard.
-- The Run button has no running state: the page is not told when a run ends.
+- The Run button has no running state: nothing shows while a run is in progress (the
+    end of a run is announced to screen readers; the goal `job-nodes` adds the state).
 - A node's empty output box says `output`, the same word as the port name.
 - The page parts and the theme colours are checked at AA by tests and by axe in
     the built-in browser pane; a scan with a real screen reader was not done.

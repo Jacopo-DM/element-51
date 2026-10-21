@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use crate::layout::{Rect, Side, node_rect};
 use crate::theme::Metrics;
 use crate::view::View;
-use crate::{Edit, Graph, NodeType, PlacedNode, PortRef};
+use crate::{Edit, Graph, NodeType, PlacedNode, PortRef, RunResult, Status};
 
 /// How much more a step sideways counts than a step ahead, when the keyboard
 /// looks for the nearest node in a direction.
@@ -373,4 +373,44 @@ pub fn pan_text(direction: Direction) -> String {
 /// The sentence after the zoom changed to `zoom` (1.0 is 100 percent).
 pub fn zoom_text(zoom: f64) -> String {
     format!("Zoom {} percent", (zoom * 100.0).round())
+}
+
+/// The sentence when a run ended: how many nodes were ok, failed and were
+/// skipped, and the first error.
+pub fn run_text(result: &RunResult) -> String {
+    let count = |wanted: Status| {
+        result
+            .outcomes
+            .iter()
+            .filter(|outcome| outcome.status == wanted)
+            .count()
+    };
+    let (ok, errors, skipped) = (
+        count(Status::Ok),
+        count(Status::Error),
+        count(Status::Skipped),
+    );
+    let mut parts = Vec::new();
+    if ok > 0 {
+        parts.push(format!("{ok} ok"));
+    }
+    if errors > 0 {
+        parts.push(format!("{errors} {}", plural(errors, "error")));
+    }
+    if skipped > 0 {
+        parts.push(format!("{skipped} skipped"));
+    }
+    if parts.is_empty() {
+        return "Run finished: no nodes".to_string();
+    }
+    let mut text = format!("Run finished: {}", parts.join(", "));
+    if let Some(first) = result
+        .outcomes
+        .iter()
+        .find(|outcome| outcome.status == Status::Error)
+    {
+        let why = first.error.as_deref().unwrap_or("failed");
+        text.push_str(&format!(". First error: {}: {why}", first.node));
+    }
+    text
 }
