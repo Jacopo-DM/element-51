@@ -14,6 +14,7 @@ mod pictures;
 mod save_png;
 mod source_ui;
 mod theme_ui;
+mod tree_keys;
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -36,14 +37,13 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use a11y_ui::{
-    announce, on_tree_focus_in, on_tree_focus_out, on_tree_key, pending_preview, sync_tree,
-};
+use a11y_ui::{announce, on_tree_focus_in, on_tree_focus_out, sync_tree};
 use draw::{Focus, Frame, Selected, draw};
 use element_51_core::access::{edit_text, job_announcement, refusal_text, run_text, undo_text};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
+    pending_preview,
 };
 use menu_keys::{on_card_menu_key, on_menu_key, on_menu_search_key};
 use menu_ui::{
@@ -55,6 +55,7 @@ use theme_ui::{
     on_app_menu_button, on_palette_key, on_palette_submit, on_select_theme, on_theme_click,
     on_try_palette,
 };
+use tree_keys::on_tree_key;
 
 /// Everything the event handlers share.
 struct State {

@@ -2,12 +2,17 @@
 
 use element_51_core::PortType;
 use element_51_core::fields::{field_label, format_value, parse_input};
-use element_51_core::layout::node_rect;
+use element_51_core::layout::{Side, node_rect};
 use element_51_core::rows::{find_input, type_of};
 use element_51_core::{Edit, PlacedNode, Port};
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlInputElement};
 
+use crate::a11y_ui::ensure_ports;
+use crate::a11y_ui::expand_for;
+use crate::a11y_ui::focus;
+use crate::a11y_ui::node_element_id;
+use crate::a11y_ui::port_element_id;
 use crate::draw::field_box;
 use crate::input::dragged_graph;
 use crate::{Shared, listen, redraw, show_error, submit};
@@ -178,5 +183,41 @@ fn on_field_change(shared: &Shared, field: &HtmlInputElement) {
         Some(edit) => submit(shared, edit),
         // Nothing to send: put the box back to what the graph holds.
         None => redraw(shared),
+    }
+}
+
+/// Escape in a value box that the keyboard opened: put back what it held.
+pub(crate) fn restore_field(field: &HtmlInputElement) {
+    if let Some(original) = field.get_attribute("data-original") {
+        if field.type_() == "checkbox" {
+            field.set_checked(original == "true");
+        } else {
+            field.set_value(&original);
+        }
+    }
+}
+
+/// A value box that the keyboard opened was left (Enter or Escape): give the
+/// focus back to the input port it came from. A box the mouse focused has no
+/// such memory, and nothing happens.
+pub(crate) fn return_from_field(shared: &Shared, field: &HtmlInputElement) {
+    if field.get_attribute("data-original").is_none() {
+        return;
+    }
+    let _ = field.remove_attribute("data-original");
+    let (Some(node), Some(port)) = (
+        field.get_attribute("data-node"),
+        field.get_attribute("data-port"),
+    ) else {
+        return;
+    };
+    let document = shared.borrow().document.clone();
+    let Some(node_item) = document.get_element_by_id(&node_element_id(&node)) else {
+        return;
+    };
+    let _ = ensure_ports(shared, &node_item);
+    if let Some(item) = document.get_element_by_id(&port_element_id(&node, &port, Side::Input)) {
+        expand_for(&item);
+        focus(&item);
     }
 }

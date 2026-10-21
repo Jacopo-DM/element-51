@@ -1,14 +1,16 @@
 //! Pointer and key handling on the canvas: pan, zoom, move, link, delete.
 
-use element_51_core::access::link_edit;
+use element_51_core::access::{Direction, ZOOM_STEP, link_edit, pan_delta, pan_text, zoom_text};
 use element_51_core::job::job_button_at;
-use element_51_core::layout::{PortHit, Side, icon_at, link_at, node_at, port_at};
+use element_51_core::layout::{PortHit, Side, anchor_of, icon_at, link_at, node_at, port_at};
 use element_51_core::{Edit, Graph, PortRef, apply_edit};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlInputElement, KeyboardEvent, MouseEvent, WheelEvent};
 
-use crate::a11y_ui::{restore_field, return_from_field};
+use crate::a11y_ui::announce;
+use crate::draw::Focus;
 use crate::draw::{Drag, Selected};
+use crate::fields_ui::{restore_field, return_from_field};
 use crate::menu_ui::{hide_menu, open_card_menu};
 use crate::{Shared, State, redraw, send_job_request, step_history, submit};
 
@@ -281,4 +283,89 @@ pub(crate) fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
         }
         None => redraw(shared),
     }
+}
+
+pub(crate) fn arrow_direction(key: &str) -> Option<Direction> {
+    match key {
+        "ArrowLeft" => Some(Direction::Left),
+        "ArrowRight" => Some(Direction::Right),
+        "ArrowUp" => Some(Direction::Up),
+        "ArrowDown" => Some(Direction::Down),
+        _ => None,
+    }
+}
+
+/// The zoom factor a key asks for, if it is a zoom key: `+` or `=` in, `-` or
+/// `_` out, `0` back to 100 percent.
+pub(crate) fn zoom_key(shared: &Shared, key: &str) -> Option<f64> {
+    match key {
+        "+" | "=" => Some(ZOOM_STEP),
+        "-" | "_" => Some(1.0 / ZOOM_STEP),
+        "0" => Some(1.0 / shared.borrow().view.zoom()),
+        _ => None,
+    }
+}
+
+/// Zoom about the middle of the window and say the new zoom.
+pub(crate) fn zoom_view(shared: &Shared, factor: f64) {
+    let (document, zoom) = {
+        let mut state = shared.borrow_mut();
+        let centre = (
+            f64::from(state.canvas.client_width()) / 2.0,
+            f64::from(state.canvas.client_height()) / 2.0,
+        );
+        state.view.zoom_at(centre.0, centre.1, factor);
+        (state.document.clone(), state.view.zoom())
+    };
+    announce(&document, &zoom_text(zoom));
+    redraw(shared);
+}
+
+/// Pan the view toward `direction` and say so.
+pub(crate) fn pan_view(shared: &Shared, direction: Direction) {
+    let document = {
+        let mut state = shared.borrow_mut();
+        let (dx, dy) = pan_delta(direction);
+        state.view.pan_by(dx, dy);
+        state.document.clone()
+    };
+    announce(&document, &pan_text(direction));
+    redraw(shared);
+}
+
+/// The wire to draw for a link started from the keyboard: from its output port
+/// to the input port that has the focus, or to the output port itself while the
+/// focus is elsewhere. The input port that has the focus is also returned, so
+/// the canvas colours it green or red as it does under the mouse.
+pub(crate) fn pending_preview(state: &State) -> Option<(Drag, Option<PortHit>)> {
+    let source = state.pending_link.as_ref()?;
+    let replica = state.replica.as_ref()?;
+    let (graph, types, metrics) = (replica.graph(), replica.node_types(), &state.theme.metrics);
+    let from = anchor_of(graph, types, source, Side::Output, metrics)?;
+    let target = match &state.focus {
+        Some(Focus::Port {
+            node,
+            port,
+            side: Side::Input,
+        }) => Some(PortRef {
+            node: node.clone(),
+            port: port.clone(),
+        }),
+        _ => None,
+    };
+    let end = target
+        .as_ref()
+        .and_then(|target| anchor_of(graph, types, target, Side::Input, metrics))
+        .unwrap_or(from);
+    let hit = target.map(|target| PortHit {
+        node: target.node,
+        port: target.port,
+        side: Side::Input,
+    });
+    let drag = Drag {
+        source: source.clone(),
+        x: end.0,
+        y: end.1,
+    };
+    Some((drag, hit))
 }
