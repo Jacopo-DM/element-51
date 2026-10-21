@@ -3,6 +3,7 @@
 import importlib.util
 import sys
 import threading
+import time
 from pathlib import Path
 from types import ModuleType
 
@@ -17,6 +18,8 @@ EXAMPLES = Path(__file__).parent.parent / "examples"
 DEFAULT_STEPS = 60
 TRAINING_STEPS = 40
 WAIT = 10.0
+KILLED_WITHIN = 1.5
+POLL = 0.01
 
 type Expected = list[tuple[str, str, dict[str, float | int | str | bool]]]
 
@@ -86,6 +89,7 @@ EXPECTED: dict[str, Expected] = {
         ("n2", "skipped", {}),
         ("n3", "skipped", {}),
         ("n4", "skipped", {}),
+        ("n5", "skipped", {}),
     ],
     "f_embedding/f2_nicegui_host.py": [("n1", "ok", {"out": 3.0})],
     "e_look/e2_theme_file.py": [
@@ -359,3 +363,40 @@ def test_the_job_example_blows_up_when_asked() -> None:
     app.start_job("n1")
     assert failed.wait(WAIT)
     assert reasons == ["RuntimeError: the loss blew up"]
+
+
+def heard(events: list[object], state: str) -> bool:
+    """Wait until a job update with this state has arrived.
+
+    Returns
+    -------
+    bool
+        Whether it arrived within `WAIT` seconds.
+    """
+    deadline = time.monotonic() + WAIT
+
+    def arrived() -> bool:
+        return any(
+            isinstance(e, JobUpdate) and e.state == state for e in events
+        )
+
+    while not arrived() and time.monotonic() < deadline:
+        time.sleep(POLL)
+    return arrived()
+
+
+def test_the_job_example_stops_its_separate_process_job_at_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stop kills `Stubborn`, which sleeps 30 s and never reports."""
+    monkeypatch.syspath_prepend(str(EXAMPLES / "g_experiments"))
+    app = build("g_experiments/g2_job_nodes.py")
+    events: list[object] = []
+
+    app.subscribe_jobs(events.append)
+    app.start_job("n5")
+    assert heard(events, "running")
+    began = time.monotonic()
+    app.stop_job("n5")
+    assert heard(events, "stopped")
+    assert time.monotonic() - began < KILLED_WITHIN

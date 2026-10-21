@@ -6,6 +6,8 @@ does, and it reports as it goes, so a card or a plot fills in while it works.
 steps share, and `step` does one step and returns the new points of the two
 series it makes. `Countdown` is a work job: one method that calls `report`
 itself.
+`Stubborn` is a job in a separate process (`isolated = True`): it sleeps
+and never reports, and Stop still ends it.
 `double` is a plain node after it, and `Plot` draws `Training`'s two series.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
@@ -26,6 +28,10 @@ Notes
         job reports. `double` stays empty until the job ends, then shows 0 (the
         last value the job returned, doubled): a node after a job runs once,
         when the job ends.
+    * Press Start on `Stubborn`, then Stop: the card says `stopping` and, half
+        a second later, `stopped`. The job never reports and sleeps 30 s, so
+        Stop could not reach it in a thread. Its own process is killed
+        instead, and the editor never noticed.
     * Press Start with the keyboard: move to a job node in the hidden tree,
         press Right to enter its ports, Down to reach the Start and Stop items,
         and Enter on one. A screen reader hears `n1: running.` and
@@ -36,7 +42,7 @@ Notes
 # Standard library
 import math
 import time
-from typing import override
+from typing import ClassVar, override
 
 # Third-party libraries
 from rich.console import Console
@@ -147,6 +153,31 @@ class Countdown(element_51.JobNode[None]):
         return 0
 
 
+class Stubborn(element_51.JobNode[None]):
+    """A job in its own process that sleeps and never reports."""
+
+    isolated: ClassVar[bool] = True
+    seconds: float = 30.0
+
+    @override
+    def work(self, report: element_51.Report) -> int:
+        """Sleep, ignoring `report`.
+
+        Parameters
+        ----------
+        report
+            Not used: the job never reports, so only a kill can stop it.
+
+        Returns
+        -------
+        int
+            Zero.
+        """
+        del report
+        time.sleep(self.seconds)
+        return 0
+
+
 @element_51.node
 def double(value: int) -> int:
     """Double a number.
@@ -160,20 +191,30 @@ def double(value: int) -> int:
 
 
 def build_app() -> element_51.App:
-    """Build the app: a step job into a Plot, and a work job into a node.
+    """Build the app: three jobs and the nodes after them.
+
+    A step job feeds a Plot, a work job feeds a node, and a third job runs in
+    its own process.
 
     Returns
     -------
     element_51.App
         An app whose first node is `Training` (n1), the second `Countdown`
         (n2), the third `double` (n3) after it, and the fourth a Plot with
-        both of `Training`'s series linked.
+        both of `Training`'s series linked, and the fifth `Stubborn` (n5).
     """
-    app = element_51.App([Training, Countdown, double, element_51.PlotNode])
+    app = element_51.App([
+        Training,
+        Countdown,
+        Stubborn,
+        double,
+        element_51.PlotNode,
+    ])
     training = app.add_node(Training, x=60.0, y=60.0)
     countdown = app.add_node(Countdown, x=60.0, y=420.0)
     twice = app.add_node(double, x=360.0, y=420.0)
     chart = app.add_node(element_51.PlotNode, x=360.0, y=60.0)
+    app.add_node(Stubborn, x=60.0, y=640.0)
     app.add_link(countdown, "out", twice, "value")
     app.add_link(training, "loss", chart, "series_1")
     app.add_link(training, "accuracy", chart, "series_2")
