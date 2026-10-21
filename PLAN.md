@@ -488,7 +488,7 @@ Oldest first.
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
     fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
-- The redraw time at 200 nodes (`tools/bench_page.js`) is 1.3 to 1.5 ms per wheel event in
+- The redraw time at 200 nodes (`tools/bench_page.js`) is 1.3 to 1.6 ms per wheel event (1.54 median on 2026-10-21 after the last visual-ports task) in
     the browser pane today (1024 by 768 CSS pixels at device ratio 2; measured 2026-10-21 on
     `main` before task 34, with it, and at `e90563a` before the accessibility work), not the
     0.21 to 0.22 ms recorded on 2026-10-20 (Baseline). The cause is not found; it is not
