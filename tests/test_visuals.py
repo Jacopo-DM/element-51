@@ -2,12 +2,14 @@
 
 import json
 import math
-from typing import override
+from typing import Literal, override
 
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from element_51.engine import run_graph
+from element_51.engine import NodeOutcome, RunResult, run_graph
 from element_51.model import (
     Graph,
     Link,
@@ -625,3 +627,109 @@ def test_a_plot_with_only_a_later_row_linked_still_shows_it() -> None:
         two_curves_graph("series_2"), functions, raise_errors=True
     )
     assert list(result.outcomes[-1].shown) == ["series_2"]
+
+
+@given(st.text())
+@example('{"width": 1, "height": 1, "channels": 1, "pixels": [7]}')
+def test_image_boundary(raw: str) -> None:
+    """Any text is a picture or a ValidationError."""
+    try:
+        image = Image.model_validate_json(raw)
+    except ValidationError:
+        return
+    assert len(image.pixels) == image.width * image.height * image.channels
+
+
+@given(st.text())
+@example('{"values": [1.0, null, 3.0]}')
+def test_series_boundary(raw: str) -> None:
+    """Any text is a series or a ValidationError."""
+    try:
+        series = Series.model_validate_json(raw)
+    except ValidationError:
+        return
+    assert len(series.values) <= MAX_POINTS
+
+
+@st.composite
+def pictures(draw: st.DrawFn) -> Image:
+    """Draw a small grey or colour picture whose pixels fill it.
+
+    Returns
+    -------
+    Image
+        A valid picture.
+    """
+    width = draw(st.integers(min_value=1, max_value=8))
+    height = draw(st.integers(min_value=1, max_value=8))
+    channels: Literal[1, 3] = 1 if draw(st.booleans()) else 3
+    pixels = draw(
+        st.binary(
+            min_size=width * height * channels,
+            max_size=width * height * channels,
+        )
+    )
+    return Image(width=width, height=height, channels=channels, pixels=pixels)
+
+
+FINITE = st.floats(allow_nan=False, allow_infinity=False)
+SERIES = st.builds(
+    Series, values=st.lists(FINITE | st.just(math.nan), max_size=50).map(tuple)
+)
+
+
+def same_values(first: Series, second: Series) -> bool:
+    """Whether two series hold the same numbers, a gap equal to a gap.
+
+    Returns
+    -------
+    bool
+        True if they are equal position by position.
+    """
+    return len(first.values) == len(second.values) and all(
+        left == right or (math.isnan(left) and math.isnan(right))
+        for left, right in zip(first.values, second.values, strict=True)
+    )
+
+
+@given(pictures())
+def test_image_round_trip(image: Image) -> None:
+    """Loading a dumped picture gives the same picture back."""
+    assert Image.model_validate_json(image.model_dump_json()) == image
+
+
+@given(SERIES)
+def test_series_round_trip(series: Series) -> None:
+    """A dumped series reads back the same, a gap (NaN) coming back as a gap."""
+    assert same_values(
+        Series.model_validate_json(series.model_dump_json()), series
+    )
+
+
+@given(
+    st.lists(
+        st.builds(
+            NodeOutcome,
+            node=st.from_regex(r"n[0-9]+", fullmatch=True),
+            status=st.sampled_from(["ok", "error", "skipped"]),
+            outputs=st.dictionaries(
+                st.text(),
+                st.one_of(FINITE, st.integers(), st.text(), st.booleans()),
+            ),
+            shown=st.dictionaries(
+                st.text(),
+                st.one_of(
+                    pictures(),
+                    st.builds(Series, values=st.lists(FINITE).map(tuple)),
+                ),
+                max_size=3,
+            ),
+            error=st.none() | st.text(),
+        ),
+        max_size=4,
+    )
+)
+def test_run_result_round_trip(outcomes: list[NodeOutcome]) -> None:
+    """A run result with pictures and series reads back as it was written."""
+    result = RunResult(outcomes=tuple(outcomes))
+    assert RunResult.model_validate_json(result.model_dump_json()) == result
