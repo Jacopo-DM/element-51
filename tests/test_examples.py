@@ -1,16 +1,22 @@
 """Every example builds its graph and runs to the outcome it describes."""
 
 import importlib.util
+import sys
+import threading
 from pathlib import Path
 from types import ModuleType
 
 import pytest
 
+from element_51.edits import SetValue
+from element_51.protocol import JobUpdate
 from element_51.session import App
 from element_51.visuals import Image, Series
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 DEFAULT_STEPS = 60
+TRAINING_STEPS = 40
+WAIT = 10.0
 
 type Expected = list[tuple[str, str, dict[str, float | int | str | bool]]]
 
@@ -74,6 +80,12 @@ EXPECTED: dict[str, Expected] = {
         ("n3", "ok", {"out": 784}),
         ("n4", "ok", {}),
         ("n5", "ok", {}),
+    ],
+    "g_experiments/g2_job_nodes.py": [
+        ("n1", "skipped", {}),
+        ("n2", "skipped", {}),
+        ("n3", "skipped", {}),
+        ("n4", "skipped", {}),
     ],
     "f_embedding/f2_nicegui_host.py": [("n1", "ok", {"out": 3.0})],
     "e_look/e2_theme_file.py": [
@@ -165,6 +177,8 @@ def load(name: str) -> ModuleType:
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    # A pydantic generic such as `JobNode[int]` looks its module up here.
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -297,3 +311,51 @@ def test_the_picture_example_shows_a_ramp_and_its_negative() -> None:
     assert [
         a + b for a, b in zip(first.pixels, second.pixels, strict=True)
     ] == [255] * (28 * 28)
+
+
+def test_the_job_example_runs_its_jobs_and_the_nodes_after_them() -> None:
+    """Start fills the Plot's series and `double`, which runs at the end."""
+    app = build("g_experiments/g2_job_nodes.py")
+    ended = threading.Event()
+    states: list[str] = []
+
+    def listener(event: object) -> None:
+        if isinstance(event, JobUpdate):
+            states.append(event.state)
+            if event.state == "finished":
+                ended.set()
+
+    app.subscribe_jobs(listener)
+    app.apply(SetValue(node="n1", port="delay", value=0.0))
+    app.apply(SetValue(node="n2", port="pause", value=0.0))
+    app.start_job("n1")
+    assert ended.wait(WAIT)
+    ended.clear()
+    app.start_job("n2")
+    assert ended.wait(WAIT)
+    outcomes = {o.node: o for o in app.execute().outcomes}
+    assert outcomes["n1"].status == "ok"
+    series = outcomes["n4"].shown["series_1"]
+    assert isinstance(series, Series)
+    assert len(series.values) == TRAINING_STEPS
+    assert outcomes["n2"].outputs == {"out": 0}
+    assert outcomes["n3"].outputs == {"out": 0}
+
+
+def test_the_job_example_blows_up_when_asked() -> None:
+    """With `blow_up` ticked the job fails at step 10 with its reason."""
+    app = build("g_experiments/g2_job_nodes.py")
+    failed = threading.Event()
+    reasons: list[str] = []
+
+    def listener(event: object) -> None:
+        if isinstance(event, JobUpdate) and event.state == "failed":
+            reasons.append(event.error or "")
+            failed.set()
+
+    app.subscribe_jobs(listener)
+    app.apply(SetValue(node="n1", port="delay", value=0.0))
+    app.apply(SetValue(node="n1", port="blow_up", value=True))
+    app.start_job("n1")
+    assert failed.wait(WAIT)
+    assert reasons == ["RuntimeError: the loss blew up"]

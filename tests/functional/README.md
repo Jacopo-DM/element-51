@@ -33,8 +33,8 @@ a row (a test fails without it).
 | `ports` | `nodes_and_running.ipynb` |
 | `model` | `nodes_and_running.ipynb` |
 | `engine` | `nodes_and_running.ipynb` |
-| `job_node` | none yet |
-| `jobs` | none yet |
+| `job_node` | `jobs.ipynb` |
+| `jobs` | `jobs.ipynb` |
 | `session` | `nodes_and_running.ipynb` |
 | `store` | `save_and_load.ipynb` |
 | `theme` | `themes.ipynb` |

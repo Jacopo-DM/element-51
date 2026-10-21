@@ -1639,3 +1639,7 @@ have to go through `tools/compress_images.py`).
     canvas read by a throwaway build) and interleaved rounds. Timing the parts of a frame with
     `performance.now()` is unreliable for the same reason: the cost of a section moved to
     the next one that flushed. An ablation (switch a part off, time the whole frame) works.
+- A pydantic generic such as `JobNode[int]` looks up the module of the class that uses it in
+    `sys.modules`. A module loaded with `importlib.util.module_from_spec` and `exec_module` and
+    not registered there fails with `KeyError: '<module name>'`: `tests/test_examples.py` registers
+    each example before running it, and a job class made by `exec` has the same problem (docs/jobs.md).

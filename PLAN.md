@@ -129,54 +129,15 @@ axe-core reports 0 violations in the new states in all three themes. Left open, 
 Known problems: the 12-picture-card redraw budget (1.0 ms) is missed, a real download and a real
 screen reader were not tried, and the narrow window and touch were not checked.
 
-### job-nodes
+### job-nodes: done (2026-10-21)
 
-- Goal: a node that you start and stop by hand, works in the background in
-    steps and reports as it goes, so a long task can drive live displays. The class
-    is `element_51.JobNode` (the user's choice; names weighed: `ExecutorNode` clashes
-    with `concurrent.futures`, `TaskNode` with this repo's tasks). Depends on
-    `visual-ports`. Runs in a thread; the separate-process variant is the goal
-    `job-isolation`.
-- Kind: new behaviour.
-- Success measure (each is a test or a recorded walk-through):
-    1. A `JobNode` subclass declares inputs and outputs like `Node` and works in
-        steps: `steps()` says how many, `begin()` makes the job's state, and
-        `step(state, i)` returns what to show after step `i`. A job that cannot be
-        split overrides `work(report)` instead and calls `report(...)` itself (the
-        step form is built on it). No global `report()`.
-    2. The card has Start and Stop buttons and shows the state (idle, running,
-        stopping, finished, stopped, failed). A step job also shows a thin bar and
-        `step 3 of 5`; a `work` job shows `running` only.
-    3. A series output grows by what a step or report returns; a picture or a number
-        is replaced. A node downstream of a job sees its latest reported values;
-        before the first report it is skipped, with the reason. The results stay
-        until the next Start, even if an input changes, and are not saved with the
-        graph.
-    4. Run and `Run automatically` never start a `JobNode`. Start first runs the
-        nodes the job depends on, once (the others are untouched), then starts it
-        with their values and its own boxes; if one of them fails the job does not
-        start and the card names it. Start while the node's job is running or
-        stopping is refused with a reason. Jobs of different nodes may run together.
-    5. Each report reaches open pages at most 20 times a second; display nodes
-        (Plot, Image) linked directly to the job redraw on every report; every other
-        node after it runs once, when the job ends. Measured: a report reaches the
-        page within 100 ms on localhost.
-    6. Stop shows `stopping` at once; a step job ends before its next step, a `work`
-        job at its next `report` call, which raises `Stopped` (the job may catch it
-        to clean up). A job whose steps or reports come at least every 0.5 s ends
-        within 1 s. A job that never reports cannot be stopped; the card says so.
-    7. A job that raises shows its error on the card and in the banner (with
-        Dismiss) and leaves the editor working; a page reload shows the job's
-        current state and data.
-    8. The Run button has a running state while a plain run is in progress (this
-        clears the known problem in this file).
-    9. Every new page part is labelled, operable by keyboard, AA in all themes, and
-        described in the hidden tree (the constraint of the experiment goals).
-    10. Python tests with a fake job (no sleeping longer than a few milliseconds);
-        the existing 325 Python tests and 292 native tests pass unchanged.
-- Status: approved 2026-10-21 with the revised wording ("lets go"); spec in DESIGN.md;
-    the task list (1 to 7) is approved ("Approve all") and listed under Tasks.
-- Added: 2026-10-21
+Commits `f455b06..HEAD` on `main` (tasks 1 to 7). `element_51.JobNode` (a step form and a work form), a
+`JobRunner` on daemon threads, the start, stop, job update and refusal messages, a job row on the
+card (Start, Stop, state, bar), live Plot and picture updates, the run after a job, keyboard and
+screen-reader access, and the Run button's running state. All ten criteria are met (spec and
+decisions in DESIGN.md; `docs/jobs.md`; `examples/g_experiments/g2_job_nodes.py`;
+`tests/functional/jobs.ipynb`). Left open, in Known problems: nothing newly; the separate-process
+variant is the goal `job-isolation`.
 
 ### job-isolation
 
@@ -224,7 +185,7 @@ screen reader were not tried, and the narrow window and touch were not checked.
     (and uses `auto-run` for the sample node).
 - Kind: new behaviour (an example, plus its tests and docs page).
 - Success measure:
-    1. `examples/g_experiments/g2_mnist.py` builds three linked nodes: `MnistSample`
+    1. `examples/g_experiments/g3_mnist.py` (`g2` is `g2_job_nodes.py`) builds three linked nodes: `MnistSample`
         (an `index` box; outputs the image and its label), `Train` (a `JobNode`;
         inputs for hidden size, learning rate and epochs; outputs the `loss` and
         `accuracy` series) and a `PlotNode`.
@@ -297,7 +258,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes` and `job-isolation` have approved specs (DESIGN.md) and approved task lists (tasks 1 to 7 and 8, under Tasks); work starts with `job-nodes` task 1. `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
+Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes` is done (2026-10-21). `job-isolation` (task 8, a separate process for a job) has an approved spec and task and can start; the user is asked about coverage in a child process first. `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -599,92 +560,17 @@ geometry helper in `element-51-core` gets native tests.
 
 Tasks 34 to 38 are done (DESIGN.md, Results and the spec's task outcomes).
 
-### Goal `job-nodes`: tasks 1 to 7 approved 2026-10-21
+### Goal `job-nodes`: done
 
-Goals and specs approved 2026-10-21 ("lets go"); the task list approved the same day ("Approve all"). One task per commit,
-each ending in something that runs and passes its tests. Spec: DESIGN.md, "job-nodes spec".
-Criteria are the numbers in the goal. Tests that pin existing behaviour: `test_engine.py`,
-`test_nodes.py`, `test_session.py`, `test_server_websocket.py`, the shared fixtures and the
-Rust `run.rs`, `layout.rs`, `rows.rs`, `access.rs` tests; the page has no automated tests, so
-tasks 4 to 6 are checked in the browser pane (a recorded walk-through).
-
-Tier 1, the walking skeleton and what the rest needs:
-
-1. **DONE 2026-10-21. `JobNode` and subset runs (Python, plus the one Rust field).** What: `JobNode` in
-    `nodes.py` (step form, work form, the checks, `Stopped`, `Report`), `NodeType.job` in
-    `model.py` and `NodeType` in Rust (serde default false), `run_graph(only=, fixed=)`,
-    `ancestors` and `closure` in `engine.py`, `NodeOutcome.reason` for a skipped job, a
-    plain Run that takes job results as `fixed`. First a spike on typing `State` (a PEP 695
-    `JobNode[State]` under pydantic 2.14.1, else a `begin` that returns an object with a
-    `step` method); if neither passes mypy strict with no `Any`, stop and ask. Files:
-    `nodes.py`, `model.py`, `engine.py`, `ports.py` if needed, `tests/test_nodes.py`,
-    `tests/test_engine.py`, `tests/fixtures/snapshot.json`, Rust `model.rs` and its tests.
-    Serves: criteria 1, 3 (the skipped job), 4 (Run never starts one). Risk: low to medium
-    (the typing spike). Cost: about 250 lines, one new concept (`fixed`). Verify: new unit
-    tests; the 325 Python and 292 native tests pass unchanged.
-2. **DONE 2026-10-21. `JobRunner` and `App.start_job`, `stop_job` (Python).** What: new `jobs.py`
-    (`JobState`, `JobRunner`, thread, update merge, 50 ms publisher with an injected
-    clock), `App` methods and a job-update subscription, refusal reasons, delete and load
-    handling, the end-of-job run. Files: `jobs.py`, `session.py`, `tests/test_jobs.py`,
-    `tests/test_session.py`. Serves: criteria 3, 4, 5 (the rate), 6, 7 (the error), 10.
-    Risk: medium (threads and locks; `App` already has one re-entrant lock and node code
-    runs unlocked). Cost: about 350 lines, new rules for locking and for the timer.
-    Verify: fake jobs and a fake clock, no real sleeps beyond a few ms; Stop, failure,
-    delete, load, double Start and the merge rule each have a test; coverage stays 100%.
-3. **DONE 2026-10-21. Messages and server (Python and Rust core).** What: `StartRequest`, `StopRequest`,
-    `JobUpdate`, `JobRefusal`, partial `RunResult`, `Snapshot.jobs` in `protocol.py` and the
-    Rust `Message`; `reply_to` and `connect` in `server.py`; the shared fixtures; Rust
-    `RunResult::merge`. Files: `protocol.py`, `server.py`, `tests/fixtures/messages.json`,
-    `tests/fixtures/snapshot.json`, `rust/element-51-core/src/model.rs`, `rust/.../tests/messages.rs`,
-    `snapshot.rs`, `tests/test_protocol.py`, `tests/test_server_websocket.py`. Serves:
-    criteria 5 (the 100 ms measure, in a websocket test), 7 (a reload shows state). Risk:
-    medium (a wire change; both suites read the fixtures). Cost: about 300 lines. Verify:
-    both suites read the same fixtures; a real-server test times a report from the job's
-    thread to the client; the old messages still parse.
-
-Tier 2, in order of value over risk plus cost:
-
-4. **DONE 2026-10-21. The card (page).** What: the job row (Start, Stop, state word, bar), `node_rect`
-    growth for job types, hit-testing of the buttons, the job map in `State`, live redraw of
-    the job's own picture or chart and of a Plot linked to it (the `linked` patch and
-    `RunResult::merge`), the banner for a refusal or failure. Files: `layout.rs`, `display.rs`
-    (or a new `job.rs`) in core; `draw.rs`, `input.rs`, `lib.rs` in web; Rust tests for
-    layout, hit-test and merge. Serves: criteria 2, 3, 5, 7. Risk: medium (drawing code has
-    no automated test; the frame budget must not regress). Cost: about 400 lines. Verify:
-    native tests; `tools/bench_page.py` on the three workloads before and after (no job
-    rows in them, so no change expected); a walk-through of Start, a live Plot, Stop, a
-    failing job and a reload with a real example in the pane.
-5. **DONE 2026-10-21. Keyboard, screen reader, contrast.** What: job items in the hidden tree (Start,
-    Stop, state text), the announcements, `ui_states.py --graph job`, `uiKeys` rows, an axe
-    scan in the three themes, any contrast pair the new parts need. Files: `access.rs`,
-    `a11y_ui.rs`, `theme.rs` and the theme files only if a pair is missing, `tools/ui_states.py`,
-    `tools/ui_keys.js`. Serves: criterion 9. Risk: low to medium. Cost: about 250 lines.
-    Verify: native tests for the texts; axe 0 violations in each theme; the key rows pass.
-6. **DONE 2026-10-21. Run button running state.** What: `Run` disabled with `aria-busy` and the label
-    `Running` between a run request and its result; the known problem is removed. Files:
-    `lib.rs`, `index.html`. Serves: criterion 8. Risk: low. Cost: about 40 lines. Verify:
-    in the pane with a node that sleeps; announced to screen readers; axe 0.
-7. **Example, docs and notebook.** What: `examples/g_experiments/g2_job_nodes.py` (a job
-    that makes a falling loss and a rising accuracy, with a Plot), a row in
-    `tests/test_examples.py`, `docs/jobs.md`, `tests/functional/jobs.ipynb` and its row in
-    the coverage table, CODEMAP.md, README mention. The MNIST goal's example name becomes
-    `g3_mnist.py` (the next number in the folder). Serves: criterion 10 and the user's
-    try-out. Risk: low. Cost: about 300 lines. Verify: example test; the notebook passes
-    in the runner; docs build with `-W`.
-
-Tier 3, listed and not executed: a global `element_51.report()` (hidden state; the stepper
-removes most of the need); a series that a report replaces (no job needs it); status text on
-the card; keeping results when the page or the server restarts (not saved, by decision).
-
-If an area has no test: the page code (tasks 4 to 6) has none and `element-51-web` has no
-test runner. The pure parts (layout, merge, text) go in `element-51-core` where they can be
-tested, as in the earlier goals; the user decides whether to add characterisation tests
-first.
+Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not executed: a global
+`element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
+replaces (no job needs it); status text on the card; keeping results when the page or the server
+restarts (not saved, by decision).
 
 ### Goal `job-isolation`: task 8 approved 2026-10-21 (coverage inside a child still to ask)
 
-Spec: DESIGN.md, "job-isolation spec". Depends on `job-nodes` tasks 1 to 3. Approved; it starts
-after task 3.
+Spec: DESIGN.md, "job-isolation spec". `job-nodes` is done, so it can start. Approved; the user is
+asked about coverage inside a child process first.
 
 8. **Separate process.** What: `isolated = True` on a `JobNode` class; a child process
     (spawn) that imports the class, builds the node and runs `work` with a queue-backed
