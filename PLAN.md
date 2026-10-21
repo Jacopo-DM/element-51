@@ -137,29 +137,16 @@ card (Start, Stop, state, bar), live Plot and picture updates, the run after a j
 screen-reader access, and the Run button's running state. All ten criteria are met (spec and
 decisions in DESIGN.md; `docs/jobs.md`; `examples/g_experiments/g2_job_nodes.py`;
 `tests/functional/jobs.ipynb`). Left open, in Known problems: nothing newly; the separate-process
-variant is the goal `job-isolation`.
+variant is the goal `job-isolation` (below, also done).
 
-### job-isolation
+### job-isolation: done (2026-10-21)
 
-- Goal: a `JobNode` class with `isolated = True` runs its job in a separate process,
-    so Stop works even on a job that never reports, and a crash cannot take the
-    editor down.
-- Kind: new behaviour.
-- Success measure:
-    1. The same job code (step or `work`) runs unchanged with the switch.
-    2. Stop on an unresponsive job (a step that sleeps 30 s) ends it within 1 s:
-        Stop first asks as in `job-nodes`, and the process is killed if no report
-        comes within 0.5 s.
-    3. A child that dies (`os._exit` in a test) shows `failed` with a reason; the
-        editor keeps working.
-    4. A node class the child cannot import (defined inside a function) is refused at
-        Start with a reason on the card.
-    5. Inputs, reports and the final result cross the boundary pickled; tests use
-        tiny jobs; no test sleeps longer than a fraction of a second.
-- Status: approved 2026-10-21 ("lets go"); spec in DESIGN.md; task 8 is approved.
-    Depends on `job-nodes`. Nothing else
-    depends on it: `auto-run` and `mnist-experiment` do not wait for it.
-- Added: 2026-10-21
+Commits `11f8a93..HEAD` on `main` (task 8). `isolated = True` on a `JobNode` class runs the job in
+a child process (spawn): Stop asks, then kills the process 0.5 s later; a child that dies ends
+`failed` with its exit code; a class a child cannot import (inside a function, off the import
+path, typed into a notebook or a prompt) is refused at Start with a reason. All five criteria are
+met (spec and decisions in DESIGN.md; `docs/jobs.md`, "A job in its own process"; `Stubborn` in
+`examples/g_experiments/g2_job_nodes.py`; the last section of `tests/functional/jobs.ipynb`).
 
 ### auto-run
 
@@ -258,7 +245,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes` is done (2026-10-21; 11 commits on `main`, not pushed). `job-isolation` (task 8, a separate process for a job) has an approved spec and task; it waits for the user's answer to open question 2 (how the tests cover the child process). `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
+Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes` and `job-isolation` are done (2026-10-21; pushed up to `3281b79`, the isolation commits are not pushed). `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them). The user's own try-out of the editor and the new features comes first.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -567,24 +554,6 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goal `job-isolation`: task 8 approved 2026-10-21 (coverage inside a child still to ask)
-
-Spec: DESIGN.md, "job-isolation spec". `job-nodes` is done, so it can start. Approved; the user is
-asked about coverage inside a child process first.
-
-8. **Separate process.** What: `isolated = True` on a `JobNode` class; a child process
-    (spawn) that imports the class, builds the node and runs `work` with a queue-backed
-    `report`; the parent reads the queue like a thread job; Stop asks, then kills after
-    0.5 s; refusal for a class the child cannot import; a dead child becomes `failed`.
-    Files: `jobs.py` (or `isolated.py`), `nodes.py`, `tests/test_jobs.py`, a test module
-    for the child. Serves: all five criteria of the goal. Risk: medium to high
-    (multiprocessing under pytest, coverage inside a child, zombie processes). Cost: about
-    300 lines, new concepts: spawn, pickling and a kill timer. Verify: tests with a real
-    child (a step that sleeps 30 s, killed within 1 s; `os._exit`; a class defined in a
-    function); the process is gone after each test; coverage of the child needs
-    `pytest-cov`'s subprocess support and the user decides if that is acceptable before
-    this task starts.
-
 ### Tier 3: listed, not executed
 
 - Automated browser tests for `element-51-web`: large setup, and the logic is
@@ -604,19 +573,16 @@ Oldest first.
     Monaco). Options not yet tried: a larger card font, or snapping text
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
-2. (2026-10-21) `job-isolation` task 8: how do the tests cover code that runs inside the child
-    process? A: the logic is a function the tests call in the parent with a fake queue, and the
-    thin child wrapper (`_child_main`, 2 lines) takes `# pragma: no cover  # runs in the child
-    process`; a few real-process tests (kill after 0.5 s, `os._exit`, a class the child cannot
-    import) prove the wrapper, and a test that the wrapper stays at most a few lines guards it
-    (my recommendation; no settings change). B: turn on coverage's subprocess support in the
-    shared coverage settings (needs the user's say-so; honest 100%, slower tests, and a killed
-    child never writes its data, so the kill test's lines would not count anyway). The user asked
-    what they lose with A: only the count's proof that those 2 lines run, and the risk that
-    the wrapper grows unnoticed; the guard test covers that. Waiting on the answer.
 
 ## Known problems
 
+- Isolated jobs were checked on macOS only (spawn), by the tests and live in the browser pane with
+    `Stubborn`. Not checked: Linux or Windows, a job that reports a picture across the process
+    boundary at a high rate, many isolated jobs at once, and a script that starts the editor without
+    the `if __name__ == "__main__":` guard (the child imports the script again, so the server would
+    start twice; the docs say to use the guard). A killed job gets no `Stopped`, so it cannot clean up
+    after itself. A start takes a fraction of a second more (the child imports the node's module).
+    Kill timing: 0.5 s after Stop, whether or not the job was about to report.
 - Job updates were checked in the browser pane only: the job row, a live Plot and picture, a reload
     mid-job, Stop, a failing job, the run after a job. Not checked: a real screen reader, a narrow
     window or touch, a job with a picture output on a card, many jobs reporting at once, and the

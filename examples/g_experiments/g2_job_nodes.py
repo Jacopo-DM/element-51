@@ -42,7 +42,7 @@ Notes
 # Standard library
 import math
 import time
-from typing import ClassVar, override
+from typing import override
 
 # Third-party libraries
 from rich.console import Console
@@ -156,7 +156,7 @@ class Countdown(element_51.JobNode[None]):
 class Stubborn(element_51.JobNode[None]):
     """A job in its own process that sleeps and never reports."""
 
-    isolated: ClassVar[bool] = True
+    isolated = True
     seconds: float = 30.0
 
     @override

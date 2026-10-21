@@ -679,6 +679,39 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
 - The step form runs inside the child, so its state never crosses the boundary; only the
     inputs, each update and the result are pickled.
 
+Built 2026-10-21 (task 8). Where the build differs from, or settles, the spec:
+
+- `job_exec.py` holds the one function that runs a job's code (`execute`: `begin`, then `step`
+    for each `i` with a Stop check before each, or `work` with a `JobReport`). It reports to a
+    `Sink` (`begin`, `update`, `advance`). The thread runner's sink writes into the runner's
+    state; the child's sink puts pickled messages (`Began`, `Updated`, `Advanced`, `Ended`,
+    `Failed`, pydantic records in `isolated.py`) on a `multiprocessing` queue, and the parent
+    feeds them to the same thread-runner sink. So a thread job and an isolated one take the same
+    path through publishing, rate limiting and the end-of-job run.
+- Stop sets a `multiprocessing` event the child's `report` and step loop read (`StopFlag` is a
+    protocol, so a thread's or a process's event fits). The parent kills the process
+    `KILL_AFTER` (0.5 s) after Stop if the child has not ended. The spec said "if no update
+    arrives within 0.5 s"; a job that reports ends at its next report anyway, so the rule is
+    simply 0.5 s after Stop. A killed job counts as stopped, and gets no chance to clean up.
+- A child that ends with no `Ended` or `Failed` message (killed from outside, `os._exit`, a
+    native crash) becomes `failed`: "The job's process ended without a result (exit code N)".
+    The parent notices on the first empty poll (`POLL` 0.05 s) after the process is gone, so
+    messages still in the pipe are read first.
+- Refused at Start (`check_importable`, before the job is registered): a class defined inside a
+    function (`<locals>` in its qualified name), a class whose top-level module a fresh
+    interpreter cannot find (`PathFinder.find_spec` over `sys.path`, which ignores
+    `sys.modules`: a module loaded by file path, as the tests load examples, fails it), and a
+    class in `__main__` when `__main__` has no `__file__` (a notebook or a prompt). A class in
+    a script's `__main__` is accepted: the spawned child re-imports the script and finds it
+    there, which needs the `if __name__ == "__main__":` guard.
+- Coverage (the user's open question, answered 2026-10-21 by taking the recommended option; the
+    user said "Lets go"): the child's entry point `child_main` is an ordinary function that the
+    tests also call in the parent with a list as the outbox and a thread event as the stop flag, so
+    its lines count and no `# pragma: no cover` and no coverage setting is needed. The real-process
+    tests (`tests/test_isolated.py`, about 2 s together) prove spawn, the kill, a crash and the
+    refusals. The only pragmas are on test jobs whose bodies run in the child (`Sleeper`, `Dies`,
+    one line of `Chatty`), as CLAUDE.md allows.
+
 
 ## Decisions
 
@@ -1493,6 +1526,19 @@ have to go through `tools/compress_images.py`).
     run); Start with the last Run's values (can be stale without a sign); a status text
     line on the card (not asked; `step 3 of 5` covers progress).
 
+- Coverage of the child through `pytest-cov`'s subprocess support (rejected 2026-10-21): it
+    needs a change to the shared coverage settings (the user's say-so), slows every test, and a
+    child killed on purpose never writes its data, so the kill test's lines would not count
+    anyway. A thin wrapper marked `# pragma: no cover` was also not needed: passing `child_main`
+    itself as the process target leaves no wrapper.
+- `fork` as the start method (rejected): unsafe on macOS in a process that has threads (the
+    server and the job threads), and the user's editor runs on macOS. `spawn` costs a fraction of
+    a second per Start, which a hand-started job can pay.
+- `concurrent.futures.ProcessPoolExecutor` (rejected): it cannot kill one running job without
+    breaking the pool.
+- Killing as soon as Stop is pressed (rejected): a job that reports often should get the chance
+    to end with `Stopped` and keep its last values, so the kill waits 0.5 s.
+
 ## Results
 
 | Date | Change | Result |
@@ -1552,6 +1598,7 @@ have to go through `tools/compress_images.py`).
 
 | 2026-10-21 | speed-up-frame task 2: the grid's dots as one path with one fill (`grid` in `draw.rs`) | 12 picture cards, `tools/bench_page.js` batches, a throwaway build with a `data-oldgrid` switch, four interleaved rounds in one page session: 1.42, 1.31, 1.34, 1.40 ms before, 1.00, 0.94, 0.96, 0.92 after, about 0.4 ms or 30% faster; the 200-node page did not change (0.26 to 0.32 ms both ways in that session). Not pixel-identical, and the user accepted it (2026-10-21): 3,029 of 3,145,728 pixels differ, at most 27 of 255 per channel, on the anti-aliased edge of the dots (one fill of many arcs is rasterised slightly differently from many fills). No new test: the web crate has none and the grid has no native logic. Whole set after tasks 1 and 2, clean build, 4 sets of 11 batches, medians: 200 nodes 1.32, 1.40, 1.42, 1.43 ms (before 1.55, 1.55, 1.51, 1.52); 12 pictures 0.96, 0.97, 1.04, 1.07 (before 1.22, 1.22, 1.16, 1.16), at the 1.0 ms budget but not clearly under it; chart 0.46 to 0.53 before Run (0.52 to 0.62) and 2.11 to 2.19 after Run (2.36 to 2.55), so no workload got slower |
 | 2026-10-21 | `job-nodes` task 5: keyboard and screen reader for job nodes | `uiKeysJob` on `ui_states.py --graph job`: 21 of 21 rows pass; axe-core 0 violations in the default state, with a job button focused, with a job running, stopped and failed (banner shown) in `antimony`, `antimony-light` and `purple-synthwave`; no new theme colour (the job row uses `field`, `field_text`, `field_border`, `placeholder` and `label`, whose pairs the native AA test already covers) |
+| 2026-10-21 | `job-isolation` task 8: a job in a child process (`isolated = True`) | tests: 15 in `tests/test_isolated.py` (the child entry called in the parent: a work job, a step job, Stop, a raise, a class that cannot be imported; real child processes: a work job and a step job finish with their outputs, Stop kills a job that sleeps 30 s and never reports within 1 s after Stop (it took about 0.7 s with a 0.2 s settle), a job that reports ends at its next report, `os._exit(3)` gives `failed` with `exit code 3`, a raise in the child gives `failed` with its reason, and no child is left after each test; refusals for a class in a function, a module off the import path and a notebook `__main__`; acceptance of an importable class and of a script's `__main__`), one in `tests/test_examples.py` (Stop on `Stubborn` in the job example, with its folder on the import path), a section in `tests/functional/jobs.ipynb` (the notebook refusal, then a module written to a scratch folder and stopped in under a second); 397 Python tests at 100% branch coverage (13 to 25 s over several runs on a busy machine), no coverage setting changed; by hand in the browser pane on port 8766 (`examples/g_experiments/g2_job_nodes.py` through a throwaway script): Start on `Stubborn` shows `running` with Stop, Stop shows `stopped` within a second, no python child process left. To try it: `uv run python tools/build_wasm.py`, then `uv run python examples/g_experiments/g2_job_nodes.py`, press Start and then Stop on `Stubborn` |
 
 ## Gotchas
 
@@ -1647,3 +1694,11 @@ have to go through `tools/compress_images.py`).
     `sys.modules`. A module loaded with `importlib.util.module_from_spec` and `exec_module` and
     not registered there fails with `KeyError: '<module name>'`: `tests/test_examples.py` registers
     each example before running it, and a job class made by `exec` has the same problem (docs/jobs.md).
+- A spawned child gets the parent's `sys.path` and re-imports the main script as `__mp_main__`
+    (and aliases it as `__main__`), so a script that starts the editor without the
+    `if __name__ == "__main__":` guard starts it again in every child. `tests/test_isolated.py`
+    relies on `tests/` being on `sys.path` (pytest puts it there) so that the child can import
+    `sample_jobs`; `tests/test_examples.py` adds the examples folder with `monkeypatch.syspath_prepend`.
+- `importlib.util.find_spec` finds a module that is only in `sys.modules`, which a fresh child
+    would not. `check_importable` uses `importlib.machinery.PathFinder.find_spec(top, sys.path)`
+    for that reason.

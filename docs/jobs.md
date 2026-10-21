@@ -112,11 +112,47 @@ request is refused; its `reason` is worded for a person. A listener hears a
 `JobUpdate` for each change, and, when a job ends, a partial `RunResult` with
 the nodes after it. It is called from the job's thread and must not block.
 
+## A job in its own process
+
+Set `isolated = True` in the class body and the job runs in a separate process:
+
+```python
+class Stubborn(element_51.JobNode[None]):
+    isolated = True
+
+    def work(self, report: element_51.Report) -> int:
+        time.sleep(30)
+        return 0
+```
+
+The code is the same, step or `work`. What changes is Stop. In a thread, Stop
+works at the next step or report, so a job that sleeps 30 s cannot be stopped.
+With `isolated`, Stop asks the same way and, if the job has not ended half a
+second later, kills the process. The card says `stopped`. A job that crashes its
+process (a native library that aborts, `os._exit`) ends `failed`, with the exit
+code, and the editor goes on.
+
+The rules for an isolated job:
+
+- The class must be importable by module and name from a fresh Python: define
+    it at the top level of a script or a module. A class inside a function, or
+    typed into a notebook or a prompt, is refused when you press Start, with the
+    reason on the card. A script that starts the editor needs the usual
+    `if __name__ == "__main__":` guard, because the child imports the script
+    again.
+- The inputs, every report and the result are pickled across, so they must be
+    plain values, pictures and series. The step form's state never leaves the
+    child.
+- A killed job is not asked to clean up: `Stopped` is raised only if it reports
+    in time. Anything it holds (a file, a lock) is released by the system.
+- Starting the process takes a fraction of a second.
+
 ## Things to know
 
-- The job runs in a thread of your Python process, so it can use anything the
-    process can, and it ends when the process does. Stop is cooperative: it works
-    at the next step or report.
+- By default the job runs in a thread of your Python process, so it can use
+    anything the process can, and it ends when the process does. Stop is
+    cooperative: it works at the next step or report. `isolated = True` (above)
+    changes both.
 - Define the class in a module Python can import, such as your script. A class
     made by `exec` has no module, and pydantic cannot build `JobNode[...]` for it.
 - An exception in the job fails it: the card says `failed` and the banner shows
