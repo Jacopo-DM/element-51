@@ -119,38 +119,15 @@ Non-goals for all four: a GPU or a distributed run, resuming a run from a
 checkpoint, zoom or pan inside a chart, editing images, a dataset catalogue in
 the library (datasets live in examples), and running two jobs of one node at once.
 
-### visual-ports
+### visual-ports: done (2026-10-21)
 
-- Goal: nodes can pass pictures and time series, a card shows a picture, a Plot
-    node draws live lines, and either can be saved as a PNG. Depends on `skeleton`
-    and `antimony-theme`.
-- Kind: new behaviour.
-- Success measure (each is a test, a pure-function test where the code runs on
-    the canvas, or a recorded walk-through in the browser pane):
-    1. Two new port kinds, `image` and `series`, exist in Python (`element_51.Image`,
-        `element_51.Series`, pydantic models) and in Rust, pinned by shared fixtures;
-        a link joins only equal kinds; all three themes give each kind a colour and a
-        shape, and the contrast tests pass for every theme and palette.
-    2. After a run, a card with an `Image` output shows the picture below its ports,
-        scaled up with crisp pixels; a native test covers the picture area's size and
-        position.
-    3. `element_51.PlotNode` shows each series it receives as a named line on one
-        chart with a scale on both axes and the last value as text; it starts with
-        one empty series input, linking it adds a fresh empty row below, and every
-        linked row is one line named after the port it comes from; native tests
-        cover the rows rule and the chart scaling.
-    4. A node's series show up as output ports named by the node (`loss`,
-        `accuracy`), as any output does.
-    5. The card menu has `Save as PNG` on a node with a picture or a chart.
-    6. The hidden tree describes each display (for example "Plot, 2 lines, loss
-        last 0.31, accuracy last 0.92"); axe-core reports 0 violations in every
-        new state in all three themes.
-    7. Nothing that works today changes: both suites pass apart from the new tests,
-        and redraw time at 200 nodes stays within its recorded spread.
-- Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
-    "visual-ports spec"); the task list (tasks 34 to 38) approved 2026-10-21. Starts after `canvas-accessibility`
-    (done).
-- Added: 2026-10-21
+Commits `527571e..HEAD` on `main` (tasks 34 to 38, tasks `box-summaries` and `code-colours` after
+the user tried it). Pictures and series are port kinds, a card shows a picture or a chart, `PlotNode`
+grows a row for each link, Save as PNG is in the card menu, the hidden tree describes each display,
+and `docs/visual-ports.md` explains it. All seven criteria are met (spec and results in DESIGN.md);
+axe-core reports 0 violations in the new states in all three themes. Left open, with reasons, in
+Known problems: the 12-picture-card redraw budget (1.0 ms) is missed, a real download and a real
+screen reader were not tried, and the narrow window and touch were not checked.
 
 ### job-nodes
 
@@ -258,8 +235,8 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 38 of `visual-ports` (approved 2026-10-21): accessibility and docs (new `ui_states.py` states, axe in three themes, `ui_keys.js` rows including Save as PNG, `docs/visual-ports.md`). Task 37 (Save as PNG) is done. `card-polish` is done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`).
-Tasks 34 (a picture on a card), 35 (a series and a one-line chart) and 36 (rows that grow with links) are done: see DESIGN.md, Results and the spec's task 34
+Next step: none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes`, `auto-run` and `mnist-experiment` are approved but have no spec: the user runs `/zz-02-project-plan` for the next one (`job-nodes` first, because the Start button the user asked for belongs to it, and the two others build on it). The user's own try-out of the editor and the new features comes first.
+Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
 lines to a `Plot` node whose rows grow with its links). `canvas-accessibility` is done, so every new part of
@@ -478,40 +455,9 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `visual-ports` (task list approved 2026-10-21; tasks 34 to 36 done 2026-10-21)
+### Goal `visual-ports`: done
 
-All five tasks come after `canvas-accessibility` (done; the user's order). The web
-crate has no automated tests, so each task puts its logic in `element-51-core`
-(`display.rs`, `layout.rs`, `edit.rs`, `access.rs`) with native tests written first,
-and checks the page by hand in the browser pane and with axe-core. The shared
-fixtures in `tests/fixtures/` change with every wire record, so both suites
-read them. Estimates are by analogy with the menu work (about 300 lines of Rust
-and 60 of Python per task of this size); nothing is measured yet. Existing
-behaviour near the changes is pinned by `layout.rs`, `rules.rs`, `fields.rs`,
-`theme.rs` and `palette.rs` in the core tests and by `test_engine.py`,
-`test_nodes.py`, `test_edits.py` in Python; no characterisation tests are needed
-first. The example for these tasks is `examples/g_experiments/g1_picture_and_plot.py`
-(a new group `g_experiments`; the MNIST example is `g2_mnist.py`).
-
-#### Tier 1: walking skeleton (criteria 1, 2, 4 for images, 6 in part)
-
-34. Done 2026-10-21: a picture on a card, end to end (DESIGN.md, Results; the spec's task 34
-    outcome lists what changed from the plan, including that `series` moved to task 35 and
-    that two measurement budgets are open, see Known problems).
-
-#### Tier 2 (ordered by value over risk plus cost)
-
-35. Done 2026-10-21: a series and a one-line chart (DESIGN.md, Results and the spec's task 35
-    outcome; the line name tie-break by node id and the sixth line's dash are exercised in
-    task 36).
-36. Done 2026-10-21: rows that grow with links (DESIGN.md, Results and the spec's task 36
-    outcome).
-37. Done 2026-10-21: Save as PNG (DESIGN.md, Results and the spec's task 37 outcome).
-38. **Accessibility and docs.** New `ui_states.py` states (a picture, a chart with
-    three lines, a grown Plot node), axe-core in all three themes, `ui_keys.js` rows
-    for the new labels, a docs page `docs/visual-ports.md`. Files: `tools/ui_states.py`,
-    `tools/ui_keys.js`, `docs/`. Criteria 6, 7. Risk: low. Cost: about 150 lines and
-    one page. Verify: axe 0 violations, redraw baseline, `uv-docs build`.
+Tasks 34 to 38 are done (DESIGN.md, Results and the spec's task outcomes).
 
 ### Tier 3: listed, not executed
 
@@ -552,8 +498,7 @@ Oldest first.
     Next step: profile one frame (`columns` measures text, every row fills and clips) and
     decide whether to cut it; needs the user's say-so as a new task. Task 35 (a chart on
     a card) added to the same frame: a 100,000-point chart costs about 1.6 ms a frame.
-- A node's picture output box says `output`, and a card shows only the first picture of
-    its node.
+- A card shows only the first picture of its node (the one first in port name order).
 - Not checked on a narrow window or by touch: the source panel, the growing Plot card, the
     chart. Not run in a real screen reader: the panel and the chart label.
 - The Run button has no running state: nothing shows while a run is in progress (the

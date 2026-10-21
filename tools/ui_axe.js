@@ -2,7 +2,8 @@
 // state. It loads axe from a local server on port 8769 (see DESIGN.md, the
 // ui-design-pass spec, for where `axe.min.js` comes from). Run it in the page's
 // console or with the browser pane's javascript tool. Returns, for each state, a
-// list of "rule (impact): nodes".
+// list of "rule (impact): nodes". With `--graph display` the run states have a picture
+// and a chart on screen.
 (async () => {
     if (!window.axe) {
         await new Promise((resolve, reject) => {
@@ -34,6 +35,18 @@
     document.getElementById("run").click();
     await wait(600);
     found.run = await scan();
+    // The card menu of the first node, opened from the keyboard (on the display
+    // graph it holds Save as PNG), and the source panel it opens.
+    tree.children[0].focus();
+    await wait(100);
+    tree.children[0].dispatchEvent(new KeyboardEvent("keydown", { key: "F10", shiftKey: true, bubbles: true, cancelable: true }));
+    await wait(300);
+    found.cardMenu = await scan();
+    document.activeElement.click();
+    await wait(800);
+    found.sourcePanel = await scan();
+    document.getElementById("source-close").click();
+    await wait(200);
     canvas.dispatchEvent(new MouseEvent("contextmenu", { clientX: 520, clientY: 220, bubbles: true, cancelable: true }));
     const search = document.getElementById("menu-search");
     search.value = "zzz";

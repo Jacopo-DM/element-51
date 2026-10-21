@@ -398,3 +398,97 @@ async function uiKeys() {
         rows,
     };
 }
+
+// The same kind of walk for the picture and chart cards. Run it in the page of
+// `uv run python tools/ui_states.py --graph display` (a fresh server, a fresh page,
+// the empty canvas clicked for focus), then `await uiKeysDisplay()`. It presses Run
+// itself. Each row is [step, passed, what was seen].
+async function uiKeysDisplay() {
+    const rows = [];
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const check = (step, passed, seen) => rows.push([step, Boolean(passed), String(seen)]);
+    const tree = document.getElementById("graph-tree");
+    const status = document.getElementById("status");
+    const banner = document.getElementById("error");
+    const cardMenu = document.getElementById("card-menu");
+    const active = () => document.activeElement;
+    const nodes = () => [...tree.children];
+    const label = (id) => document.getElementById("tree-" + id).getAttribute("aria-label");
+    const pressWith = async (key, modifiers) => {
+        active().dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...modifiers }));
+        await wait(150);
+    };
+    const entries = () => [...cardMenu.querySelectorAll("button")].map((button) => button.textContent);
+    // A real download would leave a file in the user's folder: catch the click instead.
+    const downloads = [];
+    const originalClick = HTMLElement.prototype.click;
+    HTMLElement.prototype.click = function () {
+        if (this.tagName === "A" && this.hasAttribute("download")) {
+            downloads.push({ name: this.getAttribute("download"), href: this.getAttribute("href") });
+            return undefined;
+        }
+        return originalClick.call(this);
+    };
+    // Open the card menu of a node from the keyboard, and press Save as PNG.
+    const save = async (id) => {
+        document.getElementById("tree-" + id).focus();
+        await wait(60);
+        await pressWith("F10", { shiftKey: true });
+        await pressWith("ArrowDown", {});
+        const entry = active().textContent;
+        active().click();
+        await wait(300);
+        return entry;
+    };
+
+    check("a picture card, a plain card and a chart card are in the tree", nodes().length === 4, nodes().length);
+    check("before a run no label claims a display", nodes().every((li) => !/Shows/.test(li.getAttribute("aria-label"))), nodes().map((li) => li.getAttribute("aria-label")).join(" | "));
+
+    // Task 37: Save as PNG.
+    nodes()[0].focus();
+    await wait(60);
+    await pressWith("F10", { shiftKey: true });
+    check("a picture card offers View source code, Save as PNG and Delete node", entries().join("|") === "View source code|Save as PNG|Delete node", entries().join("|"));
+    await pressWith("ArrowDown", {});
+    check("Down from the first entry reaches Save as PNG", active().textContent === "Save as PNG", active().textContent);
+    await pressWith("Escape", {});
+    check("Escape closes the menu and returns to the node", cardMenu.hidden && active().id === "tree-n1", active().id);
+    document.getElementById("tree-n3").focus();
+    await wait(60);
+    await pressWith("F10", { shiftKey: true });
+    check("a card with no picture or chart has no Save as PNG", entries().join("|") === "View source code|Delete node", entries().join("|"));
+    await pressWith("Escape", {});
+    check("Save as PNG before a run says there is nothing to save", (await save("n1")) === "Save as PNG" && !banner.hidden && /^n1 has nothing to save yet/.test(banner.textContent) && downloads.length === 0, banner.textContent);
+    check("the message has a Dismiss button that closes it", banner.querySelector("button").textContent === "Dismiss" && (banner.querySelector("button").click(), banner.hidden), banner.hidden);
+
+    document.getElementById("run").click();
+    await wait(900);
+    check("a picture card says its size after a run", /Shows a 28 by 28 picture\.$/.test(label("n1")) && /Shows a 28 by 28 picture\.$/.test(label("n2")), label("n1"));
+    check("a node that only makes series does not say it plots", !/Shows/.test(label("n3")), label("n3"));
+    check("the Plot says its lines and where each ends", /Shows a plot of 2 lines, loss last [\d.]+ and accuracy last [\d.]+\.$/.test(label("n4")), label("n4"));
+    document.getElementById("tree-n4").focus();
+    await wait(60);
+    active().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+    await wait(100);
+    const rowLabels = [...document.getElementById("tree-n4").querySelectorAll("[data-port]")].map((li) => li.getAttribute("aria-label"));
+    check("the Plot lists its two linked rows and one empty row", rowLabels.length === 3 && /^Input series_1, series, linked from n3 loss$/.test(rowLabels[0]) && /^Input series_2, series, linked from n3 accuracy$/.test(rowLabels[1]) && /^Input series_3, series, not linked$/.test(rowLabels[2]), rowLabels.join(" | "));
+    active().dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true, cancelable: true }));
+    await wait(60);
+
+    await save("n1");
+    check("Save as PNG on the picture downloads n1-out.png and says so", downloads.length === 1 && downloads[0].name === "n1-out.png" && /^data:image\/png;base64,/.test(downloads[0].href) && status.textContent === "Saving n1-out.png", (downloads[0] && downloads[0].name) + " / " + status.textContent);
+    check("the focus is back on the node", active().id === "tree-n1", active().id);
+    await save("n4");
+    check("Save as PNG on the Plot downloads n4-chart.png", downloads.length === 2 && downloads[1].name === "n4-chart.png" && /^data:image\/png;base64,/.test(downloads[1].href), downloads[1] && downloads[1].name);
+    const image = new Image();
+    image.src = downloads[1].href;
+    await image.decode();
+    check("the chart file is larger than the card's chart area", image.naturalWidth > 400 && image.naturalHeight > 200, image.naturalWidth + " by " + image.naturalHeight);
+    HTMLElement.prototype.click = originalClick;
+    banner.setAttribute("hidden", "");
+    return {
+        passed: rows.filter((row) => row[1]).length,
+        failed: rows.filter((row) => !row[1]).length,
+        rows,
+    };
+}

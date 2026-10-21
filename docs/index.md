@@ -45,6 +45,8 @@ keep it between sessions.
 
 - [Themes](themes.md): choose a built-in theme, or change colours, sizes, fonts
     and port shapes with a JSON file. It lists every key.
+- [Pictures and plots](visual-ports.md): pass a picture or a list of numbers
+    between nodes, show it on a card, draw lines on a Plot card, save a PNG.
 - [Embedding](embedding.md): put the editor inside a FastAPI or NiceGUI app,
     next to a side panel of your own.
 - [API reference](reference.md): every public function and class.
@@ -57,6 +59,7 @@ topic. Each one starts with notes on what to try.
 :caption: Contents
 
 themes
+visual-ports
 embedding
 reference
 ```
