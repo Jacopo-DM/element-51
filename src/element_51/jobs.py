@@ -15,6 +15,7 @@ from element_51.engine import (
     resolve_inputs,
     run_graph,
 )
+from element_51.isolated import ChildFailedError, check_importable, run_in_child
 from element_51.job_exec import CallbackSink, execute
 from element_51.job_node import JobNode, Stopped
 from element_51.model import Graph, Model, NodeType, PlacedNode, PortValue
@@ -207,6 +208,8 @@ class JobRunner:
         if not (isinstance(function, type) and issubclass(function, JobNode)):
             msg = f"Node {node} ({placed.node_type}) is not a job"
             raise JobRefusedError(msg)
+        if function.isolated and (why := check_importable(function)):
+            raise JobRefusedError(why)
         job = _Job(node=node, node_type=function.node_type)
         with self._lock:
             previous = self._jobs.get(node)
@@ -350,6 +353,9 @@ class JobRunner:
             self._run(job, function, inputs)
         except Stopped:
             pass
+        except ChildFailedError as error:
+            job.error = error.reason
+            outcome = "failed"
         except Exception as error:  # ruff: ignore[blind-except]  # job code can raise anything; the card shows it
             job.error = describe_error(error)
             outcome = "failed"
@@ -375,7 +381,10 @@ class JobRunner:
             update=partial(self._update, job),
             advance=partial(self._set_step, job),
         )
-        execute(function, inputs, job.stop, sink)
+        if function.isolated:
+            run_in_child(function, inputs, job.stop, sink)
+        else:
+            execute(function, inputs, job.stop, sink)
 
     def _set_steps(self, job: _Job, total: int) -> None:
         """Record how many steps a job has and publish."""

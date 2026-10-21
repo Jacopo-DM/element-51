@@ -36,6 +36,7 @@ a row (a test fails without it).
 | `job_node` | `jobs.ipynb` |
 | `jobs` | `jobs.ipynb` |
 | `job_exec` | `jobs.ipynb` |
+| `isolated` | `jobs.ipynb` |
 | `session` | `nodes_and_running.ipynb` |
 | `store` | `save_and_load.ipynb` |
 | `theme` | `themes.ipynb` |

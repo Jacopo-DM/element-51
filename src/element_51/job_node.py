@@ -39,11 +39,17 @@ class JobNode[State](Node):
     instead and calls `report` itself. Define one form, not both. Run never
     starts a job; the Start button does.
 
+    Set `isolated = True` in the class body to run the job in a separate
+    process. Stop then ends it even if it never steps or reports, and a crash
+    stays in that process. The class must be importable by module and name,
+    and the inputs and everything the job reports must be picklable.
+
     The return hint of `step` (or `work`) gives the outputs, as `run`'s does for
     a `Node`.
     """
 
     is_job: ClassVar[bool] = True
+    isolated: ClassVar[bool] = False
     is_stepped: ClassVar[bool]
 
     def steps(self) -> int:

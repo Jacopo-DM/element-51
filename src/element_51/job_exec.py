@@ -19,13 +19,13 @@ class StopFlag(Protocol):
 class Sink(Protocol):
     """Where a running job's progress goes."""
 
-    def begin(self, total: int) -> None:
+    def begin(self, total: int, /) -> None:
         """Say how many steps the job has."""
 
-    def update(self, fields: Mapping[str, Carried]) -> None:
+    def update(self, fields: Mapping[str, Carried], /) -> None:
         """Add new values to the job's outputs."""
 
-    def advance(self, step: int) -> None:
+    def advance(self, step: int, /) -> None:
         """Say that `step` steps are done."""
 
 
