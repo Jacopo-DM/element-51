@@ -653,8 +653,9 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
     linked directly to a job output. A picture or series on the job's own card follows
     its own reports. A node between the job and a Plot makes the Plot update when the job
     ends.
-- Run button state: `Run` is disabled with `aria-busy` and the label `Running` between
-    sending a run and receiving its result.
+- Run button state: `Run` gets `aria-busy` and `aria-disabled` and the label `Running` between
+    sending a run and receiving its (non-partial) result; it stays focusable and a press
+    while busy does nothing. Built in task 6: axe 0 violations while busy.
 - Verification: Python tests with a fake clock and fake jobs (state machine, merge rule,
     rate limit, refusal reasons, stop, failure, delete and load); a websocket test that a
     report reaches a connected client within 100 ms (the measure of criterion 5); shared

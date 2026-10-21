@@ -149,6 +149,7 @@ pub fn start() -> Result<(), JsValue> {
     listen(&socket, "close", move |event: CloseEvent| {
         let reason = event.reason();
         let state = shared.borrow();
+        set_running(&state.document, false);
         if reason.is_empty() {
             show_error(
                 &state.document,
@@ -602,6 +603,9 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                 }
             }
             Ok(Message::RunResult(result)) => {
+                if !result.partial {
+                    set_running(&state.document, false);
+                }
                 if let Some(summary) = result.error_summary() {
                     show_error(&state.document, &summary);
                 }
@@ -652,8 +656,17 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
     }
 }
 
+/// Press Run: send the request and show that a run is in progress until its
+/// result comes. A press while a run is in progress does nothing.
 fn on_run(shared: &Shared) {
     let state = shared.borrow();
+    let busy = state
+        .document
+        .get_element_by_id("run")
+        .is_some_and(|button| button.get_attribute("aria-busy").as_deref() == Some("true"));
+    if busy {
+        return;
+    }
     if state
         .socket
         .send_with_str(&Message::Run(RunRequest {}).to_json())
@@ -663,5 +676,24 @@ fn on_run(shared: &Shared) {
             &state.document,
             "Could not send the run request: not connected to Python.",
         );
+    } else {
+        set_running(&state.document, true);
+    }
+}
+
+/// Show the Run button as busy, `Running`, or as it was. It stays focusable
+/// (`aria-busy`, not `disabled`), so a keyboard user keeps their place.
+fn set_running(document: &Document, running: bool) {
+    let Some(button) = document.get_element_by_id("run") else {
+        return;
+    };
+    if running {
+        let _ = button.set_attribute("aria-busy", "true");
+        let _ = button.set_attribute("aria-disabled", "true");
+        button.set_text_content(Some("Running"));
+    } else {
+        let _ = button.remove_attribute("aria-busy");
+        let _ = button.remove_attribute("aria-disabled");
+        button.set_text_content(Some("Run"));
     }
 }

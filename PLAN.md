@@ -660,7 +660,7 @@ Tier 2, in order of value over risk plus cost:
     `a11y_ui.rs`, `theme.rs` and the theme files only if a pair is missing, `tools/ui_states.py`,
     `tools/ui_keys.js`. Serves: criterion 9. Risk: low to medium. Cost: about 250 lines.
     Verify: native tests for the texts; axe 0 violations in each theme; the key rows pass.
-6. **Run button running state.** What: `Run` disabled with `aria-busy` and the label
+6. **DONE 2026-10-21. Run button running state.** What: `Run` disabled with `aria-busy` and the label
     `Running` between a run request and its result; the known problem is removed. Files:
     `lib.rs`, `index.html`. Serves: criterion 8. Risk: low. Cost: about 40 lines. Verify:
     in the pane with a node that sleeps; announced to screen readers; axe 0.
@@ -734,8 +734,6 @@ Oldest first.
 - A card shows only the first picture of its node (the one first in port name order).
 - Not checked on a narrow window or by touch: the source panel, the growing Plot card, the
     chart. Not run in a real screen reader: the panel and the chart label.
-- The Run button has no running state: nothing shows while a run is in progress (the
-    end of a run is announced to screen readers; the goal `job-nodes` adds the state).
 - A node's empty output box says `output`, the same word as the port name.
 - The page parts and the theme colours are checked at AA by tests and by axe in
     the built-in browser pane; a scan with a real screen reader was not done.
