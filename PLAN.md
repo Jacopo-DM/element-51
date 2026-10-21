@@ -230,6 +230,22 @@ resize action), so a screen reader user cannot resize.
 - Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan`.
 - Added: 2026-10-22
 
+### series-colour (draft, 2026-10-22)
+
+- Goal: a colour picker next to each `series_N` name on a Plot card, so the user chooses the
+    colour of each line.
+- Decided by the user 2026-10-22: the colour is saved in the graph file (a new format version 4,
+    a new edit that Undo covers, like `ResizeNode`), and the picker is the browser's own colour box
+    (`<input type="color">`, a small swatch beside the name; Chrome shows a square gradient, not a
+    wheel), not a wheel drawn in Rust.
+- Open for the spec: the swatch is a page element over the canvas, so it needs the covered-card
+    rule (DESIGN.md, Gotchas); the hidden tree needs a label for it; the Save as PNG (and a future
+    CSV or matplotlib PNG) must use the chosen colour; the default is the theme's series colour;
+    a colour must keep 3:1 against the chart background or the user is told (open).
+- Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan` and
+    approval in words.
+- Added: 2026-10-22
+
 ### speed-up-frame: done (2026-10-21)
 
 Tasks 1 and 2 kept (wires that cannot reach the view are not drawn, the grid's dots are one path
