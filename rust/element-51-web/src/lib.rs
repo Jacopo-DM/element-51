@@ -10,10 +10,12 @@ mod draw_card;
 mod draw_chart;
 mod draw_focus;
 mod draw_wires;
+mod edit_ui;
 mod fields_ui;
 mod input;
 mod menu_keys;
 mod menu_ui;
+mod messages;
 mod pictures;
 mod run_ui;
 mod save_png;
@@ -30,7 +32,7 @@ use element_51_core::history::History;
 use element_51_core::layout::PortHit;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{Edit, EditRequest, JobUpdate, Message, PortRef, Replica, RunResult};
+use element_51_core::{JobUpdate, PortRef, Replica, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -38,21 +40,20 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use crate::run_ui::{clear_run, on_job_update, on_run, send_job_request, set_running};
-use a11y_ui::{announce, on_tree_focus_in, on_tree_focus_out, sync_tree};
+use crate::edit_ui::{step_history, submit};
+use crate::messages::on_message;
+use crate::run_ui::{on_run, send_job_request, set_running};
+use a11y_ui::{on_tree_focus_in, on_tree_focus_out, sync_tree};
 use draw::{Focus, Frame, Selected, draw};
-use element_51_core::access::{edit_text, refusal_text, run_text, undo_text};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
     pending_preview,
 };
 use menu_keys::{on_card_menu_key, on_menu_key, on_menu_search_key};
-use menu_ui::{
-    fill_menu, on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search,
-};
+use menu_ui::{on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search};
 use pictures::Pictures;
-use source_ui::{close_source, on_source_key, show_source};
+use source_ui::{close_source, on_source_key};
 use theme_ui::{
     on_app_menu_button, on_palette_key, on_palette_submit, on_select_theme, on_theme_click,
     on_try_palette,
@@ -312,7 +313,7 @@ pub fn start() -> Result<(), JsValue> {
 
 /// Hand the theme's colours and font to the page's own parts (input boxes, the
 /// menu, the error banner) as CSS custom properties on the root element.
-fn apply_theme(document: &Document, theme: &Theme) {
+pub(crate) fn apply_theme(document: &Document, theme: &Theme) {
     let Some(root) = document.document_element() else {
         return;
     };
@@ -355,7 +356,7 @@ fn fit_canvas(state: &Shared, window: &web_sys::Window) {
     state.canvas.set_height((height * ratio).round() as u32);
 }
 
-fn redraw(shared: &Shared) {
+pub(crate) fn redraw(shared: &Shared) {
     sync_tree(shared);
     draw_canvas(shared);
     sync_fields(shared);
@@ -398,7 +399,7 @@ fn draw_canvas(state: &Shared) {
 
 /// Show the page. It stays hidden until the first snapshot has set the theme, so
 /// a light-theme page never shows the default dark one first.
-fn mark_ready(document: &Document) {
+pub(crate) fn mark_ready(document: &Document) {
     if let Some(root) = document.document_element() {
         root.set_class_name("ready");
     }
@@ -415,196 +416,4 @@ pub(crate) fn show_error(document: &Document, message: &str) {
     };
     text.set_text_content(Some(message));
     let _ = banner.remove_attribute("hidden");
-}
-
-fn send(state: &State, request: EditRequest) {
-    let text = Message::Edit(request).to_json();
-    if state.socket.send_with_str(&text).is_err() {
-        show_error(
-            &state.document,
-            "Could not send the edit: not connected to Python.",
-        );
-    }
-}
-
-/// Apply an edit the user made, send it, and remember it so it can be undone.
-fn submit(shared: &Shared, edit: Edit) {
-    submit_edit(shared, edit, true);
-}
-
-/// Apply `edit` locally and send it. A refused edit shows its reason. With
-/// `record` the edit joins the undo history; undo and redo pass false.
-fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
-    {
-        let mut state = shared.borrow_mut();
-        let Some(replica) = state.replica.as_mut() else {
-            return;
-        };
-        // Moving a node changes no result, so the shown values stay.
-        let keeps_results = matches!(edit, Edit::MoveNode { .. });
-        let before = replica.graph().clone();
-        match replica.submit(edit.clone()) {
-            Ok(request) => {
-                if record {
-                    state.history.record(&before, &edit);
-                    announce(&state.document, &edit_text(&edit));
-                }
-                send(&state, request);
-                state.tree_stale = true;
-                if !keeps_results {
-                    clear_run(&mut state);
-                }
-            }
-            Err(error) => {
-                show_error(&state.document, &error.to_string());
-                announce(&state.document, &refusal_text(&error.to_string()));
-            }
-        }
-    }
-    redraw(shared);
-}
-
-/// Undo the newest step, or redo the newest undone one. The edits go to Python
-/// like any others; the first one that no longer applies shows its reason and
-/// ends the step.
-fn step_history(shared: &Shared, undo: bool) {
-    let edits = {
-        let mut state = shared.borrow_mut();
-        state.selected = None;
-        if undo {
-            state.history.undo()
-        } else {
-            state.history.redo()
-        }
-    };
-    let changed = edits.as_ref().is_some_and(|edits| !edits.is_empty());
-    let mut interrupted = false;
-    for edit in edits.unwrap_or_default() {
-        let before = shared.borrow().replica.as_ref().map(|r| r.graph().clone());
-        submit_edit(shared, edit, false);
-        let after = shared.borrow().replica.as_ref().map(|r| r.graph().clone());
-        if before == after {
-            interrupted = true;
-            break;
-        }
-    }
-    // A refused step has already been announced with its reason.
-    if !interrupted {
-        announce(&shared.borrow().document, &undo_text(undo, changed));
-    }
-    redraw(shared);
-}
-
-fn on_message(shared: &Shared, event: &MessageEvent) {
-    let parsed = event
-        .data()
-        .as_string()
-        .ok_or_else(|| "Python sent a message that is not text".to_string())
-        .and_then(|text| Message::from_json(&text).map_err(|error| error.to_string()));
-    let mut source_reply = None;
-    {
-        let mut state = shared.borrow_mut();
-        match parsed {
-            Ok(Message::Snapshot(snapshot)) => {
-                state.jobs = snapshot
-                    .jobs
-                    .iter()
-                    .map(|job| (job.node.clone(), job.clone()))
-                    .collect();
-                clear_run(&mut state);
-                state.selected = None;
-                state.tree_stale = true;
-                let theme_key = format!("{} {}", snapshot.theme, snapshot.theme_changes);
-                if theme_key != state.theme_key {
-                    match Theme::with_changes(&snapshot.theme, &snapshot.theme_changes) {
-                        Ok(theme) => {
-                            apply_theme(&state.document, &theme);
-                            state.theme = theme;
-                            state.theme_key = theme_key;
-                        }
-                        Err(reason) => show_error(
-                            &state.document,
-                            &format!("The theme cannot be used: {reason}"),
-                        ),
-                    }
-                }
-                mark_ready(&state.document);
-                fill_menu(&state.document, &snapshot);
-                match state.replica.as_mut() {
-                    Some(replica) => replica.reset(snapshot),
-                    None => state.replica = Some(Replica::new(snapshot)),
-                }
-            }
-            Ok(Message::Ack(ack)) => {
-                if let Some(replica) = state.replica.as_mut() {
-                    replica.ack(ack.id);
-                }
-            }
-            Ok(Message::Reject(reject)) => {
-                let known = state
-                    .replica
-                    .as_mut()
-                    .is_some_and(|replica| replica.reject(reject.id));
-                if known {
-                    state.tree_stale = true;
-                    clear_run(&mut state);
-                    show_error(
-                        &state.document,
-                        &format!("Python refused the edit: {}", reject.reason),
-                    );
-                    announce(&state.document, &refusal_text(&reject.reason));
-                }
-            }
-            Ok(Message::RunResult(result)) => {
-                if !result.partial {
-                    set_running(&state.document, false);
-                }
-                if let Some(summary) = result.error_summary() {
-                    show_error(&state.document, &summary);
-                }
-                // The run after a job follows the job's own announcement; it is only
-                // spoken when something in it failed.
-                if !result.partial || result.error_summary().is_some() {
-                    announce(&state.document, &run_text(&result));
-                }
-                // A partial result covers the nodes after a job that ended; it
-                // joins the last result instead of replacing it.
-                let whole = match (result.partial, state.run.take()) {
-                    (true, Some(mut run)) => {
-                        run.merge(&result);
-                        run
-                    }
-                    _ => result,
-                };
-                state.pictures = Pictures::from_result(&state.document, &whole);
-                state.tree_stale = true;
-                state.run = Some(whole);
-            }
-            Ok(Message::SourceReply(reply)) => source_reply = Some(reply),
-            Ok(Message::JobUpdate(update)) => on_job_update(&mut state, update),
-            Ok(Message::JobRefused(refusal)) => {
-                show_error(&state.document, &refusal.reason);
-                announce(&state.document, &refusal_text(&refusal.reason));
-            }
-            Ok(
-                Message::Edit(_)
-                | Message::Run(_)
-                | Message::Source(_)
-                | Message::Start(_)
-                | Message::Stop(_),
-            ) => {
-                show_error(
-                    &state.document,
-                    "Python sent a message only the browser should send.",
-                );
-            }
-            Err(error) => show_error(&state.document, &error),
-        }
-    }
-    redraw(shared);
-    // The panel moves the focus, which runs handlers that borrow the state, so
-    // it is shown once the borrow above has ended.
-    if let Some(reply) = source_reply {
-        show_source(shared, &reply);
-    }
 }
