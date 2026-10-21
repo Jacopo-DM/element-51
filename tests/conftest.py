@@ -1,11 +1,17 @@
-"""Fixtures shared by the server tests."""
+"""Shared pytest setup: the Hypothesis profile and the server fixtures."""
 
+import os
 from pathlib import Path
 
 import pytest
+from hypothesis import settings
 from server_support import WASM_MAGIC
 
 from element_51 import server
+
+settings.register_profile("default", deadline=None)
+settings.register_profile("ci", deadline=None, derandomize=True)
+settings.load_profile("ci" if os.environ.get("CI") else "default")
 
 
 @pytest.fixture
