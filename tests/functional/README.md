@@ -29,11 +29,11 @@ a row (a test fails without it).
 
 | Module | Notebook |
 | --- | --- |
-| `nodes` | none yet |
-| `ports` | none yet |
-| `model` | none yet |
-| `engine` | none yet |
-| `session` | none yet |
+| `nodes` | `nodes_and_running.ipynb` |
+| `ports` | `nodes_and_running.ipynb` |
+| `model` | `nodes_and_running.ipynb` |
+| `engine` | `nodes_and_running.ipynb` |
+| `session` | `nodes_and_running.ipynb` |
 | `store` | none yet |
 | `theme` | none yet |
 | `visuals` | none yet |
