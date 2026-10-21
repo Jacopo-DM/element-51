@@ -4,8 +4,7 @@
 
 use crate::pictures::Pictures;
 use element_51_core::display::{
-    chart_layout, chart_rect, fit_picture, last_value, line_names, line_style, picture_rect,
-    short_number,
+    chart_layout, chart_rect, fit_picture, legend_slots, line_names, line_style, picture_rect,
 };
 use element_51_core::fields::{linked_text, share_room};
 use element_51_core::job::{
@@ -32,6 +31,12 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 const MIN_GRID_PIXELS: f64 = 8.0;
 /// The focus ring's width, its dark halo on each side, and its gap from what it
 /// rings, all in screen pixels.
+/// How strong the chart's grid lines are, from 0 to 1.
+const GRID_ALPHA: f64 = 0.4;
+/// A chart line's width as a fraction of a wire's.
+const LINE_WIDTH_RATIO: f64 = 0.75;
+/// The length of a legend swatch, in canvas pixels.
+const SWATCH_WIDTH: f64 = 16.0;
 const FOCUS_WIDTH: f64 = 2.0;
 const FOCUS_HALO: f64 = 1.0;
 const FOCUS_GAP: f64 = 3.0;
@@ -639,8 +644,8 @@ fn card(
     Ok(())
 }
 
-/// The chart of a plot node: gridlines and tick labels, then one line per
-/// linked series with its source port's name and last value at its end.
+/// The chart of a plot node: a faint grid, the axes and tick labels, one line
+/// per linked series, and a legend row above the plot.
 pub(crate) fn chart(
     context: &CanvasRenderingContext2d,
     theme: &Theme,
@@ -681,12 +686,28 @@ pub(crate) fn chart(
     context.set_stroke_style_str(&colours.card_border);
     context.set_fill_style_str(&colours.field_text);
     let room = plot.x - area.x - metrics.box_pad;
+    // The grid is faint; the two axes are drawn over it at full strength.
+    context.set_global_alpha(GRID_ALPHA);
     context.set_text_align("right");
     for tick in &layout.y_ticks {
         context.begin_path();
         context.move_to(plot.x, tick.at);
         context.line_to(plot.x + plot.w, tick.at);
         context.stroke();
+    }
+    for tick in &layout.x_ticks {
+        context.begin_path();
+        context.move_to(tick.at, plot.y);
+        context.line_to(tick.at, plot.y + plot.h);
+        context.stroke();
+    }
+    context.set_global_alpha(1.0);
+    context.begin_path();
+    context.move_to(plot.x, plot.y);
+    context.line_to(plot.x, plot.y + plot.h);
+    context.line_to(plot.x + plot.w, plot.y + plot.h);
+    context.stroke();
+    for tick in &layout.y_ticks {
         let label = fit_text(context, &tick.label, room)?;
         context.fill_text(
             &label,
@@ -696,10 +717,6 @@ pub(crate) fn chart(
     }
     context.set_text_align("center");
     for tick in &layout.x_ticks {
-        context.begin_path();
-        context.move_to(tick.at, plot.y);
-        context.line_to(tick.at, plot.y + plot.h);
-        context.stroke();
         context.fill_text(
             &tick.label,
             tick.at,
@@ -710,8 +727,9 @@ pub(crate) fn chart(
     context.begin_path();
     context.rect(plot.x, plot.y, plot.w, plot.h);
     context.clip();
-    context.set_line_width(metrics.wire_width * 0.6);
+    context.set_line_width(metrics.wire_width * LINE_WIDTH_RATIO);
     context.set_line_join("round");
+    context.set_line_cap("round");
     for (index, runs) in layout.lines.iter().enumerate() {
         let (kind, dashed) = line_style(index);
         context.set_stroke_style_str(&theme.port_style(kind, true).colour);
@@ -738,31 +756,32 @@ pub(crate) fn chart(
         }
     }
     context.restore();
-    // Names sit at the line ends, in the line's colour, so colour is not the only cue.
-    for (index, ((name, series), runs)) in lines.iter().zip(&layout.lines).enumerate() {
-        let Some(end) = runs.last().and_then(|run| run.last()) else {
-            continue;
-        };
-        let (kind, _) = line_style(index);
-        context.set_fill_style_str(&theme.port_style(kind, true).colour);
-        let text = match last_value(series) {
-            Some(last) => format!("{name} {}", short_number(last)),
-            None => (*name).to_string(),
-        };
-        // The label goes above the end of the line in the lower half of the plot and
-        // below it in the upper half, so it stays off the line's own tail.
-        let gap = metrics.text_baseline * 3.0;
-        let label_y = if end.1 > plot.y + plot.h / 2.0 {
-            end.1 - gap
-        } else {
-            end.1 + gap + metrics.text_baseline
-        };
-        // Text runs away from the line: right of an end in the left half, left of
-        // one in the right half.
-        let near_left = end.0 < plot.x + plot.w / 2.0;
-        context.set_text_align(if near_left { "left" } else { "right" });
-        let side = if near_left { 4.0 } else { -4.0 };
-        context.fill_text(&text, end.0.min(plot.x + plot.w) + side, label_y)?;
+    // The legend names each line beside a short swatch of its colour and dash,
+    // so colour is not the only cue.
+    context.set_text_align("left");
+    let slots = legend_slots(&layout.legend, lines.len());
+    for (index, ((name, _), slot)) in lines.iter().zip(&slots).enumerate() {
+        let (kind, dashed) = line_style(index);
+        let middle = slot.y + slot.h / 2.0;
+        context.set_line_width(metrics.wire_width * LINE_WIDTH_RATIO);
+        context.set_stroke_style_str(&theme.port_style(kind, true).colour);
+        if dashed {
+            context.set_line_dash(&crate::json_parse("[4, 3]"))?;
+        }
+        context.begin_path();
+        context.move_to(slot.x, middle);
+        context.line_to(slot.x + SWATCH_WIDTH, middle);
+        context.stroke();
+        if dashed {
+            context.set_line_dash(&crate::json_parse("[]"))?;
+        }
+        let room = slot.w - SWATCH_WIDTH - metrics.box_pad;
+        let label = fit_text(context, name, room)?;
+        context.fill_text(
+            &label,
+            slot.x + SWATCH_WIDTH + metrics.box_pad / 2.0,
+            middle + metrics.text_baseline,
+        )?;
     }
     Ok(())
 }

@@ -10,8 +10,13 @@ use crate::{CardDisplay, NodeType, PortType, Series, Shown};
 const CHART_HEIGHT_RATIO: f64 = 0.6;
 /// Room for the y axis labels, as a multiple of the row height.
 const LABEL_ROOMS: f64 = 1.8;
-/// How many ticks an axis aims for.
-const TICK_TARGET: usize = 4;
+/// How many ticks the x axis aims for.
+const X_TICK_TARGET: usize = 4;
+/// How many ticks the y axis aims for: a plot is wider than it is tall, and a
+/// scale with only one or two labels reads as unfinished.
+const Y_TICK_TARGET: usize = 5;
+/// The height of the legend row above the plot, as a multiple of the row height.
+const LEGEND_ROOMS: f64 = 1.0;
 /// How far the y range reaches past the data, as a fraction of its span.
 const RANGE_PAD: f64 = 0.05;
 
@@ -278,10 +283,13 @@ pub struct Tick {
 }
 
 /// A chart worked out for drawing: where the plot is inside the chart area,
-/// the ticks of both axes, and each line as runs of canvas points.
+/// the legend row, the ticks of both axes, and each line as runs of canvas
+/// points.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Chart {
     pub plot: Rect,
+    /// The row above the plot where the legend goes.
+    pub legend: Rect,
     pub x_ticks: Vec<Tick>,
     pub y_ticks: Vec<Tick>,
     /// One entry per series, in the order given; each is a list of runs.
@@ -295,11 +303,18 @@ pub struct Chart {
 pub fn chart_layout(area: &Rect, metrics: &Metrics, lines: &[&Series]) -> Option<Chart> {
     let left = metrics.row_height * LABEL_ROOMS;
     let (below, pad) = (metrics.row_height, metrics.box_pad);
+    let legend = Rect {
+        x: area.x + pad,
+        y: area.y + pad,
+        w: area.w - 2.0 * pad,
+        h: metrics.row_height * LEGEND_ROOMS,
+    };
+    let top = legend.y + legend.h;
     let plot = Rect {
         x: area.x + left,
-        y: area.y + pad,
+        y: top,
         w: area.w - left - pad,
-        h: area.h - pad - below,
+        h: area.y + area.h - below - top,
     };
     let numbers: Vec<f64> = lines
         .iter()
@@ -318,14 +333,14 @@ pub fn chart_layout(area: &Rect, metrics: &Metrics, lines: &[&Series]) -> Option
     let x_max = (longest.max(2) - 1) as f64;
     let to_x = |index: f64| plot.x + index / x_max * plot.w;
     let to_y = |value: f64| plot.y + plot.h - (value - low) / (high - low) * plot.h;
-    let x_ticks = nice_ticks(0.0, x_max, TICK_TARGET)
+    let x_ticks = nice_ticks(0.0, x_max, X_TICK_TARGET)
         .into_iter()
         .map(|tick| Tick {
             at: to_x(tick),
             label: short_number(tick),
         })
         .collect();
-    let y_ticks = nice_ticks(low, high, TICK_TARGET)
+    let y_ticks = nice_ticks(low, high, Y_TICK_TARGET)
         .into_iter()
         .map(|tick| Tick {
             at: to_y(tick),
@@ -348,8 +363,23 @@ pub fn chart_layout(area: &Rect, metrics: &Metrics, lines: &[&Series]) -> Option
         .collect();
     Some(Chart {
         plot,
+        legend,
         x_ticks,
         y_ticks,
         lines,
     })
+}
+
+/// The legend row split into one equal slot per line, left to right. Empty for
+/// no lines.
+pub fn legend_slots(legend: &Rect, count: usize) -> Vec<Rect> {
+    let width = legend.w / count.max(1) as f64;
+    (0..count)
+        .map(|index| Rect {
+            x: legend.x + index as f64 * width,
+            y: legend.y,
+            w: width,
+            h: legend.h,
+        })
+        .collect()
 }

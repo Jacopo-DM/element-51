@@ -240,8 +240,8 @@ fn an_older_message_without_display_or_shown_still_reads() {
 // ---- series and the chart ----
 
 use element_51_core::display::{
-    CHART_LINE_STYLES, chart_layout, chart_rect, last_value, line_style, nice_ticks, short_number,
-    shown_summary, thin,
+    CHART_LINE_STYLES, chart_layout, chart_rect, last_value, legend_slots, line_style, nice_ticks,
+    short_number, shown_summary, thin,
 };
 use element_51_core::{Series, Shown};
 
@@ -588,4 +588,41 @@ fn a_series_summary_gives_its_last_number() {
     assert_eq!(shown_summary(&series(vec![None, None])), "2 gaps");
     assert_eq!(shown_summary(&series(vec![None])), "1 gap");
     assert_eq!(shown_summary(&series(vec![])), "0 gaps");
+}
+
+#[test]
+fn the_legend_row_sits_above_the_plot_inside_the_area() {
+    let loss = series(&some(&[0.9, 0.5, 0.25, 0.1]));
+    let chart = chart_layout(&area(), &m(), &[&loss]).unwrap();
+    let (a, l, p) = (area(), chart.legend, chart.plot);
+    assert!(l.x >= a.x && l.x + l.w <= a.x + a.w && l.y >= a.y);
+    assert!(
+        close(l.y + l.h, p.y),
+        "the plot starts where the legend ends"
+    );
+    assert!(p.h > 0.0);
+}
+
+#[test]
+fn legend_slots_split_the_row_equally_from_the_left() {
+    let row = element_51_core::layout::Rect {
+        x: 10.0,
+        y: 20.0,
+        w: 150.0,
+        h: 26.0,
+    };
+    assert!(legend_slots(&row, 0).is_empty());
+    let slots = legend_slots(&row, 3);
+    assert_eq!(slots.len(), 3);
+    for (index, slot) in slots.iter().enumerate() {
+        assert!(close(slot.w, 50.0) && close(slot.h, 26.0) && close(slot.y, 20.0));
+        assert!(close(slot.x, 10.0 + 50.0 * index as f64));
+    }
+}
+
+#[test]
+fn a_series_that_runs_from_nothing_to_one_gets_at_least_four_y_labels() {
+    let accuracy = series(&some(&[0.05, 0.3, 0.6, 0.9, 0.95]));
+    let chart = chart_layout(&area(), &m(), &[&accuracy]).unwrap();
+    assert!(chart.y_ticks.len() >= 4, "{:?}", chart.y_ticks);
 }
