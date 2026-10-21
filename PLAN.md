@@ -279,9 +279,9 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user approves or changes the four draft experiment goals (open question
-4), then task 28 of `canvas-accessibility` (approved); the experiment goals start after
-task 33, as the user chose on 2026-10-21. The user's own try-out
+Next step: task 28 of `canvas-accessibility` (approved). The experiment goals are
+approved (2026-10-21; `visual-ports` has its spec and tasks 34 to 38); they start after
+task 33, as the user chose. Open question 4 is answered (the goals are the answer). The user's own try-out
 (below) is still pending.
 `examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
 `examples/template.py`); it serves with `uvicorn` on `HOST` and `PORT` set at its top, so a
@@ -633,11 +633,6 @@ Oldest first.
     Needs `/zz-02-project-plan` to make it a goal with its own spec and approval.
     Priority (user, 2026-10-20): the next work (0.1.0 is published), ahead of the blur
     fix and touch support.
-
-4. (2026-10-21) The experiment idea is now four draft goals (`visual-ports`,
-    `job-nodes`, `auto-run`, `mnist-experiment`, under "Experiment goals"). They wait
-    for the user's approval in words, and start after `canvas-accessibility` tasks 27
-    to 33 (the user's choice).
 
 ## Known problems
 
