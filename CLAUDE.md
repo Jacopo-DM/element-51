@@ -37,7 +37,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Python lint (read only) | `uv run --locked ruff check --no-fix` | under 1 s; plain `ruff check` rewrites files |
 | Python types | `uv run --locked mypy .` | about 1 s |
 | Python types, advisory | `uv run --locked ty check` | under 1 s |
-| Python tests, 100% coverage | `uv run --locked pytest` | about 2 s |
+| Python tests, 100% coverage | `uv run --locked pytest` | about 13 s |
 | Rust format check | `R cargo fmt --all --check --manifest-path rust/Cargo.toml` | under 1 s; `cargo fmt --all` rewrites |
 | Rust lint | `R cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings` | about 1 s warm |
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml --no-fail-fast` | about 1 s warm; without the flag the files after a failing one do not run |
