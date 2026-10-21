@@ -257,20 +257,22 @@ runs, saves, undoes and has the Antimony look, a light theme, a nested menu and
 the README credit).
 0.1.0 was published to PyPI by the user on 2026-10-20 (built from commit
 `ca74873`, tagged `v0.1.0`). 0.1.1 followed on 2026-10-21 (tagged `v0.1.1`) only to
-add the GitHub link to the PyPI page (`[project.urls]`); PyPI lists 0.0.1, 0.1.0
-and 0.1.1. A version number cannot be reused. The user chose 0.2.0 on 2026-10-21, and
-`pyproject.toml` and `uv.lock` say 0.2.0; to release it: `uv run python tools/build_wasm.py`,
-`uv build`, `uv run python tools/check_wheel.py`, then the user publishes and tags `v0.2.0` on
-the release commit.
+add the GitHub link to the PyPI page (`[project.urls]`). 0.2.0 was published by the user on
+2026-10-21 (wheel and sdist on PyPI, checked by Claude; tagged `v0.2.0` on `42ca779` and
+pushed). A version number cannot be reused: the next release is 0.2.1 or 0.3.0. Since 0.2.0 the
+repo added the hover text on series boxes, the paper-ready Save as PNG and the card resize
+handle (format version 3), none of it released. The user's first publish attempt on 2026-10-21
+was garbled by the app's command box and did not run; whatever was typed at its silent prompt
+may have shown on screen, so the user was told to revoke both that token and the older exposed
+one on pypi.org (not confirmed done).
 The third built-in theme `purple-synthwave` (the user's favourite Coolors palette) was
-added on 2026-10-21; it ships with the next release (0.1.2 or 0.2.0), together with the
-classifiers.
+added on 2026-10-21; it shipped in 0.2.0, together with the classifiers.
 The menu was reworked on 2026-10-21 at the user's request (branch `menu-and-default-theme`):
 the menu button sits at the top right, `Try palette` is `Load palette from Coolors link`,
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user's try-out of the editor comes first (`d6_auto_run.py`, `g2_job_nodes.py`; the light theme, the palettes and the red failed-node border were not looked at by eye). Then, in this order: the user publishes 0.2.0 (the version is bumped and `tools/check_wheel.py` passes; the user builds, publishes and tags `v0.2.0`) and revokes the exposed PyPI token; the user tries `g3_mnist.py` (`uv run examples/g_experiments/g3_mnist.py`; the first start downloads 42.5 MB into `__data__/`). No approved goal is left open; the next goal needs `/zz-02-project-plan`. Done 2026-10-21: `mnist-experiment` (merged, not pushed), `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run`, `box-summaries`, `code-colours`. GitHub's CI, Docs and Rust and WASM runs passed for every push up to `c3a412b` except that the Rust and WASM run for the last push was still running when read.
+Next step: the user's try-out comes first: `d6_auto_run.py` (Run automatically, red failed-node border), `g3_mnist.py` (`uv run examples/g_experiments/g3_mnist.py`; data is in `__data__/` already on the user's machine), the hover text on series boxes, Save as PNG on a Plot and a picture card (the new paper figure, opened in the user's own paper tools), and dragging the grip on a Plot or picture card. Then, in this order: the user revokes the exposed PyPI tokens (unconfirmed) and answers open question 1 (blurry text, needs a screenshot) and open question 2 (my choices for the paper PNG and the resize handle, which the user may overrule); the user records the page (macOS Cmd+Shift+5, about 10 s) so Claude can convert it with `ffmpeg` into `docs/images/mnist.gif` and draft the README lines (goal `readme-gif`, waiting); later, a keyboard way to resize a card (hidden tree) if the user wants it. No approved goal is open besides `readme-gif`; the next new goal needs `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22 (`main` is at `origin/main`, `3ffd16c`): `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper`, `card-resize`, and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close) and the series box bare number with a hover text. GitHub CI, Docs and Rust and WASM passed for every push up to `c3a412b`; the runs for the pushes after it were not read.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -630,8 +632,31 @@ Oldest first.
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
 
+2. (2026-10-22) On "go" the user did not answer my questions for `png-paper` and `card-resize`, so
+    I picked the recommended options and recorded the reasons in DESIGN.md ("png-paper spec",
+    "card-resize spec"): a 2100 by 1400 pixel PNG at 300 dpi (not single column), x label `index`
+    and y label the line's name only when there is one line, a picture enlarged by a whole number;
+    the resize handle only on picture and chart cards, never below the default size, saved in
+    the graph and undoable. Any of these can change if the user says so.
+
 ## Known problems
 
+- No keyboard way to resize a card: the hidden tree has no resize action, so a screen reader or
+    keyboard user cannot use the grip (the size only changes how the card looks). A touch screen
+    was not tried either (the grip is 14 graph units square).
+- The hover text on a series or picture box is the canvas's `title`, set on mouse move
+    (`tip_at` in `fields_ui.rs`). It does nothing on touch or for the keyboard; the hidden tree
+    and the status line keep the word `last`. Not measured: the redraw cost on the 200-node page
+    after the tooltip lookup and the grip strokes (it was 1.52 to 1.67 ms before the grip).
+- The paper PNG was checked as a file in the browser pane only (2100 by 1400, `pHYs` 11811, the
+    PGFPlots look). Not checked: opening it in Word or LaTeX; whether the system has Latin
+    Modern or Computer Modern (this Mac fell back to a Times-like serif); log axes (a chart has
+    no log mode); axis names (a series carries none, so the x label is the fixed word `index`).
+- `readme-gif`: capturing frames from browser-pane screenshots does not work (the pane throttles
+    a page it is not showing, and each screenshot in a `browser_batch` is inlined into the
+    conversation); a real screen recording converted with `ffmpeg` is the plan.
+- The MNIST example downloads 42.5 MB into `__data__/` the first time `main()` runs; tests never
+    download (they use fake files) and every example test runs from an empty temporary folder.
 - Isolated jobs were checked on macOS only (spawn), by the tests and live in the browser pane with
     `Stubborn`. Not checked: Linux or Windows, a job that reports a picture across the process
     boundary at a high rate, many isolated jobs at once, and a script that starts the editor without

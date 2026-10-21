@@ -1766,6 +1766,12 @@ have to go through `tools/compress_images.py`).
     both change how the dots look (a tile is scaled by the zoom, so the dots get soft at some
     zooms; a cached bitmap helps only frames where the view did not move). The page already
     redraws well inside its 4 ms budget, so the crisp dots stay.
+- A README GIF built from browser-pane screenshots with Pillow (rejected, 2026-10-22): the pane
+    throttles a page it is not showing (a training slowed to 0.09 s a step reached step 4 after
+    about 20 screenshots, so frames cannot be spaced evenly), and every screenshot in a
+    `browser_batch` is inlined into the conversation, so a 15 to 30 frame capture costs tens of
+    thousands of tokens for a choppy result. A real screen recording (macOS Cmd+Shift+5) converted
+    with the installed `ffmpeg` is smoother and free.
 
 ## Results
 
@@ -1943,3 +1949,25 @@ have to go through `tools/compress_images.py`).
     no-hex-colour scan lists its files by name (add each new web file that holds drawing or
     menu code), and the palette, page-hidden and similar tests read one file each
     (found while splitting `menu_ui` and `lib`, 2026-10-21).
+- A new field on a wire record must go into the shared fixtures too, with its value: Python
+    dumps `"width": null` for an unset optional, and `test_snapshot_serialises_back_to_the_same_json`
+    compares a dump with `tests/fixtures/snapshot.json`, so the fixture has to hold the nulls (done
+    with `json.dump(..., indent=4, ensure_ascii=False)` over the four fixture files when
+    `width` and `display_height` were added). Rust reads them with `#[serde(default)]`.
+- A pydantic record that holds numpy arrays needs `arbitrary_types_allowed=True` and the array
+    type written directly (`Floats = NDArray[np.float64]` as the annotation); `InstanceOf[Floats]`
+    fails with "'cls' must be valid as the first argument to 'isinstance'" because the alias is
+    not a class. The in-place update of such a frozen record is `weights.w1[...] -= step`; `-=`
+    on the attribute is an assignment and mypy refuses it.
+- The browser canvas cannot write a PNG's resolution: `toDataURL` has no `pHYs` chunk. Save as PNG
+    decodes the data URL with `atob`, inserts the chunk with `element-51-core::png::with_dpi`
+    (CRC-32 by hand, no dependency) and encodes it again with `btoa`.
+- `urllib.request.urlopen` trips ruff's `suspicious-url-open-usage`; the MNIST example checks the
+    address starts with `https://` and carries a one-line `# ruff: ignore[...]  # reason`, as the
+    repo does for other justified cases.
+- Every example test runs from an empty temporary folder (`pytestmark = pytest.mark.usefixtures(
+    "in_an_empty_folder")` in `tests/test_examples.py`), so an example that reads `__data__/` from the
+    working directory (the MNIST one) never sees the user's real data; the MNIST tests write fake
+    gzip IDX files into their own temporary `__data__/`.
+- A `cd` in one Bash command persists into the next (the working directory drifted into `rust/`
+    and `__data__/fashion` during this work): use absolute paths or `git -C`.

@@ -51,7 +51,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Build the docs | `uv-docs build` (or `uv run --locked --group docs sphinx-build -W --keep-going -b html docs docs/_build/html`) | about 5 s; warnings are errors, as in CI (`docs.yml`); needs `uv sync --group docs` first; writes only `docs/_build/` and `docs/api/`, both ignored |
 | Preview the docs | `uv-docs` | live preview in the browser; rebuilds when `docs/` or `src/` change; Ctrl+C stops it |
 | Check the wheel before publishing | `uv run python tools/check_wheel.py` | about 3 s; builds a wheel in a temp folder and exits 1 if `src/element_51/web/` was not built first (run `tools/build_wasm.py`) |
-| Publish a release (the user runs it, never Claude) | `read -rs UV_PUBLISH_TOKEN && export UV_PUBLISH_TOKEN && uv run python tools/check_wheel.py && uv publish; unset UV_PUBLISH_TOKEN` | after `uv run python tools/build_wasm.py` and `uv build`, and a version bump in `pyproject.toml` and `uv.lock`; paste a PyPI token scoped to the project at the silent prompt, never at a username prompt, never in chat; then tag `v<version>` on the release commit |
+| Publish a release (the user runs it, never Claude) | `read -rs UV_PUBLISH_TOKEN && export UV_PUBLISH_TOKEN && uv run python tools/check_wheel.py && uv publish; unset UV_PUBLISH_TOKEN` | after `uv run python tools/build_wasm.py` and `uv build`, and a version bump in `pyproject.toml` and `uv.lock`; paste a PyPI token scoped to the project at the silent prompt, never at a username prompt, never in chat; run the line in a normal Terminal tab, not the app's `!` command box (it garbled the line on 2026-10-21 and nothing was published); then tag `v<version>` on the release commit |
 | Serve the editor | `uv run examples/a_basics/a2_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
 | Run the functional notebooks | `uv run python tools/run_notebooks.py [file ...]` | one line per notebook (PASS, FAIL, SKIP); `--save` writes new outputs into a notebook that passed; pre-commit runs them at commit (staged ones) and at push (all); see `tests/functional/README.md` |
 | Serve another example | `uv run python examples/a_basics/a3_arithmetic.py` (every example except `c1_script_api.py`, which prints and exits, serves on http://127.0.0.1:8765) | same port, so stop one before starting the next |
@@ -228,3 +228,6 @@ the user approved this difference on 2026-10-21.
     with `include_str!`, and the no-hex-colour scan in `rust/element-51-core/tests/theme.rs`
     only reads the files it lists: add a new web module that holds drawing or menu code to
     that list, and run `cargo test` before the commit.
+- Do not capture frames from the browser pane with many screenshots in one `browser_batch`: every
+    screenshot is inlined into the conversation and the pane throttles a page it is not showing.
+    For a GIF the user records the page (macOS Cmd+Shift+5) and `ffmpeg` (installed) converts it.
