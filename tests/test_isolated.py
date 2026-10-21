@@ -1,8 +1,10 @@
 """Tests for jobs that run in a child process."""
 
 import multiprocessing
+import sys
 import threading
 import time
+from types import ModuleType
 from typing import ClassVar, override
 
 import pytest
@@ -225,3 +227,20 @@ def test_a_class_in_the_main_module_is_accepted() -> None:
     Main.__qualname__ = "Main"
     Main.__module__ = "__main__"
     assert check_importable(Main) is None
+
+
+def test_a_class_in_an_interactive_main_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Typed(JobNode[None]):
+        @override
+        def work(self, report: Report) -> int:  # pragma: no cover  # not run
+            del report
+            return 0
+
+    Typed.__qualname__ = "Typed"
+    Typed.__module__ = "__main__"
+    monkeypatch.setitem(sys.modules, "__main__", ModuleType("__main__"))
+    reason = check_importable(Typed)
+    assert reason is not None
+    assert "interactive" in reason

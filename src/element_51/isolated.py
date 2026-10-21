@@ -145,20 +145,27 @@ def check_importable(function: type) -> str | None:
     str | None
         The reason, or None if a fresh interpreter should find it.
     """
+    name = function.__name__
+    module = function.__module__
     if "<locals>" in function.__qualname__:
         return (
-            f"{function.__name__} is defined inside a function, "
+            f"{name} is defined inside a function, "
             "so a separate process cannot import it"
         )
-    top = function.__module__.split(".")[0]
-    if top != "__main__" and (
-        importlib.machinery.PathFinder.find_spec(top, sys.path) is None
-    ):
-        return (
-            f"{function.__name__} is in module {function.__module__}, "
-            "which a separate process cannot find on the import path"
-        )
-    return None
+    if module == "__main__":
+        if getattr(sys.modules[module], "__file__", None) is None:
+            return (
+                f"{name} is defined in an interactive session (a notebook "
+                "or a prompt), so a separate process cannot import it; "
+                "define it in a script or a module"
+            )
+        return None
+    if importlib.machinery.PathFinder.find_spec(module.split(".")[0], sys.path):
+        return None
+    return (
+        f"{name} is in module {module}, "
+        "which a separate process cannot find on the import path"
+    )
 
 
 def _apply(message: ChildMessage, sink: Sink) -> bool:
