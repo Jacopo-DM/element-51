@@ -196,17 +196,12 @@ and the light theme's red border were not checked.
 - Status: approved 2026-10-21; no spec yet (it comes last).
 - Added: 2026-10-21
 
-### speed-up-frame
+### speed-up-frame: done (2026-10-21)
 
-- Goal: the page redraws faster per wheel event (zoom or pan), measured by
-    `tools/bench_page.js`. Third speed pass; the first (`speed-up`, 2026-10-20) is done.
-- Kind: improvement (behaviour unchanged; the picture of every frame stays the same).
-- Success measure (the user chose redraw time per frame, 2026-10-21): 12 picture cards in
-    view at or under the 1.0 ms budget already in DESIGN.md (now 1.16 to 1.22 ms); the
-    200-node page lower than today's 1.51 to 1.55 ms; the 100,000-point chart no slower
-    than 2.4 to 2.6 ms after Run and 0.5 to 0.6 ms before. Any gain under the spread
-    (about 0.1 ms between sets) does not count.
-- Status: in progress. Tasks 1 and 2 done 2026-10-21 (200 nodes 1.55 to 1.4 ms, 12 pictures 1.2 to 1.0 ms, chart after Run 2.45 to 2.15 ms); task 3 (a much cheaper grid) waits for the user's decision after measuring; tasks 4 to 6 skipped at the user's word. Added: 2026-10-21.
+Tasks 1 and 2 kept (wires that cannot reach the view are not drawn, the grid's dots are one path
+with one fill): 200 nodes 1.55 to 1.4 ms, 12 pictures 1.2 to 1.0 ms, chart after Run 2.45 to
+2.15 ms. Task 3 (a much cheaper grid) skipped at the user's word on 2026-10-21 and tasks 4 to
+6 before it; the reasons are under Rejected approaches in DESIGN.md.
 
 ### functional-notebooks: done (2026-10-21)
 
@@ -252,9 +247,10 @@ the README credit).
 0.1.0 was published to PyPI by the user on 2026-10-20 (built from commit
 `ca74873`, tagged `v0.1.0`). 0.1.1 followed on 2026-10-21 (tagged `v0.1.1`) only to
 add the GitHub link to the PyPI page (`[project.urls]`); PyPI lists 0.0.1, 0.1.0
-and 0.1.1. A version number cannot be reused, so the next release is 0.1.2 or
-0.2.0 (bump `version` in `pyproject.toml`, run `uv run python
-tools/check_wheel.py`, then the user publishes).
+and 0.1.1. A version number cannot be reused. The user chose 0.2.0 on 2026-10-21, and
+`pyproject.toml` and `uv.lock` say 0.2.0; to release it: `uv run python tools/build_wasm.py`,
+`uv build`, `uv run python tools/check_wheel.py`, then the user publishes and tags `v0.2.0` on
+the release commit.
 The third built-in theme `purple-synthwave` (the user's favourite Coolors palette) was
 added on 2026-10-21; it ships with the next release (0.1.2 or 0.2.0), together with the
 classifiers.
@@ -263,7 +259,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `restructure-2` is done, merged to `main` and pushed (2026-10-21, `main` is at `origin/main`; the merged branch `restructure-2` is not deleted yet and needs the user's say-so; GitHub's CI, Docs and Rust and WASM runs for it were not read); the user's try-out comes first. `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` is done (2026-10-21, the user's try-out of `d6_auto_run.py` still to come); `mnist-experiment` is approved but has no spec (the user runs `/zz-02-project-plan` for it). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
+Next step: the user's try-out of the editor comes first (`d6_auto_run.py`, `g2_job_nodes.py`; the light theme, the palettes and the red failed-node border were not looked at by eye). Then, in this order: the user publishes 0.2.0 (the version is bumped and `tools/check_wheel.py` passes; the user builds, publishes and tags `v0.2.0`) and revokes the exposed PyPI token; `/zz-02-project-plan` writes the spec for `mnist-experiment` (approved, no spec yet; the MNIST download needs the user's approval by name, source and size). Done and pushed 2026-10-21: `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run`, `box-summaries`, `code-colours`. GitHub's CI, Docs and Rust and WASM runs passed for every push up to `c3a412b` except that the Rust and WASM run for the last push was still running when read.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two

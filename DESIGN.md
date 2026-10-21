@@ -1632,6 +1632,12 @@ have to go through `tools/compress_images.py`).
     breaking the pool.
 - Killing as soon as Stop is pressed (rejected): a job that reports often should get the chance
     to end with `Stopped` and keep its last values, so the kill waits 0.5 s.
+- A cheaper grid for `speed-up-frame` task 3 (rejected by the user, 2026-10-21): a tile-pattern fill
+    or a cached bitmap would save at most 0.5 ms of a 1.4 to 1.5 ms frame (the grid is 0.6 to
+    0.7 ms), probably less because the benchmark measures recording time and not painting, and
+    both change how the dots look (a tile is scaled by the zoom, so the dots get soft at some
+    zooms; a cached bitmap helps only frames where the view did not move). The page already
+    redraws well inside its 4 ms budget, so the crisp dots stay.
 
 ## Results
 
