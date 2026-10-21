@@ -111,6 +111,7 @@
         "port_hit_radius": 9.0,
         "wire_width": 3.5,
         "wire_width_selected": 5.0,
+        "wire_over_card": 0.5,
         "selection_width": 2.0,
         "wire_min_reach": 20.0,
         "wire_max_swing": 70.0,

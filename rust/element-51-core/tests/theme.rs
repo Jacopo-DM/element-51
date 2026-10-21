@@ -39,6 +39,17 @@ fn the_sizes_are_sensible() {
 }
 
 #[test]
+fn a_wire_is_see_through_over_a_card_in_every_theme_and_a_file_can_change_it() {
+    for name in THEME_NAMES {
+        let theme = Theme::builtin(name).unwrap();
+        let opacity = theme.metrics.wire_over_card;
+        assert!(opacity > 0.0 && opacity < 1.0, "{name}: {opacity}");
+    }
+    let theme = changed("antimony", r#"{"metrics": {"wire_over_card": 0.25}}"#).unwrap();
+    assert_eq!(theme.metrics.wire_over_card, 0.25);
+}
+
+#[test]
 fn the_html_parts_get_named_css_values_from_the_theme() {
     let theme = Theme::default();
     let variables = theme.css_variables();

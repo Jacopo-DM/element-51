@@ -198,6 +198,10 @@ pub fn draw(
         visible.overlaps(&node_rect(node, node_type, metrics).grown(margin))
     };
 
+    // A wire is drawn solid under the cards, so it shows on the canvas, and again
+    // over the cards at the theme's opacity, so a card's boxes show through it.
+    draw_links(context, theme, (graph, types), selected)?;
+    let mut cards: Vec<Rect> = Vec::new();
     for node in &graph.nodes {
         let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
             continue;
@@ -214,28 +218,20 @@ pub fn draw(
             (run, pictures),
             is_selected,
         )?;
+        cards.push(node_rect(node, node_type, metrics));
     }
-
-    context.set_line_cap("round");
-    context.set_line_join("round");
-    for link in &graph.links {
-        let from = anchor_of(graph, types, &link.source, Side::Output, metrics);
-        let to = anchor_of(graph, types, &link.target, Side::Input, metrics);
-        if let (Some(from), Some(to)) = (from, to) {
-            let chosen = selected == Some(&Selected::Link(link.clone()));
-            let colour = wire_colour(graph, types, &link.source, theme);
-            context.set_stroke_style_str(if chosen {
-                &colours.selected_wire
-            } else {
-                colour
-            });
-            context.set_line_width(if chosen {
-                metrics.wire_width_selected
-            } else {
-                metrics.wire_width
-            });
-            wire(context, from, to, metrics);
+    let opacity = metrics.wire_over_card.clamp(0.0, 1.0);
+    if opacity > 0.0 && !cards.is_empty() {
+        context.save();
+        context.begin_path();
+        for rect in &cards {
+            context.rect(rect.x, rect.y, rect.w, rect.h);
         }
+        context.clip();
+        context.set_global_alpha(opacity);
+        let drawn = draw_links(context, theme, (graph, types), selected);
+        context.restore();
+        drawn?;
     }
     context.set_line_width(metrics.wire_width);
     if let Some(drag) = drag
@@ -294,6 +290,39 @@ pub fn draw(
         focus_ring(context, (graph, types), theme, view, focus)?;
     }
     context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)?;
+    Ok(())
+}
+
+/// Every link of the graph as a wire, in the colour of the port it leaves, or the
+/// selected colour and width for the selected one.
+fn draw_links(
+    context: &CanvasRenderingContext2d,
+    theme: &Theme,
+    (graph, types): (&Graph, &[NodeType]),
+    selected: Option<&Selected>,
+) -> Result<(), JsValue> {
+    let (colours, metrics) = (&theme.colours, &theme.metrics);
+    context.set_line_cap("round");
+    context.set_line_join("round");
+    for link in &graph.links {
+        let from = anchor_of(graph, types, &link.source, Side::Output, metrics);
+        let to = anchor_of(graph, types, &link.target, Side::Input, metrics);
+        if let (Some(from), Some(to)) = (from, to) {
+            let chosen = selected == Some(&Selected::Link(link.clone()));
+            let colour = wire_colour(graph, types, &link.source, theme);
+            context.set_stroke_style_str(if chosen {
+                &colours.selected_wire
+            } else {
+                colour
+            });
+            context.set_line_width(if chosen {
+                metrics.wire_width_selected
+            } else {
+                metrics.wire_width
+            });
+            wire(context, from, to, metrics);
+        }
+    }
     Ok(())
 }
 

@@ -277,8 +277,8 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user decides the order of task 36 of `visual-ports` (rows that grow with links)
-and the `card-polish` tasks 39 to 41, which were approved to run after task 35 (now done).
+Next step: task 40 of `card-polish` (a linked input shows its value), then 41 (View source code);
+task 36 of `visual-ports` (rows that grow with links) is still approved and waits for the user's order.
 Tasks 34 (a picture on a card) and 35 (a series and a one-line chart) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a loss curve on a `Plot` node). `canvas-accessibility` is done, so every new part of
@@ -558,11 +558,7 @@ first. The example for these tasks is `examples/g_experiments/g1_picture_and_plo
 Estimates are by analogy with the card menu work. Existing behaviour near the changes
 is pinned by `theme.rs`, `layout.rs`, `menu.rs`, `test_server_websocket.py`.
 
-39. **See-through wires over cards.** `wire_over_card` in `Metrics` (all three theme
-    files, `docs/themes.md`, the native key test); `draw.rs` draws each wire solid,
-    then again at that opacity clipped to the visible cards. Risk: low. Cost: about
-    60 lines. Verify: native tests for the key, the 200-node redraw next to its baseline
-    (the wire pass doubles wire drawing), by hand with the picture example.
+39. Done 2026-10-21: see-through wires over cards (DESIGN.md, Results).
 40. **A linked input shows its value.** A pure function in `core` builds the text from
     the source's output text and `node.port`, with the source dim; `draw.rs` draws two
     runs of text in the box. Risk: low. Cost: about 80 lines. Verify: native tests

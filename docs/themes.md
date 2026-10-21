@@ -139,6 +139,7 @@ Numbers, in canvas units: one unit is one pixel at zoom 1.
 | `port_hit_radius` | How close a press must be to a port's anchor to hit it. | `9.0` |
 | `wire_width` | Thickness of a wire. | `3.5` |
 | `wire_width_selected` | Thickness of a selected wire. | `5.0` |
+| `wire_over_card` | How solid a wire is where it crosses a card: 0 shows only the card, 1 shows only the wire. Off the cards a wire is always solid. | `0.5` |
 | `selection_width` | Thickness of the outline round a selected node. | `2.0` |
 | `wire_min_reach` | The least a wire's curve leaves sideways. | `20.0` |
 | `wire_max_swing` | The most a wire's curve swings out when its ends are in one column. | `70.0` |

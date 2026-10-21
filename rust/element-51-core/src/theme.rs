@@ -169,6 +169,9 @@ pub struct Metrics {
     pub wire_width: f64,
     /// Thickness of a selected wire.
     pub wire_width_selected: f64,
+    /// How solid a wire is where it crosses a card: 0 shows only the card, 1
+    /// shows only the wire. Off the cards a wire is always solid.
+    pub wire_over_card: f64,
     /// Thickness of the outline round a selected node.
     pub selection_width: f64,
     /// The least a wire's curve leaves sideways.
