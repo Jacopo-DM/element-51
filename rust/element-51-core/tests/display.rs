@@ -350,12 +350,15 @@ fn a_chart_card_is_taller_by_the_chart_area_and_a_margin() {
     let rect = node_rect(&node, &plot, &m());
     assert_eq!(
         rect.h,
-        m().header_height + m().row_height + 0.6 * m().node_width + m().title_pad
+        m().header_height + m().row_height + 0.85 * m().node_width + m().title_pad
     );
     let area = chart_rect(&rect, &plot, &m()).unwrap();
     assert_eq!(area.x, rect.x + m().title_pad);
     assert_eq!(area.y, rect.y + m().header_height + m().row_height);
-    assert_eq!((area.w, area.h), (picture_side(&m()), 0.6 * m().node_width));
+    assert_eq!(
+        (area.w, area.h),
+        (picture_side(&m()), 0.85 * m().node_width)
+    );
     assert_eq!(area.y + area.h + m().title_pad, rect.y + rect.h);
     assert_eq!(picture_rect(&rect, &plot, &m()), None);
 }

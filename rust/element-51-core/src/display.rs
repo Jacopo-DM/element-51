@@ -7,7 +7,7 @@ use crate::theme::Metrics;
 use crate::{CardDisplay, NodeType, PortType, Series, Shown};
 
 /// The height of a chart area as a fraction of the card's width.
-const CHART_HEIGHT_RATIO: f64 = 0.6;
+const CHART_HEIGHT_RATIO: f64 = 0.85;
 /// Room for the y axis labels, as a multiple of the row height.
 const LABEL_ROOMS: f64 = 1.8;
 /// How many ticks the x axis aims for.

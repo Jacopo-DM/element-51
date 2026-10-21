@@ -359,7 +359,7 @@ plot. This spec covers `visual-ports` only; `job-nodes`, `auto-run` and
         link to such a port.
     * A card's height depends on its node type, not on its data, so it does not
         jump when results arrive: a square picture area (node width minus the inset)
-        for `image`, a chart area of 0.6 of the node width for `chart`.
+        for `image`, a chart area of 0.85 of the node width for `chart` (0.6 until 2026-10-21).
     * The picture is drawn with smoothing off (crisp pixels) and cached per result.
     * The chart: one line per linked row on the card colour, a scale on both axes,
         the last value as text; a line is named after its source port, and when two
