@@ -628,11 +628,7 @@ restarts (not saved, by decision).
 
 Tier 1 (the walking skeleton: a ticked box runs the graph after an edit):
 
-1. The auto-run rule in `element-51-core` (new `autorun.rs`, `lib.rs` export), with
-    native tests in `tests/autorun.rs`. Serves criteria 2, 3 (nothing here starts a job)
-    and 6. Risk low, about 120 lines, no new concept beyond the rule itself. Verified by the
-    new native tests (debounce, move gives none, change during a run queues one, unticking
-    clears); `cargo test` and `clippy` stay clean.
+1. Done (2026-10-21). The auto-run rule in `element-51-core` (`autorun.rs`, `tests/autorun.rs`, 8 tests).
 2. The checkbox and its wiring (new `autorun_ui.rs`, edits in `edit_ui.rs`,
     `messages.rs`, `run_ui.rs`, `lib.rs`, `index.html`). Serves criteria 1, 2, 4, 5, 6 and 7.
     Risk medium (it touches the edit, snapshot and run paths), about 200 lines. The error

@@ -7,6 +7,7 @@
 pub mod access;
 pub mod address;
 pub mod announce;
+pub mod autorun;
 pub mod contrast;
 pub mod display;
 mod edit;
