@@ -271,8 +271,11 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
-`main` equals `origin/main` (`ed1aed5`). No other local branch is left: every merged
-branch was deleted on 2026-10-21 at the user's say-so.
+`main` equals `origin/main` (`1488eb2`, pushed 2026-10-21 at the user's say-so, 13 commits:
+the experiment goals and tasks, keyboard access and the one-node `a1_hello_world`); the
+GitHub workflows for that push were still running when last checked, so read them first.
+No other local branch is left: every merged branch was deleted on 2026-10-21 at the
+user's say-so.
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. The repo was pushed on
