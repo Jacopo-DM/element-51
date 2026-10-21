@@ -960,6 +960,33 @@ the reason:
     Not done: a `host` argument on `serve()` (new behaviour, not asked for; if added, keep
     `127.0.0.1` the default and warn when it changes).
 
+### Functional notebooks (2026-10-21)
+
+Four notebooks, one per feature area a newcomer meets first (nodes and running, save and
+load, themes, pictures and series), not one per module. `tests/functional/README.md` has a
+row per public module of `src/element_51/` and `tests/test_functional_coverage.py` fails
+when a module has none or a row names a missing file. Reason: the success measure is "every
+public area has a notebook or a row saying none yet", and a test keeps it true.
+
+- Dev dependencies added with the user's yes (2026-10-21): `nbclient`, `nbformat`,
+    `ipykernel` and `matplotlib` (the user chose matplotlib for real line plots). Pictures
+    are drawn with Pillow, which was already a dev dependency. Installed size of the
+    whole `.venv` is 345 MB, of which matplotlib is 23 MB.
+- The live-push and server area is left out: it needs a local port and is already
+    covered by `tests/test_server_websocket.py`.
+- Notebook output is a PNG through `IPython.display.Image` from bytes, not `plt.show()`:
+    the runner sets `MPLBACKEND=agg`, under which `plt.show()` emits nothing.
+- Ruff checks the notebooks with every rule (only `assert` and `print` are allowed
+    there). So a notebook compares floats with `math.isclose`, puts expected values in a
+    constants cell, and checks that an error was raised with a flag
+    (`raised = False`, `try`, `raised = True`, `assert raised`), because `raise
+    AssertionError("text")` breaks the exception-message rules.
+- `ty check` reads the notebooks too. `app.run()` returns the `Carried` union, so a
+    notebook narrows each value with `isinstance` (and `assert`) before it uses it, and
+    uses `PilImage.Resampling.NEAREST`, not `PilImage.NEAREST`.
+- A refused link raises `element_51.edits.EditError`, which is not exported from
+    `element_51`, so the notebook imports it from `element_51.edits`.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a

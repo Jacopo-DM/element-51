@@ -15,6 +15,7 @@ the ignore list in CLAUDE.md.
     each state, for screenshots and accessibility scans, and walk the hidden tree by keyboard (`uiKeys` on the standard graph, `uiKeysDisplay` on the display one; commands in CLAUDE.md).
 - `tools/bench_python.py`, `tools/bench_page.py` and `tools/bench_page.js`: the speed
     benchmarks (see the commands in CLAUDE.md).
+- `uv run python tools/run_notebooks.py [file ...]`: run the functional notebooks in `tests/functional/` and print PASS, FAIL or SKIP for each (the shared copy from `~/Functions/_rsync/python/tools/`; commands in CLAUDE.md).
 - `uv run python tools/check_wheel.py`: build the wheel in a temporary folder and
     fail if it lacks the browser layer.
 - `uv run python tools/measure_structure.py [--jscpd <binary>]`: print the
@@ -125,8 +126,10 @@ reject, run, run result, a source request and its two replies (code, and no sour
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_store.py`, `test_theme.py`, `test_visuals.py` (the `Image` and `Series` records, the `image` and `series` port kinds, `PlotNode` and the engine's `shown`), `test_server.py` (the page, `serve` and the process), `test_server_websocket.py` (a real uvicorn server and the `websockets` client), `test_server_hosts.py` (themes, and the FastAPI example's host with a fake web folder); `server_support.py` holds `running`, `fetch`, `post` and `free_port`, and `conftest.py` the `web_dir` fixture,
-`test_examples.py` (loads every example in `examples/` and runs its graph).
+`test_examples.py` (loads every example in `examples/` and runs its graph), `test_functional_coverage.py` (every public module has a row in `tests/functional/README.md`).
 `sample_nodes.py` holds node functions shared by several test files.
+
+Functional notebooks, `tests/functional/`: `nodes_and_running.ipynb`, `save_and_load.ipynb`, `themes.ipynb`, `pictures_and_series.ipynb`, and `README.md` with the coverage table (a row per public module of `src/element_51/`: its notebook or "none yet"). They cover the Python side only.
 
 Rust, `rust/element-51-core/tests/`: `address.rs`, `snapshot.rs`, `messages.rs`, `rules.rs`
 (the shared fixtures), `replica.rs`, `layout.rs`, `run.rs`, `view.rs`, `fields.rs`,

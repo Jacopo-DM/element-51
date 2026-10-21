@@ -199,18 +199,14 @@ screen reader were not tried, and the narrow window and touch were not checked.
 - Status: approved 2026-10-21; no spec yet (it comes last).
 - Added: 2026-10-21
 
-### functional-notebooks
+### functional-notebooks: done (2026-10-21)
 
-- Goal: functional notebooks (`tests/functional/*.ipynb`, run by `tools/run_notebooks.py`)
-    for the Python side: every public module of `src/element_51/` has a row in
-    `tests/functional/README.md`, with a notebook or "none yet".
-- Kind: improvement (behaviour unchanged).
-- Success measure: every public module has a row (a unit test fails without one);
-    four notebooks pass: `nodes_and_running`, `save_and_load`, `themes`,
-    `pictures_and_series`.
-- Left out on purpose (user's answer, 2026-10-21): the live-push and server part
-    (`edits`, `protocol`, `server`): `tests/test_server_websocket.py` covers it.
-- Status: in progress. Added: 2026-10-21.
+Four notebooks in `tests/functional/` (`nodes_and_running`, `save_and_load`, `themes`,
+`pictures_and_series`), the runner `tools/run_notebooks.py`, pre-commit hooks at commit
+and at push, and a coverage table with a test (commits `688e548` to `42e5b35`). Left out
+on purpose (user's answer, 2026-10-21): `edits`, `protocol` and `server` (the live-push
+and websocket part); `tests/test_server_websocket.py` covers it, and a notebook there
+needs a local port. The table says "none yet" for them. Decisions are in DESIGN.md.
 
 ### card-polish: done (2026-10-21)
 
