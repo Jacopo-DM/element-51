@@ -386,8 +386,9 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
 - UI baseline, measured 2026-10-20 (dark and light, `tools/ui_states.py`, axe-core
     4.14.0 with the wcag2a, wcag2aa, wcag21aa, wcag22aa and best-practice tags,
     in the built-in browser pane at 1280 wide). Screenshots in
-    `docs/ui-baseline/`: `dark-1280-default`, `-menu`, `-search`, `-card-menu`,
-    `-run-and-banner`, `dark-375-default`, `light-1280-search-none-and-banner`.
+    `docs/ui-baseline/`: `dark-1280-default`, `-menu` and `-run-and-banner` (the
+    search, card menu, 375 wide and light banner captures were deleted on
+    2026-10-21 as unreferenced; git history has them).
     - axe violations, rule (impact): nodes. Default state, both themes: `label`
         (critical) 1, `landmark-one-main` (moderate) 1, `page-has-heading-one`
         (moderate) 1, `region` (moderate) 2. After Run, `region` 3. With the menu
