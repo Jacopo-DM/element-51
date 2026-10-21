@@ -8,10 +8,12 @@ mod a11y_ui;
 mod draw;
 mod fields_ui;
 mod input;
+mod menu_keys;
 mod menu_ui;
 mod pictures;
 mod save_png;
 mod source_ui;
+mod theme_ui;
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -43,13 +45,16 @@ use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
 };
+use menu_keys::{on_card_menu_key, on_menu_key, on_menu_search_key};
 use menu_ui::{
-    fill_menu, on_app_menu_button, on_card_menu_click, on_card_menu_key, on_context_menu,
-    on_menu_click, on_menu_hover, on_menu_key, on_menu_search, on_menu_search_key, on_palette_key,
-    on_palette_submit, on_select_theme, on_theme_click, on_try_palette,
+    fill_menu, on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search,
 };
 use pictures::Pictures;
 use source_ui::{close_source, on_source_key, show_source};
+use theme_ui::{
+    on_app_menu_button, on_palette_key, on_palette_submit, on_select_theme, on_theme_click,
+    on_try_palette,
+};
 
 /// Everything the event handlers share.
 struct State {

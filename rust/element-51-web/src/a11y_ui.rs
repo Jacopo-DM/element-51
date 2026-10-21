@@ -17,7 +17,7 @@ use web_sys::{Document, Element, FocusEvent, HtmlElement, HtmlInputElement, Keyb
 
 use crate::State;
 use crate::draw::{Drag, Focus, Selected};
-use crate::menu_ui::{open_add_menu_from_keyboard, open_card_menu_from_keyboard};
+use crate::menu_keys::{open_add_menu_from_keyboard, open_card_menu_from_keyboard};
 use crate::{Shared, redraw, send_job_request, submit};
 
 /// The least gap, in pixels, between a focused node and the window edge. It is
