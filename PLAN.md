@@ -277,7 +277,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 40 of `card-polish` (a linked input shows its value), then 41 (View source code);
+Next step: task 41 of `card-polish` (View source code);
 task 36 of `visual-ports` (rows that grow with links) is still approved and waits for the user's order.
 Tasks 34 (a picture on a card) and 35 (a series and a one-line chart) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
@@ -559,11 +559,7 @@ Estimates are by analogy with the card menu work. Existing behaviour near the ch
 is pinned by `theme.rs`, `layout.rs`, `menu.rs`, `test_server_websocket.py`.
 
 39. Done 2026-10-21: see-through wires over cards (DESIGN.md, Results).
-40. **A linked input shows its value.** A pure function in `core` builds the text from
-    the source's output text and `node.port`, with the source dim; `draw.rs` draws two
-    runs of text in the box. Risk: low. Cost: about 80 lines. Verify: native tests
-    (value only, source only before a run, both, cut when narrow, a picture source shows
-    only the source), by hand.
+40. Done 2026-10-21: a linked input shows its value (DESIGN.md, Results).
 41. **View source code.** A `source` request and reply in `protocol.py` and
     `model.rs` (shared fixtures), `inspect.getsource` on the node's function or class
     (an unreadable source gives a reason), `CardAction::Source`, a panel in `index.html`

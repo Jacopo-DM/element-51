@@ -6,6 +6,7 @@ use crate::pictures::Pictures;
 use element_51_core::display::{
     chart_layout, chart_rect, fit_picture, last_value, line_style, picture_rect, short_number,
 };
+use element_51_core::fields::{linked_text, share_room};
 use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_controls,
@@ -524,9 +525,28 @@ fn card(
                 .iter()
                 .find(|link| link.target.node == node.id && link.target.port == port.name)
             {
+                // The value first, then the source dimmer after it; the source is cut
+                // first when the box is narrow.
+                let parts = linked_text(
+                    &source.source,
+                    run.and_then(|result| result.outcome_for(&source.source.node)),
+                );
+                let mut at = text_x;
+                if let Some(value) = &parts.value {
+                    let (value_room, _) = share_room(
+                        context.measure_text(value)?.width(),
+                        context.measure_text(&parts.source)?.width(),
+                        room,
+                        metrics.box_pad,
+                    );
+                    let shown = fit_text(context, value, value_room)?;
+                    context.set_fill_style_str(&colours.field_text);
+                    context.fill_text(&shown, at, baseline)?;
+                    at += context.measure_text(&shown)?.width() + metrics.box_pad;
+                }
+                let left = room - (at - text_x);
                 context.set_fill_style_str(&colours.placeholder);
-                let from = format!("{}.{}", source.source.node, source.source.port);
-                context.fill_text(&fit_text(context, &from, room)?, text_x, baseline)?;
+                context.fill_text(&fit_text(context, &parts.source, left)?, at, baseline)?;
             }
         } else {
             let value = outcome

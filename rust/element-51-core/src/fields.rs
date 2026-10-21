@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::PortType;
+use crate::{NodeOutcome, PortRef, PortType, Status};
 
 /// Read what a person typed for an input of type `kind`.
 ///
@@ -48,4 +48,44 @@ pub fn format_value(value: &Value) -> String {
         Value::String(text) => text.clone(),
         other => other.to_string(),
     }
+}
+
+/// What a linked input's box shows: the value its source produced, if the last
+/// run gave one, and the source's name.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LinkedText {
+    /// The source's value as JSON text, such as `21.0` or `"hi"`.
+    pub value: Option<String>,
+    /// The source as `n1.out`, or `[n1.out]` when a value comes before it.
+    pub source: String,
+}
+
+/// The text for an input linked to output `source`, given the source node's
+/// outcome in the last run (`None` before a run or after an edit). A source that
+/// failed, was skipped or produced no plain value (a picture or a series) has no
+/// value to show.
+pub fn linked_text(source: &PortRef, outcome: Option<&NodeOutcome>) -> LinkedText {
+    let name = format!("{}.{}", source.node, source.port);
+    let value = outcome
+        .filter(|outcome| outcome.status == Status::Ok)
+        .and_then(|outcome| outcome.output_text(&source.port));
+    LinkedText {
+        source: if value.is_some() {
+            format!("[{name}]")
+        } else {
+            name
+        },
+        value,
+    }
+}
+
+/// How the room in a box is shared by a value and a source of the given widths,
+/// with `gap` between them: the value keeps what it needs, the source gets what
+/// is left and is cut first. Returns `(value_room, source_room)`.
+pub fn share_room(value_width: f64, source_width: f64, room: f64, gap: f64) -> (f64, f64) {
+    if value_width + gap + source_width <= room {
+        return (value_width, source_width);
+    }
+    let value_room = value_width.min(room).max(0.0);
+    (value_room, (room - value_room - gap).max(0.0))
 }
