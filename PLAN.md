@@ -617,8 +617,9 @@ Oldest first.
 
 ## Known problems
 
-- `main` is 11 commits ahead of `origin/main` (`eeafa87` is pushed; `6992c47` to `e12ca5a` are not):
-    the `job-nodes` goal. Every push needs the user's say-so. The branches `job-nodes-1` to
+- `main` is ahead of `origin/main` by the `job-nodes` goal and the notes commits after it
+    (`eeafa87` is pushed; `6992c47` onwards are not; `git log origin/main..main` lists them). Every
+    push needs the user's say-so. The branches `job-nodes-1` to
     `job-nodes-7` are merged and not deleted (deleting needs the user's say-so).
 - Job updates were checked in the browser pane only: the job row, a live Plot and picture, a reload
     mid-job, Stop, a failing job, the run after a job. Not checked: a real screen reader, a narrow
