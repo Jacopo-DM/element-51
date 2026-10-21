@@ -594,7 +594,7 @@ fn card(
 
 /// The chart of a plot node: gridlines and tick labels, then one line per
 /// linked series with its source port's name and last value at its end.
-fn chart(
+pub(crate) fn chart(
     context: &CanvasRenderingContext2d,
     theme: &Theme,
     graph: &Graph,

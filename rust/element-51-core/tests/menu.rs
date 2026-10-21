@@ -110,15 +110,20 @@ fn empty_or_unmatched_text_finds_nothing() {
 }
 
 #[test]
-fn a_card_offers_to_view_its_source_and_to_delete_the_node_last() {
+fn a_card_offers_to_view_its_source_to_save_and_to_delete_the_node_last() {
     use element_51_core::Edit;
     use element_51_core::menu::{CardAction, card_actions};
     let actions = card_actions();
     assert_eq!(
         actions,
-        vec![CardAction::ViewSource, CardAction::DeleteNode]
+        vec![
+            CardAction::ViewSource,
+            CardAction::SavePng,
+            CardAction::DeleteNode
+        ]
     );
     assert_eq!(CardAction::ViewSource.label(), "View source code");
+    assert_eq!(CardAction::SavePng.label(), "Save as PNG");
     assert_eq!(CardAction::DeleteNode.label(), "Delete node");
     assert_eq!(
         CardAction::DeleteNode.edit("n3"),
@@ -127,9 +132,32 @@ fn a_card_offers_to_view_its_source_and_to_delete_the_node_last() {
 }
 
 #[test]
-fn viewing_the_source_is_not_an_edit() {
+fn viewing_the_source_and_saving_are_not_edits() {
     use element_51_core::menu::CardAction;
     assert_eq!(CardAction::ViewSource.edit("n3"), None);
+    assert_eq!(CardAction::SavePng.edit("n3"), None);
+}
+
+#[test]
+fn save_as_png_is_offered_only_for_a_picture_or_a_chart() {
+    use element_51_core::CardDisplay;
+    use element_51_core::menu::{CardAction, card_actions};
+    for action in card_actions() {
+        let on_plain = action.offered(CardDisplay::None);
+        assert_eq!(on_plain, action != CardAction::SavePng, "{action:?}");
+        assert!(action.offered(CardDisplay::Image));
+        assert!(action.offered(CardDisplay::Chart));
+    }
+}
+
+#[test]
+fn the_png_file_is_named_after_the_node_and_what_it_shows() {
+    use element_51_core::menu::png_file_name;
+    assert_eq!(png_file_name("n1", "out"), "n1-out.png");
+    assert_eq!(png_file_name("n5", "chart"), "n5-chart.png");
+    // A port name with a slash, a dot or a space cannot reach a path.
+    assert_eq!(png_file_name("n2", "../a b.c"), "n2-___a_b_c.png");
+    assert_eq!(png_file_name("n2", "é"), "n2-_.png");
 }
 
 mod placement {

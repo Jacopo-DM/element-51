@@ -1,6 +1,6 @@
 //! The add-node menu: nested categories, and search across all of them.
 
-use crate::{Edit, NodeType};
+use crate::{CardDisplay, Edit, NodeType};
 
 /// One line of a menu level.
 #[derive(Clone, Debug, PartialEq)]
@@ -91,12 +91,18 @@ pub fn search(node_types: &[NodeType], text: &str) -> Vec<Match> {
 pub enum CardAction {
     /// Show the node type's source code. Not an edit.
     ViewSource,
+    /// Save the card's picture or chart as a PNG file. Not an edit.
+    SavePng,
     DeleteNode,
 }
 
 /// The entries of the card menu, in the order shown.
 pub fn card_actions() -> Vec<CardAction> {
-    vec![CardAction::ViewSource, CardAction::DeleteNode]
+    vec![
+        CardAction::ViewSource,
+        CardAction::SavePng,
+        CardAction::DeleteNode,
+    ]
 }
 
 impl CardAction {
@@ -104,7 +110,17 @@ impl CardAction {
     pub fn label(self) -> &'static str {
         match self {
             CardAction::ViewSource => "View source code",
+            CardAction::SavePng => "Save as PNG",
             CardAction::DeleteNode => "Delete node",
+        }
+    }
+
+    /// Whether a card whose node shows `display` has this entry in its menu:
+    /// saving a picture needs a picture or a chart on the card.
+    pub fn offered(self, display: CardDisplay) -> bool {
+        match self {
+            CardAction::SavePng => display != CardDisplay::None,
+            CardAction::ViewSource | CardAction::DeleteNode => true,
         }
     }
 
@@ -112,10 +128,28 @@ impl CardAction {
     /// action that changes nothing in the graph.
     pub fn edit(self, id: &str) -> Option<Edit> {
         match self {
-            CardAction::ViewSource => None,
+            CardAction::ViewSource | CardAction::SavePng => None,
             CardAction::DeleteNode => Some(Edit::DeleteNode { id: id.to_string() }),
         }
     }
+}
+
+/// The name of the file `Save as PNG` offers: `n1-out.png` for node `node`'s
+/// picture on port `what`, `n5-chart.png` for a chart. Anything that is not a
+/// letter, digit, `_` or `-` becomes `_`, so the name is safe on every system.
+pub fn png_file_name(node: &str, what: &str) -> String {
+    let safe = |text: &str| -> String {
+        text.chars()
+            .map(|c| {
+                if c.is_ascii_alphanumeric() || c == '_' || c == '-' {
+                    c
+                } else {
+                    '_'
+                }
+            })
+            .collect()
+    };
+    format!("{}-{}.png", safe(node), safe(what))
 }
 
 /// Where to put a popup of `size` that was asked for at `want`, so that it

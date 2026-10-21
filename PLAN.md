@@ -258,7 +258,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 37 of `visual-ports` (approved 2026-10-21): Save as PNG. `card-polish` is done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`).
+Next step: task 38 of `visual-ports` (approved 2026-10-21): accessibility and docs (new `ui_states.py` states, axe in three themes, `ui_keys.js` rows including Save as PNG, `docs/visual-ports.md`). Task 37 (Save as PNG) is done. `card-polish` is done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`).
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart) and 36 (rows that grow with links) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -506,12 +506,7 @@ first. The example for these tasks is `examples/g_experiments/g1_picture_and_plo
     task 36).
 36. Done 2026-10-21: rows that grow with links (DESIGN.md, Results and the spec's task 36
     outcome).
-37. **Save as PNG.** `CardAction::Save` (enabled for a node with a picture or
-    chart); the picture or chart drawn at full size on an off-screen canvas and
-    downloaded as `<node>-<port>.png`; a native test for the file name and the
-    action's availability. Files: `menu.rs`, `menu_ui.rs`, `draw.rs`. Criterion 5.
-    Risk: low. Cost: about 150 lines. Verify: native tests, by hand (the downloaded
-    file opens and matches the card).
+37. Done 2026-10-21: Save as PNG (DESIGN.md, Results and the spec's task 37 outcome).
 38. **Accessibility and docs.** New `ui_states.py` states (a picture, a chart with
     three lines, a grown Plot node), axe-core in all three themes, `ui_keys.js` rows
     for the new labels, a docs page `docs/visual-ports.md`. Files: `tools/ui_states.py`,

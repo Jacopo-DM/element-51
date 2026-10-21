@@ -10,6 +10,7 @@ mod fields_ui;
 mod input;
 mod menu_ui;
 mod pictures;
+mod save_png;
 mod source_ui;
 
 use std::cell::RefCell;
@@ -18,7 +19,6 @@ use std::rc::Rc;
 use element_51_core::address::websocket_url;
 use element_51_core::history::History;
 use element_51_core::layout::PortHit;
-use element_51_core::menu::card_actions;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
 use element_51_core::{Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult};
@@ -217,13 +217,6 @@ pub fn start() -> Result<(), JsValue> {
         })?;
     }
     if let Some(card_menu) = document.get_element_by_id("card-menu") {
-        for (index, action) in card_actions().into_iter().enumerate() {
-            if let Ok(button) = document.create_element("button") {
-                button.set_text_content(Some(action.label()));
-                let _ = button.set_attribute("data-card-action", &index.to_string());
-                let _ = card_menu.append_child(&button);
-            }
-        }
         let shared = state.clone();
         listen(&card_menu, "click", move |event: MouseEvent| {
             on_card_menu_click(&shared, &event)

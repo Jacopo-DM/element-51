@@ -8,12 +8,13 @@ use element_51_core::menu::{
 use element_51_core::palette::with_palette;
 use element_51_core::rows::type_of;
 use element_51_core::theme::Theme;
-use element_51_core::{Edit, Snapshot};
+use element_51_core::{CardDisplay, Edit, Snapshot};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, HtmlElement, HtmlInputElement, KeyboardEvent, MouseEvent};
 
 use crate::a11y_ui::announce;
 use crate::draw::Selected;
+use crate::save_png::save_png;
 use crate::source_ui::request_source;
 use crate::{Shared, State, apply_theme, redraw, show_error, submit};
 
@@ -266,12 +267,38 @@ pub(crate) fn open_card_menu(state: &mut State, id: String, event: &MouseEvent) 
         return;
     };
     let _ = menu.remove_attribute("data-return");
+    fill_card_menu(state, &menu, &id);
     show_at(
         &menu,
         f64::from(event.client_x()),
         f64::from(event.client_y()),
     );
     state.card_menu_node = Some(id);
+}
+
+/// Give the card menu the entries node `id` is offered: Save as PNG only where
+/// the card shows a picture or a chart. A button's `data-card-action` is its
+/// place in `card_actions()`, so it does not change with what is left out.
+fn fill_card_menu(state: &State, menu: &Element, id: &str) {
+    let display = state
+        .replica
+        .as_ref()
+        .and_then(|replica| {
+            let node = replica.graph().nodes.iter().find(|node| node.id == id)?;
+            Some(type_of(replica.graph(), replica.node_types(), node)?.display)
+        })
+        .unwrap_or(CardDisplay::None);
+    menu.set_text_content(None);
+    for (index, action) in card_actions().into_iter().enumerate() {
+        if !action.offered(display) {
+            continue;
+        }
+        if let Ok(button) = state.document.create_element("button") {
+            button.set_text_content(Some(action.label()));
+            let _ = button.set_attribute("data-card-action", &index.to_string());
+            let _ = menu.append_child(&button);
+        }
+    }
 }
 
 /// Show `menu` with its corner at (`left`, `top`), moved back inside the window
@@ -414,6 +441,18 @@ pub(crate) fn on_card_menu_click(shared: &Shared, event: &MouseEvent) {
         };
         if let Some(id) = id {
             request_source(shared, &id, opener);
+        }
+        return_focus(shared);
+        return;
+    }
+    if action == Some(CardAction::SavePng) {
+        let id = {
+            let mut state = shared.borrow_mut();
+            hide_menu(&state);
+            state.card_menu_node.take()
+        };
+        if let Some(id) = id {
+            save_png(shared, &id);
         }
         return_focus(shared);
         return;
@@ -750,6 +789,7 @@ pub(crate) fn open_card_menu_from_keyboard(shared: &Shared, id: &str) {
         let Some(menu) = state.document.get_element_by_id("card-menu") else {
             return;
         };
+        fill_card_menu(&state, &menu, id);
         show_at(&menu, canvas.left() + x, canvas.top() + y);
         remember_opener(&state.document, &menu);
         state.card_menu_node = Some(id.to_string());
