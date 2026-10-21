@@ -290,6 +290,80 @@ theme, with the credit in the README.
     (g) Focus events only fire while the page's window has focus, so the browser-pane
     walk-through needs a click on the page first (CLAUDE.md, Commands).
 
+### visual-ports spec (approved 2026-10-21)
+
+Part of the experiment goals (PLAN.md): the user wants to set up an experiment such
+as MNIST classification visually, with a sample image, a training run and a live
+plot. This spec covers `visual-ports` only; `job-nodes`, `auto-run` and
+`mnist-experiment` get their own specs when their turn comes.
+
+- Users: Python authors who write nodes that produce pictures or time series and
+    want to see them on the card. Non-goals: PLAN.md, "Experiment goals".
+- Existing behaviour that must not change: the four port kinds, the int to float
+    rule, typed value boxes, the saved graph format (`FORMAT_VERSION` stays 2, the
+    snapshot version stays 2, so old files load unchanged), redraw time at 200 nodes
+    when no card shows a picture (median 0.21 to 0.22 ms), and every current test
+    (only fixtures gain new fields that have defaults).
+- Data model:
+    * `Image` (pydantic, `visuals.py`): `width`, `height`, `channels` (1 or 3) and
+        `pixels` (bytes), checked as `width * height * channels`, at most 256 by 256.
+        On the wire the pixels are a JSON list of integers (no base64 dependency or
+        hand-written decoder; about 3 kB for 28 by 28).
+    * `Series` (pydantic): `values`, a tuple of floats, the x axis is the index, at
+        most 100,000 points (a node that returns more fails with a clear error). NaN
+        goes out as `null` and is drawn as a gap, so a diverging loss does not crash a
+        node.
+    * `PortType` gains `image` and `series` in Python and Rust; `can_link` joins only
+        equal kinds for them. `-> Image` and `-> Series` give one output `out` (the
+        "model with fields" rule is skipped for these two types). Inputs of these
+        kinds have no default and no typed value, so they get no box and can only be
+        linked; `parse_input` refuses them. A new alias `Carried` is `PortValue`
+        plus `Image` and `Series`; `PortValue` stays the four plain kinds.
+    * `NodeType` gains `display` (none, image or chart; a function returning `Image`
+        gets `image` by itself) and `variadic` (a prefix and a kind; `PlotNode` has
+        `series` and `series`, so its inputs are `series_1`, `series_2`, ...).
+    * `NodeOutcome` gains `shown`: the values the card displays, by port name (an
+        image node's image outputs, a chart node's series inputs). The page reads only
+        `shown`.
+- Behaviour:
+    * A `PlotNode` shows one row per linked `series_k`, in order of `k`, plus one
+        empty row named with the next unused `k`. Removing a middle link removes its
+        row and keeps the other port names. `edit.rs` and `edits.py` both accept a
+        link to such a port.
+    * A card's height depends on its node type, not on its data, so it does not
+        jump when results arrive: a square picture area (node width minus the inset)
+        for `image`, a chart area of 0.6 of the node width for `chart`.
+    * The picture is drawn with smoothing off (crisp pixels) and cached per result.
+    * The chart: one line per linked row on the card colour, a scale on both axes,
+        the last value as text; a line is named after its source port, and when two
+        share a name each gets its node id (`n3 loss`); line colours reuse the
+        theme's port colours (no new theme colour key), the sixth and later lines
+        cycle with a dash, and names sit at the line ends, so colour is never the
+        only cue; a long series is thinned to about twice the chart's width in
+        pixels with min and max per bucket.
+    * `Save as PNG` is a card-menu entry on a node with a picture or chart. It draws
+        at full size on an off-screen canvas and downloads through the browser as
+        `<node>-<port>.png` (the file lands in the Downloads folder; Python is not
+        involved).
+    * The hidden tree labels a display ("Shows a 28 by 28 picture", "Plot of 2
+        lines, loss last 0.31, accuracy last 0.92") and lists the effective rows.
+    * The `ports` section of the three theme files gets `image` and `series` colours
+        and shapes; `docs/themes.md`, `Theme::contrast_pairs`, the palette mapping and
+        its tests extend to six kinds.
+- Modules: Python, new `visuals.py`; changed `model.py`, `ports.py`, `nodes.py` (a
+    registered `PlotNode` object), `engine.py` (collects the variadic inputs and
+    builds `shown`), `edits.py`. Rust core, new `display.rs` (ticks, thinning, line
+    names, picture geometry); changed `model.rs`, `edit.rs`, `layout.rs` (effective rows,
+    display height), `theme.rs` and the three JSONs, `menu.rs` (a Save action),
+    `fields.rs`, `access.rs`. Web: `draw.rs` (picture and chart, cache), `menu_ui.rs`
+    (Save), `fields_ui.rs` (no box for these kinds).
+- Measurements at build time: the redraw median with 12 picture cards in view
+    (budget 1.0 ms or less) and the draw time of a 100,000-point chart (budget 4 ms
+    or less), both next to the 200-node baseline.
+- Open points with their defaults: grey and RGB only (no alpha); a node returning
+    more than 100,000 points fails (live growth belongs to `job-nodes`, which will
+    send partial updates instead of whole series); images up to 256 by 256.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1021,6 +1095,12 @@ have to go through `tools/compress_images.py`).
     DOM (a rewrite, and it loses the speed measured at 2000 nodes); a live region
     only (a blind user could not learn which nodes exist); a link mode on its own
     key (the Enter rule on ports needs fewer keys and no modes to remember).
+- For `visual-ports` (2026-10-21), rejected: base64 or PNG-encoded pixels (a new
+    dependency or a hand-written decoder for no gain at 28 by 28); a separate display
+    panel (the user chose cards); a Plot node with a fixed number of inputs (the user
+    asked for rows that appear as lines are linked); new theme colour keys for chart
+    lines (more keys in three themes and the palette code for little benefit); sending
+    pictures as binary frames (the binary channel is a non-goal for now).
 
 ## Results
 

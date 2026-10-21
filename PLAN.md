@@ -129,7 +129,7 @@ The canvas itself has no keyboard or screen-reader access: open question 2.
     me.
 - Added: 2026-10-21
 
-### Experiment goals (draft, added 2026-10-21)
+### Experiment goals (approved 2026-10-21)
 
 The user wants to set up a simple experiment visually, for example MNIST
 classification: a node that shows a sample image, a node that starts a training
@@ -176,7 +176,8 @@ the library (datasets live in examples), and running two jobs of one node at onc
         new state in all three themes.
     7. Nothing that works today changes: both suites pass apart from the new tests,
         and redraw time at 200 nodes stays within its recorded spread.
-- Status: draft, added 2026-10-21.
+- Status: approved 2026-10-21; spec approved 2026-10-21 (DESIGN.md, under
+    "visual-ports spec"); the task list awaits approval. Starts after `canvas-accessibility`.
 - Added: 2026-10-21
 
 ### job-nodes
@@ -206,7 +207,7 @@ the library (datasets live in examples), and running two jobs of one node at onc
         clears the known problem in this file).
     6. Python tests with a fake job (no sleeping longer than a few milliseconds);
         the existing 226 Python tests and all Rust tests pass unchanged.
-- Status: draft, added 2026-10-21.
+- Status: approved 2026-10-21; no spec yet (it comes after `visual-ports`).
 - Added: 2026-10-21
 
 ### auto-run
@@ -222,7 +223,8 @@ the library (datasets live in examples), and running two jobs of one node at onc
     3. It never starts a `JobNode`.
     4. It is labelled, operable by keyboard, AA in all themes, and axe reports 0
         violations; a native test covers the debounce rule.
-- Status: draft, added 2026-10-21.
+- Status: approved 2026-10-21; no spec yet. Independent: it can start any time
+    after `canvas-accessibility`.
 - Added: 2026-10-21
 
 ### mnist-experiment
@@ -232,7 +234,7 @@ the library (datasets live in examples), and running two jobs of one node at onc
     (and uses `auto-run` for the sample node).
 - Kind: new behaviour (an example, plus its tests and docs page).
 - Success measure:
-    1. `examples/g_experiments/g1_mnist.py` builds three linked nodes: `MnistSample`
+    1. `examples/g_experiments/g2_mnist.py` builds three linked nodes: `MnistSample`
         (an `index` box; outputs the image and its label), `Train` (a `JobNode`;
         inputs for hidden size, learning rate and epochs; outputs the `loss` and
         `accuracy` series) and a `PlotNode`.
@@ -245,7 +247,7 @@ the library (datasets live in examples), and running two jobs of one node at onc
     4. A `dataset` choice also offers Fashion-MNIST, with its own checked download.
     5. The docstring lists what to try; a row in `tests/test_examples.py` (with the
         fake data); a docs page.
-- Status: draft, added 2026-10-21.
+- Status: approved 2026-10-21; no spec yet (it comes last).
 - Added: 2026-10-21
 
 ### palette-try: done (2026-10-20)
