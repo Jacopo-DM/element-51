@@ -79,7 +79,7 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `header_error` | The title bar of a node that failed. | `#8a3a3a` | `#8a3a3a` | `#6e2e2e` |
 | `card_error_border` | The line round a node card whose last run failed. | `#e05252` | `#c0392b` | `#ff6b6b` |
 | `header_skipped` | The title bar of a node that was skipped. | `#3a3a3a` | `#3a3a3a` | `#322f86` |
-| `title` | The id and type name in a title bar. | `#e0e0e0` | `#e0e0e0` | `#acadbc` |
+| `title` | The id and type name in a title bar. | `#e0e0e0` | `#e0e0e0` | `#dcdcee` |
 | `label` | Port names, and the values shown after a run. | `#b0b0b0` | `#b0b0b0` | `#9f9fbc` |
 | `text_dim` | Faded text, for a node that was skipped. | `#aaaaaa` | `#aaaaaa` | `#a5a5c2` |
 | `placeholder` | A greyed hint in a value box: a default, a source, `output`. | `#9a9a9a` | `#9a9a9a` | `#8787a0` |
