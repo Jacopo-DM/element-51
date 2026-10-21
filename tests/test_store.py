@@ -223,6 +223,30 @@ def test_load_graph_boundary(text: str) -> None:
     assert isinstance(graph, Graph)
 
 
+@given(st.binary())
+@example(b"\xff\xfe")
+@example(SAVED_GRAPH.encode())
+def test_load_graph_boundary_for_any_bytes(data: bytes) -> None:
+    """Any bytes in the file are a graph or a StoreError, nothing else."""
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "g.json"
+        path.write_bytes(data)
+        try:
+            graph = load_graph(path, NODE_TYPES)
+        except StoreError:
+            return
+    assert isinstance(graph, Graph)
+
+
+def test_a_file_that_is_not_utf8_says_so() -> None:
+    """The error names the problem, as the other kinds of damage do."""
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "g.json"
+        path.write_bytes(b"\xff\xfe")
+        with pytest.raises(StoreError, match="not UTF-8 text"):
+            load_graph(path, NODE_TYPES)
+
+
 @st.composite
 def graphs(draw: st.DrawFn) -> Graph:
     """Draw a graph of `add` and `show` nodes that follows the link rules.

@@ -73,10 +73,15 @@ def load_graph(path: Path, node_types: Mapping[str, NodeType]) -> Graph:
     Raises
     ------
     StoreError
-        If the file is not JSON, is not a graph file, has a format version
-        this library does not read, or holds a graph the link rules refuse.
+        If the file is not UTF-8 text, is not JSON, is not a graph file, has
+        a format version this library does not read, or holds a graph the
+        link rules refuse.
     """
-    text = path.read_text("utf-8")
+    try:
+        text = path.read_text("utf-8")
+    except UnicodeDecodeError as error:
+        msg = f"{path} is not a graph file: it is not UTF-8 text"
+        raise StoreError(msg) from error
     try:
         data: object = json.loads(text)
     except json.JSONDecodeError as error:

@@ -481,11 +481,6 @@ Oldest first.
 
 ## Known problems
 
-- `load_graph` on a file that is not UTF-8 raises `UnicodeDecodeError`, not `StoreError`, so
-    `App.load` breaks its documented error (found 2026-10-21 while writing the property
-    tests, which feed valid UTF-8 only). The fix is to read the bytes inside the `try` and
-    refuse them as "not a graph file"; it changes behaviour a little, so it needs the user's
-    say-so.
 - `.pre-commit-config.yaml` lacks the template's notebook hooks (`run-notebooks`,
     `run-notebooks-all`, a pre-push stage). Left on purpose (2026-10-20): the repo has no
     `tests/functional/` and no `tools/run_notebooks.py`; the pre-push hook would fail
