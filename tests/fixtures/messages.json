@@ -151,5 +151,26 @@
                 "error": null
             }
         ]
+    },
+    "run_result_chart": {
+        "op": "run_result",
+        "outcomes": [
+            {
+                "node": "n2",
+                "status": "ok",
+                "outputs": {},
+                "shown": {
+                    "series_1": {
+                        "values": [
+                            0.9,
+                            0.5,
+                            null,
+                            0.25
+                        ]
+                    }
+                },
+                "error": null
+            }
+        ]
     }
 }

@@ -3,7 +3,9 @@
 //! Every colour, size and font comes from the `Theme` in the frame.
 
 use crate::pictures::Pictures;
-use element_51_core::display::{fit_picture, picture_rect};
+use element_51_core::display::{
+    chart_layout, chart_rect, fit_picture, last_value, line_style, picture_rect, short_number,
+};
 use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_controls,
@@ -11,7 +13,8 @@ use element_51_core::layout::{
 use element_51_core::theme::{Metrics, PortShape, PortStyle, Theme};
 use element_51_core::view::View;
 use element_51_core::{
-    Edit, Graph, Link, NodeType, PlacedNode, PortRef, PortType, RunResult, Status, apply_edit,
+    Edit, Graph, Link, NodeOutcome, NodeType, PlacedNode, PortRef, PortType, RunResult, Series,
+    Status, apply_edit,
 };
 use std::f64::consts::TAU;
 use wasm_bindgen::JsValue;
@@ -526,6 +529,132 @@ fn card(
             context.set_image_smoothing_enabled(true);
             drawn?;
         }
+    }
+    if let Some(area) = chart_rect(&rect, node_type, metrics) {
+        context.set_fill_style_str(&colours.field);
+        round_rect_path(context, &area, metrics.box_radius);
+        context.fill();
+        if let Some(outcome) = outcome.filter(|_| status == Some(Status::Ok)) {
+            chart(context, theme, graph, (node, node_type), (&area, outcome))?;
+        }
+    }
+    Ok(())
+}
+
+/// The chart of a plot node: gridlines and tick labels, then one line per
+/// linked series with its source port's name and last value at its end.
+fn chart(
+    context: &CanvasRenderingContext2d,
+    theme: &Theme,
+    graph: &Graph,
+    (node, node_type): (&PlacedNode, &NodeType),
+    (area, outcome): (&Rect, &NodeOutcome),
+) -> Result<(), JsValue> {
+    let (colours, metrics) = (&theme.colours, &theme.metrics);
+    let lines: Vec<(&str, &Series)> = node_type
+        .inputs
+        .iter()
+        .filter_map(|port| {
+            let series = outcome.shown.get(&port.name)?.as_series()?;
+            let source = graph
+                .links
+                .iter()
+                .find(|link| link.target.node == node.id && link.target.port == port.name)?;
+            Some((source.source.port.as_str(), series))
+        })
+        .collect();
+    let series: Vec<&Series> = lines.iter().map(|(_, series)| *series).collect();
+    let Some(layout) = chart_layout(area, metrics, &series) else {
+        return Ok(());
+    };
+    let plot = layout.plot;
+    context.set_font(&theme.fonts.value);
+    context.set_line_width(1.0);
+    context.set_stroke_style_str(&colours.card_border);
+    context.set_fill_style_str(&colours.field_text);
+    let room = plot.x - area.x - metrics.box_pad;
+    context.set_text_align("right");
+    for tick in &layout.y_ticks {
+        context.begin_path();
+        context.move_to(plot.x, tick.at);
+        context.line_to(plot.x + plot.w, tick.at);
+        context.stroke();
+        let label = fit_text(context, &tick.label, room)?;
+        context.fill_text(
+            &label,
+            plot.x - metrics.box_pad / 2.0,
+            tick.at + metrics.text_baseline,
+        )?;
+    }
+    context.set_text_align("center");
+    for tick in &layout.x_ticks {
+        context.begin_path();
+        context.move_to(tick.at, plot.y);
+        context.line_to(tick.at, plot.y + plot.h);
+        context.stroke();
+        context.fill_text(
+            &tick.label,
+            tick.at,
+            plot.y + plot.h + metrics.row_height * 0.5 + metrics.text_baseline,
+        )?;
+    }
+    context.save();
+    context.begin_path();
+    context.rect(plot.x, plot.y, plot.w, plot.h);
+    context.clip();
+    context.set_line_width(metrics.wire_width * 0.6);
+    context.set_line_join("round");
+    for (index, runs) in layout.lines.iter().enumerate() {
+        let (kind, dashed) = line_style(index);
+        context.set_stroke_style_str(&theme.port_style(kind, true).colour);
+        if dashed {
+            context.set_line_dash(&crate::json_parse("[6, 4]"))?;
+        }
+        for run in runs {
+            context.begin_path();
+            for (step, (x, y)) in run.iter().enumerate() {
+                if step == 0 {
+                    context.move_to(*x, *y);
+                } else {
+                    context.line_to(*x, *y);
+                }
+            }
+            // A run of one point would draw nothing: give it a dot.
+            if run.len() == 1 {
+                context.line_to(run[0].0 + 0.1, run[0].1);
+            }
+            context.stroke();
+        }
+        if dashed {
+            context.set_line_dash(&crate::json_parse("[]"))?;
+        }
+    }
+    context.restore();
+    // Names sit at the line ends, in the line's colour, so colour is not the only cue.
+    for (index, ((name, series), runs)) in lines.iter().zip(&layout.lines).enumerate() {
+        let Some(end) = runs.last().and_then(|run| run.last()) else {
+            continue;
+        };
+        let (kind, _) = line_style(index);
+        context.set_fill_style_str(&theme.port_style(kind, true).colour);
+        let text = match last_value(series) {
+            Some(last) => format!("{name} {}", short_number(last)),
+            None => (*name).to_string(),
+        };
+        // The label goes above the end of the line in the lower half of the plot and
+        // below it in the upper half, so it stays off the line's own tail.
+        let gap = metrics.text_baseline * 3.0;
+        let label_y = if end.1 > plot.y + plot.h / 2.0 {
+            end.1 - gap
+        } else {
+            end.1 + gap + metrics.text_baseline
+        };
+        // Text runs away from the line: right of an end in the left half, left of
+        // one in the right half.
+        let near_left = end.0 < plot.x + plot.w / 2.0;
+        context.set_text_align(if near_left { "left" } else { "right" });
+        let side = if near_left { 4.0 } else { -4.0 };
+        context.fill_text(&text, end.0.min(plot.x + plot.w) + side, label_y)?;
     }
     Ok(())
 }

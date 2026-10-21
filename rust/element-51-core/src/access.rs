@@ -7,10 +7,11 @@
 
 use std::collections::BTreeMap;
 
+use crate::display::{last_value, short_number};
 use crate::layout::{Rect, Side, node_rect};
 use crate::theme::Metrics;
 use crate::view::View;
-use crate::{Edit, Graph, NodeType, PlacedNode, PortRef, RunResult, Status};
+use crate::{Edit, Graph, NodeType, PlacedNode, PortRef, RunResult, Shown, Status};
 
 /// How much more a step sideways counts than a step ahead, when the keyboard
 /// looks for the nearest node in a direction.
@@ -61,27 +62,50 @@ pub fn describe_graph(graph: &Graph, node_types: &[NodeType]) -> Vec<NodeItem> {
 }
 
 /// The list with what each node showed in `result` added to its label, for
-/// example `Shows a 28 by 28 picture.`. A node that showed nothing keeps its
+/// example `Shows a 28 by 28 picture.` or `Shows a plot of 2 lines, loss last
+/// 0.31 and accuracy last 0.92.`. A line is named after the output port its
+/// series comes from, found in `graph`. A node that showed nothing keeps its
 /// label.
-pub fn with_pictures(items: Vec<NodeItem>, result: &RunResult) -> Vec<NodeItem> {
+pub fn with_displays(items: Vec<NodeItem>, graph: &Graph, result: &RunResult) -> Vec<NodeItem> {
     items
         .into_iter()
         .map(|item| {
-            let sizes: Vec<String> = result
-                .outcome_for(&item.id)
-                .map(|outcome| {
-                    outcome
-                        .shown
-                        .values()
-                        .map(|image| format!("a {} by {} picture", image.width, image.height))
-                        .collect()
-                })
-                .unwrap_or_default();
-            if sizes.is_empty() {
+            let Some(outcome) = result.outcome_for(&item.id) else {
+                return item;
+            };
+            let mut parts: Vec<String> = Vec::new();
+            let mut lines: Vec<String> = Vec::new();
+            for (port, shown) in &outcome.shown {
+                match shown {
+                    Shown::Image(image) => {
+                        parts.push(format!("a {} by {} picture", image.width, image.height));
+                    }
+                    Shown::Series(series) => {
+                        let name = graph
+                            .links
+                            .iter()
+                            .find(|link| link.target.node == item.id && &link.target.port == port)
+                            .map_or(port.as_str(), |link| link.source.port.as_str());
+                        lines.push(match last_value(series) {
+                            Some(last) => format!("{name} last {}", short_number(last)),
+                            None => format!("{name} has no value yet"),
+                        });
+                    }
+                }
+            }
+            if !lines.is_empty() {
+                parts.push(format!(
+                    "a plot of {} {}, {}",
+                    lines.len(),
+                    plural(lines.len(), "line"),
+                    join_names(&lines)
+                ));
+            }
+            if parts.is_empty() {
                 return item;
             }
             NodeItem {
-                label: format!("{} Shows {}.", item.label, join_names(&sizes)),
+                label: format!("{} Shows {}.", item.label, join_names(&parts)),
                 ..item
             }
         })

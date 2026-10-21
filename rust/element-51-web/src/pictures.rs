@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use element_51_core::{Image, RunResult};
+use element_51_core::{Image, RunResult, Shown};
 use wasm_bindgen::{Clamped, JsCast};
 use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
 
@@ -24,7 +24,7 @@ impl Pictures {
             .outcomes
             .iter()
             .filter_map(|outcome| {
-                let image = outcome.shown.values().next()?;
+                let image = outcome.shown.values().find_map(Shown::as_image)?;
                 Some((outcome.node.clone(), canvas_of(document, image)?))
             })
             .collect();

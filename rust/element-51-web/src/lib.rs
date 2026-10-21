@@ -82,7 +82,7 @@ type Shared = Rc<RefCell<State>>;
 extern "C" {
     /// `JSON.parse`, to build the options object for the canvas context.
     #[wasm_bindgen(js_namespace = JSON, js_name = parse)]
-    fn json_parse(text: &str) -> JsValue;
+    pub(crate) fn json_parse(text: &str) -> JsValue;
 }
 
 /// Connect to `/ws`, draw the graph Python sends, and send the user's edits.

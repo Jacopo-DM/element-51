@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from element_51.model import Port, PortType
-from element_51.visuals import Image, carries
+from element_51.visuals import Image, Series, carries
 
 PORT_TYPES: dict[type, PortType] = {
     float: PortType.FLOAT,
@@ -14,6 +14,7 @@ PORT_TYPES: dict[type, PortType] = {
     str: PortType.STR,
     bool: PortType.BOOL,
     Image: PortType.IMAGE,
+    Series: PortType.SERIES,
 }
 
 NO_DEFAULT = inspect.Parameter.empty
@@ -37,11 +38,14 @@ def port_type(annotation: object, where: str) -> PortType:
     Raises
     ------
     TypeError
-        If the hint is not float, int, str, bool or Image.
+        If the hint is not float, int, str, bool, Image or Series.
     """
     if isinstance(annotation, type) and annotation in PORT_TYPES:
         return PORT_TYPES[annotation]
-    msg = f"{where}: {annotation!r} is not one of float, int, str, bool, Image"
+    msg = (
+        f"{where}: {annotation!r} is not one of "
+        "float, int, str, bool, Image, Series"
+    )
     raise TypeError(msg)
 
 
@@ -64,9 +68,9 @@ def input_port(
     if default is not NO_DEFAULT and not carries(default, kind):
         msg = f"{where}: default {default!r} is not a {kind}"
         raise TypeError(msg)
-    if default is not NO_DEFAULT and kind is PortType.IMAGE:
+    if default is not NO_DEFAULT and kind in {PortType.IMAGE, PortType.SERIES}:
         msg = (
-            f"{where}: an image input can only be linked, so it has no default"
+            f"{where}: a {kind} input can only be linked, so it has no default"
         )
         raise TypeError(msg)
     return Port(name=name, kind=kind)
@@ -91,7 +95,7 @@ def output_ports(
     """Build the output ports from a return hint.
 
     A pydantic model gives one port per field, in the order declared. Any
-    other hint, `Image` included, gives the single port `out`.
+    other hint, `Image` and `Series` included, gives the single port `out`.
 
     Returns
     -------

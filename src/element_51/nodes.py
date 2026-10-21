@@ -6,7 +6,14 @@ from typing import ClassVar, Protocol, cast, get_type_hints, overload
 
 from pydantic import BaseModel
 
-from element_51.model import Model, NodeType, Port, PortValue, value_fits
+from element_51.model import (
+    Model,
+    NodeType,
+    Port,
+    PortType,
+    PortValue,
+    value_fits,
+)
 from element_51.ports import (
     NO_DEFAULT,
     display_of,
@@ -361,3 +368,37 @@ def _check_category(category: str, where: str) -> str:
         )
         raise ValueError(msg)
     return category
+
+
+class PlotNode:
+    """A node that draws the series linked to it as lines on one chart.
+
+    Register the class itself: `App([..., PlotNode])`. It has no outputs. Its
+    first input is `series_1`; link a series to it and the chart draws it.
+    """
+
+    node_type: ClassVar[NodeType] = NodeType(
+        name="Plot",
+        inputs=(Port(name="series_1", kind=PortType.SERIES),),
+        outputs=(),
+        display="chart",
+    )
+    defaults: ClassVar[Mapping[str, PortValue]] = {}
+    output_model: ClassVar[type[BaseModel] | None] = None
+
+    @classmethod
+    def call(cls, inputs: Mapping[str, Carried]) -> object:
+        """Do nothing: the chart is drawn from the linked series.
+
+        Parameters
+        ----------
+        inputs
+            The linked series, by input name.
+
+        Returns
+        -------
+        object
+            Always None.
+        """
+        del inputs
+        return None

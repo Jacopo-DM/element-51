@@ -18,7 +18,7 @@ fn shared_fixture_parses() {
         .iter()
         .map(|t| t.name.as_str())
         .collect();
-    assert_eq!(names, ["add", "show", "picture"]);
+    assert_eq!(names, ["add", "show", "picture", "Plot"]);
     let add = &snapshot.node_types[0];
     assert_eq!(add.inputs.len(), 2);
     assert_eq!(add.inputs[0].kind, PortType::Float);

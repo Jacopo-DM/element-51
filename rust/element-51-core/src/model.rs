@@ -13,6 +13,7 @@ pub enum PortType {
     Str,
     Bool,
     Image,
+    Series,
 }
 
 impl std::fmt::Display for PortType {
@@ -23,6 +24,7 @@ impl std::fmt::Display for PortType {
             PortType::Str => "str",
             PortType::Bool => "bool",
             PortType::Image => "image",
+            PortType::Series => "series",
         };
         formatter.write_str(name)
     }
@@ -64,6 +66,8 @@ pub enum CardDisplay {
     None,
     /// A picture from one of the node's outputs.
     Image,
+    /// A chart of the series linked to the node's inputs.
+    Chart,
 }
 
 /// A grey or colour picture a node produced: `width * height * channels` bytes
@@ -76,6 +80,40 @@ pub struct Image {
     /// 1 for grey, 3 for red, green and blue.
     pub channels: u8,
     pub pixels: Vec<u8>,
+}
+
+/// A list of numbers drawn as a line against its position. `None` is a gap
+/// (`null` on the wire).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Series {
+    pub values: Vec<Option<f64>>,
+}
+
+/// What a card displays: a picture or a series.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Shown {
+    Image(Image),
+    Series(Series),
+}
+
+impl Shown {
+    /// The picture, if this is one.
+    pub fn as_image(&self) -> Option<&Image> {
+        match self {
+            Shown::Image(image) => Some(image),
+            Shown::Series(_) => None,
+        }
+    }
+
+    /// The series, if this is one.
+    pub fn as_series(&self) -> Option<&Series> {
+        match self {
+            Shown::Series(series) => Some(series),
+            Shown::Image(_) => None,
+        }
+    }
 }
 
 impl Image {
@@ -234,9 +272,10 @@ pub struct NodeOutcome {
     pub status: Status,
     /// The value of each output port, by port name. Empty unless `status` is ok.
     pub outputs: BTreeMap<String, serde_json::Value>,
-    /// The pictures the card displays, by output port name.
+    /// What the card displays: the pictures by output port name, or the series
+    /// linked to a chart by input port name.
     #[serde(default)]
-    pub shown: BTreeMap<String, Image>,
+    pub shown: BTreeMap<String, Shown>,
     pub error: Option<String>,
 }
 

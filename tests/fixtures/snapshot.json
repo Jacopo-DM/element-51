@@ -61,6 +61,19 @@
             "defaults": {},
             "category": "",
             "display": "image"
+        },
+        {
+            "name": "Plot",
+            "inputs": [
+                {
+                    "name": "series_1",
+                    "kind": "series"
+                }
+            ],
+            "outputs": [],
+            "defaults": {},
+            "category": "",
+            "display": "chart"
         }
     ],
     "graph": {

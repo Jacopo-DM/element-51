@@ -1,8 +1,18 @@
-//! What a card shows below its ports: where the picture goes and how it fits.
+//! What a card shows below its ports: where the picture or the chart goes, how a
+//! picture fits, and the chart's scale, ticks and lines.
 
 use crate::layout::Rect;
 use crate::theme::Metrics;
-use crate::{CardDisplay, NodeType};
+use crate::{CardDisplay, NodeType, PortType, Series};
+
+/// The height of a chart area as a fraction of the card's width.
+const CHART_HEIGHT_RATIO: f64 = 0.6;
+/// Room for the y axis labels, as a multiple of the row height.
+const LABEL_ROOMS: f64 = 1.8;
+/// How many ticks an axis aims for.
+const TICK_TARGET: usize = 4;
+/// How far the y range reaches past the data, as a fraction of its span.
+const RANGE_PAD: f64 = 0.05;
 
 /// The side of the square picture area: the card's width less the inset on
 /// each side.
@@ -17,7 +27,13 @@ pub fn display_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
     match node_type.display {
         CardDisplay::None => 0.0,
         CardDisplay::Image => picture_side(metrics) + metrics.title_pad,
+        CardDisplay::Chart => chart_height(metrics) + metrics.title_pad,
     }
+}
+
+/// The height of the chart area: a fraction of the card's width.
+pub fn chart_height(metrics: &Metrics) -> f64 {
+    CHART_HEIGHT_RATIO * metrics.node_width
 }
 
 /// The picture area of the card at `card`, below the port rows. None if the
@@ -47,4 +63,246 @@ pub fn fit_picture(area: &Rect, width: u32, height: u32) -> Rect {
         w,
         h,
     }
+}
+
+/// The chart area of the card at `card`, below the port rows. None if the node
+/// type does not show a chart.
+pub fn chart_rect(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Option<Rect> {
+    if node_type.display != CardDisplay::Chart {
+        return None;
+    }
+    let rows = node_type.inputs.len() + node_type.outputs.len();
+    Some(Rect {
+        x: card.x + metrics.title_pad,
+        y: card.y + metrics.header_height + metrics.row_height * rows as f64,
+        w: picture_side(metrics),
+        h: chart_height(metrics),
+    })
+}
+
+/// How a chart line looks: the port type whose colour it takes, and whether it
+/// is dashed. Lines take the colours in turn and dash from the sixth, so colour
+/// is never the only way to tell them apart.
+pub const CHART_LINE_STYLES: [PortType; 5] = [
+    PortType::Float,
+    PortType::Int,
+    PortType::Str,
+    PortType::Bool,
+    PortType::Image,
+];
+
+/// The style of line number `index`, counting from 0.
+pub fn line_style(index: usize) -> (PortType, bool) {
+    (
+        CHART_LINE_STYLES[index % CHART_LINE_STYLES.len()],
+        index >= CHART_LINE_STYLES.len(),
+    )
+}
+
+/// The last value of a series that is a number, if there is one.
+pub fn last_value(series: &Series) -> Option<f64> {
+    series
+        .values
+        .iter()
+        .rev()
+        .flatten()
+        .copied()
+        .find(|value| value.is_finite())
+}
+
+/// A number in about three significant digits, for ticks and for the last
+/// value: `0.314`, `12.3`, `1235`, `1.2e-5`.
+pub fn short_number(value: f64) -> String {
+    if value.is_nan() {
+        return "nan".to_string();
+    }
+    if value.is_infinite() {
+        return if value > 0.0 { "inf" } else { "-inf" }.to_string();
+    }
+    if value == 0.0 {
+        return "0".to_string();
+    }
+    let size = value.abs();
+    if size < 1e-4 {
+        return format!("{value:.1e}");
+    }
+    let decimals = if size >= 1000.0 {
+        0
+    } else {
+        (2 - size.log10().floor() as i32).clamp(0, 6) as usize
+    };
+    let text = format!("{value:.decimals$}");
+    if text.contains('.') {
+        text.trim_end_matches('0').trim_end_matches('.').to_string()
+    } else {
+        text
+    }
+}
+
+/// Round numbers from `low` to `high`, about `target` of them: a step of 1, 2
+/// or 5 times a power of ten. A range that is empty or backwards gives just
+/// `low`.
+pub fn nice_ticks(low: f64, high: f64, target: usize) -> Vec<f64> {
+    if low.partial_cmp(&high) != Some(std::cmp::Ordering::Less) {
+        return vec![low];
+    }
+    let raw = (high - low) / target.max(1) as f64;
+    let magnitude = 10f64.powf(raw.log10().floor());
+    let scaled = raw / magnitude;
+    let step = magnitude
+        * if scaled <= 1.0 {
+            1.0
+        } else if scaled <= 2.0 {
+            2.0
+        } else if scaled <= 5.0 {
+            5.0
+        } else {
+            10.0
+        };
+    let first = (low / step).ceil() as i64;
+    let last = (high / step + 1e-9).floor() as i64;
+    (first..=last)
+        .map(|k| (k as f64 * step * 1e12).round() / 1e12)
+        .collect()
+}
+
+/// The points of a line as `(index, value)`, in runs: a gap (no number) starts a
+/// new run. A series longer than twice `buckets` is cut into `buckets` equal
+/// parts and each keeps its lowest and highest point, so a spike survives and
+/// the line has about two points per bucket. A part with no numbers breaks the
+/// line.
+pub fn thin(values: &[Option<f64>], buckets: usize) -> Vec<Vec<(f64, f64)>> {
+    let buckets = buckets.max(1);
+    let number = |value: &Option<f64>| value.filter(|number| number.is_finite());
+    let mut runs: Vec<Vec<(f64, f64)>> = Vec::new();
+    let mut current: Vec<(f64, f64)> = Vec::new();
+    let mut end_run = |current: &mut Vec<(f64, f64)>| {
+        if !current.is_empty() {
+            runs.push(std::mem::take(current));
+        }
+    };
+    if values.len() <= 2 * buckets {
+        for (index, value) in values.iter().enumerate() {
+            match number(value) {
+                Some(y) => current.push((index as f64, y)),
+                None => end_run(&mut current),
+            }
+        }
+    } else {
+        let size = values.len().div_ceil(buckets);
+        for (part, chunk) in values.chunks(size).enumerate() {
+            let mut low: Option<(usize, f64)> = None;
+            let mut high: Option<(usize, f64)> = None;
+            for (offset, value) in chunk.iter().enumerate() {
+                if let Some(y) = number(value) {
+                    let at = part * size + offset;
+                    if low.is_none_or(|(_, best)| y < best) {
+                        low = Some((at, y));
+                    }
+                    if high.is_none_or(|(_, best)| y > best) {
+                        high = Some((at, y));
+                    }
+                }
+            }
+            let (Some(low), Some(high)) = (low, high) else {
+                end_run(&mut current);
+                continue;
+            };
+            let (first, second) = if low.0 <= high.0 {
+                (low, high)
+            } else {
+                (high, low)
+            };
+            current.push((first.0 as f64, first.1));
+            if second.0 != first.0 {
+                current.push((second.0 as f64, second.1));
+            }
+        }
+    }
+    end_run(&mut current);
+    runs
+}
+
+/// One tick on an axis: where it is on the canvas, and its label.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Tick {
+    pub at: f64,
+    pub label: String,
+}
+
+/// A chart worked out for drawing: where the plot is inside the chart area,
+/// the ticks of both axes, and each line as runs of canvas points.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Chart {
+    pub plot: Rect,
+    pub x_ticks: Vec<Tick>,
+    pub y_ticks: Vec<Tick>,
+    /// One entry per series, in the order given; each is a list of runs.
+    pub lines: Vec<Vec<Vec<(f64, f64)>>>,
+}
+
+/// Lay out `lines` in the chart area `area`: a plot with room on the left for
+/// the y labels and below for the x labels, one scale for every line, ticks at
+/// round numbers, and each line thinned to the plot's width. None if no series
+/// has a number in it.
+pub fn chart_layout(area: &Rect, metrics: &Metrics, lines: &[&Series]) -> Option<Chart> {
+    let left = metrics.row_height * LABEL_ROOMS;
+    let (below, pad) = (metrics.row_height, metrics.box_pad);
+    let plot = Rect {
+        x: area.x + left,
+        y: area.y + pad,
+        w: area.w - left - pad,
+        h: area.h - pad - below,
+    };
+    let numbers: Vec<f64> = lines
+        .iter()
+        .flat_map(|series| series.values.iter().flatten().copied())
+        .filter(|number| number.is_finite())
+        .collect();
+    let lowest = numbers.iter().copied().reduce(f64::min)?;
+    let highest = numbers.iter().copied().reduce(f64::max)?;
+    let (low, high) = if highest > lowest {
+        let reach = (highest - lowest) * RANGE_PAD;
+        (lowest - reach, highest + reach)
+    } else {
+        (lowest - 0.5, highest + 0.5)
+    };
+    let longest = lines.iter().map(|series| series.values.len()).max()?;
+    let x_max = (longest.max(2) - 1) as f64;
+    let to_x = |index: f64| plot.x + index / x_max * plot.w;
+    let to_y = |value: f64| plot.y + plot.h - (value - low) / (high - low) * plot.h;
+    let x_ticks = nice_ticks(0.0, x_max, TICK_TARGET)
+        .into_iter()
+        .map(|tick| Tick {
+            at: to_x(tick),
+            label: short_number(tick),
+        })
+        .collect();
+    let y_ticks = nice_ticks(low, high, TICK_TARGET)
+        .into_iter()
+        .map(|tick| Tick {
+            at: to_y(tick),
+            label: short_number(tick),
+        })
+        .collect();
+    let buckets = plot.w.max(1.0) as usize;
+    let lines = lines
+        .iter()
+        .map(|series| {
+            thin(&series.values, buckets)
+                .into_iter()
+                .map(|run| {
+                    run.into_iter()
+                        .map(|(index, value)| (to_x(index), to_y(value)))
+                        .collect()
+                })
+                .collect()
+        })
+        .collect();
+    Some(Chart {
+        plot,
+        x_ticks,
+        y_ticks,
+        lines,
+    })
 }

@@ -16,6 +16,7 @@ pub fn parse_input(text: &str, kind: PortType) -> Result<Option<Value>, String> 
     let trimmed = text.trim();
     match kind {
         PortType::Image => Err("a picture can only be linked".to_string()),
+        PortType::Series => Err("a series can only be linked".to_string()),
         PortType::Str => Ok(Some(Value::String(text.to_string()))),
         PortType::Float => trimmed
             .parse::<f64>()

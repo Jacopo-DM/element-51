@@ -204,7 +204,7 @@ pub fn value_fits(value: &serde_json::Value, kind: crate::PortType) -> bool {
         serde_json::Value::Number(number) => match kind {
             PortType::Float => true,
             PortType::Int => number.is_i64() || number.is_u64(),
-            PortType::Str | PortType::Bool | PortType::Image => false,
+            PortType::Str | PortType::Bool | PortType::Image | PortType::Series => false,
         },
         serde_json::Value::String(_) => kind == PortType::Str,
         _ => false,

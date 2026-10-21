@@ -256,7 +256,7 @@ fn the_theme_docs_list_every_key_a_theme_can_change() {
 }
 
 #[test]
-fn every_port_type_has_a_style_for_each_side_and_by_default_all_are_boxes_but_pictures_are_diamonds()
+fn every_port_type_has_a_style_for_each_side_and_by_default_all_are_boxes_but_pictures_are_diamonds_and_series_circles()
  {
     use element_51_core::PortType;
     use element_51_core::theme::PortShape;
@@ -268,13 +268,14 @@ fn every_port_type_has_a_style_for_each_side_and_by_default_all_are_boxes_but_pi
             PortType::Str,
             PortType::Bool,
             PortType::Image,
+            PortType::Series,
         ] {
             for output in [false, true] {
                 let style = theme.port_style(kind, output);
-                let shape = if kind == PortType::Image {
-                    PortShape::Diamond
-                } else {
-                    PortShape::Box
+                let shape = match kind {
+                    PortType::Image => PortShape::Diamond,
+                    PortType::Series => PortShape::Circle,
+                    _ => PortShape::Box,
                 };
                 assert_eq!(style.shape, shape, "{name} {kind} {output}");
                 assert!(!style.colour.is_empty());
@@ -293,6 +294,7 @@ fn by_default_an_input_and_an_output_of_one_type_share_a_colour() {
         PortType::Str,
         PortType::Bool,
         PortType::Image,
+        PortType::Series,
     ] {
         assert_eq!(
             theme.port_style(kind, false).colour,

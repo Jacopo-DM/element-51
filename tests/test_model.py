@@ -27,6 +27,7 @@ def test_shared_fixture_parses_into_a_snapshot() -> None:
         "add",
         "show",
         "picture",
+        "Plot",
     ]
     assert snapshot.graph.links[0].source.node == "n1"
 

@@ -26,13 +26,14 @@ class PortType(StrEnum):
     STR = "str"
     BOOL = "bool"
     IMAGE = "image"
+    SERIES = "series"
 
 
 def can_link(source: PortType, target: PortType) -> bool:
     """Whether an output of type `source` may feed an input of type `target`.
 
     Equal types link. An int output may also feed a float input. A picture
-    links only to a picture.
+    links only to a picture, and a series only to a series.
 
     Parameters
     ----------
@@ -96,7 +97,9 @@ class NodeType(Model):
     `defaults` holds the value an unlinked input takes when the node has no
     value of its own; an input with no default must be given one. `category`
     places the type in the add-node menu: `""` for the top level, with `/`
-    between levels (`"Math/Trig"` is `Trig` inside `Math`).
+    between levels (`"Math/Trig"` is `Trig` inside `Math`). `display` says what
+    the card shows below its ports: `"image"` for a node with a picture output,
+    `"chart"` for a node that plots the series linked to it, else `"none"`.
     """
 
     name: str
@@ -104,7 +107,7 @@ class NodeType(Model):
     outputs: tuple[Port, ...]
     defaults: Mapping[str, PortValue] = {}
     category: str = ""
-    display: Literal["none", "image"] = "none"
+    display: Literal["none", "image", "chart"] = "none"
 
 
 class PortRef(Model):

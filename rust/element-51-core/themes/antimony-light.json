@@ -88,6 +88,16 @@
                 "colour": "#d98cc4",
                 "shape": "diamond"
             }
+        },
+        "series": {
+            "in": {
+                "colour": "#5fc9c0",
+                "shape": "circle"
+            },
+            "out": {
+                "colour": "#5fc9c0",
+                "shape": "circle"
+            }
         }
     },
     "metrics": {

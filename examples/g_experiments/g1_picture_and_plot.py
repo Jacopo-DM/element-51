@@ -1,9 +1,11 @@
-"""A picture on a card.
+"""A picture and a plot on a card.
 
-Three nodes: `ramp` makes a grey picture whose brightness rises from left to
+Five nodes. `ramp` makes a grey picture whose brightness rises from left to
 right, `invert` flips its brightness, and `pixels` counts its pixels. A picture
-is a value like a number, with its own port (a diamond) that links only to other
-picture ports.
+is a value like a number, with its own port (a diamond) that links only to
+other picture ports. `loss_curve` makes a series, a list of numbers (a circle
+port that links only to other series ports), and the built-in `Plot` node draws
+the series linked to it as a line on its card.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
 
@@ -17,8 +19,16 @@ Notes
         `invert` node: pictures link only to pictures. A picture output does not
         link to a number input, and the page refuses it with the reason.
     * A picture input has no value box, because a picture cannot be typed.
+    * The `Plot` card shows the loss curve as a line with a scale on both axes,
+        its source port's name `out` and the last value at the line's end.
+    * Change `steps` in `loss_curve` to 300 and press Run: the line gets
+        longer and the x axis grows. Tick `blow_up`: the loss turns to NaN
+        after step 40, and the line stops there, with a gap, not an error.
 
 """
+
+# Standard library
+import math
 
 # Third-party libraries
 from rich.console import Console
@@ -29,6 +39,7 @@ import element_51
 
 # --- Globals --- #
 MAX_BRIGHTNESS = 255
+BLOW_UP_AT = 40
 
 # --- Warnings --- #
 
@@ -85,20 +96,48 @@ def pixels(source: element_51.Image) -> int:
     return source.width * source.height
 
 
+@element_51.node
+def loss_curve(steps: int = 60, *, blow_up: bool = False) -> element_51.Series:
+    """Make a falling curve with a ripple.
+
+    Returns
+    -------
+    element_51.Series
+        `steps` values; with `blow_up`, NaN from step 40 on.
+    """
+    values = tuple(
+        math.nan
+        if blow_up and step >= BLOW_UP_AT
+        else math.exp(-step / 20) + 0.05 * math.sin(step)
+        for step in range(steps)
+    )
+    return element_51.Series(values=values)
+
+
 def build_app() -> element_51.App:
-    """Build the app with a picture, its negative and a pixel count.
+    """Build the app with a picture, its negative, a pixel count and a plot.
 
     Returns
     -------
     element_51.App
-        An app whose first two nodes show pictures.
+        An app whose first two nodes show pictures and whose last shows a
+        chart.
     """
-    app = element_51.App([ramp, invert, pixels])
+    app = element_51.App([
+        ramp,
+        invert,
+        pixels,
+        loss_curve,
+        element_51.PlotNode,
+    ])
     first = app.add_node(ramp, x=60.0, y=60.0)
     second = app.add_node(invert, x=360.0, y=60.0)
     third = app.add_node(pixels, x=660.0, y=60.0)
     app.add_link(first, "out", second, "source")
     app.add_link(first, "out", third, "source")
+    curve = app.add_node(loss_curve, x=60.0, y=400.0)
+    chart = app.add_node(element_51.PlotNode, x=360.0, y=400.0)
+    app.add_link(curve, "out", chart, "series_1")
     return app
 
 

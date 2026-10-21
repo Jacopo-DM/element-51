@@ -121,6 +121,7 @@ Each port type has an `in` style for its inputs and an `out` style for its outpu
 | `text` | text | `#94a95f` | `box` |
 | `bool` | true or false | `#6fa8dc` | `box` |
 | `image` | a picture | `#d98cc4` | `diamond` |
+| `series` | a list of numbers | `#5fc9c0` | `circle` |
 
 ### `metrics`
 

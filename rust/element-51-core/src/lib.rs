@@ -22,7 +22,8 @@ pub mod view;
 pub use edit::{EditError, apply_edit, value_fits};
 pub use model::{
     Ack, CardDisplay, Edit, EditRequest, Graph, Image, Link, Message, NodeOutcome, NodeType,
-    PlacedNode, Port, PortRef, PortType, Reject, RunRequest, RunResult, Snapshot, Status,
+    PlacedNode, Port, PortRef, PortType, Reject, RunRequest, RunResult, Series, Shown, Snapshot,
+    Status,
 };
 pub use replica::Replica;
 

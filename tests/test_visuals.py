@@ -1,6 +1,7 @@
 """Tests for pictures and the values a node can carry."""
 
 import json
+import math
 from typing import override
 
 import pytest
@@ -16,13 +17,16 @@ from element_51.model import (
     PortType,
     can_link,
 )
-from element_51.nodes import Node, Registered, node
-from element_51.visuals import Image, carries
+from element_51.nodes import Node, PlotNode, Registered, node
+from element_51.visuals import MAX_POINTS, Image, Series, carries
 
 WIDTH = 3
 HEIGHT = 2
 PIXELS_IN_COLOUR = 6
 FLAG = True
+THIRD = 3.0
+LIMIT = 100_000
+EMPTY = Series(values=())
 SAMPLE = Image(width=1, height=1, channels=1, pixels=b"a")
 
 
@@ -281,7 +285,9 @@ def test_a_picture_reaches_the_node_it_is_linked_to() -> None:
     )
     result = run_graph(graph, functions, raise_errors=True)
     by_id = {outcome.node: outcome for outcome in result.outcomes}
-    assert by_id["n2"].shown["out"].pixels == bytes(
+    negative = by_id["n2"].shown["out"]
+    assert isinstance(negative, Image)
+    assert negative.pixels == bytes(
         255 - pixel for pixel in range(WIDTH * HEIGHT)
     )
     assert by_id["n3"].outputs == {"out": WIDTH}
@@ -331,3 +337,196 @@ def test_the_outcome_goes_out_with_the_picture_as_a_list() -> None:
     )
     wire = json.loads(result.model_dump_json())
     assert wire["outcomes"][0]["shown"]["out"]["pixels"] == [0, 1, 2, 3, 4, 5]
+
+
+LOSS = (0.9, 0.5, 0.25)
+
+
+@node
+def loss_curve() -> Series:
+    return Series(values=LOSS)
+
+
+@node
+def two_curves_and_a_number() -> Series:
+    return Series(values=(1.0, float("nan"), 3.0))
+
+
+@node
+def last_of(history: Series) -> float:
+    return history.values[-1]
+
+
+def test_a_series_holds_floats_by_index() -> None:
+    """The x axis is the position, so only the values are kept."""
+    assert Series(values=LOSS).values == LOSS
+    assert Series.model_validate({"values": [1, 2]}).values == (1.0, 2.0)
+    assert Series(values=()).values == ()
+
+
+def test_nan_goes_out_as_null_and_comes_back_as_nan() -> None:
+    """A diverging loss is a gap in the line, not a crash."""
+    series = Series(values=(1.0, float("nan"), 3.0))
+    wire = json.loads(series.model_dump_json())
+    assert wire == {"values": [1.0, None, 3.0]}
+    again = Series.model_validate_json(series.model_dump_json())
+    assert again.values[0] == pytest.approx(1.0)
+    assert math.isnan(again.values[1])
+    assert again.values[2] == THIRD
+
+
+def test_a_series_may_hold_100000_points_and_no_more() -> None:
+    """A node that returns more fails with a clear error."""
+    assert MAX_POINTS == LIMIT
+    assert len(Series(values=(0.0,) * MAX_POINTS).values) == MAX_POINTS
+    with pytest.raises(ValidationError, match="100000"):
+        Series(values=(0.0,) * (MAX_POINTS + 1))
+
+
+@pytest.mark.parametrize("values", [["a"], "abc", 5])
+def test_a_series_refuses_what_is_not_a_list_of_numbers(
+    values: object,
+) -> None:
+    """Text, or a lone number, is an error."""
+    with pytest.raises(ValidationError):
+        Series.model_validate({"values": values})
+
+
+def test_series_links_only_to_series() -> None:
+    """A series is its own kind."""
+    assert PortType.SERIES.value == "series"
+    assert can_link(PortType.SERIES, PortType.SERIES)
+    assert not can_link(PortType.SERIES, PortType.FLOAT)
+    assert not can_link(PortType.FLOAT, PortType.SERIES)
+    assert not can_link(PortType.IMAGE, PortType.SERIES)
+
+
+def test_carries_a_series_for_a_series_port_only() -> None:
+    """The kind check works for both visual kinds."""
+    assert carries(Series(values=LOSS), PortType.SERIES)
+    assert not carries(Series(values=LOSS), PortType.IMAGE)
+    assert not carries(grey(), PortType.SERIES)
+    assert not carries(1.0, PortType.SERIES)
+
+
+def test_a_function_returning_a_series_has_a_series_output() -> None:
+    """`-> Series` is one output `out`; the card itself shows nothing."""
+    assert loss_curve.node_type.outputs == (
+        Port(name="out", kind=PortType.SERIES),
+    )
+    assert loss_curve.node_type.display == "none"
+    assert last_of.node_type.inputs == (
+        Port(name="history", kind=PortType.SERIES),
+    )
+
+
+def test_a_default_for_a_series_input_is_refused() -> None:
+    """A series cannot be typed, so no default fits."""
+
+    def bad(history: Series = EMPTY) -> int:  # pragma: no cover  # never called
+        return len(history.values)
+
+    with pytest.raises(TypeError, match=r"history.*series"):
+        node(bad)
+
+
+def test_the_plot_node_is_a_chart_with_one_series_input() -> None:
+    """It has no outputs and shows a chart."""
+    node_type = PlotNode.node_type
+    assert node_type.name == "Plot"
+    assert node_type.inputs == (Port(name="series_1", kind=PortType.SERIES),)
+    assert node_type.outputs == ()
+    assert node_type.display == "chart"
+    assert PlotNode.defaults == {}
+    assert PlotNode.output_model is None
+
+
+def test_a_series_reaches_the_node_it_is_linked_to() -> None:
+    """The downstream function gets the Series itself."""
+    functions: dict[str, Registered] = {
+        "loss_curve": loss_curve,
+        "last_of": last_of,
+    }
+    result = run_graph(
+        graph_of(
+            {"n1": "loss_curve", "n2": "last_of"},
+            [("n1", "out", "n2", "history")],
+        ),
+        functions,
+        raise_errors=True,
+    )
+    by_id = {outcome.node: outcome for outcome in result.outcomes}
+    assert by_id["n1"].outputs == {}
+    assert by_id["n1"].shown == {}
+    assert by_id["n2"].outputs == {"out": LOSS[-1]}
+
+
+def test_a_plot_shows_the_series_linked_to_it() -> None:
+    """The chart's data is `shown`, by input port name."""
+    functions: dict[str, Registered] = {
+        "loss_curve": loss_curve,
+        "Plot": PlotNode,
+    }
+    result = run_graph(
+        graph_of(
+            {"n1": "loss_curve", "n2": "Plot"},
+            [("n1", "out", "n2", "series_1")],
+        ),
+        functions,
+        raise_errors=True,
+    )
+    plot = result.outcomes[1]
+    assert plot.status == "ok"
+    assert plot.outputs == {}
+    assert plot.shown == {"series_1": Series(values=LOSS)}
+
+
+def test_a_plot_with_nothing_linked_is_ok_and_shows_nothing() -> None:
+    """The empty row is a place to link, not a missing value."""
+    result = run_graph(
+        graph_of({"n1": "Plot"}, []), {"Plot": PlotNode}, raise_errors=True
+    )
+    assert result.outcomes[0].status == "ok"
+    assert result.outcomes[0].shown == {}
+
+
+def test_a_series_with_a_gap_reaches_the_page_with_a_null() -> None:
+    """NaN in a node's series becomes null on the wire."""
+    functions: dict[str, Registered] = {
+        "gappy": two_curves_and_a_number,
+        "Plot": PlotNode,
+    }
+    result = run_graph(
+        graph_of(
+            {"n1": "gappy", "n2": "Plot"}, [("n1", "out", "n2", "series_1")]
+        ),
+        functions,
+        raise_errors=True,
+    )
+    wire = json.loads(result.model_dump_json())
+    assert wire["outcomes"][1]["shown"]["series_1"] == {
+        "values": [1.0, None, 3.0]
+    }
+
+
+def test_the_wire_tells_a_series_from_a_picture() -> None:
+    """`shown` reads back into the right record for each."""
+    result = run_graph(
+        graph_of({"n1": "picture"}, []),
+        {"picture": picture},
+        raise_errors=True,
+    )
+    again = type(result).model_validate_json(result.model_dump_json())
+    assert again.outcomes[0].shown == {"out": grey()}
+    chart = type(result).model_validate({
+        "outcomes": [
+            {
+                "node": "n1",
+                "status": "ok",
+                "shown": {"series_1": {"values": [1.0, None]}},
+            }
+        ]
+    })
+    shown = chart.outcomes[0].shown["series_1"]
+    assert isinstance(shown, Series)
+    assert math.isnan(shown.values[1])

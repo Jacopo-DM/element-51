@@ -161,6 +161,7 @@ pub fn with_palette(theme: &Theme, link: &str) -> Result<Theme, String> {
         &mut out.ports.text,
         &mut out.ports.bool,
         &mut out.ports.image,
+        &mut out.ports.series,
     ] {
         for style in [&mut sides.input, &mut sides.output] {
             style.colour = ensure(&style.colour, &[&card], GRAPHIC_RATIO);

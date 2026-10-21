@@ -5,7 +5,7 @@
 use element_51_core::access::{
     Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_ports, editing_text,
     link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes, moved_to,
-    neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, selected_text, with_pictures,
+    neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, selected_text, with_displays,
     zoom_text,
 };
 use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
@@ -135,7 +135,7 @@ pub(crate) fn sync_tree(shared: &Shared) {
         (
             state.document.clone(),
             match state.run.as_ref() {
-                Some(result) => with_pictures(items, result),
+                Some(result) => with_displays(items, replica.graph(), result),
                 None => items,
             },
         )

@@ -277,10 +277,11 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 35 of `visual-ports` (approved 2026-10-21): a series and a one-line chart.
-Task 34 (a picture on a card, end to end) is done: see DESIGN.md, Results and the spec's task 34
+Next step: the user decides the order of task 36 of `visual-ports` (rows that grow with links)
+and the `card-polish` tasks 39 to 41, which were approved to run after task 35 (now done).
+Tasks 34 (a picture on a card) and 35 (a series and a one-line chart) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
-after `uv run python tools/build_wasm.py`. `canvas-accessibility` is done, so every new part of
+after `uv run python tools/build_wasm.py` (it now also shows a loss curve on a `Plot` node). `canvas-accessibility` is done, so every new part of
 the experiment goals is built to be reachable by keyboard from the start. The user's own try-out (below) is still pending, and so
 is trying the keyboard use with VoiceOver (Cmd+F5 on this Mac: Tab to the graph, then the arrow
 keys).
@@ -493,7 +494,7 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `visual-ports` (task list approved 2026-10-21; task 34 done 2026-10-21)
+### Goal `visual-ports` (task list approved 2026-10-21; tasks 34 and 35 done 2026-10-21)
 
 All five tasks come after `canvas-accessibility` (done; the user's order). The web
 crate has no automated tests, so each task puts its logic in `element-51-core`
@@ -516,16 +517,9 @@ first. The example for these tasks is `examples/g_experiments/g1_picture_and_plo
 
 #### Tier 2 (ordered by value over risk plus cost)
 
-35. **A series and a one-line chart.** `Series` and the `series` kind (NaN as
-    `null`, 100,000 points at most); `PlotNode` with one `series_1` input and a
-    chart area; `display.rs` ticks, scale, thinning (min and max per bucket) and the
-    "last value" text; the chart drawn in `draw.rs` on the card colour with the
-    theme's port colours; `shown` carries a chart node's series inputs; the hidden
-    tree says "Plot of 1 line, loss last 0.31". Files as for task 34 plus
-    `nodes.py` (`PlotNode`). Criteria 1, 3 (one line), 4. Risk: medium. Cost: about
-    500 lines. Verify: native tests for ticks, scale, thinning and the NaN gap,
-    Python tests for the limits and the engine, the example by hand, a 100,000-point
-    chart drawn in 4 ms or less.
+35. Done 2026-10-21: a series and a one-line chart (DESIGN.md, Results and the spec's task 35
+    outcome; the line name tie-break by node id and the sixth line's dash are exercised in
+    task 36).
 36. **Rows that grow with links.** `NodeType.variadic`; the effective rows
     (`layout::effective_inputs`: linked `series_k` in order, then one empty row) used
     by `node_rect`, hit-testing, drawing, the hidden tree and `neighbour`; `edit.rs`
@@ -611,7 +605,7 @@ Oldest first.
     12 picture cards is missed: the cost is in drawing a card (about 0.15 ms each).
     Next step: profile one frame (`columns` measures text, every row fills and clips) and
     decide whether to cut it; needs the user's say-so as a new task. Task 35 (a chart on
-    a card) adds to the same frame.
+    a card) added to the same frame: a 100,000-point chart costs about 1.6 ms a frame.
 - A node's picture output box says `output`, and a card shows only the first picture of
     its node.
 - The Run button has no running state: nothing shows while a run is in progress (the

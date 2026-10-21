@@ -8,25 +8,28 @@ from element_51.model import (
     Graph,
     Link,
     Model,
+    NodeType,
     PlacedNode,
+    PortType,
     PortValue,
 )
 from element_51.nodes import Registered
-from element_51.visuals import Carried, Image, carries
+from element_51.visuals import Carried, Image, Series, Shown, carries
 
 
 class NodeOutcome(Model):
     """What happened to one node in a run.
 
     `outputs` holds the plain values by output port name. `shown` holds what
-    the card displays, by port name: the pictures a node produced. The page
-    reads `shown` for the card and `outputs` for the boxes beside the ports.
+    the card displays, by port name: the pictures a node produced, or the
+    series linked to a chart node by input port name. The page reads `shown`
+    for the card and `outputs` for the boxes beside the ports.
     """
 
     node: str
     status: Literal["ok", "error", "skipped"]
     outputs: Mapping[str, PortValue] = {}
-    shown: Mapping[str, Image] = {}
+    shown: Mapping[str, Shown] = {}
     error: str | None = None
 
 
@@ -99,8 +102,9 @@ def run_graph(
             outcomes[node.id] = NodeOutcome(node=node.id, status="skipped")
             continue
         try:
-            outputs = _evaluate(
-                node, incoming, functions[node.node_type], outputs_by_node
+            function = functions[node.node_type]
+            outputs, inputs = _evaluate(
+                node, incoming, function, outputs_by_node
             )
         except Exception as error:  # node code can raise anything
             if raise_errors:
@@ -113,25 +117,51 @@ def run_graph(
             )
             continue
         outputs_by_node[node.id] = outputs
-        outcomes[node.id] = _outcome(node.id, outputs)
+        outcomes[node.id] = _outcome(
+            node.id, function.node_type, (outputs, inputs)
+        )
     return RunResult(outcomes=tuple(outcomes.values()))
 
 
-def _outcome(node: str, outputs: Mapping[str, Carried]) -> NodeOutcome:
-    """Split a node's outputs into plain values and pictures.
+def _outcome(
+    node: str,
+    node_type: NodeType,
+    values: tuple[Mapping[str, Carried], Mapping[str, Carried]],
+) -> NodeOutcome:
+    """Split a node's values into plain outputs and what its card shows.
+
+    A node with a picture output shows its pictures. A chart node shows the
+    series linked to its inputs. A series output is carried to the next node
+    and shown nowhere.
+
+    Parameters
+    ----------
+    node
+        The node id.
+    node_type
+        The node's type, which says what its card shows.
+    values
+        The node's outputs and its inputs, by port name.
 
     Returns
     -------
     NodeOutcome
         An `ok` outcome.
     """
+    outputs, inputs = values
     plain: dict[str, PortValue] = {}
-    shown: dict[str, Image] = {}
+    shown: dict[str, Shown] = {}
     for name, value in outputs.items():
         if isinstance(value, Image):
             shown[name] = value
-        else:
+        elif not isinstance(value, Series):
             plain[name] = value
+    if node_type.display == "chart":
+        shown.update({
+            name: value
+            for name, value in inputs.items()
+            if isinstance(value, Series)
+        })
     return NodeOutcome(node=node, status="ok", outputs=plain, shown=shown)
 
 
@@ -193,13 +223,16 @@ def _evaluate(
     incoming: Sequence[Link],
     function: Registered,
     outputs_by_node: Mapping[str, Mapping[str, Carried]],
-) -> Mapping[str, Carried]:
+) -> tuple[Mapping[str, Carried], Mapping[str, Carried]]:
     """Call one node's function and check what comes back.
+
+    A chart node takes no value for a series input nothing is linked to: that
+    is an empty row, a place to link, not a missing value.
 
     Returns
     -------
-    Mapping[str, Carried]
-        The value of each of the node's output ports.
+    tuple[Mapping[str, Carried], Mapping[str, Carried]]
+        The value of each of the node's output ports, and of each input.
 
     Raises
     ------
@@ -220,10 +253,15 @@ def _evaluate(
             inputs[port.name] = node.values[port.name]
         elif port.name in function.defaults:
             inputs[port.name] = function.defaults[port.name]
+        elif (
+            function.node_type.display == "chart"
+            and port.kind is PortType.SERIES
+        ):
+            continue
         else:
             msg = f"input {port.name!r} has no value"
             raise _MissingInputError(msg)
-    return _collect_outputs(function, function.call(inputs))
+    return _collect_outputs(function, function.call(inputs)), inputs
 
 
 def _collect_outputs(
@@ -242,6 +280,8 @@ def _collect_outputs(
         If the node returned something its output ports cannot carry.
     """
     model = function.output_model
+    if not function.node_type.outputs:
+        return {}
     if model is None:
         port = function.node_type.outputs[0]
         if carries(result, port.kind):

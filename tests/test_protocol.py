@@ -1,6 +1,7 @@
 """Tests for the messages between Python and the browser."""
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,7 @@ from element_51.protocol import (
     Reject,
     RunRequest,
 )
+from element_51.visuals import Image, Series
 
 FIXTURE = Path(__file__).parent / "fixtures" / "messages.json"
 MESSAGES = json.loads(FIXTURE.read_text())
@@ -116,7 +118,17 @@ def test_a_result_with_a_picture_round_trips() -> None:
     result = round_trip(RunResult, "run_result_picture")
     assert isinstance(result, RunResult)
     picture = result.outcomes[0].shown["out"]
+    assert isinstance(picture, Image)
     assert picture.pixels == bytes([0, 85, 170, 255])
+
+
+def test_a_result_with_a_chart_round_trips() -> None:
+    """A series with a gap is a list with a null on the wire."""
+    result = round_trip(RunResult, "run_result_chart")
+    assert isinstance(result, RunResult)
+    series = result.outcomes[0].shown["series_1"]
+    assert isinstance(series, Series)
+    assert math.isnan(series.values[2])
 
 
 def test_client_messages_are_told_apart_by_op() -> None:

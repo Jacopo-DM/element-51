@@ -5,14 +5,14 @@ use element_51_core::access::{
     Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_graph, describe_ports, edit_text,
     editing_text, link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes,
     moved_to, neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, refusal_text,
-    run_text, selected_text, undo_text, with_pictures, zoom_text,
+    run_text, selected_text, undo_text, with_displays, zoom_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::view::{MAX_ZOOM, MIN_ZOOM, View};
 use element_51_core::{
     Edit, Graph, Image, Link, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType,
-    RunResult, Status, apply_edit,
+    RunResult, Series, Shown, Status, apply_edit,
 };
 use serde::Deserialize;
 
@@ -625,12 +625,12 @@ fn picture_outcome(node: &str, sizes: &[(&str, u32, u32)]) -> NodeOutcome {
             .map(|(port, width, height)| {
                 (
                     port.to_string(),
-                    Image {
+                    Shown::Image(Image {
                         width: *width,
                         height: *height,
                         channels: 1,
                         pixels: vec![0; (width * height) as usize],
-                    },
+                    }),
                 )
             })
             .collect(),
@@ -645,8 +645,9 @@ fn label_of<'a>(items: &'a [NodeItem], id: &str) -> &'a str {
 #[test]
 fn a_node_that_shows_a_picture_says_its_size() {
     let items = list_nodes(&graph(), &types());
-    let shown = with_pictures(
+    let shown = with_displays(
         items.clone(),
+        &graph(),
         &result(vec![picture_outcome("n1", &[("out", 28, 28)])]),
     );
     assert_eq!(
@@ -660,7 +661,7 @@ fn a_node_that_shows_a_picture_says_its_size() {
 fn a_node_with_two_pictures_names_each_size() {
     let items = list_nodes(&graph(), &types());
     let two = picture_outcome("n1", &[("a", 2, 3), ("b", 4, 5)]);
-    let shown = with_pictures(items.clone(), &result(vec![two]));
+    let shown = with_displays(items.clone(), &graph(), &result(vec![two]));
     assert_eq!(
         label_of(&shown, "n1"),
         format!(
@@ -674,7 +675,7 @@ fn a_node_with_two_pictures_names_each_size() {
 fn a_list_is_unchanged_when_nothing_was_shown() {
     let items = list_nodes(&graph(), &types());
     let plain = result(vec![outcome("n1", Status::Ok, None)]);
-    assert_eq!(with_pictures(items.clone(), &plain), items);
+    assert_eq!(with_displays(items.clone(), &graph(), &plain), items);
 }
 
 #[test]
@@ -685,4 +686,103 @@ fn a_picture_input_says_it_can_only_be_linked() {
         "{text}"
     );
     assert_ne!(text, linked_input_text());
+}
+
+fn plot_world() -> (Graph, Vec<NodeType>) {
+    let mut node_types = types();
+    node_types.push(NodeType {
+        name: "curves".to_string(),
+        inputs: vec![],
+        outputs: vec![
+            port("loss", PortType::Series),
+            port("accuracy", PortType::Series),
+        ],
+        defaults: Default::default(),
+        category: String::new(),
+        display: Default::default(),
+    });
+    node_types.push(NodeType {
+        name: "Plot".to_string(),
+        inputs: vec![
+            port("series_1", PortType::Series),
+            port("series_2", PortType::Series),
+        ],
+        outputs: vec![],
+        defaults: Default::default(),
+        category: String::new(),
+        display: element_51_core::CardDisplay::Chart,
+    });
+    let graph = Graph {
+        nodes: vec![
+            node("n1", "curves", 0.0, 0.0),
+            node("n2", "Plot", 300.0, 0.0),
+        ],
+        links: vec![
+            link(("n1", "loss"), ("n2", "series_1")),
+            link(("n1", "accuracy"), ("n2", "series_2")),
+        ],
+    };
+    (graph, node_types)
+}
+
+fn plot_outcome(lines: &[(&str, &[Option<f64>])]) -> NodeOutcome {
+    NodeOutcome {
+        shown: lines
+            .iter()
+            .map(|(port, values)| {
+                (
+                    port.to_string(),
+                    Shown::Series(Series {
+                        values: values.to_vec(),
+                    }),
+                )
+            })
+            .collect(),
+        ..outcome("n2", Status::Ok, None)
+    }
+}
+
+#[test]
+fn a_chart_says_how_many_lines_it_has_and_where_each_ends() {
+    let (graph, node_types) = plot_world();
+    let items = list_nodes(&graph, &node_types);
+    let one = plot_outcome(&[("series_1", &[Some(0.9), Some(0.31)])]);
+    let shown = with_displays(items.clone(), &graph, &result(vec![one]));
+    assert_eq!(
+        label_of(&shown, "n2"),
+        format!(
+            "{} Shows a plot of 1 line, loss last 0.31.",
+            label_of(&items, "n2")
+        )
+    );
+    let two = plot_outcome(&[
+        ("series_1", &[Some(0.31)]),
+        ("series_2", &[Some(0.5), Some(0.92)]),
+    ]);
+    let shown = with_displays(items.clone(), &graph, &result(vec![two]));
+    assert_eq!(
+        label_of(&shown, "n2"),
+        format!(
+            "{} Shows a plot of 2 lines, loss last 0.31 and accuracy last 0.92.",
+            label_of(&items, "n2")
+        )
+    );
+}
+
+#[test]
+fn a_line_with_no_numbers_says_so_and_an_empty_chart_says_nothing() {
+    let (graph, node_types) = plot_world();
+    let items = list_nodes(&graph, &node_types);
+    let gaps = plot_outcome(&[("series_1", &[None, None])]);
+    let shown = with_displays(items.clone(), &graph, &result(vec![gaps]));
+    assert_eq!(
+        label_of(&shown, "n2"),
+        format!(
+            "{} Shows a plot of 1 line, loss has no value yet.",
+            label_of(&items, "n2")
+        )
+    );
+    let empty = plot_outcome(&[]);
+    let shown = with_displays(items.clone(), &graph, &result(vec![empty]));
+    assert_eq!(label_of(&shown, "n2"), label_of(&items, "n2"));
 }

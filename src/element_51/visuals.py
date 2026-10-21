@@ -1,9 +1,10 @@
-"""Pictures: values a node can show on its card and pass along a link.
+"""Pictures and series: values a node can show on its card and pass on.
 
 `PortValue` (in `model.py`) stays the four plain kinds. `Carried` adds what
 cannot be typed into a box and can only travel along a link.
 """
 
+import math
 from typing import Annotated, Literal, Self, TypeGuard
 
 from pydantic import BeforeValidator, Field, PlainSerializer, model_validator
@@ -11,6 +12,7 @@ from pydantic import BeforeValidator, Field, PlainSerializer, model_validator
 from element_51.model import Model, PortType, PortValue, value_fits
 
 MAX_SIDE = 256
+MAX_POINTS = 100_000
 
 
 def _bytes_from_list(value: object) -> object:
@@ -79,7 +81,38 @@ class Image(Model):
         return self
 
 
-type Carried = PortValue | Image
+def _floats_from_list(value: object) -> object:
+    """Accept `null` in a list of values as a gap (NaN), as JSON writes it.
+
+    Returns
+    -------
+    object
+        A tuple with every `None` replaced by NaN, or `value` unchanged if it
+        is not a list or tuple.
+    """
+    if isinstance(value, list | tuple):
+        return tuple(math.nan if item is None else item for item in value)
+    return value
+
+
+class Series(Model):
+    """A list of numbers drawn as a line against its position: 0, 1, 2, ...
+
+    At most 100,000 values. NaN is a gap in the line: on the wire it is
+    `null`, so a loss that diverges does not break the page.
+    """
+
+    values: Annotated[
+        tuple[float, ...],
+        BeforeValidator(_floats_from_list),
+        Field(max_length=MAX_POINTS),
+    ]
+
+
+type Shown = Image | Series
+"""What a card can display: the values of `NodeOutcome.shown`."""
+
+type Carried = PortValue | Image | Series
 
 
 def carries(value: object, kind: PortType) -> TypeGuard[Carried]:
@@ -99,4 +132,6 @@ def carries(value: object, kind: PortType) -> TypeGuard[Carried]:
     """
     if kind is PortType.IMAGE:
         return isinstance(value, Image)
+    if kind is PortType.SERIES:
+        return isinstance(value, Series)
     return value_fits(value, kind)
