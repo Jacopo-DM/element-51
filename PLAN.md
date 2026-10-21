@@ -608,11 +608,7 @@ All in `examples/g_experiments/g3_mnist.py` and its tests; no new dependency (`n
 
 Tier 1 (a working example on fake data):
 
-1. The data part: `Idx`, `load_images`, `load_labels`, the `DATASETS` table and `fetch` with its
-    `.part` and sha256 step (hashes left empty until task 4). Serves criterion 2. Risk low, about
-    120 lines. Verified by `tests/test_mnist_example.py`: fake gzip IDX files parse, a bad magic number
-    or a wrong count is an error, `fetch` is skipped when the files exist and refuses a file whose
-    hash differs (with the download function replaced by a stub, no network).
+1. Done (2026-10-21). The data part in `examples/g_experiments/g3_mnist.py` (`IdxHeader`, `read_idx`, `load_images`, `load_labels`, the `DATASETS` table with the sizes and empty sha256 fields, `download_file`, `fetch`) and `tests/test_mnist_example.py` (13 tests, no network). The hashes are filled in by task 4.
 2. The network: `init`, `forward`, `backward`, `accuracy`, in numpy. Serves criterion 3. Risk medium
     (a wrong gradient trains badly and is hard to see). About 80 lines. Verified by a finite-difference
     gradient check on a tiny network, the same seed giving the same weights and curves, and a

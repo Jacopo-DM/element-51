@@ -84,6 +84,7 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "ok", {}),
         ("n5", "ok", {}),
     ],
+    "g_experiments/g3_mnist.py": [],
     "g_experiments/g2_job_nodes.py": [
         ("n1", "skipped", {}),
         ("n2", "skipped", {}),
