@@ -629,17 +629,7 @@ restarts (not saved, by decision).
 Tier 1 (the walking skeleton: a ticked box runs the graph after an edit):
 
 1. Done (2026-10-21). The auto-run rule in `element-51-core` (`autorun.rs`, `tests/autorun.rs`, 8 tests).
-2. The checkbox and its wiring (new `autorun_ui.rs`, edits in `edit_ui.rs`,
-    `messages.rs`, `run_ui.rs`, `lib.rs`, `index.html`). Serves criteria 1, 2, 4, 5, 6 and 7.
-    Risk medium (it touches the edit, snapshot and run paths), about 200 lines. The error
-    banner already shows one text at a time; this task checks that a passing run clears
-    it and a failing run replaces it, and fixes it if not. Verified by: all three
-    walk-throughs (90, 16, 21 rows) plus new rows for the box (Tab to it, Space ticks,
-    Run reports disabled, unticking enables it); in the browser pane: type into an add
-    node's box and see the result follow, three fast edits give one run, a 20-second
-    node with an edit during the run shows "Still running, will run again" and then
-    runs once more; axe 0 violations with the box in both themes; contrast for the
-    label. No automated page test exists, so the rule's tests (task 1) pin the logic.
+2. Done (2026-10-21). The checkbox and its wiring (`autorun_ui.rs`, `index.html`, the edit, snapshot and run paths). Checked in the browser pane: `uiKeys` 90 of 90, `uiKeysAuto` 19 of 19 (new rows in `tools/ui_keys.js`), dark and light look. Not run: axe (it is a download that needs the user's yes), a real screen reader, a narrow window or touch, and the banner clearing after a passing run (the default graph always fails; the code clears it only if the banner holds a run failure).
 
 Tier 2:
 

@@ -3,6 +3,7 @@
 use crate::Shared;
 use crate::State;
 use crate::a11y_ui::announce;
+use crate::autorun_ui::changed;
 use crate::redraw;
 use crate::run_ui::clear_run;
 use crate::show_error;
@@ -27,6 +28,7 @@ pub(crate) fn submit(shared: &Shared, edit: Edit) {
 /// Apply `edit` locally and send it. A refused edit shows its reason. With
 /// `record` the edit joins the undo history; undo and redo pass false.
 pub(crate) fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
+    let mut altered = false;
     {
         let mut state = shared.borrow_mut();
         let Some(replica) = state.replica.as_mut() else {
@@ -45,6 +47,7 @@ pub(crate) fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
                 state.tree_stale = true;
                 if !keeps_results {
                     clear_run(&mut state);
+                    altered = true;
                 }
             }
             Err(error) => {
@@ -52,6 +55,9 @@ pub(crate) fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
                 announce(&state.document, &refusal_text(&error.to_string()));
             }
         }
+    }
+    if altered {
+        changed(shared);
     }
     redraw(shared);
 }

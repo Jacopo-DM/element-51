@@ -5,6 +5,7 @@
 //! value boxes in `fields_ui`.
 
 mod a11y_ui;
+mod autorun_ui;
 mod canvas_ui;
 mod draw;
 mod draw_card;
@@ -41,6 +42,7 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
+use crate::autorun_ui::on_toggle;
 use crate::canvas_ui::{apply_theme, draw_canvas, fit_canvas, mark_ready};
 use crate::edit_ui::{step_history, submit};
 use crate::messages::on_message;
@@ -91,6 +93,10 @@ pub(crate) struct State {
     card_menu_node: Option<String>,
     /// The theme name and changes the current theme was built from.
     theme_key: String,
+    /// The `Run automatically` rule: the box, the waiting change, the run going.
+    auto: element_51_core::autorun::AutoRun,
+    /// Whether the error banner shows a failed run, so that a passing run clears it.
+    run_failed: bool,
 }
 
 pub(crate) type Shared = Rc<RefCell<State>>;
@@ -146,6 +152,8 @@ pub fn start() -> Result<(), JsValue> {
         menu_at: (0.0, 0.0),
         card_menu_node: None,
         theme_key: String::new(),
+        auto: element_51_core::autorun::AutoRun::new(),
+        run_failed: false,
     }));
     fit_canvas(&state, &window);
 
@@ -216,6 +224,12 @@ pub fn start() -> Result<(), JsValue> {
     if let Some(button) = document.get_element_by_id("run") {
         let shared = state.clone();
         listen(&button, "click", move |_event: MouseEvent| on_run(&shared))?;
+    }
+    if let Some(auto) = document.get_element_by_id("auto-run") {
+        let shared = state.clone();
+        listen(&auto, "change", move |_event: web_sys::Event| {
+            on_toggle(&shared)
+        })?;
     }
     if let Some(menu) = document.get_element_by_id("menu") {
         let shared = state.clone();
@@ -326,6 +340,13 @@ pub(crate) fn redraw(shared: &Shared) {
     sync_tree(shared);
     draw_canvas(shared);
     sync_fields(shared);
+}
+
+/// Hide the error banner.
+pub(crate) fn hide_error(document: &Document) {
+    if let Some(banner) = document.get_element_by_id("error") {
+        let _ = banner.set_attribute("hidden", "");
+    }
 }
 
 /// Put `message` in the error banner. It stays until the user presses Dismiss.

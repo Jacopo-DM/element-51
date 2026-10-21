@@ -181,6 +181,11 @@ pub fn zoom_text(zoom: f64) -> String {
     format!("Zoom {} percent", (zoom * 100.0).round())
 }
 
+/// The sentence when an edit came in during a run and one more run is queued.
+pub fn queued_run_text() -> &'static str {
+    "Still running, will run again"
+}
+
 /// The sentence when a run ended: how many nodes were ok, failed and were
 /// skipped, and the first error.
 pub fn run_text(result: &RunResult) -> String {

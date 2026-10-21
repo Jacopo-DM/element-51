@@ -3,11 +3,13 @@
 use crate::Shared;
 use crate::a11y_ui::announce;
 use crate::apply_theme;
+use crate::autorun_ui::changed;
+use crate::hide_error;
 use crate::mark_ready;
 use crate::menu_ui::fill_menu;
 use crate::pictures::Pictures;
 use crate::redraw;
-use crate::run_ui::{clear_run, on_job_update, set_running};
+use crate::run_ui::{clear_run, on_job_update, set_running, start_run};
 use crate::show_error;
 use crate::source_ui::show_source;
 use element_51_core::announce::{refusal_text, run_text};
@@ -22,6 +24,7 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
         .ok_or_else(|| "Python sent a message that is not text".to_string())
         .and_then(|text| Message::from_json(&text).map_err(|error| error.to_string()));
     let mut source_reply = None;
+    let mut graph_changed = false;
     {
         let mut state = shared.borrow_mut();
         match parsed {
@@ -32,6 +35,7 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
                     .map(|job| (job.node.clone(), job.clone()))
                     .collect();
                 clear_run(&mut state);
+                graph_changed = true;
                 state.selected = None;
                 state.tree_stale = true;
                 let theme_key = format!("{} {}", snapshot.theme, snapshot.theme_changes);
@@ -68,6 +72,8 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
                 if known {
                     state.tree_stale = true;
                     clear_run(&mut state);
+                    graph_changed = true;
+                    state.run_failed = false;
                     show_error(
                         &state.document,
                         &format!("Python refused the edit: {}", reject.reason),
@@ -81,7 +87,13 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
                 }
                 if let Some(summary) = result.error_summary() {
                     show_error(&state.document, &summary);
+                    state.run_failed = true;
+                } else if !result.partial && state.run_failed {
+                    // A passing run clears the banner a failing run left.
+                    hide_error(&state.document);
+                    state.run_failed = false;
                 }
+                let run_ended = !result.partial;
                 // The run after a job follows the job's own announcement; it is only
                 // spoken when something in it failed.
                 if !result.partial || result.error_summary().is_some() {
@@ -99,6 +111,10 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
                 state.pictures = Pictures::from_result(&state.document, &whole);
                 state.tree_stale = true;
                 state.run = Some(whole);
+                // A change that came in during the run starts one more.
+                if run_ended && state.auto.finished() {
+                    start_run(&state);
+                }
             }
             Ok(Message::SourceReply(reply)) => source_reply = Some(reply),
             Ok(Message::JobUpdate(update)) => on_job_update(&mut state, update),
@@ -120,6 +136,9 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
             }
             Err(error) => show_error(&state.document, &error),
         }
+    }
+    if graph_changed {
+        changed(shared);
     }
     redraw(shared);
     // The panel moves the focus, which runs handlers that borrow the state, so

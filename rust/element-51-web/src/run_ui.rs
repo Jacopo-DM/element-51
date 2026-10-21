@@ -8,7 +8,8 @@ use crate::show_error;
 use element_51_core::announce::job_announcement;
 use element_51_core::job::JobButton;
 use element_51_core::{JobStatus, JobUpdate, Message, RunRequest, StartRequest, StopRequest};
-use web_sys::Document;
+use wasm_bindgen::JsCast;
+use web_sys::{Document, HtmlInputElement};
 
 /// Forget the last run, then show what the jobs have reported: a job's results
 /// are not the result of a run, so an edit must not lose them.
@@ -70,16 +71,25 @@ pub(crate) fn send_job_request(state: &State, id: &str, button: JobButton) {
 }
 
 /// Press Run: send the request and show that a run is in progress until its
-/// result comes. A press while a run is in progress does nothing.
+/// result comes. A press while a run is in progress does nothing, and neither
+/// does one while `Run automatically` is ticked.
 pub(crate) fn on_run(shared: &Shared) {
-    let state = shared.borrow();
+    let mut state = shared.borrow_mut();
     let busy = state
         .document
         .get_element_by_id("run")
         .is_some_and(|button| button.get_attribute("aria-busy").as_deref() == Some("true"));
-    if busy {
+    if busy || state.auto.ticked() {
         return;
     }
+    if start_run(&state) {
+        state.auto.started();
+    }
+}
+
+/// Send the run request and show the Run button as busy. False if it could not
+/// be sent.
+pub(crate) fn start_run(state: &State) -> bool {
     if state
         .socket
         .send_with_str(&Message::Run(RunRequest {}).to_json())
@@ -89,8 +99,10 @@ pub(crate) fn on_run(shared: &Shared) {
             &state.document,
             "Could not send the run request: not connected to Python.",
         );
+        false
     } else {
         set_running(&state.document, true);
+        true
     }
 }
 
@@ -106,7 +118,18 @@ pub(crate) fn set_running(document: &Document, running: bool) {
         button.set_text_content(Some("Running"));
     } else {
         let _ = button.remove_attribute("aria-busy");
-        let _ = button.remove_attribute("aria-disabled");
+        // `Run automatically` keeps the button off, like a run does.
+        if !auto_run_ticked(document) {
+            let _ = button.remove_attribute("aria-disabled");
+        }
         button.set_text_content(Some("Run"));
     }
+}
+
+/// Whether the `Run automatically` box is ticked.
+pub(crate) fn auto_run_ticked(document: &Document) -> bool {
+    document
+        .get_element_by_id("auto-run")
+        .and_then(|box_| box_.dyn_into::<HtmlInputElement>().ok())
+        .is_some_and(|box_| box_.checked())
 }

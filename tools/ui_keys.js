@@ -583,3 +583,110 @@ async function uiKeysJob() {
         rows,
     };
 }
+
+// Walk the Run automatically box (on `ui_states.py`, the default graph). It counts
+// the run messages the page sends by wrapping `WebSocket.prototype.send`, and
+// toggles the `loud` box of n6 to make edits. Restart the server and reload the
+// page first: the rows change a value.
+async function uiKeysAuto() {
+    const rows = [];
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const check = (step, passed, seen) => rows.push([step, Boolean(passed), String(seen)]);
+    const run = document.getElementById("run");
+    const box = document.getElementById("auto-run");
+    const status = document.getElementById("status");
+    const banner = document.getElementById("error");
+    const loud = document.getElementById("field-n6-loud");
+    const tree = document.getElementById("graph-tree");
+    const sent = [];
+    let hold = 0;
+    const original = WebSocket.prototype.send;
+    WebSocket.prototype.send = function (data) {
+        if (String(data) === '{"op":"run"}') {
+            sent.push(Math.round(performance.now()));
+            if (hold > 0) {
+                const socket = this;
+                setTimeout(() => original.call(socket, data), hold);
+                return;
+            }
+        }
+        return original.call(this, data);
+    };
+    const until = async (predicate) => {
+        const end = Date.now() + 5000;
+        while (Date.now() < end) {
+            if (predicate()) return true;
+            await wait(50);
+        }
+        return false;
+    };
+    const label = box && box.labels.length ? box.labels[0].textContent.trim() : "";
+
+    check("the box is labelled Run automatically", label === "Run automatically", label);
+    check("it is unticked at load and Run is available", !box.checked && !run.hasAttribute("aria-disabled"), box.checked);
+    check(
+        "the tab order is Run, the box, then the graph tree",
+        Boolean(run.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING) && Boolean(box.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING),
+        "run, auto-run, tree",
+    );
+
+    loud.click();
+    await wait(600);
+    check("unticked, an edit starts no run", sent.length === 0, sent.length);
+
+    box.focus();
+    box.click();
+    await wait(100);
+    check("ticking disables Run for assistive technology", box.checked && run.getAttribute("aria-disabled") === "true", run.getAttribute("aria-disabled"));
+    run.click();
+    await wait(300);
+    check("pressing Run while ticked does nothing", sent.length === 0 && run.textContent === "Run", sent.length);
+
+    loud.click();
+    await wait(200);
+    check("an edit does not run before 300 ms", sent.length === 0, sent.length);
+    await wait(400);
+    check("then it runs once", sent.length === 1, sent.length);
+    check("the run ended and Run stays disabled", await until(() => run.textContent === "Run") && run.getAttribute("aria-disabled") === "true", run.textContent);
+    check("a failing run shows the banner", !banner.hidden && /ZeroDivisionError/.test(banner.textContent), banner.textContent);
+
+    sent.length = 0;
+    loud.click();
+    await wait(60);
+    loud.click();
+    await wait(60);
+    loud.click();
+    await wait(800);
+    check("three edits inside a second give one run", sent.length === 1, sent.length);
+
+    sent.length = 0;
+    hold = 1200;
+    loud.click();
+    await wait(600);
+    check("the run in progress shows Running", run.textContent === "Running" && run.getAttribute("aria-busy") === "true", run.textContent);
+    loud.click();
+    await wait(100);
+    check("an edit during it says it will run again", status.textContent === "Still running, will run again" && run.textContent === "Running, will run again", status.textContent + " / " + run.textContent);
+    await wait(250);
+    check("nothing starts while a run is going", sent.length === 1, sent.length);
+    hold = 0;
+    check("one more run starts when it ends", await until(() => sent.length === 2), sent.length);
+    check("and then it ends", await until(() => run.textContent === "Run" && !run.hasAttribute("aria-busy")), run.textContent);
+    await wait(500);
+    check("only one extra run", sent.length === 2, sent.length);
+
+    box.click();
+    await wait(100);
+    check("unticking enables Run again", !box.checked && !run.hasAttribute("aria-disabled"), run.getAttribute("aria-disabled"));
+    sent.length = 0;
+    loud.click();
+    await wait(600);
+    check("unticked, an edit starts no run again", sent.length === 0, sent.length);
+
+    WebSocket.prototype.send = original;
+    return {
+        passed: rows.filter((row) => row[1]).length,
+        failed: rows.filter((row) => !row[1]).length,
+        rows,
+    };
+}
