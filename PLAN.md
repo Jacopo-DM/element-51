@@ -508,7 +508,7 @@ canvas calls in the page: `measureText` 0.43 us, setting the same font 0.39 us, 
 
 Tier 1:
 
-1. Draw only the wires that can reach the view. `draw_links` in
+1. Done (2026-10-21, 0.24 ms or 15% on the 200-node page; the Results row in DESIGN.md has the numbers). Draw only the wires that can reach the view. `draw_links` in
     `rust/element-51-web/src/draw.rs` loops over every link of the graph, twice (solid
     under the cards, again over them at the wire opacity); in the 200-node page 190 wires
     are drawn for the 12 cards in view. Skip a link whose box (both anchors, grown by the

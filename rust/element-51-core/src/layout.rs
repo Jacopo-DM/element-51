@@ -226,6 +226,30 @@ pub fn wire_controls(from: (f64, f64), to: (f64, f64), metrics: &Metrics) -> [(f
     [from, (from.0 + reach, from.1), (to.0 - reach, to.1), to]
 }
 
+/// A box that holds the curve of a link from `from` to `to` and its line, even
+/// the thickest one. The curve stays inside the hull of its control points, so
+/// the box around the four points, grown by half the line, is a safe bound: a
+/// wire whose box misses the view draws nothing in it.
+pub fn wire_bounds(from: (f64, f64), to: (f64, f64), metrics: &Metrics) -> Rect {
+    let controls = wire_controls(from, to, metrics);
+    let (mut left, mut top) = controls[0];
+    let (mut right, mut bottom) = controls[0];
+    for point in &controls[1..] {
+        left = left.min(point.0);
+        right = right.max(point.0);
+        top = top.min(point.1);
+        bottom = bottom.max(point.1);
+    }
+    let half = metrics.wire_width.max(metrics.wire_width_selected) / 2.0;
+    Rect {
+        x: left,
+        y: top,
+        w: right - left,
+        h: bottom - top,
+    }
+    .grown(half)
+}
+
 /// How many straight pieces stand in for a curve when testing a click.
 const WIRE_STEPS: usize = 32;
 

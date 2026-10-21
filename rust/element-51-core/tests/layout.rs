@@ -2,7 +2,7 @@
 
 use element_51_core::layout::{
     Rect, Side, anchor_of, icon_at, icon_rect, input_anchor, link_at, node_at as pick_node,
-    node_rect, output_anchor, output_row, port_at, wire_controls,
+    node_rect, output_anchor, output_row, port_at, wire_bounds, wire_controls,
 };
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::{Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
@@ -404,4 +404,69 @@ fn a_grown_rectangle_reaches_a_neighbour_the_plain_one_misses() {
         rect(95.0, -5.0, 60.0, 60.0),
         "grown on every side"
     );
+}
+
+fn view_box() -> Rect {
+    Rect {
+        x: 0.0,
+        y: 0.0,
+        w: 800.0,
+        h: 600.0,
+    }
+}
+
+#[test]
+fn a_wire_box_holds_the_whole_curve_and_its_line() {
+    // The curve stays inside the hull of its control points, so a box around the
+    // four points, and half the thickest line, holds every drawn pixel.
+    let metrics = m();
+    for (from, to) in [
+        ((0.0, 0.0), (300.0, 10.0)),
+        ((300.0, 400.0), (0.0, 0.0)),
+        ((100.0, 100.0), (100.0, 500.0)),
+        ((50.0, 50.0), (50.0, 50.0)),
+    ] {
+        let bounds = wire_bounds(from, to, &metrics);
+        let half = metrics.wire_width.max(metrics.wire_width_selected) / 2.0;
+        for point in wire_controls(from, to, &metrics) {
+            assert!(point.0 >= bounds.x + half - 1e-9, "{from:?} {to:?}");
+            assert!(
+                point.0 <= bounds.x + bounds.w - half + 1e-9,
+                "{from:?} {to:?}"
+            );
+            assert!(point.1 >= bounds.y + half - 1e-9, "{from:?} {to:?}");
+            assert!(
+                point.1 <= bounds.y + bounds.h - half + 1e-9,
+                "{from:?} {to:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_wire_inside_the_view_overlaps_it() {
+    let bounds = wire_bounds((100.0, 100.0), (400.0, 300.0), &m());
+    assert!(view_box().overlaps(&bounds));
+}
+
+#[test]
+fn a_wire_crossing_the_view_with_both_ends_outside_overlaps_it() {
+    let bounds = wire_bounds((-500.0, 300.0), (1500.0, 320.0), &m());
+    assert!(view_box().overlaps(&bounds));
+}
+
+#[test]
+fn a_wire_wholly_outside_the_view_does_not_overlap_it() {
+    let metrics = m();
+    for (from, to) in [
+        ((-900.0, 100.0), (-300.0, 300.0)),
+        ((1000.0, 100.0), (1600.0, 300.0)),
+        ((100.0, -900.0), (400.0, -300.0)),
+        ((100.0, 900.0), (400.0, 1500.0)),
+    ] {
+        assert!(
+            !view_box().overlaps(&wire_bounds(from, to, &metrics)),
+            "{from:?} {to:?}"
+        );
+    }
 }

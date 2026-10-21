@@ -10,7 +10,7 @@ use element_51_core::display::{
 use element_51_core::fields::{linked_text, share_room};
 use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
-    wire_controls,
+    wire_bounds, wire_controls,
 };
 use element_51_core::rows::{find_input, type_of};
 use element_51_core::theme::{Metrics, PortShape, PortStyle, Theme};
@@ -203,7 +203,7 @@ pub fn draw(
 
     // A wire is drawn solid under the cards, so it shows on the canvas, and again
     // over the cards at the theme's opacity, so a card's boxes show through it.
-    draw_links(context, theme, (graph, types), selected)?;
+    draw_links(context, theme, (graph, types), selected, &visible)?;
     let mut cards: Vec<Rect> = Vec::new();
     for node in &graph.nodes {
         let Some(node_type) = type_of(graph, types, node) else {
@@ -232,7 +232,7 @@ pub fn draw(
         }
         context.clip();
         context.set_global_alpha(opacity);
-        let drawn = draw_links(context, theme, (graph, types), selected);
+        let drawn = draw_links(context, theme, (graph, types), selected, &visible);
         context.restore();
         drawn?;
     }
@@ -303,6 +303,7 @@ fn draw_links(
     theme: &Theme,
     (graph, types): (&Graph, &[NodeType]),
     selected: Option<&Selected>,
+    visible: &Rect,
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     context.set_line_cap("round");
@@ -311,6 +312,11 @@ fn draw_links(
         let from = anchor_of(graph, types, &link.source, Side::Output, metrics);
         let to = anchor_of(graph, types, &link.target, Side::Input, metrics);
         if let (Some(from), Some(to)) = (from, to) {
+            // A wire that cannot reach the view draws nothing in it; skipping it
+            // keeps a frame's cost to what is on screen. See DESIGN.md, speed-up-frame.
+            if !visible.overlaps(&wire_bounds(from, to, metrics)) {
+                continue;
+            }
             let chosen = selected == Some(&Selected::Link(link.clone()));
             let colour = wire_colour(graph, types, &link.source, theme);
             context.set_stroke_style_str(if chosen {
