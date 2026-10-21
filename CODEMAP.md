@@ -33,7 +33,7 @@ the ignore list in CLAUDE.md.
     `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`, `e3_palette.py`, `e4_purple_synthwave.py`. `f_embedding`:
     `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
     in a FastAPI or NiceGUI host, with a side panel). `g_experiments`:
-    `g1_picture_and_plot.py` (nodes that make and pass pictures and a series; a picture shows on the card, and a `Plot` node draws the series linked to it). Each example has
+    `g1_picture_and_plot.py` (nodes that make and pass pictures and series; a picture shows on the card, and a `Plot` node draws the series linked to it, with a row for each link and an empty one after them). Each example has
     `build_app()`; `tests/test_examples.py` runs every one.
 - `docs/images/`: the three README screenshots (`dark`, `light`, `palette`; how they
     were made is in DESIGN.md, Gotchas).

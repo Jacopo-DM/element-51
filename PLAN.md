@@ -261,15 +261,19 @@ point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholde
 Next step: task 37 of `visual-ports` (approved 2026-10-21): Save as PNG. `card-polish` is done.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart) and 36 (rows that grow with links) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
-after `uv run python tools/build_wasm.py` (it now also shows a loss curve on a `Plot` node). `canvas-accessibility` is done, so every new part of
+after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
+lines to a `Plot` node whose rows grow with its links). `canvas-accessibility` is done, so every new part of
 the experiment goals is built to be reachable by keyboard from the start. The user's own try-out (below) is still pending, and so
 is trying the keyboard use with VoiceOver (Cmd+F5 on this Mac: Tab to the graph, then the arrow
 keys).
 `examples/a_basics/a1_hello_world.py` is now a one-node example (the template is
 `examples/template.py`); it serves with `uvicorn` on `HOST` and `PORT` set at its top, so a
 script can choose the address (`element_51.serve` always uses `127.0.0.1`). The user has
-`a1_hello_world.py` running in their own terminal (pid 2151 on 2026-10-21, started before
-the default-theme change): it needs a restart to show purple-synthwave; never kill it.
+`a1_hello_world.py` no longer running: they asked Claude to stop it (pid 2151) on 2026-10-21 to
+free port 8765, which is a one-off leave, not a standing one. They then ran
+`examples/g_experiments/g1_picture_and_plot.py` in their own terminal on port 8765 (pid 56292,
+started after task 34, so it holds Python from before tasks 35 to 41 and needs a restart);
+never kill a process of theirs unless they ask, and use another port for Claude's own checks.
 To try the newest work: `uv run python tools/build_wasm.py`, then
 `uv run python examples/e_look/e3_palette.py`, open http://127.0.0.1:8765, press
 the menu button at the top right, choose Load palette from Coolors link and paste
@@ -281,10 +285,10 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-21 after the header change);
-`main` was pushed to `origin/main` at `e151401` on 2026-10-21 at the user's say-so (the
-experiment goals and tasks, keyboard access and the one-node `a1_hello_world`); the
-GitHub workflows for `1488eb2` (CI, Rust and WASM, Docs) all finished with success
-(checked 2026-10-21). Task 34 of `visual-ports` was pushed the same day (`527571e`).
+`main` equals `origin/main` at `b74ce11` (pushed 2026-10-21 at the user's say-so, each time:
+tasks 34 to 36 of `visual-ports` and `card-polish`). The GitHub workflows for `1488eb2` (CI,
+Rust and WASM, Docs) all finished with success (checked 2026-10-21); the later pushes' runs
+were not read.
 No other local branch is left: every merged branch was deleted on 2026-10-21 at the
 user's say-so.
 In `~/Functions`, the VS Code profile settings and the project template
@@ -555,6 +559,8 @@ Oldest first.
     a card) added to the same frame: a 100,000-point chart costs about 1.6 ms a frame.
 - A node's picture output box says `output`, and a card shows only the first picture of
     its node.
+- Not checked on a narrow window or by touch: the source panel, the growing Plot card, the
+    chart. Not run in a real screen reader: the panel and the chart label.
 - The Run button has no running state: nothing shows while a run is in progress (the
     end of a run is announced to screen readers; the goal `job-nodes` adds the state).
 - A node's empty output box says `output`, the same word as the port name.

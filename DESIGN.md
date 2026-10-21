@@ -1302,8 +1302,13 @@ have to go through `tools/compress_images.py`).
 - `cargo test` stops at the first test file that fails, so the files after it never run
     and the total looks smaller: a count of 166 instead of 215 once hid `theme.rs`.
     Run `cargo test --no-fail-fast` to see every failure.
-- A change to the shared `link_cases.json` graph changes `next_id` there (now `n8`), which
-    `rules.rs` and `test_edits.py` pin; add nodes there only with a reason.
+- A change to the shared `link_cases.json` graph changes `next_id` there (now `n10`), which
+    `rules.rs` and `test_edits.py` pin, and the "unknown node" cases name `n99` because any
+    lower id may exist; add nodes there only with a reason.
+- A synthetic `KeyboardEvent` for Enter does not press a button, so a walk-through row
+    that "presses Enter" on a menu entry must `click()` the focused entry (a real Enter
+    does the same). The hidden tree and the menus read keydown events, which synthetic
+    ones do reach.
 - `uv publish` asks for the username first. Type `__token__`, then paste the token at
     the password prompt (nothing is echoed). A token pasted at the username prompt is
     echoed on screen and refused (happened 2026-10-21; that token had to be revoked).

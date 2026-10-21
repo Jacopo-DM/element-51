@@ -209,6 +209,8 @@ No tool ignore or deny file exists in this repo, so none was changed.
     (it refuses anything that is not a fast-forward, and also refuses while `main` is checked
     out in the folder; then commit from a `git worktree add <scratchpad>/wt -b <branch> main`
     and, once `main` is checked out and clean, `git merge --ff-only <branch>` there).
+- A synthetic Enter in a script does not press a button: `click()` the focused entry (the
+    walk-through rows do). The walk-through has 89 rows.
 - A pane screenshot taken right after a script action can show the previous frame (a ring or
     menu that is not there yet); take a second screenshot before deciding something is wrong.
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's
