@@ -46,21 +46,27 @@
                 "node_type": "add",
                 "x": 10.0,
                 "y": 20.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n2",
                 "node_type": "add",
                 "x": 200.0,
                 "y": 20.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n3",
                 "node_type": "add",
                 "x": 400.0,
                 "y": 60.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             }
         ],
         "links": [
@@ -113,21 +119,27 @@
                         "node_type": "add",
                         "x": 10.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n2",
                         "node_type": "add",
                         "x": 55.5,
                         "y": 66.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -188,14 +200,18 @@
                         "node_type": "add",
                         "x": 10.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -226,14 +242,18 @@
                         "node_type": "add",
                         "x": 200.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -279,21 +299,27 @@
                         "node_type": "add",
                         "x": 10.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n2",
                         "node_type": "add",
                         "x": 200.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -353,21 +379,27 @@
                         "y": 20.0,
                         "values": {
                             "b": 2.5
-                        }
+                        },
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n2",
                         "node_type": "add",
                         "x": 200.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -422,21 +454,27 @@
                         "y": 20.0,
                         "values": {
                             "a": 3
-                        }
+                        },
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n2",
                         "node_type": "add",
                         "x": 200.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -489,7 +527,9 @@
                         "node_type": "add",
                         "x": 10.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n2",
@@ -498,14 +538,18 @@
                         "y": 20.0,
                         "values": {
                             "a": 1.5
-                        }
+                        },
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -558,21 +602,27 @@
                         "node_type": "add",
                         "x": 10.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n2",
                         "node_type": "add",
                         "x": 200.0,
                         "y": 20.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     },
                     {
                         "id": "n3",
                         "node_type": "add",
                         "x": 400.0,
                         "y": 60.0,
-                        "values": {}
+                        "values": {},
+                        "width": null,
+                        "display_height": null
                     }
                 ],
                 "links": [
@@ -658,6 +708,255 @@
                 "value": true
             },
             "result": "bad_value"
+        },
+        {
+            "name": "a card can be resized",
+            "edit": {
+                "kind": "resize_node",
+                "id": "n2",
+                "width": 320.0,
+                "display_height": 210.5
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": 320.0,
+                        "display_height": 210.5
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "a card can be given back its default size",
+            "edit": {
+                "kind": "resize_node",
+                "id": "n2",
+                "width": null,
+                "display_height": null
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "a card can be resized in one direction only",
+            "edit": {
+                "kind": "resize_node",
+                "id": "n1",
+                "width": 300.0,
+                "display_height": null
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": 300.0,
+                        "display_height": null
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "add",
+                        "x": 200.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    },
+                    {
+                        "id": "n3",
+                        "node_type": "add",
+                        "x": 400.0,
+                        "y": 60.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null
+                    }
+                ],
+                "links": [
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n2",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n2",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "a"
+                        }
+                    },
+                    {
+                        "source": {
+                            "node": "n1",
+                            "port": "out"
+                        },
+                        "target": {
+                            "node": "n3",
+                            "port": "b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "resizing an unknown node is refused",
+            "edit": {
+                "kind": "resize_node",
+                "id": "n9",
+                "width": 300.0,
+                "display_height": null
+            },
+            "result": "unknown_node"
+        },
+        {
+            "name": "a size of zero is refused",
+            "edit": {
+                "kind": "resize_node",
+                "id": "n1",
+                "width": 0.0,
+                "display_height": null
+            },
+            "result": "bad_size"
+        },
+        {
+            "name": "a size that is far too large is refused",
+            "edit": {
+                "kind": "resize_node",
+                "id": "n1",
+                "width": null,
+                "display_height": 100000.0
+            },
+            "result": "bad_size"
         }
     ]
 }

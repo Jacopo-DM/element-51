@@ -32,7 +32,11 @@ pub enum EditError {
         node: String,
         port: String,
     },
+    BadSize(&'static str),
 }
+
+/// The largest width or height a card may be given, in graph units.
+pub const MAX_CARD_SIZE: f64 = 4000.0;
 
 impl EditError {
     /// The category, spelled as in the wire format and the shared fixture.
@@ -47,6 +51,7 @@ impl EditError {
             EditError::Cycle => "cycle",
             EditError::UnknownLink => "unknown_link",
             EditError::BadValue { .. } => "bad_value",
+            EditError::BadSize(_) => "bad_size",
         }
     }
 }
@@ -79,6 +84,12 @@ impl fmt::Display for EditError {
                 node,
                 port,
             } => write!(formatter, "{value} is not a {kind} for {node}.{port}"),
+            EditError::BadSize(name) => {
+                write!(
+                    formatter,
+                    "{name} must be above 0 and at most {MAX_CARD_SIZE}"
+                )
+            }
         }
     }
 }
@@ -107,6 +118,8 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 x: *x,
                 y: *y,
                 values: Default::default(),
+                width: None,
+                display_height: None,
             });
             Ok(next)
         }
@@ -141,6 +154,26 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 .ok_or_else(|| EditError::UnknownNode(id.clone()))?;
             node.x = *x;
             node.y = *y;
+            Ok(next)
+        }
+        Edit::ResizeNode {
+            id,
+            width,
+            display_height,
+        } => {
+            let mut next = graph.clone();
+            let node = next
+                .nodes
+                .iter_mut()
+                .find(|node| node.id == *id)
+                .ok_or_else(|| EditError::UnknownNode(id.clone()))?;
+            for (name, size) in [("width", width), ("display_height", display_height)] {
+                if size.is_some_and(|size| !(size > 0.0 && size <= MAX_CARD_SIZE)) {
+                    return Err(EditError::BadSize(name));
+                }
+            }
+            node.width = *width;
+            node.display_height = *display_height;
             Ok(next)
         }
         Edit::DeleteNode { id } => {

@@ -34,6 +34,7 @@ pub fn edit_text(edit: &Edit) -> String {
             format!("Linked {} to {}", end_name(source), end_name(target))
         }
         Edit::MoveNode { id, .. } => format!("Moved {id}"),
+        Edit::ResizeNode { id, .. } => format!("Resized {id}"),
         Edit::DeleteNode { id } => format!("Deleted node {id}"),
         Edit::DeleteLink { source, target } => format!(
             "Deleted the link from {} to {}",

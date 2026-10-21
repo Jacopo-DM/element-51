@@ -190,7 +190,9 @@ class PlacedNode(Model):
     """A node placed in the graph.
 
     `values` holds the values the user typed for unlinked inputs, by input
-    name. They win over the node type's defaults.
+    name. They win over the node type's defaults. `width` and `display_height`
+    are the size the user gave the card, in graph units: the card's width, and
+    the height of the picture or chart on it. `None` means the default size.
     """
 
     id: NodeId
@@ -198,6 +200,8 @@ class PlacedNode(Model):
     x: float
     y: float
     values: Mapping[str, PortValue] = {}
+    width: float | None = None
+    display_height: float | None = None
 
 
 class Graph(Model):

@@ -118,14 +118,18 @@
                 "y": 60.0,
                 "values": {
                     "a": 4.0
-                }
+                },
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n2",
                 "node_type": "show",
                 "x": 300.0,
                 "y": 80.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             }
         ],
         "links": [

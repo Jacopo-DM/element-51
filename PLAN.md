@@ -184,23 +184,12 @@ Results). `tests/test_mnist_example.py` (31 tests, fake data), a row in `tests/t
 and a fixture that runs every example from an empty folder, `docs/experiments.md`. The user's own
 try-out is still to come; the keyboard walk-throughs do not cover this example.
 
-### card-resize (draft, asked 2026-10-22)
+### card-resize: done (2026-10-22)
 
-- Goal: a resize handle (the hatched grip) in the bottom-right corner of a card, to drag it
-    bigger or smaller.
-- Kind: new behaviour.
-- Open, for the user: which cards get it (only picture and chart cards, or every card); whether
-    the size is part of the graph (saved, seen by Python, undoable: it changes the wire record
-    and the saved file's version) or only lasts for the page session.
-- Status: draft, nothing approved, no spec.
-- Added: 2026-10-22
-
-### png-paper: done (2026-10-22)
-
-Save as PNG gives a paper figure in the PGFPlots look (2100 by 1400 pixels at 300 dpi, white page, serif text,
-blue and red lines with markers, boxed legend); a picture is enlarged by a whole number with a thin frame. The
-size and labels were my choices when the user said go (DESIGN.md, "png-paper spec"); the user's own look at
-the saved files, and in Word or LaTeX, is still to come.
+A grip in the bottom right corner of a picture or chart card resizes it; the size is part of the graph (Python sees it,
+save and load keep it as format version 3, undo covers it). The choices were mine when the user said go (DESIGN.md,
+"card-resize spec"); the user's own try-out is still to come. Not done: resizing by keyboard (the hidden tree has no
+resize action), so a screen reader user cannot resize.
 
 ### readme-gif (waiting on the user's recording, 2026-10-22)
 

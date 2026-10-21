@@ -2,8 +2,12 @@
 
 use element_51_core::access::{Direction, ZOOM_STEP, link_edit, pan_delta};
 use element_51_core::announce::{pan_text, zoom_text};
+use element_51_core::display::{chart_rect, dragged_size, picture_rect};
 use element_51_core::job::job_button_at;
-use element_51_core::layout::{PortHit, Side, anchor_of, icon_at, link_at, node_at, port_at};
+use element_51_core::layout::{
+    PortHit, Side, anchor_of, handle_at, icon_at, link_at, node_at, node_rect, port_at,
+};
+use element_51_core::rows::type_of;
 use element_51_core::{Edit, Graph, PortRef, apply_edit};
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlInputElement, KeyboardEvent, MouseEvent, WheelEvent};
@@ -24,8 +28,19 @@ pub(crate) enum Gesture {
     /// Dragging a node. Nothing is sent until the button is released, so one
     /// drag is one edit.
     Move(Moving),
+    /// Dragging the resize handle of a card. Like a move, one drag is one edit.
+    Resize(Resizing),
     /// Dragging the empty canvas; holds the last pointer position on screen.
     Pan(f64, f64),
+}
+
+/// A card being resized: where the pointer took hold, the size it had, and the
+/// size it has now (the card's width and the height of its picture or chart).
+pub(crate) struct Resizing {
+    id: String,
+    grab: (f64, f64),
+    start: (f64, f64),
+    now: (f64, f64),
 }
 
 pub(crate) struct Moving {
@@ -48,13 +63,19 @@ const PINCH_ZOOM_RATE: f64 = 0.01;
 /// The graph with a node being dragged shown at the pointer, if one is. The
 /// replica is not touched; the move is sent once, when the button is released.
 pub(crate) fn dragged_graph(state: &State) -> Option<Graph> {
-    let (Gesture::Move(moving), Some(replica)) = (&state.gesture, state.replica.as_ref()) else {
-        return None;
-    };
-    let edit = Edit::MoveNode {
-        id: moving.id.clone(),
-        x: moving.now.0,
-        y: moving.now.1,
+    let replica = state.replica.as_ref()?;
+    let edit = match &state.gesture {
+        Gesture::Move(moving) => Edit::MoveNode {
+            id: moving.id.clone(),
+            x: moving.now.0,
+            y: moving.now.1,
+        },
+        Gesture::Resize(resizing) => Edit::ResizeNode {
+            id: resizing.id.clone(),
+            width: Some(resizing.now.0),
+            display_height: Some(resizing.now.1),
+        },
+        _ => return None,
     };
     apply_edit(replica.graph(), replica.node_types(), &edit).ok()
 }
@@ -73,6 +94,20 @@ fn port_under(state: &State, x: f64, y: f64) -> Option<PortHit> {
         y,
         &state.theme.metrics,
     )
+}
+
+/// The node whose resize handle is under the graph point `(x, y)`, with the
+/// width of its card and the height of its picture or chart now.
+fn handle_under(state: &State, x: f64, y: f64) -> Option<(String, (f64, f64))> {
+    let replica = state.replica.as_ref()?;
+    let metrics = &state.theme.metrics;
+    let id = handle_at(replica.graph(), replica.node_types(), x, y, metrics)?;
+    let node = replica.graph().nodes.iter().find(|node| node.id == id)?;
+    let node_type = type_of(replica.graph(), replica.node_types(), node)?;
+    let card = node_rect(node, &node_type, metrics);
+    let area = picture_rect(&card, &node_type, metrics)
+        .or_else(|| chart_rect(&card, &node_type, metrics))?;
+    Some((id, (card.w, area.h)))
 }
 
 pub(crate) fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
@@ -103,6 +138,14 @@ pub(crate) fn on_mouse_down(shared: &Shared, event: &MouseEvent) {
         } else if let Some((id, button)) = button {
             state.selected = Some(Selected::Node(id.clone()));
             send_job_request(&state, &id, button);
+        } else if let Some((id, start)) = handle_under(&state, x, y) {
+            state.selected = Some(Selected::Node(id.clone()));
+            state.gesture = Gesture::Resize(Resizing {
+                id,
+                grab: (x, y),
+                start,
+                now: start,
+            });
         } else if let Some(hit) = port_under(&state, x, y).filter(|hit| hit.side == Side::Output) {
             state.gesture = Gesture::Link(Drag {
                 source: PortRef {
@@ -161,6 +204,14 @@ pub(crate) fn on_mouse_move(shared: &Shared, event: &MouseEvent) {
         let screen = screen_point(event);
         let (x, y) = state.view.to_graph(screen.0, screen.1);
         state.hover = port_under(&state, x, y);
+        // Over a resize handle, or while dragging one, the pointer says so.
+        let resizing =
+            matches!(state.gesture, Gesture::Resize(_)) || handle_under(&state, x, y).is_some();
+        if resizing {
+            let _ = state.canvas.set_attribute("data-cursor", "resize");
+        } else {
+            let _ = state.canvas.remove_attribute("data-cursor");
+        }
         // The canvas's own hover text names what a picture or series box shows.
         match tip_at(&state, x, y) {
             Some(tip) => state.canvas.set_title(&tip),
@@ -170,6 +221,15 @@ pub(crate) fn on_mouse_move(shared: &Shared, event: &MouseEvent) {
                 }
             }
         }
+        let metrics = state.theme.metrics.clone();
+        let resize_kind = match &state.gesture {
+            Gesture::Resize(resizing) => state.replica.as_ref().and_then(|replica| {
+                let graph = replica.graph();
+                let node = graph.nodes.iter().find(|node| node.id == resizing.id)?;
+                type_of(graph, replica.node_types(), node).map(std::borrow::Cow::into_owned)
+            }),
+            _ => None,
+        };
         match &mut state.gesture {
             Gesture::None => return,
             Gesture::Link(drag) => {
@@ -177,6 +237,16 @@ pub(crate) fn on_mouse_move(shared: &Shared, event: &MouseEvent) {
                 drag.y = y;
             }
             Gesture::Move(moving) => moving.now = (x - moving.grab.0, y - moving.grab.1),
+            Gesture::Resize(resizing) => {
+                if let Some(kind) = &resize_kind {
+                    resizing.now = dragged_size(
+                        resizing.start,
+                        (x - resizing.grab.0, y - resizing.grab.1),
+                        kind,
+                        &metrics,
+                    );
+                }
+            }
             Gesture::Pan(last_x, last_y) => {
                 let (dx, dy) = (screen.0 - *last_x, screen.1 - *last_y);
                 *last_x = screen.0;
@@ -208,7 +278,12 @@ pub(crate) fn on_mouse_up(shared: &Shared, event: &MouseEvent) {
                 x: moving.now.0,
                 y: moving.now.1,
             }),
-            Gesture::Move(_) | Gesture::Pan(..) | Gesture::None => None,
+            Gesture::Resize(resizing) if resizing.now != resizing.start => Some(Edit::ResizeNode {
+                id: resizing.id,
+                width: Some(resizing.now.0),
+                display_height: Some(resizing.now.1),
+            }),
+            Gesture::Move(_) | Gesture::Resize(_) | Gesture::Pan(..) | Gesture::None => None,
         }
     };
     match edit {

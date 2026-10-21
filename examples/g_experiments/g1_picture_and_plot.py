@@ -23,6 +23,9 @@ Notes
         on both axes, each named after its source port (`loss`, `accuracy`)
         with its last value at its end. Its inputs grow: every link adds a
         row, and a new empty row waits below for the next line.
+    * Drag the grip in the bottom right corner of the `Plot` card: the card
+        and its chart grow. Press Ctrl+Z to put it back, or reload the page:
+        Python remembers the size.
     * Open the card menu (the three bars) of `ramp` and choose Save as PNG: the
         browser downloads `n1-out.png`, the picture enlarged to fill a page
         with crisp pixels. On the `Plot` card the same entry saves

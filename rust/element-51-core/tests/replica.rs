@@ -129,6 +129,8 @@ fn snapshot_with(ids: &[&str]) -> Snapshot {
             x: 5.0,
             y: 6.0,
             values: Default::default(),
+            width: None,
+            display_height: None,
         })
         .collect();
     Snapshot {

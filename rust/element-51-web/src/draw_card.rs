@@ -4,7 +4,7 @@ use crate::draw::columns;
 use crate::draw::fit_text;
 use crate::draw_chart::chart;
 use crate::pictures::Pictures;
-use element_51_core::display::{chart_rect, fit_picture, picture_rect};
+use element_51_core::display::{chart_rect, fit_picture, picture_rect, resize_handle};
 use element_51_core::fields::{linked_text, share_room};
 use element_51_core::job::{
     JobButton, JobLayout, can_start, can_stop, job_layout, progress_fraction, progress_text,
@@ -67,6 +67,20 @@ pub(crate) fn card(
         context.set_line_width(metrics.selection_width);
         card_path(context, &rect, metrics.card_radius);
         context.stroke();
+    }
+
+    // The resize handle: three short diagonal strokes in the corner, as on a
+    // window. Only a card that shows a picture or a chart has one.
+    if let Some(handle) = resize_handle(&rect, node_type) {
+        context.set_stroke_style_str(label);
+        context.set_line_width(1.0);
+        let (right, bottom) = (handle.x + handle.w - 3.0, handle.y + handle.h - 3.0);
+        for step in [4.0, 7.0, 10.0] {
+            context.begin_path();
+            context.move_to(right, bottom - step);
+            context.line_to(right - step, bottom);
+            context.stroke();
+        }
     }
 
     // Title bar: the id on the left, the type name and the icon on the right.

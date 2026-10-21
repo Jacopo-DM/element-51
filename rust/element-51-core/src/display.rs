@@ -20,45 +20,65 @@ const LEGEND_ROOMS: f64 = 1.0;
 /// How far the y range reaches past the data, as a fraction of its span.
 const RANGE_PAD: f64 = 0.05;
 
-/// The side of the square picture area: the card's width less the inset on
-/// each side.
+/// The side of the square picture area at the default card width: the width
+/// less the inset on each side.
 pub fn picture_side(metrics: &Metrics) -> f64 {
     metrics.node_width - 2.0 * metrics.title_pad
 }
 
-/// How much taller a card of this type is because of what it shows: the
-/// picture area and a margin under it. It depends on the type only, so a card
-/// does not change size when results arrive.
-pub fn display_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
+/// The height of the picture or chart area at the default size, 0 for a type
+/// that shows nothing.
+pub fn default_area_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
     match node_type.display {
         CardDisplay::None => 0.0,
-        CardDisplay::Image => picture_side(metrics) + metrics.title_pad,
-        CardDisplay::Chart => chart_height(metrics) + metrics.title_pad,
+        CardDisplay::Image => picture_side(metrics),
+        CardDisplay::Chart => chart_height(metrics),
     }
 }
 
-/// The height of the chart area: a fraction of the card's width.
+/// How much taller a card of this type is because of what it shows, at the
+/// default size: the picture or chart area and a margin under it. It depends on
+/// the type only, so a card does not change size when results arrive.
+pub fn display_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
+    match node_type.display {
+        CardDisplay::None => 0.0,
+        _ => default_area_height(node_type, metrics) + metrics.title_pad,
+    }
+}
+
+/// The height of the chart area at the default size: a fraction of the card's
+/// default width.
 pub fn chart_height(metrics: &Metrics) -> f64 {
     CHART_HEIGHT_RATIO * metrics.node_width
 }
 
+/// The picture or chart area of the card at `card`, below the port rows: the
+/// card's width less the inset on each side, and what is left of its height
+/// above the margin under it. None if the node type shows nothing.
+fn display_area(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Option<Rect> {
+    if node_type.display == CardDisplay::None {
+        return None;
+    }
+    let rows = node_type.inputs.len() + node_type.outputs.len();
+    let top = card.y
+        + metrics.header_height
+        + metrics.row_height * rows as f64
+        + job_height(node_type, metrics);
+    Some(Rect {
+        x: card.x + metrics.title_pad,
+        y: top,
+        w: card.w - 2.0 * metrics.title_pad,
+        h: card.y + card.h - metrics.title_pad - top,
+    })
+}
+
 /// The picture area of the card at `card`, below the port rows. None if the
-/// node type shows nothing.
+/// node type shows no picture.
 pub fn picture_rect(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Option<Rect> {
     if node_type.display != CardDisplay::Image {
         return None;
     }
-    let rows = node_type.inputs.len() + node_type.outputs.len();
-    let side = picture_side(metrics);
-    Some(Rect {
-        x: card.x + metrics.title_pad,
-        y: card.y
-            + metrics.header_height
-            + metrics.row_height * rows as f64
-            + job_height(node_type, metrics),
-        w: side,
-        h: side,
-    })
+    display_area(card, node_type, metrics)
 }
 
 /// The largest rectangle of a `width` by `height` picture's shape that fits in
@@ -80,16 +100,42 @@ pub fn chart_rect(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Optio
     if node_type.display != CardDisplay::Chart {
         return None;
     }
-    let rows = node_type.inputs.len() + node_type.outputs.len();
+    display_area(card, node_type, metrics)
+}
+
+/// The side of the resize handle in the bottom right corner of a card, in graph
+/// units.
+pub const HANDLE_SIDE: f64 = 14.0;
+
+/// The resize handle of the card at `card`: a square inside its bottom right
+/// corner. None if the node type shows nothing to enlarge.
+pub fn resize_handle(card: &Rect, node_type: &NodeType) -> Option<Rect> {
+    if node_type.display == CardDisplay::None {
+        return None;
+    }
     Some(Rect {
-        x: card.x + metrics.title_pad,
-        y: card.y
-            + metrics.header_height
-            + metrics.row_height * rows as f64
-            + job_height(node_type, metrics),
-        w: picture_side(metrics),
-        h: chart_height(metrics),
+        x: card.x + card.w - HANDLE_SIDE,
+        y: card.y + card.h - HANDLE_SIDE,
+        w: HANDLE_SIDE,
+        h: HANDLE_SIDE,
     })
+}
+
+/// The width and the picture or chart height a card gets when its bottom right
+/// corner is dragged by `(dx, dy)` from a card of `start` width and area
+/// height. Neither goes below the default size or above `MAX_CARD_SIZE`.
+pub fn dragged_size(
+    start: (f64, f64),
+    (dx, dy): (f64, f64),
+    node_type: &NodeType,
+    metrics: &Metrics,
+) -> (f64, f64) {
+    let width = (start.0 + dx).clamp(metrics.node_width, crate::MAX_CARD_SIZE);
+    let height = (start.1 + dy).clamp(
+        default_area_height(node_type, metrics),
+        crate::MAX_CARD_SIZE,
+    );
+    (width, height)
 }
 
 /// How a chart line looks: the port type whose colour it takes, and whether it

@@ -11,12 +11,20 @@ from pathlib import Path
 
 from pydantic import ConfigDict, ValidationError
 
-from element_51.edits import AddLink, AddNode, EditError, SetValue, apply_edit
+from element_51.edits import (
+    AddLink,
+    AddNode,
+    EditError,
+    ResizeNode,
+    SetValue,
+    apply_edit,
+)
 from element_51.model import Graph, Link, Model, NodeType, PlacedNode
 
-FORMAT_VERSION = 2
-# Version 1 had no node values; it reads as version 2 with none.
-READABLE_VERSIONS = frozenset({1, FORMAT_VERSION})
+FORMAT_VERSION = 3
+# Version 1 had no node values and version 2 no card sizes; they read as
+# version 3 with none.
+READABLE_VERSIONS = frozenset({1, 2, FORMAT_VERSION})
 
 
 class StoreError(Exception):
@@ -32,7 +40,7 @@ class _Header(Model):
 
 
 class _SavedGraph(Model):
-    """A graph file, as version 2 writes it and version 1 reads."""
+    """A graph file, as version 3 writes it and versions 1 and 2 read."""
 
     format_version: int
     nodes: tuple[PlacedNode, ...]
@@ -92,40 +100,62 @@ def load_graph(path: Path, node_types: Mapping[str, NodeType]) -> Graph:
         if header.format_version not in READABLE_VERSIONS:
             msg = (
                 f"{path} is format version {header.format_version}; "
-                "this library reads versions 1 and 2"
+                "this library reads versions 1, 2 and 3"
             )
             raise StoreError(msg)
         saved = _SavedGraph.model_validate(data)
     except ValidationError as error:
         msg = f"{path} is not a graph file: {error}"
         raise StoreError(msg) from error
-    graph = Graph(nodes=(), links=())
     try:
-        for placed in saved.nodes:
-            graph = apply_edit(
-                graph,
-                node_types,
-                AddNode(
-                    id=placed.id,
-                    node_type=placed.node_type,
-                    x=placed.x,
-                    y=placed.y,
-                ),
-            )
-        for placed in saved.nodes:
-            for port, value in placed.values.items():
-                graph = apply_edit(
-                    graph,
-                    node_types,
-                    SetValue(node=placed.id, port=port, value=value),
-                )
-        for link in saved.links:
-            graph = apply_edit(
-                graph,
-                node_types,
-                AddLink(source=link.source, target=link.target),
-            )
+        return _replay(saved, node_types)
     except EditError as error:
         msg = f"{path} holds a graph the rules refuse: {error.reason}"
         raise StoreError(msg) from error
+
+
+def _replay(saved: _SavedGraph, node_types: Mapping[str, NodeType]) -> Graph:
+    """Build the graph of a file by applying each node, size, value and link.
+
+    Returns
+    -------
+    Graph
+        The graph, if every step passes the rules.
+    """
+    graph = Graph(nodes=(), links=())
+    for placed in saved.nodes:
+        graph = apply_edit(
+            graph,
+            node_types,
+            AddNode(
+                id=placed.id,
+                node_type=placed.node_type,
+                x=placed.x,
+                y=placed.y,
+            ),
+        )
+    for placed in saved.nodes:
+        if placed.width is not None or placed.display_height is not None:
+            graph = apply_edit(
+                graph,
+                node_types,
+                ResizeNode(
+                    id=placed.id,
+                    width=placed.width,
+                    display_height=placed.display_height,
+                ),
+            )
+    for placed in saved.nodes:
+        for port, value in placed.values.items():
+            graph = apply_edit(
+                graph,
+                node_types,
+                SetValue(node=placed.id, port=port, value=value),
+            )
+    for link in saved.links:
+        graph = apply_edit(
+            graph,
+            node_types,
+            AddLink(source=link.source, target=link.target),
+        )
     return graph

@@ -1,6 +1,6 @@
 //! Where a node box sits and how big it is.
 
-use crate::display::display_height;
+use crate::display::{display_height, resize_handle};
 use crate::job::job_height;
 use crate::rows::type_of;
 use crate::theme::Metrics;
@@ -40,14 +40,23 @@ impl Rect {
 /// output, then the picture area if the node type has one.
 pub fn node_rect(node: &PlacedNode, node_type: &NodeType, metrics: &Metrics) -> Rect {
     let rows = node_type.inputs.len() + node_type.outputs.len();
+    // A size the user gave never goes below the default, whatever the file says.
+    let width = node
+        .width
+        .map_or(metrics.node_width, |wanted| wanted.max(metrics.node_width));
+    let shown = display_height(node_type, metrics);
+    let display = match node.display_height {
+        Some(wanted) if shown > 0.0 => (wanted + metrics.title_pad).max(shown),
+        _ => shown,
+    };
     Rect {
         x: node.x,
         y: node.y,
-        w: metrics.node_width,
+        w: width,
         h: metrics.header_height
             + metrics.row_height * rows as f64
             + job_height(node_type, metrics)
-            + display_height(node_type, metrics),
+            + display,
     }
 }
 
@@ -179,6 +188,34 @@ pub fn node_at(
             };
             let rect = node_rect(node, &node_type, metrics);
             x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
+        })
+        .map(|node| node.id.clone())
+}
+
+/// The topmost node whose resize handle holds `(x, y)`, if any. The handle is
+/// a few units wide, so it takes the press before the card beneath it does.
+pub fn handle_at(
+    graph: &Graph,
+    node_types: &[NodeType],
+    x: f64,
+    y: f64,
+    metrics: &Metrics,
+) -> Option<String> {
+    graph
+        .nodes
+        .iter()
+        .rev()
+        .find(|node| {
+            let Some(node_type) = type_of(graph, node_types, node) else {
+                return false;
+            };
+            let card = node_rect(node, &node_type, metrics);
+            resize_handle(&card, &node_type).is_some_and(|handle| {
+                x >= handle.x
+                    && x <= handle.x + handle.w
+                    && y >= handle.y
+                    && y <= handle.y + handle.h
+            })
         })
         .map(|node| node.id.clone())
 }

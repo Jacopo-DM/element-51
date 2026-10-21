@@ -39,6 +39,7 @@ class EditErrorKind(StrEnum):
     CYCLE = "cycle"
     UNKNOWN_LINK = "unknown_link"
     BAD_VALUE = "bad_value"
+    BAD_SIZE = "bad_size"
 
 
 class EditError(Exception):
@@ -85,6 +86,22 @@ class MoveNode(Model):
     y: float
 
 
+MAX_CARD_SIZE = 4000.0
+
+
+class ResizeNode(Model):
+    """Give a card a size, or the default size again with `None`.
+
+    `width` is the card's width and `display_height` the height of the picture
+    or chart on it, both in graph units.
+    """
+
+    kind: Literal["resize_node"] = "resize_node"
+    id: NodeId
+    width: float | None
+    display_height: float | None
+
+
 class DeleteNode(Model):
     """Remove a node, and every link that touches it."""
 
@@ -109,7 +126,15 @@ class SetValue(Model):
     value: PortValue | None
 
 
-type AnyEdit = AddNode | AddLink | MoveNode | DeleteNode | DeleteLink | SetValue
+type AnyEdit = (
+    AddNode
+    | AddLink
+    | MoveNode
+    | ResizeNode
+    | DeleteNode
+    | DeleteLink
+    | SetValue
+)
 type Edit = Annotated[AnyEdit, Field(discriminator="kind")]
 
 
@@ -134,19 +159,22 @@ def apply_edit(
     """
     match edit:
         case AddNode():
-            return _add_node(graph, node_types, edit)
+            after = _add_node(graph, node_types, edit)
         case AddLink():
-            return _add_link(graph, node_types, edit)
+            after = _add_link(graph, node_types, edit)
         case MoveNode():
-            return _move_node(graph, edit)
+            after = _move_node(graph, edit)
+        case ResizeNode():
+            after = _resize_node(graph, edit)
         case DeleteNode():
-            return _delete_node(graph, edit)
+            after = _delete_node(graph, edit)
         case DeleteLink():
-            return _delete_link(graph, edit)
+            after = _delete_link(graph, edit)
         case SetValue():
-            return _set_value(graph, node_types, edit)
+            after = _set_value(graph, node_types, edit)
         case _:  # pragma: no cover  # unreachable: the match is exhaustive
             assert_never(edit)
+    return after
 
 
 def _add_node(
@@ -189,6 +217,26 @@ def _move_node(graph: Graph, edit: MoveNode) -> Graph:
     _require_node(graph, edit.id)
     nodes = tuple(
         node.model_copy(update={"x": edit.x, "y": edit.y})
+        if node.id == edit.id
+        else node
+        for node in graph.nodes
+    )
+    return Graph(nodes=nodes, links=graph.links)
+
+
+def _resize_node(graph: Graph, edit: ResizeNode) -> Graph:
+    _require_node(graph, edit.id)
+    for name, size in (
+        ("width", edit.width),
+        ("display_height", edit.display_height),
+    ):
+        if size is not None and not 0.0 < size <= MAX_CARD_SIZE:
+            msg = f"{name} must be above 0 and at most {MAX_CARD_SIZE:g}"
+            raise EditError(EditErrorKind.BAD_SIZE, msg)
+    nodes = tuple(
+        node.model_copy(
+            update={"width": edit.width, "display_height": edit.display_height}
+        )
         if node.id == edit.id
         else node
         for node in graph.nodes

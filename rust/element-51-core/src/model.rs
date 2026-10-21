@@ -179,6 +179,13 @@ pub struct PlacedNode {
     /// Values the user gave to unlinked inputs, by input name.
     #[serde(default)]
     pub values: BTreeMap<String, serde_json::Value>,
+    /// The width the user gave the card, in graph units; `None` is the default.
+    #[serde(default)]
+    pub width: Option<f64>,
+    /// The height the user gave the picture or chart on the card; `None` is
+    /// the default.
+    #[serde(default)]
+    pub display_height: Option<f64>,
 }
 
 /// The nodes and links the user has built.
@@ -234,6 +241,12 @@ pub enum Edit {
     AddLink { source: PortRef, target: PortRef },
     /// Put a node at a new position.
     MoveNode { id: String, x: f64, y: f64 },
+    /// Give a card a size, or the default size again with `None`.
+    ResizeNode {
+        id: String,
+        width: Option<f64>,
+        display_height: Option<f64>,
+    },
     /// Remove a node, and every link that touches it.
     DeleteNode { id: String },
     /// Remove one link.

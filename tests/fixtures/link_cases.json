@@ -149,63 +149,81 @@
                 "node_type": "add",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n2",
                 "node_type": "add",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n3",
                 "node_type": "label",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n4",
                 "node_type": "count",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n5",
                 "node_type": "divmod",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n6",
                 "node_type": "picture",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n7",
                 "node_type": "invert",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n8",
                 "node_type": "curve",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             },
             {
                 "id": "n9",
                 "node_type": "Plot",
                 "x": 0.0,
                 "y": 0.0,
-                "values": {}
+                "values": {},
+                "width": null,
+                "display_height": null
             }
         ],
         "links": [

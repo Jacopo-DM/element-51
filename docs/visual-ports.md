@@ -72,6 +72,16 @@ dashed, so colour is never the only way to tell them apart. A long series is
 thinned to about twice the width of the chart in pixels, keeping the lowest and
 highest number of each part, so a spike is never lost.
 
+## Resizing a card
+
+A card that shows a picture or a chart has a grip in its bottom right corner
+(three short diagonal lines). Drag it to make the card wider and the picture or
+chart taller; the boxes on the card widen with it. A card never gets smaller
+than its default size. The size is part of the graph: Python sees it in
+`app.graph`, `app.save` writes it, a reload and a loaded file bring it back, and
+Ctrl+Z undoes a resize. A saved file with a card size is format version 3;
+version 1 and 2 files still load.
+
 ## Save as PNG
 
 The card menu (the three bars on a card, or Shift+F10 with the node focused)

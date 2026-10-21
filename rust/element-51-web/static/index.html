@@ -36,6 +36,7 @@ canvas { display: block; width: 100%; height: 100%; }
 .tok-name { color: var(--code-name); }
 #source-close:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 #source-text:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+#canvas[data-cursor="resize"] { cursor: nwse-resize; }
 #toolbar { position: fixed; left: var(--button-x); top: var(--button-y); display: flex; align-items: stretch; gap: var(--button-gap); }
 #app-menu-button { position: fixed; right: var(--button-x); top: var(--button-y); height: 34px; box-sizing: border-box; }
 #run { display: flex; align-items: center; gap: var(--button-gap);

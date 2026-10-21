@@ -66,6 +66,8 @@ fn node(id: &str) -> PlacedNode {
         x: 0.0,
         y: 0.0,
         values: Default::default(),
+        width: None,
+        display_height: None,
     }
 }
 

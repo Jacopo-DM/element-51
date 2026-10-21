@@ -877,6 +877,33 @@ did not answer my two questions (size, and where labels come from) and said "go"
     rarely suit paper), and a LaTeX font file (a download for a font that is only a nicety;
     the font stack uses it when the system has it).
 
+### card-resize spec (the user's request, 2026-10-22; choices made by me on "go")
+
+The user asked for a resize handle in the bottom right corner of a card, with a picture of the
+hatched grip, and did not answer my questions (which cards, saved or not), then said "go". I
+chose the recommended options:
+
+- Which cards: those that show a picture or a chart (`Image` and `Chart` node types), because a
+    card of numbers has nothing to enlarge; a card that shows nothing has no handle, but the
+    width in a file is still read (`node_rect` takes it).
+- What changes: the card's `width` and the `display_height` of its picture or chart, both in
+    graph units. A card never goes below the default size (the default width, and the default
+    picture or chart height) and never above 4000 (`MAX_CARD_SIZE`). Why: smaller cards would
+    squeeze the boxes; the floor keeps every card readable.
+- The size is part of the graph: `PlacedNode.width` and `display_height` (both `None` for the
+    default) in Python and Rust, an edit `ResizeNode(id, width, display_height)` (`None` gives
+    the default back), shared cases in `tests/fixtures/edit_cases.json`, an `EditError` kind
+    `bad_size`, the graph file at format version 3 (versions 1 and 2 still load; an older library
+    refuses a version 3 file by its version number instead of failing on an unknown field).
+    Why: a size that vanishes on reload is surprising for something you dragged, and undo and
+    redo come with an edit for free.
+- Geometry: `node_rect` gives the card its size; the picture and chart area are worked out from the
+    card (`display_area`), so nothing else keeps a size. Dragging previews the size on the page
+    (`dragged_graph`) and sends one edit on release, as a move does.
+- Not done, and why: resizing by keyboard (the hidden tree has no resize action yet; a screen
+    reader user cannot resize, and the size only changes how the card looks); a handle on every
+    card; shrinking below the default.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1807,6 +1834,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | `mnist-experiment`: `examples/g_experiments/g3_mnist.py` | 31 tests in `tests/test_mnist_example.py` on fake data (reader errors, `.part` and sha256 refusal, finite-difference gradients, seed, learning a separable set, sample, settings, a Start that fills the Plot) and a row in `tests/test_examples.py`; real data downloaded after the user's yes (MNIST 11.6 MB from Google's cvdf-datasets, identical sha256 to PyTorch's S3 copy; Fashion-MNIST 30.9 MB from Zalando's GitHub, md5 equal to the dataset README's), sha256 pinned in the example; measured on this Mac (numpy 2.5.4): MNIST at 64 hidden, 10 epochs 1.8 s 97.21%; Fashion the same 1.7 s 86.72%; defaults (128 hidden, 30 epochs, 282 points) MNIST 6.8 s 97.73% (first point 85.8%, loss 0.887 to 0.0106), Fashion 7.1 s 87.77%; hidden 16 3.2 s 95.36%; learning rate 0.01 6.8 s 96.20%; 1.0 6.9 s 97.52%; by hand in the browser pane: Run automatically shows the digit, Start fills the Plot live (step 77 of 282 seen), `fashion` in the sample swaps to a boot and its linked `dataset` follows, `epochs` 0 fails with its reason |
 | 2026-10-22 | a series box shows a bare number, the words are a hover text (the user's request) | native tests: `shown_summary` gives `0.05`, `shown_tooltip` gives `last of 2 points`, `grey picture, 28 x 20`, `2 points, none of them a number`, and `NodeOutcome::output_tooltip` is None for a plain value; by hand in the browser pane (MNIST example): the loss box reads `0.0106`, hovering it sets the canvas's `title` to `last of 282 points`, and the Plot's linked box says `last of 282 points, from n2.loss`; the hidden tree and the status line keep the word `last` (`access.rs`), so a keyboard or screen-reader user loses nothing, and touch has no hover text |
 | 2026-10-22 | Save as PNG is paper ready (the user's request, PGFPlots look) | native tests: 10 in `tests/paper.rs` (plot inside the figure, y label only for one line, blue circle then red cross then dashed again after six, ticks inside the plot with a true minus, about ten markers spread along a long line and all on a short one, a gap breaks the line and has no marker, no numbers gives no chart, a flat line has a scale, points are pixels at 300 dpi, a 28 by 28 picture is enlarged 50 times) and 3 in `tests/png.rs` (CRC-32 standard value, the `pHYs` chunk of 11811 pixels per metre placed after IHDR with a valid CRC, a non-PNG refused); by hand in the browser pane on the MNIST example: the chart saves as `n3-chart.png`, 2100 by 1400 with `pHYs` 11811, and looks like the gallery (white page, frame, serif numbers, blue circles and red crosses, boxed legend); the digit saves as `n1-image.png`, 1400 by 1400; not checked: opening the file in Word or LaTeX, a font that is really Latin Modern (this Mac's fallback was a Times-like serif) |
+| 2026-10-22 | a resize handle on picture and chart cards (the user's request) | Python: shared edit cases (a resize, a reset to the default, one direction only, an unknown node, a size of zero, a size of 100000), a size saved and loaded, a version 2 file still loads, the property test of save and load now draws sizes; Rust: 10 tests in `tests/resize.rs` (default size, a bigger card and picture area, the chart area, a size below the default drawn at the default, a card that shows nothing, the handle in the corner, a drag clamped between the default and 4000, undo and redo, undo of a delete brings back the size, the status line); by hand in the browser pane (MNIST example): the grip shows on the picture and Plot cards, dragging the Plot's grip widened and heightened the card and its boxes, a reload kept the size (Python holds it), a second drag shrank it and Ctrl+Z restored the bigger size; not checked: a keyboard way to resize, a touch screen, the light theme, the redraw benchmark |
 
 ## Gotchas
 

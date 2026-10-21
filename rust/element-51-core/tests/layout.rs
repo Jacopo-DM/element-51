@@ -25,6 +25,8 @@ fn node_at(x: f64, y: f64) -> PlacedNode {
         x,
         y,
         values: Default::default(),
+        width: None,
+        display_height: None,
     }
 }
 
@@ -180,6 +182,8 @@ fn node_at_finds_the_node_under_a_point_and_the_topmost_when_they_overlap() {
                 x: 0.0,
                 y: 0.0,
                 values: Default::default(),
+                width: None,
+                display_height: None,
             },
             PlacedNode {
                 id: "n2".into(),
@@ -187,6 +191,8 @@ fn node_at_finds_the_node_under_a_point_and_the_topmost_when_they_overlap() {
                 x: 100.0,
                 y: 10.0,
                 values: Default::default(),
+                width: None,
+                display_height: None,
             },
         ],
         links: vec![],
@@ -223,6 +229,8 @@ fn link_at_finds_a_link_near_its_curve_and_nothing_far_from_it() {
                 x: 0.0,
                 y: 0.0,
                 values: Default::default(),
+                width: None,
+                display_height: None,
             },
             PlacedNode {
                 id: "n2".into(),
@@ -230,6 +238,8 @@ fn link_at_finds_a_link_near_its_curve_and_nothing_far_from_it() {
                 x: 400.0,
                 y: 0.0,
                 values: Default::default(),
+                width: None,
+                display_height: None,
             },
         ],
         links: vec![Link {

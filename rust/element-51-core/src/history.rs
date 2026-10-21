@@ -86,6 +86,17 @@ fn inverse(before: &Graph, edit: &Edit) -> Vec<Edit> {
             })
             .into_iter()
             .collect(),
+        Edit::ResizeNode { id, .. } => before
+            .nodes
+            .iter()
+            .find(|node| node.id == *id)
+            .map(|node| Edit::ResizeNode {
+                id: id.clone(),
+                width: node.width,
+                display_height: node.display_height,
+            })
+            .into_iter()
+            .collect(),
         Edit::SetValue { node, port, .. } => {
             let old = before
                 .nodes
@@ -115,6 +126,13 @@ fn restore_node(before: &Graph, id: &str) -> Vec<Edit> {
         x: node.x,
         y: node.y,
     }];
+    if node.width.is_some() || node.display_height.is_some() {
+        edits.push(Edit::ResizeNode {
+            id: node.id.clone(),
+            width: node.width,
+            display_height: node.display_height,
+        });
+    }
     edits.extend(node.values.iter().map(|(port, value)| Edit::SetValue {
         node: id.to_string(),
         port: port.clone(),

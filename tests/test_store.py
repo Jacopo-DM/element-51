@@ -10,7 +10,7 @@ from hypothesis import example, given
 from hypothesis import strategies as st
 from sample_nodes import add, show
 
-from element_51.edits import SetValue
+from element_51.edits import MAX_CARD_SIZE, ResizeNode, SetValue
 from element_51.model import Graph, Link, PlacedNode, PortRef
 from element_51.session import App
 from element_51.store import (
@@ -96,7 +96,7 @@ def test_a_version_this_library_does_not_read_is_refused(
     )
     app = built_app()
     before = app.graph
-    with pytest.raises(StoreError, match=r"version 99.*versions 1 and 2"):
+    with pytest.raises(StoreError, match=r"version 99.*versions 1, 2 and 3"):
         app.load(path)
     assert app.graph == before
 
@@ -167,6 +167,39 @@ def test_a_version_1_file_without_values_still_loads(tmp_path: Path) -> None:
     app = App([add])
     app.load(path)
     assert app.graph.nodes[0].values == {}
+
+
+def test_a_card_size_is_saved_and_loaded(tmp_path: Path) -> None:
+    """A resized card keeps its width and its picture height in the file."""
+    path = tmp_path / "g.json"
+    app = App([add])
+    node_id = app.add_node(add, x=1.0, y=2.0)
+    app.apply(ResizeNode(id=node_id, width=300.0, display_height=None))
+    app.save(path)
+    saved = json.loads(path.read_text("utf-8"))["nodes"][0]
+    assert (saved["width"], saved["display_height"]) == (300.0, None)
+    fresh = App([add])
+    fresh.load(path)
+    assert fresh.graph.nodes[0].width == pytest.approx(300.0)
+    assert fresh.graph.nodes[0].display_height is None
+
+
+def test_a_version_2_file_without_card_sizes_still_loads(
+    tmp_path: Path,
+) -> None:
+    """Files written before card sizes existed read as having the default."""
+    path = tmp_path / "g.json"
+    path.write_text(
+        json.dumps({
+            "format_version": 2,
+            "nodes": [{"id": "n1", "node_type": "add", "x": 1.0, "y": 2.0}],
+            "links": [],
+        }),
+        "utf-8",
+    )
+    app = App([add])
+    app.load(path)
+    assert app.graph.nodes[0].width is None
 
 
 def test_a_value_that_does_not_fit_its_port_is_refused(tmp_path: Path) -> None:
@@ -258,6 +291,9 @@ def graphs(draw: st.DrawFn) -> Graph:
         `add` outputs to `show` inputs.
     """
     coordinate = st.floats(allow_nan=False, allow_infinity=False)
+    size = st.one_of(
+        st.none(), st.floats(min_value=1.0, max_value=MAX_CARD_SIZE)
+    )
     value = st.one_of(
         st.floats(allow_nan=False, allow_infinity=False), st.integers()
     )
@@ -275,6 +311,8 @@ def graphs(draw: st.DrawFn) -> Graph:
                 x=draw(coordinate),
                 y=draw(coordinate),
                 values=values,
+                width=draw(size),
+                display_height=draw(size),
             )
         )
     links: list[Link] = []
