@@ -519,9 +519,13 @@ fn on_job_update(state: &mut State, update: JobUpdate) {
         let why = update.error.as_deref().unwrap_or("failed");
         show_error(&state.document, &format!("{}: {why}", update.node));
     }
+    // The update joins the last result; it must not replace it, or the run after
+    // another job, or a plain run, would be lost with every report.
+    let mut run = state.run.take().unwrap_or_default();
+    run.apply_job(&update);
+    state.pictures = Pictures::from_result(&state.document, &run);
+    state.run = Some(run);
     state.jobs.insert(update.node.clone(), update);
-    state.run = None;
-    show_jobs(state);
     if changed {
         state.tree_stale = true;
     }
