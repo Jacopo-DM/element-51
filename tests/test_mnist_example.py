@@ -8,9 +8,13 @@ from types import ModuleType
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 from test_examples import load
 
 PICTURES = 200
+CLASSES = 10
+SEED = 51
+HALF = 0.5
 PARTS = 4
 SIDE = 28
 
@@ -220,3 +224,97 @@ def test_the_table_names_both_datasets_with_four_parts_each(
     ]
     assert names[0] == names[1]
     assert len(names[0]) == len(np.unique(names[0])) == PARTS
+
+
+def make_set(
+    count: int, rng: np.random.Generator
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
+    """Make pictures that one lit pixel tells apart: pixel k means class k.
+
+    Returns
+    -------
+    tuple[NDArray[np.uint8], NDArray[np.uint8]]
+        The pictures and their labels.
+    """
+    labels = rng.integers(0, CLASSES, count).astype(np.uint8)
+    images = np.zeros((count, CLASSES), dtype=np.uint8)
+    images[np.arange(count), labels] = 255
+    return images, labels
+
+
+def test_the_gradients_match_finite_differences(mnist: ModuleType) -> None:
+    """Every array's analytic gradient agrees with a numeric one."""
+    rng = np.random.default_rng(SEED)
+    weights = mnist.init_weights(5, rng, inputs=6)
+    x = rng.random((12, 6))
+    labels = rng.integers(0, CLASSES, 12).astype(np.uint8)
+    _, grads = mnist.loss_and_gradients(weights, x, labels)
+    step = 1e-6
+    for name in ("w1", "b1", "w2", "b2"):
+        array = getattr(weights, name)
+        analytic = getattr(grads, name)
+        for position in [(0,) * array.ndim, tuple(s - 1 for s in array.shape)]:
+            kept = array[position]
+            array[position] = kept + step
+            up = mnist.loss_and_gradients(weights, x, labels)[0]
+            array[position] = kept - step
+            down = mnist.loss_and_gradients(weights, x, labels)[0]
+            array[position] = kept
+            numeric = (up - down) / (2 * step)
+            assert analytic[position] == pytest.approx(
+                numeric, rel=1e-5, abs=1e-8
+            )
+
+
+def test_the_same_seed_gives_the_same_weights(mnist: ModuleType) -> None:
+    """Two networks made from one seed are equal, and another seed differs."""
+    first = mnist.init_weights(8, np.random.default_rng(SEED))
+    second = mnist.init_weights(8, np.random.default_rng(SEED))
+    other = mnist.init_weights(8, np.random.default_rng(SEED + 1))
+    assert np.array_equal(first.w1, second.w1)
+    assert not np.array_equal(first.w1, other.w1)
+    assert first.w1.shape == (784, 8)
+    assert first.w2.shape == (8, CLASSES)
+
+
+def test_probabilities_sum_to_one_for_every_picture(mnist: ModuleType) -> None:
+    """Each softmax row is a probability and the ReLU layer is not negative."""
+    rng = np.random.default_rng(SEED)
+    weights = mnist.init_weights(6, rng, inputs=10)
+    hidden, probs = mnist.forward(weights, rng.random((7, 10)))
+    assert probs.shape == (7, CLASSES)
+    assert probs.sum(axis=1) == pytest.approx(np.ones(7))
+    assert hidden.min() >= 0.0
+
+
+def test_a_network_learns_a_set_one_pixel_tells_apart(
+    mnist: ModuleType,
+) -> None:
+    """Plain steps drive the loss down and the accuracy to 100%."""
+    rng = np.random.default_rng(SEED)
+    images, labels = make_set(400, rng)
+    weights = mnist.init_weights(8, rng, inputs=CLASSES)
+    x = mnist.to_floats(images)
+    first = mnist.loss_and_gradients(weights, x[:32], labels[:32])[0]
+    for step in range(300):
+        rows = slice((step * 32) % 368, (step * 32) % 368 + 32)
+        _, grads = mnist.loss_and_gradients(weights, x[rows], labels[rows])
+        mnist.apply_gradients(weights, grads, 0.5)
+    last = mnist.loss_and_gradients(weights, x[:32], labels[:32])[0]
+    assert last < first / 4
+    assert mnist.accuracy(weights, images, labels) == pytest.approx(1.0)
+
+
+def test_a_network_with_no_weights_always_says_class_zero(
+    mnist: ModuleType,
+) -> None:
+    """Equal scores pick class 0, so accuracy is the share of zeros."""
+    weights = mnist.Weights(
+        w1=np.zeros((CLASSES, 3)),
+        b1=np.zeros(3),
+        w2=np.zeros((3, CLASSES)),
+        b2=np.zeros(CLASSES),
+    )
+    images = np.zeros((4, CLASSES), dtype=np.uint8)
+    labels = np.array([0, 0, 3, 7], dtype=np.uint8)
+    assert mnist.accuracy(weights, images, labels) == pytest.approx(HALF)

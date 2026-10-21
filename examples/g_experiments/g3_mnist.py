@@ -15,7 +15,7 @@ from pathlib import Path
 # Third-party libraries
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 from rich.console import Console
 from rich.traceback import install
 
@@ -28,12 +28,18 @@ IMAGES_MAGIC = 0x0803
 LABELS_MAGIC = 0x0801
 IMAGE_HEADER = 16
 LABEL_HEADER = 8
+PIXELS = 784
+CLASSES = 10
+SEED = 51
+MAX_PIXEL = 255.0
+TINY = 1e-12
 TIMEOUT_SECONDS = 60
 
 # --- Warnings --- #
 
 # --- Typing --- #
 type Bytes = NDArray[np.uint8]
+type Floats = NDArray[np.float64]
 type Downloader = Callable[[str, Path], None]
 
 # --- TERMINAL OUTPUT SETUP --- #
@@ -262,6 +268,157 @@ def fetch(
         partial.replace(target)
         fetched.append(part)
     return fetched
+
+
+class Weights(BaseModel):
+    """The four arrays of a one-hidden-layer network.
+
+    The same record holds the gradients, which have the same shapes. The
+    arrays are updated in place, so the record itself is frozen.
+    """
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", arbitrary_types_allowed=True
+    )
+
+    w1: Floats
+    b1: Floats
+    w2: Floats
+    b2: Floats
+
+
+def init_weights(
+    hidden: int, rng: np.random.Generator, inputs: int = PIXELS
+) -> Weights:
+    """Make a network with small random weights and zero biases.
+
+    Parameters
+    ----------
+    hidden
+        How many units the hidden layer has.
+    rng
+        The random generator that draws the weights.
+    inputs
+        How many numbers one picture has.
+
+    Returns
+    -------
+    Weights
+        Weights scaled by the square root of 2 over the layer's input size.
+    """
+    return Weights(
+        w1=rng.normal(0.0, np.sqrt(2.0 / inputs), (inputs, hidden)),
+        b1=np.zeros(hidden),
+        w2=rng.normal(0.0, np.sqrt(2.0 / hidden), (hidden, CLASSES)),
+        b2=np.zeros(CLASSES),
+    )
+
+
+def to_floats(pixels: Bytes) -> Floats:
+    """Scale bytes from 0 to 255 to numbers from 0 to 1.
+
+    Returns
+    -------
+    Floats
+        The same shape as `pixels`.
+    """
+    return pixels.astype(np.float64) / MAX_PIXEL
+
+
+def forward(weights: Weights, x: Floats) -> tuple[Floats, Floats]:
+    """Run pictures through the network.
+
+    Parameters
+    ----------
+    weights
+        The network.
+    x
+        One row per picture.
+
+    Returns
+    -------
+    tuple[Floats, Floats]
+        The hidden layer after the ReLU, and the probability of each class.
+    """
+    hidden = np.maximum(x @ weights.w1 + weights.b1, 0.0)
+    scores = hidden @ weights.w2 + weights.b2
+    scores -= scores.max(axis=1, keepdims=True)
+    odds = np.exp(scores)
+    return hidden, odds / odds.sum(axis=1, keepdims=True)
+
+
+def loss_and_gradients(
+    weights: Weights, x: Floats, labels: Bytes
+) -> tuple[float, Weights]:
+    """Find the cross-entropy loss of a batch and how to lower it.
+
+    Parameters
+    ----------
+    weights
+        The network.
+    x
+        One row per picture.
+    labels
+        The right class of each picture.
+
+    Returns
+    -------
+    tuple[float, Weights]
+        The mean loss, and the gradient of it for every array.
+    """
+    count = len(x)
+    hidden, probs = forward(weights, x)
+    rows = np.arange(count)
+    loss = float(-np.log(probs[rows, labels] + TINY).mean())
+    scores = probs.copy()
+    scores[rows, labels] -= 1.0
+    scores /= count
+    back = (scores @ weights.w2.T) * (hidden > 0.0)
+    return loss, Weights(
+        w1=x.T @ back,
+        b1=back.sum(axis=0),
+        w2=hidden.T @ scores,
+        b2=scores.sum(axis=0),
+    )
+
+
+def apply_gradients(weights: Weights, grads: Weights, rate: float) -> None:
+    """Take one step downhill, in place.
+
+    Parameters
+    ----------
+    weights
+        The network, changed by this call.
+    grads
+        What `loss_and_gradients` returned.
+    rate
+        How far to move along each gradient.
+    """
+    weights.w1[...] -= rate * grads.w1
+    weights.b1[...] -= rate * grads.b1
+    weights.w2[...] -= rate * grads.w2
+    weights.b2[...] -= rate * grads.b2
+
+
+def accuracy(weights: Weights, images: Bytes, labels: Bytes) -> float:
+    """Find the share of pictures the network gets right.
+
+    Parameters
+    ----------
+    weights
+        The network.
+    images
+        One row per picture, bytes from 0 to 255.
+    labels
+        The right class of each picture.
+
+    Returns
+    -------
+    float
+        From 0 to 1.
+    """
+    _, probs = forward(weights, to_floats(images))
+    return float((probs.argmax(axis=1) == labels).mean())
 
 
 def build_app() -> element_51.App:

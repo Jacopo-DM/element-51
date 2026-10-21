@@ -609,10 +609,7 @@ All in `examples/g_experiments/g3_mnist.py` and its tests; no new dependency (`n
 Tier 1 (a working example on fake data):
 
 1. Done (2026-10-21). The data part in `examples/g_experiments/g3_mnist.py` (`IdxHeader`, `read_idx`, `load_images`, `load_labels`, the `DATASETS` table with the sizes and empty sha256 fields, `download_file`, `fetch`) and `tests/test_mnist_example.py` (13 tests, no network). The hashes are filled in by task 4.
-2. The network: `init`, `forward`, `backward`, `accuracy`, in numpy. Serves criterion 3. Risk medium
-    (a wrong gradient trains badly and is hard to see). About 80 lines. Verified by a finite-difference
-    gradient check on a tiny network, the same seed giving the same weights and curves, and a
-    separable fake set reaching 100%.
+2. Done (2026-10-21). The network in `g3_mnist.py` (`Weights`, `init_weights`, `to_floats`, `forward`, `loss_and_gradients`, `apply_gradients`, `accuracy`; float64, in-place updates) and 5 tests: the gradients match finite differences for every array, the same seed gives the same weights, probabilities sum to 1, a separable fake set trains to 100% with the loss falling by more than a factor of 4, a zero network says class 0.
 3. The nodes and the graph: `MnistSample`, `Train`, `PlotNode`, `build_app()`, the row in
     `tests/test_examples.py` (fake data folder; Start on `Train` fills the Plot, `dataset = "fashion"`
     picks the other folder, a bad word is an error naming both). Serves criteria 1, 4 and 5. Risk
