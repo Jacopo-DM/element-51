@@ -134,6 +134,7 @@ pub fn with_palette(theme: &Theme, link: &str) -> Result<Theme, String> {
     // The red bar of a failed node is the one background that moves: the title
     // keeps the palette's text colour.
     c.header_error = ensure(&c.header_error, &[&c.title], TEXT_RATIO);
+    c.card_error_border = ensure(&c.card_error_border, &[&c.canvas], GRAPHIC_RATIO);
     c.text_dim = ensure(
         &mix(&text, &c.header_skipped, 0.4),
         &[&c.header_skipped],

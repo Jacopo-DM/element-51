@@ -7,6 +7,7 @@
         "card_border": "#505050",
         "header": "#505050",
         "header_error": "#8a3a3a",
+        "card_error_border": "#e05252",
         "header_skipped": "#3a3a3a",
         "title": "#e0e0e0",
         "label": "#b0b0b0",

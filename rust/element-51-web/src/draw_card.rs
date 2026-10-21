@@ -56,6 +56,12 @@ pub(crate) fn card(
     context.set_line_width(metrics.border_width);
     card_path(context, &rect, metrics.card_radius);
     context.stroke();
+    if status == Some(Status::Error) {
+        context.set_stroke_style_str(&colours.card_error_border);
+        context.set_line_width(metrics.selection_width);
+        card_path(context, &rect, metrics.card_radius);
+        context.stroke();
+    }
     if selected {
         context.set_stroke_style_str(&colours.selected);
         context.set_line_width(metrics.selection_width);

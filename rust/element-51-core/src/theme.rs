@@ -34,6 +34,8 @@ pub struct Colours {
     pub header: String,
     /// The title bar of a node that failed.
     pub header_error: String,
+    /// The line round a node card whose last run failed.
+    pub card_error_border: String,
     /// The title bar of a node that was skipped.
     pub header_skipped: String,
     /// The id and type name in a title bar.
@@ -491,6 +493,11 @@ impl Theme {
             text("error_text on error", &c.error_text, &c.error),
             graphic("icon on header".to_string(), &c.icon, &c.header),
             graphic("selected on canvas".to_string(), &c.selected, &c.canvas),
+            graphic(
+                "card_error_border on canvas".to_string(),
+                &c.card_error_border,
+                &c.canvas,
+            ),
             graphic(
                 "selected_wire on canvas".to_string(),
                 &c.selected_wire,
