@@ -405,17 +405,18 @@ fn grid(
     let (left, top) = view.to_graph(0.0, 0.0);
     let (right, bottom) = view.to_graph(size.0, size.1);
     context.set_fill_style_str(&theme.colours.dot);
+    context.begin_path();
     let mut y = (top / step).floor() * step;
     while y <= bottom {
         let mut x = (left / step).floor() * step;
         while x <= right {
-            context.begin_path();
+            context.move_to(x + metrics.dot_radius, y);
             context.arc(x, y, metrics.dot_radius, 0.0, TAU)?;
-            context.fill();
             x += step;
         }
         y += step;
     }
+    context.fill();
     Ok(())
 }
 

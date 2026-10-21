@@ -209,7 +209,7 @@ screen reader were not tried, and the narrow window and touch were not checked.
     200-node page lower than today's 1.51 to 1.55 ms; the 100,000-point chart no slower
     than 2.4 to 2.6 ms after Run and 0.5 to 0.6 ms before. Any gain under the spread
     (about 0.1 ms between sets) does not count.
-- Status: in progress, task list awaiting approval. Added: 2026-10-21.
+- Status: in progress. Tasks 1 and 2 done 2026-10-21 (200 nodes 1.55 to 1.4 ms, 12 pictures 1.2 to 1.0 ms, chart after Run 2.45 to 2.15 ms); task 3 (a much cheaper grid) waits for the user's decision after measuring; tasks 4 to 6 skipped at the user's word. Added: 2026-10-21.
 
 ### functional-notebooks: done (2026-10-21)
 
@@ -256,7 +256,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the `speed-up-frame` task list (below) awaits approval; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes`, `auto-run` and `mnist-experiment` are approved but have no spec: the user runs `/zz-02-project-plan` for the next one (`job-nodes` first, because the Start button the user asked for belongs to it, and the two others build on it). The user's own try-out of the editor and the new features comes first.
+Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes`, `auto-run` and `mnist-experiment` are approved but have no spec: the user runs `/zz-02-project-plan` for the next one (`job-nodes` first, because the Start button the user asked for belongs to it, and the two others build on it). The user's own try-out of the editor and the new features comes first.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -489,7 +489,7 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `speed-up-frame`: proposed, awaiting approval
+### Goal `speed-up-frame`: tasks 1 and 2 done, 3 awaiting a decision
 
 Profile, 2026-10-21 (a throwaway build that timed each part of `redraw` with
 `performance.now()` and turned parts off from a `data-skip` attribute on the canvas;
@@ -523,7 +523,7 @@ Tier 1:
 
 Tier 2:
 
-2. Draw the grid's dots as one path with one fill (`grid` in `draw.rs`: now one
+2. Done (2026-10-21, 0.4 ms or 30% on the 12 pictures; accepted by the user although the dot edges differ by at most 27 of 255 in 0.1% of the pixels). Draw the grid's dots as one path with one fill (`grid` in `draw.rs`: now one
     `begin_path`, `arc` and `fill` per dot, about 1,400 dots per frame). Gain measured in the
     ablation build: 12 pictures 1.65 to 1.48 ms (0.17, 10%),
     200 nodes 1.75 to 1.73 to 1.80 (none within the spread). Risk low, 5 lines, no look
@@ -538,7 +538,7 @@ Tier 2:
     without the user's say. Expected gain at most 0.5 ms (30%), probably less because the
     benchmark measures recording time, not painting.
 
-Tier 3 (listed, not executed unless the user says so):
+Tier 3 (listed; the user confirmed skipping 4 to 6 on 2026-10-21, recorded in DESIGN.md under Rejected approaches):
 
 4. Cache text widths (`measure_text`) and skip repeated `set_font` calls in `card` and
     `columns`: about 150 calls a frame at 0.4 us is about 0.06 ms, 4% of the frame, and it
@@ -591,7 +591,7 @@ Oldest first.
     and drawing the pictures adds nothing measurable, so the spec's budget of 1.0 ms for
     12 picture cards is missed: the cost is in drawing a card (about 0.15 ms each).
     The profile of one frame is in the `speed-up-frame` goal (grid 38 to 40%, unculled
-    wires 24% on 200 nodes, cards about 0.6 ms); its task list awaits approval. Task 35 (a chart on
+    wires 24% on 200 nodes, cards about 0.6 ms); tasks 1 and 2 are done, 12 pictures now about 1.0 ms. Task 35 (a chart on
     a card) added to the same frame: a 100,000-point chart costs about 1.6 ms a frame.
 - A card shows only the first picture of its node (the one first in port name order).
 - Not checked on a narrow window or by touch: the source panel, the growing Plot card, the
