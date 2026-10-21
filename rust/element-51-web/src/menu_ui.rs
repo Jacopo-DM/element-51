@@ -6,6 +6,7 @@ use element_51_core::menu::{
     search as search_node_types, step_menu,
 };
 use element_51_core::palette::with_palette;
+use element_51_core::rows::type_of;
 use element_51_core::theme::Theme;
 use element_51_core::{Edit, Snapshot};
 use wasm_bindgen::prelude::*;
@@ -736,11 +737,8 @@ pub(crate) fn open_card_menu_from_keyboard(shared: &Shared, id: &str) {
         let mut state = shared.borrow_mut();
         let corner = state.replica.as_ref().and_then(|replica| {
             let node = replica.graph().nodes.iter().find(|node| node.id == id)?;
-            let node_type = replica
-                .node_types()
-                .iter()
-                .find(|known| known.name == node.node_type)?;
-            let rect = node_rect(node, node_type, &state.theme.metrics);
+            let node_type = type_of(replica.graph(), replica.node_types(), node)?;
+            let rect = node_rect(node, &node_type, &state.theme.metrics);
             let icon = icon_rect(&rect, &state.theme.metrics);
             Some(state.view.to_screen(icon.x, icon.y + icon.h))
         });

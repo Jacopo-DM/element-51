@@ -22,6 +22,7 @@ from element_51.model import (
     PortRef,
     PortValue,
     can_link,
+    find_input,
     value_fits,
 )
 
@@ -274,8 +275,11 @@ def _port(
         msg = f"unknown node {ref.node}"
         raise EditError(EditErrorKind.UNKNOWN_NODE, msg)
     node_type = node_types[node.node_type]
-    ports = node_type.outputs if output else node_type.inputs
-    port = next((p for p in ports if p.name == ref.port), None)
+    port = (
+        next((p for p in node_type.outputs if p.name == ref.port), None)
+        if output
+        else find_input(node_type, ref.port)
+    )
     if port is None:
         side = "output" if output else "input"
         msg = f"node {ref.node} has no {side} port {ref.port!r}"

@@ -85,10 +85,10 @@ pub fn chart_rect(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Optio
 /// is never the only way to tell them apart.
 pub const CHART_LINE_STYLES: [PortType; 5] = [
     PortType::Float,
-    PortType::Int,
     PortType::Str,
     PortType::Bool,
     PortType::Image,
+    PortType::Series,
 ];
 
 /// The style of line number `index`, counting from 0.
@@ -97,6 +97,22 @@ pub fn line_style(index: usize) -> (PortType, bool) {
         CHART_LINE_STYLES[index % CHART_LINE_STYLES.len()],
         index >= CHART_LINE_STYLES.len(),
     )
+}
+
+/// The name of each chart line from its source `(node, port)`: the output port's
+/// name, or `n3 loss` with the node id when another line has the same name.
+pub fn line_names(sources: &[(&str, &str)]) -> Vec<String> {
+    sources
+        .iter()
+        .map(|(node, port)| {
+            let shared = sources.iter().filter(|(_, other)| other == port).count() > 1;
+            if shared {
+                format!("{node} {port}")
+            } else {
+                (*port).to_string()
+            }
+        })
+        .collect()
 }
 
 /// The last value of a series that is a number, if there is one.

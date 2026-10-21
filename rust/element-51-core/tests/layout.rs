@@ -36,6 +36,7 @@ fn node_type(inputs: &[&str], outputs: &[&str]) -> NodeType {
         defaults: Default::default(),
         category: String::new(),
         display: Default::default(),
+        variadic: Default::default(),
     }
 }
 

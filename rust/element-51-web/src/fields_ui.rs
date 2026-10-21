@@ -3,6 +3,7 @@
 use element_51_core::PortType;
 use element_51_core::fields::{field_label, format_value, parse_input};
 use element_51_core::layout::node_rect;
+use element_51_core::rows::{find_input, type_of};
 use element_51_core::{Edit, PlacedNode, Port};
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlInputElement};
@@ -29,22 +30,20 @@ pub(crate) fn sync_fields(shared: &Shared) {
     let focused = state.document.active_element().map(|element| element.id());
     let mut wanted: Vec<String> = Vec::new();
     for node in &graph.nodes {
-        let Some(node_type) = replica
-            .node_types()
-            .iter()
-            .find(|known| known.name == node.node_type)
-        else {
+        let Some(node_type) = type_of(graph, replica.node_types(), node) else {
             continue;
         };
-        let rect = node_rect(node, node_type, metrics);
+        let rect = node_rect(node, &node_type, metrics);
         for (row, port) in node_type.inputs.iter().enumerate() {
-            if graph.is_linked(&node.id, &port.name) || port.kind == PortType::Image {
+            if graph.is_linked(&node.id, &port.name)
+                || matches!(port.kind, PortType::Image | PortType::Series)
+            {
                 continue;
             }
             let id = format!("field-{}-{}", node.id, port.name);
             wanted.push(id.clone());
             let Ok((x, y, width, height)) =
-                field_box(&state.context, node_type, &rect, row, metrics)
+                field_box(&state.context, &node_type, &rect, row, metrics)
             else {
                 continue;
             };
@@ -156,7 +155,7 @@ fn on_field_change(shared: &Shared, field: &HtmlInputElement) {
                     .iter()
                     .find(|known| known.name == placed.node_type)
             })
-            .and_then(|node_type| node_type.inputs.iter().find(|input| input.name == port))
+            .and_then(|node_type| find_input(node_type, &port))
             .map(|input| input.kind);
         let (Some(placed), Some(kind)) = (placed, kind) else {
             return;

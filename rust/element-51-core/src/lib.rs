@@ -16,6 +16,7 @@ pub mod menu;
 mod model;
 pub mod palette;
 mod replica;
+pub mod rows;
 pub mod source;
 pub mod theme;
 pub mod view;
@@ -24,7 +25,7 @@ pub use edit::{EditError, apply_edit, value_fits};
 pub use model::{
     Ack, CardDisplay, Edit, EditRequest, Graph, Image, Link, Message, NodeOutcome, NodeType,
     PlacedNode, Port, PortRef, PortType, Reject, RunRequest, RunResult, Series, Shown, Snapshot,
-    SourceReply, SourceRequest, Status,
+    SourceReply, SourceRequest, Status, Variadic,
 };
 pub use replica::Replica;
 

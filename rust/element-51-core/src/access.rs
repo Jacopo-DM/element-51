@@ -7,8 +7,9 @@
 
 use std::collections::BTreeMap;
 
-use crate::display::{last_value, short_number};
+use crate::display::{last_value, line_names, short_number};
 use crate::layout::{Rect, Side, node_rect};
+use crate::rows::type_of;
 use crate::theme::Metrics;
 use crate::view::View;
 use crate::{Edit, Graph, NodeType, PlacedNode, PortRef, RunResult, Shown, Status};
@@ -74,25 +75,37 @@ pub fn with_displays(items: Vec<NodeItem>, graph: &Graph, result: &RunResult) ->
                 return item;
             };
             let mut parts: Vec<String> = Vec::new();
-            let mut lines: Vec<String> = Vec::new();
-            for (port, shown) in &outcome.shown {
+            let mut sources: Vec<(&str, &str)> = Vec::new();
+            let mut lasts: Vec<Option<f64>> = Vec::new();
+            let mut ports: Vec<(&String, &Shown)> = outcome.shown.iter().collect();
+            // Rows `series_2` and `series_10` sort by length first, so row 10 follows row 9.
+            ports.sort_by_key(|(port, _)| (port.len(), port.as_str()));
+            for (port, shown) in ports {
                 match shown {
                     Shown::Image(image) => {
                         parts.push(format!("a {} by {} picture", image.width, image.height));
                     }
                     Shown::Series(series) => {
-                        let name = graph
+                        let source = graph
                             .links
                             .iter()
                             .find(|link| link.target.node == item.id && &link.target.port == port)
-                            .map_or(port.as_str(), |link| link.source.port.as_str());
-                        lines.push(match last_value(series) {
-                            Some(last) => format!("{name} last {}", short_number(last)),
-                            None => format!("{name} has no value yet"),
-                        });
+                            .map_or((item.id.as_str(), port.as_str()), |link| {
+                                (link.source.node.as_str(), link.source.port.as_str())
+                            });
+                        sources.push(source);
+                        lasts.push(last_value(series));
                     }
                 }
             }
+            let lines: Vec<String> = line_names(&sources)
+                .into_iter()
+                .zip(lasts)
+                .map(|(name, last)| match last {
+                    Some(last) => format!("{name} last {}", short_number(last)),
+                    None => format!("{name} has no value yet"),
+                })
+                .collect();
             if !lines.is_empty() {
                 parts.push(format!(
                     "a plot of {} {}, {}",
@@ -124,12 +137,12 @@ pub fn list_nodes(graph: &Graph, node_types: &[NodeType]) -> Vec<NodeItem> {
     });
     nodes
         .into_iter()
-        .map(|node| describe_node(node_types, node))
+        .map(|node| describe_node(graph, node_types, node))
         .collect()
 }
 
-fn describe_node(node_types: &[NodeType], node: &PlacedNode) -> NodeItem {
-    let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type) else {
+fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> NodeItem {
+    let Some(node_type) = type_of(graph, node_types, node) else {
         return NodeItem {
             id: node.id.clone(),
             label: format!("{}, unknown type {}.", node.id, node.node_type),
@@ -160,7 +173,7 @@ pub fn describe_ports(graph: &Graph, node_types: &[NodeType], id: &str) -> Vec<P
     let Some(node) = graph.nodes.iter().find(|node| node.id == id) else {
         return Vec::new();
     };
-    let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type) else {
+    let Some(node_type) = type_of(graph, node_types, node) else {
         return Vec::new();
     };
     let inputs = node_type.inputs.iter().map(|port| {
@@ -235,10 +248,8 @@ pub fn neighbour(
         .nodes
         .iter()
         .filter_map(|node| {
-            let node_type = node_types
-                .iter()
-                .find(|known| known.name == node.node_type)?;
-            let rect = node_rect(node, node_type, metrics);
+            let node_type = type_of(graph, node_types, node)?;
+            let rect = node_rect(node, &node_type, metrics);
             Some((
                 node.id.as_str(),
                 (rect.x + rect.w / 2.0, rect.y + rect.h / 2.0),

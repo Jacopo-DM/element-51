@@ -15,7 +15,10 @@ from element_51.model import (
     Port,
     PortRef,
     PortType,
+    Variadic,
     can_link,
+    find_input,
+    variadic_index,
 )
 from element_51.nodes import Node, PlotNode, Registered, node
 from element_51.visuals import MAX_POINTS, Image, Series, carries
@@ -530,3 +533,94 @@ def test_the_wire_tells_a_series_from_a_picture() -> None:
     shown = chart.outcomes[0].shown["series_1"]
     assert isinstance(shown, Series)
     assert math.isnan(shown.values[1])
+
+
+def test_a_variadic_node_type_names_its_rows_by_prefix_and_number() -> None:
+    """`Plot` has rows `series_1`, `series_2`, ... of the series kind."""
+    assert PlotNode.node_type.variadic == Variadic(
+        prefix="series", kind=PortType.SERIES
+    )
+    assert loss_curve.node_type.variadic is None
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("series_1", 1),
+        ("series_12", 12),
+        ("series_0", None),
+        ("series_01", None),
+        ("series_-1", None),
+        ("series_x", None),
+        ("series_", None),
+        ("series", None),
+        ("other_1", None),
+        ("xseries_1", None),
+        ("series_1x", None),
+    ],
+)
+def test_only_a_prefix_and_a_positive_whole_number_is_a_row(
+    name: str, expected: int | None
+) -> None:
+    """The row number has no sign, no leading zero and nothing after it."""
+    variadic = Variadic(prefix="series", kind=PortType.SERIES)
+    assert variadic_index(variadic, name) == expected
+
+
+def test_find_input_takes_listed_ports_and_any_row_of_a_variadic_type() -> None:
+    """A row that is not in `inputs` still has the variadic kind."""
+    node_type = PlotNode.node_type
+    assert find_input(node_type, "series_1") == Port(
+        name="series_1", kind=PortType.SERIES
+    )
+    assert find_input(node_type, "series_7") == Port(
+        name="series_7", kind=PortType.SERIES
+    )
+    assert find_input(node_type, "series_0") is None
+    assert find_input(last_of.node_type, "history") == Port(
+        name="history", kind=PortType.SERIES
+    )
+    assert find_input(last_of.node_type, "history_2") is None
+
+
+def two_curves_graph(*rows: str) -> Graph:
+    """Build `loss_curve` nodes n1, n2, ... all linked to rows of a Plot.
+
+    Returns
+    -------
+    Graph
+        The graph; the Plot is the node after the curves.
+    """
+    types = {f"n{i + 1}": "loss_curve" for i in range(len(rows))}
+    plot = f"n{len(rows) + 1}"
+    types[plot] = "Plot"
+    return graph_of(
+        types,
+        [(f"n{i + 1}", "out", plot, row) for i, row in enumerate(rows)],
+    )
+
+
+def test_a_plot_shows_every_linked_row_not_only_the_listed_one() -> None:
+    """Rows 1 and 3 are linked; row 2 is nobody's."""
+    functions: dict[str, Registered] = {
+        "loss_curve": loss_curve,
+        "Plot": PlotNode,
+    }
+    result = run_graph(
+        two_curves_graph("series_1", "series_3"), functions, raise_errors=True
+    )
+    plot = result.outcomes[-1]
+    assert plot.status == "ok"
+    assert list(plot.shown) == ["series_1", "series_3"]
+
+
+def test_a_plot_with_only_a_later_row_linked_still_shows_it() -> None:
+    """Row 1 may stay empty."""
+    functions: dict[str, Registered] = {
+        "loss_curve": loss_curve,
+        "Plot": PlotNode,
+    }
+    result = run_graph(
+        two_curves_graph("series_2"), functions, raise_errors=True
+    )
+    assert list(result.outcomes[-1].shown) == ["series_2"]

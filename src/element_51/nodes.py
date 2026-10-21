@@ -13,6 +13,7 @@ from element_51.model import (
     Port,
     PortType,
     PortValue,
+    Variadic,
     value_fits,
 )
 from element_51.ports import (
@@ -422,6 +423,7 @@ class PlotNode:
         inputs=(Port(name="series_1", kind=PortType.SERIES),),
         outputs=(),
         display="chart",
+        variadic=Variadic(prefix="series", kind=PortType.SERIES),
     )
     defaults: ClassVar[Mapping[str, PortValue]] = {}
     output_model: ClassVar[type[BaseModel] | None] = None

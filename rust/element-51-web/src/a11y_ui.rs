@@ -9,6 +9,7 @@ use element_51_core::access::{
     zoom_text,
 };
 use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
+use element_51_core::rows::{find_input, type_of};
 use element_51_core::{Edit, PortRef, PortType, Replica};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, FocusEvent, HtmlElement, HtmlInputElement, KeyboardEvent};
@@ -288,11 +289,8 @@ fn pan_to_node(state: &mut State, id: &str) {
     );
     let rect = state.replica.as_ref().and_then(|replica| {
         let node = replica.graph().nodes.iter().find(|n| n.id == id)?;
-        let node_type = replica
-            .node_types()
-            .iter()
-            .find(|known| known.name == node.node_type)?;
-        Some(node_rect(node, node_type, &state.theme.metrics))
+        let node_type = type_of(replica.graph(), replica.node_types(), node)?;
+        Some(node_rect(node, &node_type, &state.theme.metrics))
     });
     if let Some(rect) = rect {
         let (dx, dy) = pan_to_show(&state.view, &rect, size, FOCUS_MARGIN);
@@ -544,11 +542,7 @@ fn input_kind(replica: &Replica, end: &PortRef) -> Option<PortType> {
         .node_types()
         .iter()
         .find(|known| known.name == node.node_type)?;
-    node_type
-        .inputs
-        .iter()
-        .find(|port| port.name == end.port)
-        .map(|port| port.kind)
+    find_input(node_type, &end.port).map(|port| port.kind)
 }
 
 fn edit_value(shared: &Shared, end: &PortRef) {

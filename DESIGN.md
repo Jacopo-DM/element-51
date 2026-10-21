@@ -482,6 +482,31 @@ the reason:
     suites; judged useful (24 nodes of one type are hard to tell apart) and left for
     after the experiment goals.
 
+- Task 36 outcome (2026-10-21), changes from the spec above: (a) `NodeType.variadic` is
+    `{prefix, kind}` (null by default, so old messages still read); `Variadic` and
+    `PlotNode.node_type.variadic` are `series` and the `series` kind. (b) The empty row
+    is named one past the highest row in use (the node id rule), not the lowest unused
+    number: with rows 1 and 3 linked the card shows 1, 3 and 4. A new link then lands
+    below the others and no row moves when it is made. Removing a middle link removes its
+    row and keeps the others' names. An unlinked row that is listed in `inputs` (the
+    first, `series_1`) is not shown once it has no link and another row has one. (c) A
+    row number is the prefix, an underscore and a positive whole number with no sign and
+    no leading zero; `series_0`, `series_01` and `series_x` are unknown ports on both
+    sides (three cases in the shared `link_cases.json`). (d) The layout code was not given
+    the links: every function that needs a node's inputs now takes the node type as
+    `rows::resolve_type`/`type_of` gives it, which is the same type with the rows that grew
+    as its inputs and is borrowed, not copied, when the type does not grow. That kept
+    `node_rect`, `port_at`, `anchor_of` and the rest with their signatures, and the
+    existing `layout.rs` tests unchanged. (e) `edit.rs`' `port` returns an owned `Port`
+    because a row that is not listed is made on the spot. (f) The Python engine gives a
+    chart node every linked row, in order of row number, in `shown`. (g) Lines take the
+    colours of the float, text, bool, image and series ports in turn (the first five are
+    different in all three themes; int shares float's colour by default, so it was
+    dropped from the cycle) and dash from the sixth. A line is named after its source
+    port, and when two lines share a name each gets its node id (`n4 accuracy`), in the
+    chart and in the hidden tree label. (h) The example `g1_picture_and_plot.py` now has
+    `training` (two outputs, `loss` and `accuracy`) feeding rows 1 and 2 of its Plot.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1270,6 +1295,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | card-polish task 39: wires see-through over cards | native test: every built-in theme has `wire_over_card` strictly between 0 and 1 (0.5) and a theme file can change it (the docs test already needs its row in `docs/themes.md`); 239 Rust tests; by hand in the browser pane with the picture example after Run: the wire from `n1` to `n3` is solid on the canvas and, where it crosses `n2`, the `source` and `out` boxes show through it. Redraw, the 200-node page, same script and pane as the task 34 row, three sets: medians 1.59, 1.53 and 1.57 ms (ranges 1.40 to 2.07, 1.49 to 1.57, 1.23 to 1.85) against 1.33 to 1.46 before: about 0.15 ms more, because every wire is now stroked twice; the second pass is clipped to the cards but not culled. Not verified: the other two themes by eye (the key is the same in all three) |
 | 2026-10-21 | card-polish task 40: a linked input shows its value | native tests: 8 more in `tests/fields.rs` (14 there): before a run only `n1.out`, after a run `21.0` then `[n1.out]` (a string keeps its quotes), a source that failed or was skipped, a picture or series source and a port the outcome lacks show only the source, `share_room` keeps both widths when they fit, cuts the source first, and leaves it nothing when the value fills the box; 247 Rust tests; by hand in the browser pane with `examples/a_basics/a3_arithmetic.py`: before Run the boxes say `n1.out`, after Run `3.0 [n1.out]`, `7.0 [n3.out]`, `21.0 [n4.out]` with the value in the box text colour and the source dimmer. Redraw, the 200-node page, same script and pane: median 1.52 ms before Run and 1.61 to 1.64 after (values drawn in every linked box in view), about 0.1 ms more |
 | 2026-10-21 | card-polish task 41: View source code in the card menu | tests: 8 in Python (`test_session.py`: the source of a function node with its decorator, of a class node, of `PlotNode`, dedented when defined inside a function, an unreadable one gives a reason and no code, a node that is not there; `test_server_websocket.py`: the reply goes to the asking page only; `test_protocol.py`: the request and both replies round trip through the shared `messages.json`, and the client union takes a source request), 7 in Rust (`tests/source.rs`: the shared fixture on both sides, the request text, the title, line count and sentence for code, a reason, and a reply with neither; `tests/menu.rs`: the card offers View source code then Delete node and a view is not an edit); 288 Python tests at 100%, 254 Rust tests; the keyboard walk-through 89 of 89 (7 new rows: the first entry is View source code, the panel opens with the code focused, its title and sentence, the code is shown, Escape closes it and returns to the node, "Source closed" is said, Dismiss closes it); by hand in the browser pane on `tools/ui_states.py`: Shift+F10, Enter on View source code opens "Source of n2 (zero)" with the decorated function in a read-only box with Dismiss and the focus ring on the code; axe-core 4.14.0: 0 violations with the panel open and closed, and with it open in all three themes. Not verified: a real screen reader, and the panel on a narrow window. The goal is done: wires, linked values and source (tasks 39 to 41); renaming was left out on purpose |
+| 2026-10-21 | visual-ports task 36: rows that grow with links | tests: 14 in `rust/element-51-core/tests/rows.rs` (the row number rule, `find_input` for a row that is not listed, a type that does not grow is borrowed, a plot with nothing linked has one empty row, each link adds a row, rows follow their numbers and the empty row is one past the highest, removing a middle link keeps the other names, deleting the feeding nodes shrinks the card, inputs that are not rows stay first, the resolved type, the card is one row taller per link, the empty row can be hit and a link lands on it, a link ends on the row it names after the rows above it change, line names with and without a shared name), 3 in `tests/access.rs` (the grown plot's ports and its "2 inputs" label, two lines with one name get node ids, row 10 follows row 9), 7 shared cases in `link_cases.json` run on both sides (rows 1 and 3 accepted, `series_0`, `series_01`, `other_1` and `series_x` refused as unknown ports, float to a row refused), 11 test functions in `tests/test_visuals.py` (the row rule, `find_input`, a plot shows every linked row, row 2 alone); the existing `layout.rs` tests pass unchanged; 310 Python tests at 100%, 271 Rust tests, the keyboard walk-through 89 of 89; by hand in the browser pane with `examples/g_experiments/g1_picture_and_plot.py`: the Plot card shows `series_1`, `series_2` and an empty `series_3` with two named lines (`loss`, `accuracy`), dragging `accuracy` onto the empty row grows the card to `series_4` and Run draws a third line with the two equal names told apart (`n4 accuracy`), Delete on the `series_2` port in the hidden tree removes the link and its row, the card shrinks and the rows read `series_1`, `series_3`, `series_4`. Redraw, 200-node page, same script and pane: 1.51 to 1.54 ms (three sets, 1.44 to 1.59), the same as before the change (1.52 to 1.64 with values shown), so looking a type up through `type_of` costs nothing measurable. axe-core was not run: task 38 scans the new states. Not verified: undo and redo of a link to a row by eye (the edits are the same ones undo already handles) |
 
 ## Gotchas
 

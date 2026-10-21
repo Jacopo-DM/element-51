@@ -91,6 +91,46 @@ class Port(Model):
     kind: PortType
 
 
+class Variadic(Model):
+    """A node type whose inputs grow as they are linked.
+
+    The rows are named `<prefix>_1`, `<prefix>_2`, and so on, and every row
+    has the kind `kind`. A row that is not listed in `NodeType.inputs` exists
+    as soon as something links to it.
+    """
+
+    prefix: str
+    kind: PortType
+
+
+def variadic_index(variadic: Variadic, name: str) -> int | None:
+    """Read the row number from a port name.
+
+    Parameters
+    ----------
+    variadic
+        The row naming of the node type.
+    name
+        A port name.
+
+    Returns
+    -------
+    int | None
+        The row number if `name` is the prefix, an underscore and a positive
+        whole number with no sign and no leading zero, else None.
+    """
+    head, separator, tail = name.rpartition("_")
+    if (
+        separator
+        and head == variadic.prefix
+        and tail.isascii()
+        and tail.isdigit()
+        and tail[0] != "0"
+    ):
+        return int(tail)
+    return None
+
+
 class NodeType(Model):
     """The shape of a node: its name and its ports, in drawing order.
 
@@ -100,6 +140,7 @@ class NodeType(Model):
     between levels (`"Math/Trig"` is `Trig` inside `Math`). `display` says what
     the card shows below its ports: `"image"` for a node with a picture output,
     `"chart"` for a node that plots the series linked to it, else `"none"`.
+    `variadic` makes the inputs grow: see `Variadic`.
     """
 
     name: str
@@ -108,6 +149,25 @@ class NodeType(Model):
     defaults: Mapping[str, PortValue] = {}
     category: str = ""
     display: Literal["none", "image", "chart"] = "none"
+    variadic: Variadic | None = None
+
+
+def find_input(node_type: NodeType, name: str) -> Port | None:
+    """Find the input `name` of a node type, rows that grow included.
+
+    Returns
+    -------
+    Port | None
+        The listed input of that name, or for a variadic type a port of the
+        variadic kind if `name` is a row, else None.
+    """
+    for port in node_type.inputs:
+        if port.name == name:
+            return port
+    variadic = node_type.variadic
+    if variadic is not None and variadic_index(variadic, name) is not None:
+        return Port(name=name, kind=variadic.kind)
+    return None
 
 
 class PortRef(Model):

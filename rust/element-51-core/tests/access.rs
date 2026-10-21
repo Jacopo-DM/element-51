@@ -35,6 +35,7 @@ fn types() -> Vec<NodeType> {
         defaults: Default::default(),
         category: String::new(),
         display: Default::default(),
+        variadic: Default::default(),
     };
     vec![
         make("number", vec![], vec![port("out", PortType::Float)]),
@@ -700,6 +701,7 @@ fn plot_world() -> (Graph, Vec<NodeType>) {
         defaults: Default::default(),
         category: String::new(),
         display: Default::default(),
+        variadic: Default::default(),
     });
     node_types.push(NodeType {
         name: "Plot".to_string(),
@@ -711,6 +713,7 @@ fn plot_world() -> (Graph, Vec<NodeType>) {
         defaults: Default::default(),
         category: String::new(),
         display: element_51_core::CardDisplay::Chart,
+        variadic: Default::default(),
     });
     let graph = Graph {
         nodes: vec![
@@ -785,4 +788,95 @@ fn a_line_with_no_numbers_says_so_and_an_empty_chart_says_nothing() {
     let empty = plot_outcome(&[]);
     let shown = with_displays(items.clone(), &graph, &result(vec![empty]));
     assert_eq!(label_of(&shown, "n2"), label_of(&items, "n2"));
+}
+
+fn growing_plot_world(rows: &[(&str, &str, &str)]) -> (Graph, Vec<NodeType>) {
+    let (_, mut node_types) = plot_world();
+    let plot = node_types.iter_mut().find(|t| t.name == "Plot").unwrap();
+    plot.variadic = Some(element_51_core::Variadic {
+        prefix: "series".to_string(),
+        kind: PortType::Series,
+    });
+    let mut nodes = vec![node("n9", "Plot", 600.0, 0.0)];
+    let mut links = Vec::new();
+    for (id, port, row) in rows {
+        nodes.push(node(id, "curves", 0.0, 0.0));
+        links.push(link((id, port), ("n9", row)));
+    }
+    (Graph { nodes, links }, node_types)
+}
+
+#[test]
+fn a_growing_plot_lists_its_rows_in_the_tree() {
+    let (graph, node_types) = growing_plot_world(&[("n1", "loss", "series_3")]);
+    let ports = describe_ports(&graph, &node_types, "n9");
+    let labels: Vec<&str> = ports.iter().map(|p| p.label.as_str()).collect();
+    assert_eq!(
+        labels,
+        [
+            "Input series_3, series, linked from n1 loss",
+            "Input series_4, series, not linked"
+        ]
+    );
+    let items = list_nodes(&graph, &node_types);
+    assert_eq!(label_of(&items, "n9"), "n9, Plot. 2 inputs, 0 outputs.");
+    assert_eq!(items.iter().find(|i| i.id == "n9").unwrap().port_count, 2);
+}
+
+#[test]
+fn two_lines_with_one_name_are_told_apart_by_node_in_the_label() {
+    let (graph, node_types) =
+        growing_plot_world(&[("n1", "loss", "series_1"), ("n2", "loss", "series_2")]);
+    let items = list_nodes(&graph, &node_types);
+    let both = plot_outcome_for(
+        "n9",
+        &[("series_1", &[Some(0.5)]), ("series_2", &[Some(0.25)])],
+    );
+    let shown = with_displays(items.clone(), &graph, &result(vec![both]));
+    assert_eq!(
+        label_of(&shown, "n9"),
+        format!(
+            "{} Shows a plot of 2 lines, n1 loss last 0.5 and n2 loss last 0.25.",
+            label_of(&items, "n9")
+        )
+    );
+}
+
+#[test]
+fn row_ten_follows_row_nine_in_the_label() {
+    let rows: Vec<(String, String)> = (1..=10)
+        .map(|k| (format!("n{k}"), format!("series_{k}")))
+        .collect();
+    let wired: Vec<(&str, &str, &str)> = rows
+        .iter()
+        .enumerate()
+        .map(|(i, (id, row))| {
+            (
+                id.as_str(),
+                if i % 2 == 0 { "loss" } else { "accuracy" },
+                row.as_str(),
+            )
+        })
+        .collect();
+    let (graph, node_types) = growing_plot_world(&wired);
+    let items = list_nodes(&graph, &node_types);
+    let values: Vec<(String, Vec<Option<f64>>)> = (1..=10)
+        .map(|k| (format!("series_{k}"), vec![Some(f64::from(k))]))
+        .collect();
+    let lines: Vec<(&str, &[Option<f64>])> = values
+        .iter()
+        .map(|(p, v)| (p.as_str(), v.as_slice()))
+        .collect();
+    let shown = with_displays(items, &graph, &result(vec![plot_outcome_for("n9", &lines)]));
+    let label = label_of(&shown, "n9");
+    let ten = label.find("n10 accuracy last 10").unwrap_or(usize::MAX);
+    let nine = label.find("n9 loss last 9").unwrap_or(usize::MAX);
+    assert!(nine < ten, "{label}");
+}
+
+fn plot_outcome_for(node: &str, lines: &[(&str, &[Option<f64>])]) -> NodeOutcome {
+    NodeOutcome {
+        node: node.to_string(),
+        ..plot_outcome(lines)
+    }
 }

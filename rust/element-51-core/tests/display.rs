@@ -43,6 +43,7 @@ fn card(display: CardDisplay) -> (PlacedNode, NodeType) {
         defaults: Default::default(),
         category: String::new(),
         display,
+        variadic: Default::default(),
     };
     (node, node_type)
 }
@@ -336,6 +337,7 @@ fn plot_card() -> (PlacedNode, NodeType) {
         defaults: Default::default(),
         category: String::new(),
         display: CardDisplay::Chart,
+        variadic: Default::default(),
     };
     (node, node_type)
 }
@@ -449,7 +451,8 @@ fn the_last_value_is_the_last_one_that_is_a_number() {
 fn lines_take_the_port_colours_in_turn_and_dash_from_the_sixth() {
     assert_eq!(CHART_LINE_STYLES.len(), 5);
     assert_eq!(line_style(0), (PortType::Float, false));
-    assert_eq!(line_style(4), (PortType::Image, false));
+    assert_eq!(line_style(1), (PortType::Str, false));
+    assert_eq!(line_style(4), (PortType::Series, false));
     assert_eq!(line_style(5), (PortType::Float, true));
     assert_eq!(line_style(10), (PortType::Float, true));
 }

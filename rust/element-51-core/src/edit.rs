@@ -5,6 +5,7 @@
 
 use std::fmt;
 
+use crate::rows::find_input;
 use crate::{Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, can_link};
 
 /// Why an edit was refused.
@@ -212,12 +213,12 @@ pub fn value_fits(value: &serde_json::Value, kind: crate::PortType) -> bool {
 }
 
 /// The port `reference` names, as an output or as an input.
-fn port<'a>(
+fn port(
     graph: &Graph,
-    node_types: &'a [NodeType],
+    node_types: &[NodeType],
     reference: &PortRef,
     output: bool,
-) -> Result<&'a Port, EditError> {
+) -> Result<Port, EditError> {
     let node = graph
         .nodes
         .iter()
@@ -227,19 +228,20 @@ fn port<'a>(
         .iter()
         .find(|known| known.name == node.node_type)
         .ok_or_else(|| EditError::UnknownNodeType(node.node_type.clone()))?;
-    let ports = if output {
-        &node_type.outputs
+    let found = if output {
+        node_type
+            .outputs
+            .iter()
+            .find(|candidate| candidate.name == reference.port)
+            .cloned()
     } else {
-        &node_type.inputs
+        find_input(node_type, &reference.port)
     };
-    ports
-        .iter()
-        .find(|candidate| candidate.name == reference.port)
-        .ok_or_else(|| EditError::UnknownPort {
-            node: reference.node.clone(),
-            port: reference.port.clone(),
-            output,
-        })
+    found.ok_or_else(|| EditError::UnknownPort {
+        node: reference.node.clone(),
+        port: reference.port.clone(),
+        output,
+    })
 }
 
 /// Whether following links forward from node `start` reaches `goal`.

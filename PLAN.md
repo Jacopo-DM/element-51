@@ -258,9 +258,8 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: task 36 of `visual-ports` (approved 2026-10-21): rows that grow with links.
-`card-polish` is done.
-Tasks 34 (a picture on a card) and 35 (a series and a one-line chart) are done: see DESIGN.md, Results and the spec's task 34
+Next step: task 37 of `visual-ports` (approved 2026-10-21): Save as PNG. `card-polish` is done.
+Tasks 34 (a picture on a card), 35 (a series and a one-line chart) and 36 (rows that grow with links) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a loss curve on a `Plot` node). `canvas-accessibility` is done, so every new part of
 the experiment goals is built to be reachable by keyboard from the start. The user's own try-out (below) is still pending, and so
@@ -475,7 +474,7 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `visual-ports` (task list approved 2026-10-21; tasks 34 and 35 done 2026-10-21)
+### Goal `visual-ports` (task list approved 2026-10-21; tasks 34 to 36 done 2026-10-21)
 
 All five tasks come after `canvas-accessibility` (done; the user's order). The web
 crate has no automated tests, so each task puts its logic in `element-51-core`
@@ -501,18 +500,8 @@ first. The example for these tasks is `examples/g_experiments/g1_picture_and_plo
 35. Done 2026-10-21: a series and a one-line chart (DESIGN.md, Results and the spec's task 35
     outcome; the line name tie-break by node id and the sixth line's dash are exercised in
     task 36).
-36. **Rows that grow with links.** `NodeType.variadic`; the effective rows
-    (`layout::effective_inputs`: linked `series_k` in order, then one empty row) used
-    by `node_rect`, hit-testing, drawing, the hidden tree and `neighbour`; `edit.rs`
-    and `edits.py` accept a link to a `series_k` port; line names after the source
-    port (node id prefixed on duplicates), dashes from the sixth line, names at the
-    line ends. Files: `layout.rs`, `edit.rs`, `access.rs`, `display.rs`, `draw.rs`,
-    `edits.py`, `engine.py`, `nodes.py`, fixtures (`edit_cases.json`,
-    `link_cases.json`). Criterion 3. Risk: high (card height now depends on the graph;
-    every layout call takes the links). Cost: about 450 lines. Verify: native tests
-    for the rows rule (grow, shrink, a gap in the middle, a deleted node), the same
-    rules in Python against the shared fixtures, hit-tests on a grown card, the
-    existing `layout.rs` tests unchanged.
+36. Done 2026-10-21: rows that grow with links (DESIGN.md, Results and the spec's task 36
+    outcome).
 37. **Save as PNG.** `CardAction::Save` (enabled for a node with a picture or
     chart); the picture or chart drawn at full size on an off-screen canvas and
     downloaded as `<node>-<port>.png`; a native test for the file name and the

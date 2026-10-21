@@ -110,6 +110,36 @@
             "defaults": {},
             "category": "",
             "display": "image"
+        },
+        {
+            "name": "curve",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "series"
+                }
+            ],
+            "defaults": {},
+            "category": "",
+            "display": "none"
+        },
+        {
+            "name": "Plot",
+            "inputs": [
+                {
+                    "name": "series_1",
+                    "kind": "series"
+                }
+            ],
+            "outputs": [],
+            "defaults": {},
+            "category": "",
+            "display": "chart",
+            "variadic": {
+                "prefix": "series",
+                "kind": "series"
+            }
         }
     ],
     "graph": {
@@ -159,6 +189,20 @@
             {
                 "id": "n7",
                 "node_type": "invert",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n8",
+                "node_type": "curve",
+                "x": 0.0,
+                "y": 0.0,
+                "values": {}
+            },
+            {
+                "id": "n9",
+                "node_type": "Plot",
                 "x": 0.0,
                 "y": 0.0,
                 "values": {}
@@ -277,7 +321,7 @@
         {
             "name": "unknown source node",
             "source": {
-                "node": "n9",
+                "node": "n99",
                 "port": "out"
             },
             "target": {
@@ -293,7 +337,7 @@
                 "port": "out"
             },
             "target": {
-                "node": "n9",
+                "node": "n99",
                 "port": "a"
             },
             "result": "unknown_node"
@@ -403,6 +447,90 @@
             "target": {
                 "node": "n7",
                 "port": "source"
+            },
+            "result": "type_mismatch"
+        },
+        {
+            "name": "a series feeds the first row of a plot",
+            "source": {
+                "node": "n8",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "series_1"
+            },
+            "result": "ok"
+        },
+        {
+            "name": "a series feeds a row of a plot that is not listed",
+            "source": {
+                "node": "n8",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "series_3"
+            },
+            "result": "ok"
+        },
+        {
+            "name": "row 0 of a plot does not exist",
+            "source": {
+                "node": "n8",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "series_0"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "a row number with a leading zero does not exist",
+            "source": {
+                "node": "n8",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "series_01"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "a row of another name does not exist",
+            "source": {
+                "node": "n8",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "other_1"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "a row number must be a whole number",
+            "source": {
+                "node": "n8",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "series_x"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "a float does not feed a plot row",
+            "source": {
+                "node": "n1",
+                "port": "out"
+            },
+            "target": {
+                "node": "n9",
+                "port": "series_2"
             },
             "result": "type_mismatch"
         }

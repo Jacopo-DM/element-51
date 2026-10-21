@@ -271,13 +271,19 @@ def test_the_theme_file_example_changes_the_dark_theme() -> None:
     assert snapshot.theme_changes.metrics == {"node_width": 260.0}
 
 
-def test_the_picture_example_plots_a_falling_loss() -> None:
-    """The Plot node shows the loss curve, 60 values falling overall."""
+def test_the_picture_example_plots_a_falling_loss_and_a_rising_accuracy() -> (
+    None
+):
+    """The Plot node shows both curves, 60 values each."""
     result = build("g_experiments/g1_picture_and_plot.py").execute()
-    chart = {o.node: o for o in result.outcomes}["n5"].shown["series_1"]
-    assert isinstance(chart, Series)
-    assert len(chart.values) == DEFAULT_STEPS
-    assert chart.values[-1] < chart.values[0]
+    shown = {o.node: o for o in result.outcomes}["n5"].shown
+    assert list(shown) == ["series_1", "series_2"]
+    loss, accuracy = shown["series_1"], shown["series_2"]
+    assert isinstance(loss, Series)
+    assert isinstance(accuracy, Series)
+    assert len(loss.values) == len(accuracy.values) == DEFAULT_STEPS
+    assert loss.values[-1] < loss.values[0]
+    assert accuracy.values[-1] > accuracy.values[0]
 
 
 def test_the_picture_example_shows_a_ramp_and_its_negative() -> None:

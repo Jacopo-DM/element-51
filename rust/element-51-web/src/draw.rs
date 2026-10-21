@@ -4,13 +4,15 @@
 
 use crate::pictures::Pictures;
 use element_51_core::display::{
-    chart_layout, chart_rect, fit_picture, last_value, line_style, picture_rect, short_number,
+    chart_layout, chart_rect, fit_picture, last_value, line_names, line_style, picture_rect,
+    short_number,
 };
 use element_51_core::fields::{linked_text, share_room};
 use element_51_core::layout::{
     PortHit, Rect, Side, anchor_of, icon_rect, input_anchor, node_rect, output_anchor, output_row,
     wire_controls,
 };
+use element_51_core::rows::{find_input, type_of};
 use element_51_core::theme::{Metrics, PortShape, PortStyle, Theme};
 use element_51_core::view::View;
 use element_51_core::{
@@ -204,10 +206,10 @@ pub fn draw(
     draw_links(context, theme, (graph, types), selected)?;
     let mut cards: Vec<Rect> = Vec::new();
     for node in &graph.nodes {
-        let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
+        let Some(node_type) = type_of(graph, types, node) else {
             continue;
         };
-        if !on_screen(node, node_type) {
+        if !on_screen(node, &node_type) {
             continue;
         }
         let is_selected = selected == Some(&Selected::Node(node.id.clone()));
@@ -215,11 +217,11 @@ pub fn draw(
             context,
             theme,
             graph,
-            (node, node_type),
+            (node, &node_type),
             (run, pictures),
             is_selected,
         )?;
-        cards.push(node_rect(node, node_type, metrics));
+        cards.push(node_rect(node, &node_type, metrics));
     }
     let opacity = metrics.wire_over_card.clamp(0.0, 1.0);
     if opacity > 0.0 && !cards.is_empty() {
@@ -244,19 +246,19 @@ pub fn draw(
 
     // Ports go over the wires, so a wire ends at the port's square.
     for node in &graph.nodes {
-        let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
+        let Some(node_type) = type_of(graph, types, node) else {
             continue;
         };
-        if !on_screen(node, node_type) {
+        if !on_screen(node, &node_type) {
             continue;
         }
-        let rect = node_rect(node, node_type, metrics);
+        let rect = node_rect(node, &node_type, metrics);
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row, metrics);
             marker(context, (x, y), theme.port_style(port.kind, false), metrics);
         }
         for (index, port) in node_type.outputs.iter().enumerate() {
-            let (x, y) = output_anchor(&rect, output_row(node_type, index), metrics);
+            let (x, y) = output_anchor(&rect, output_row(&node_type, index), metrics);
             marker(context, (x, y), theme.port_style(port.kind, true), metrics);
         }
     }
@@ -345,10 +347,10 @@ fn focus_ring(
     let Some(node) = graph.nodes.iter().find(|node| &node.id == node_id) else {
         return Ok(());
     };
-    let Some(node_type) = types.iter().find(|known| known.name == node.node_type) else {
+    let Some(node_type) = type_of(graph, types, node) else {
         return Ok(());
     };
-    let rect = node_rect(node, node_type, metrics).grown(FOCUS_GAP * pixel);
+    let rect = node_rect(node, &node_type, metrics).grown(FOCUS_GAP * pixel);
     let radius = metrics.card_radius + FOCUS_GAP * pixel;
     for (colour, width) in [
         (&colours.canvas, (FOCUS_WIDTH + 2.0 * FOCUS_HALO) * pixel),
@@ -600,7 +602,7 @@ fn chart(
     (area, outcome): (&Rect, &NodeOutcome),
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
-    let lines: Vec<(&str, &Series)> = node_type
+    let sourced: Vec<((&str, &str), &Series)> = node_type
         .inputs
         .iter()
         .filter_map(|port| {
@@ -609,8 +611,18 @@ fn chart(
                 .links
                 .iter()
                 .find(|link| link.target.node == node.id && link.target.port == port.name)?;
-            Some((source.source.port.as_str(), series))
+            Some((
+                (source.source.node.as_str(), source.source.port.as_str()),
+                series,
+            ))
         })
+        .collect();
+    let sources: Vec<(&str, &str)> = sourced.iter().map(|(source, _)| *source).collect();
+    let names = line_names(&sources);
+    let lines: Vec<(&str, &Series)> = names
+        .iter()
+        .map(String::as_str)
+        .zip(sourced.iter().map(|(_, series)| *series))
         .collect();
     let series: Vec<&Series> = lines.iter().map(|(_, series)| *series).collect();
     let Some(layout) = chart_layout(area, metrics, &series) else {
@@ -730,11 +742,7 @@ fn round_rect_path(context: &CanvasRenderingContext2d, rect: &Rect, radius: f64)
 fn node_port_kind(graph: &Graph, types: &[NodeType], target: &PortRef) -> Option<PortType> {
     let node = graph.nodes.iter().find(|node| node.id == target.node)?;
     let node_type = types.iter().find(|known| known.name == node.node_type)?;
-    node_type
-        .inputs
-        .iter()
-        .find(|port| port.name == target.port)
-        .map(|port| port.kind)
+    find_input(node_type, &target.port).map(|port| port.kind)
 }
 
 /// A port marker centred on `at`, in the style's colour and shape. A circle

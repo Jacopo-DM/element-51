@@ -34,7 +34,8 @@
                 "b": 2.5
             },
             "category": "Math/Basic",
-            "display": "none"
+            "display": "none",
+            "variadic": null
         },
         {
             "name": "show",
@@ -47,7 +48,8 @@
             "outputs": [],
             "defaults": {},
             "category": "",
-            "display": "none"
+            "display": "none",
+            "variadic": null
         },
         {
             "name": "picture",
@@ -60,7 +62,8 @@
             ],
             "defaults": {},
             "category": "",
-            "display": "image"
+            "display": "image",
+            "variadic": null
         },
         {
             "name": "Plot",
@@ -73,7 +76,11 @@
             "outputs": [],
             "defaults": {},
             "category": "",
-            "display": "chart"
+            "display": "chart",
+            "variadic": {
+                "prefix": "series",
+                "kind": "series"
+            }
         }
     ],
     "graph": {

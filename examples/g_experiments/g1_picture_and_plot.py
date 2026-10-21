@@ -3,9 +3,9 @@
 Five nodes. `ramp` makes a grey picture whose brightness rises from left to
 right, `invert` flips its brightness, and `pixels` counts its pixels. A picture
 is a value like a number, with its own port (a diamond) that links only to
-other picture ports. `loss_curve` makes a series, a list of numbers (a circle
-port that links only to other series ports), and the built-in `Plot` node draws
-the series linked to it as a line on its card.
+other picture ports. `training` makes two series, a list of numbers each (a
+circle port that links only to other series ports), and the built-in `Plot` node
+draws the series linked to it as lines on its card.
 
 Build the browser layer first: `uv run python tools/build_wasm.py`.
 
@@ -19,11 +19,15 @@ Notes
         `invert` node: pictures link only to pictures. A picture output does not
         link to a number input, and the page refuses it with the reason.
     * A picture input has no value box, because a picture cannot be typed.
-    * The `Plot` card shows the loss curve as a line with a scale on both axes,
-        its source port's name `out` and the last value at the line's end.
-    * Change `steps` in `loss_curve` to 300 and press Run: the line gets
-        longer and the x axis grows. Tick `blow_up`: the loss turns to NaN
-        after step 40, and the line stops there, with a gap, not an error.
+    * The `Plot` card shows the loss and the accuracy as two lines with a scale
+        on both axes, each named after its source port (`loss`, `accuracy`)
+        with its last value at its end. Its inputs grow: every link adds a
+        row, and a new empty row waits below for the next line.
+    * Drag the `accuracy` link off its row (or delete it with the link's
+        card menu or the Delete key): the row goes and the card shrinks.
+    * Change `steps` in `training` to 300 and press Run: the lines get longer
+        and the x axis grows. Tick `blow_up`: the loss turns to NaN after
+        step 40, and its line stops there, with a gap, not an error.
 
 """
 
@@ -96,22 +100,33 @@ def pixels(source: element_51.Image) -> int:
     return source.width * source.height
 
 
+class Curves(element_51.Model):
+    """The two series `training` makes."""
+
+    loss: element_51.Series
+    accuracy: element_51.Series
+
+
 @element_51.node
-def loss_curve(steps: int = 60, *, blow_up: bool = False) -> element_51.Series:
-    """Make a falling curve with a ripple.
+def training(steps: int = 60, *, blow_up: bool = False) -> Curves:
+    """Make a falling loss with a ripple and a rising accuracy.
 
     Returns
     -------
-    element_51.Series
-        `steps` values; with `blow_up`, NaN from step 40 on.
+    Curves
+        `steps` values each; with `blow_up`, the loss is NaN from step 40 on.
     """
-    values = tuple(
+    loss = tuple(
         math.nan
         if blow_up and step >= BLOW_UP_AT
         else math.exp(-step / 20) + 0.05 * math.sin(step)
         for step in range(steps)
     )
-    return element_51.Series(values=values)
+    accuracy = tuple(1 - math.exp(-step / 25) for step in range(steps))
+    return Curves(
+        loss=element_51.Series(values=loss),
+        accuracy=element_51.Series(values=accuracy),
+    )
 
 
 def build_app() -> element_51.App:
@@ -127,7 +142,7 @@ def build_app() -> element_51.App:
         ramp,
         invert,
         pixels,
-        loss_curve,
+        training,
         element_51.PlotNode,
     ])
     first = app.add_node(ramp, x=60.0, y=60.0)
@@ -135,9 +150,10 @@ def build_app() -> element_51.App:
     third = app.add_node(pixels, x=660.0, y=60.0)
     app.add_link(first, "out", second, "source")
     app.add_link(first, "out", third, "source")
-    curve = app.add_node(loss_curve, x=60.0, y=400.0)
+    curves = app.add_node(training, x=60.0, y=400.0)
     chart = app.add_node(element_51.PlotNode, x=360.0, y=400.0)
-    app.add_link(curve, "out", chart, "series_1")
+    app.add_link(curves, "loss", chart, "series_1")
+    app.add_link(curves, "accuracy", chart, "series_2")
     return app
 
 

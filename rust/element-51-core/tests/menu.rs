@@ -11,6 +11,7 @@ fn kind(name: &str, category: &str) -> NodeType {
         defaults: Default::default(),
         category: category.to_string(),
         display: Default::default(),
+        variadic: Default::default(),
     }
 }
 

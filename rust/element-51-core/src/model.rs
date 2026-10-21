@@ -55,6 +55,18 @@ pub struct NodeType {
     /// What the card shows below its ports.
     #[serde(default)]
     pub display: CardDisplay,
+    /// Inputs that grow as they are linked, if the type has them.
+    #[serde(default)]
+    pub variadic: Option<Variadic>,
+}
+
+/// The rows of a node type whose inputs grow: `<prefix>_1`, `<prefix>_2`, and so
+/// on, each of kind `kind`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Variadic {
+    pub prefix: String,
+    pub kind: PortType,
 }
 
 /// What a card shows below its ports.

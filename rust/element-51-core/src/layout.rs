@@ -1,6 +1,7 @@
 //! Where a node box sits and how big it is.
 
 use crate::display::display_height;
+use crate::rows::type_of;
 use crate::theme::Metrics;
 use crate::{Graph, Link, NodeType, PlacedNode, PortRef};
 
@@ -96,10 +97,10 @@ pub fn port_at(
     metrics: &Metrics,
 ) -> Option<PortHit> {
     for node in &graph.nodes {
-        let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type) else {
+        let Some(node_type) = type_of(graph, node_types, node) else {
             continue;
         };
-        let rect = node_rect(node, node_type, metrics);
+        let rect = node_rect(node, &node_type, metrics);
         let sides = [
             (Side::Input, &node_type.inputs),
             (Side::Output, &node_type.outputs),
@@ -108,7 +109,7 @@ pub fn port_at(
             for (index, port) in ports.iter().enumerate() {
                 let row = match side {
                     Side::Input => index,
-                    Side::Output => output_row(node_type, index),
+                    Side::Output => output_row(&node_type, index),
                 };
                 let (anchor_x, anchor_y) = match side {
                     Side::Input => input_anchor(&rect, row, metrics),
@@ -137,10 +138,8 @@ pub fn anchor_of(
     metrics: &Metrics,
 ) -> Option<(f64, f64)> {
     let node = graph.nodes.iter().find(|node| node.id == reference.node)?;
-    let node_type = node_types
-        .iter()
-        .find(|known| known.name == node.node_type)?;
-    let rect = node_rect(node, node_type, metrics);
+    let node_type = type_of(graph, node_types, node)?;
+    let rect = node_rect(node, &node_type, metrics);
     match side {
         Side::Input => {
             let row = node_type
@@ -154,7 +153,7 @@ pub fn anchor_of(
                 .outputs
                 .iter()
                 .position(|port| port.name == reference.port)?;
-            Some(output_anchor(&rect, output_row(node_type, row), metrics))
+            Some(output_anchor(&rect, output_row(&node_type, row), metrics))
         }
     }
 }
@@ -173,11 +172,10 @@ pub fn node_at(
         .iter()
         .rev()
         .find(|node| {
-            let Some(node_type) = node_types.iter().find(|known| known.name == node.node_type)
-            else {
+            let Some(node_type) = type_of(graph, node_types, node) else {
                 return false;
             };
-            let rect = node_rect(node, node_type, metrics);
+            let rect = node_rect(node, &node_type, metrics);
             x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
         })
         .map(|node| node.id.clone())
@@ -208,10 +206,8 @@ pub fn icon_at(
 ) -> Option<String> {
     let id = node_at(graph, node_types, x, y, metrics)?;
     let node = graph.nodes.iter().find(|node| node.id == id)?;
-    let node_type = node_types
-        .iter()
-        .find(|known| known.name == node.node_type)?;
-    let rect = node_rect(node, node_type, metrics);
+    let node_type = type_of(graph, node_types, node)?;
+    let rect = node_rect(node, &node_type, metrics);
     let icon = icon_rect(&rect, metrics);
     let slack = metrics.title_pad / 2.0;
     let in_header = y >= rect.y && y <= rect.y + metrics.header_height;

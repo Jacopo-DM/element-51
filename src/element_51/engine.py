@@ -10,8 +10,10 @@ from element_51.model import (
     Model,
     NodeType,
     PlacedNode,
+    Port,
     PortType,
     PortValue,
+    variadic_index,
 )
 from element_51.nodes import Registered
 from element_51.visuals import Carried, Image, Series, Shown, carries
@@ -240,7 +242,7 @@ def _evaluate(
         If an input has neither a link nor a default.
     """
     inputs: dict[str, Carried] = {}
-    for port in function.node_type.inputs:
+    for port in _input_ports(function.node_type, incoming):
         link = next(
             (link for link in incoming if link.target.port == port.name),
             None,
@@ -262,6 +264,29 @@ def _evaluate(
             msg = f"input {port.name!r} has no value"
             raise _MissingInputError(msg)
     return _collect_outputs(function, function.call(inputs)), inputs
+
+
+def _input_ports(node_type: NodeType, incoming: Sequence[Link]) -> list[Port]:
+    """List the inputs a node has in this graph, rows that grew included.
+
+    Returns
+    -------
+    list[Port]
+        The listed inputs, then each linked row of a variadic type that is not
+        listed, in order of row number.
+    """
+    ports = list(node_type.inputs)
+    variadic = node_type.variadic
+    if variadic is None:
+        return ports
+    known = {port.name for port in ports}
+    rows = sorted(
+        (index, link.target.port)
+        for link in incoming
+        if link.target.port not in known
+        and (index := variadic_index(variadic, link.target.port)) is not None
+    )
+    return [*ports, *(Port(name=name, kind=variadic.kind) for _, name in rows)]
 
 
 def _collect_outputs(
