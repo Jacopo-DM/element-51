@@ -131,7 +131,7 @@ def run_graph(
             outcomes[node.id] = NodeOutcome(
                 node=node.id,
                 status="error",
-                error=_describe(error),
+                error=describe_error(error),
             )
             continue
         outputs_by_node[node.id] = outputs
@@ -305,15 +305,15 @@ def _outcome(
     return NodeOutcome(node=node, status="ok", outputs=plain, shown=shown)
 
 
-class _MissingInputError(ValueError):
+class MissingInputError(ValueError):
     """An input has neither a link nor a default."""
 
 
-class _BadReturnError(TypeError):
+class BadReturnError(TypeError):
     """A node function returned a value its output port cannot carry."""
 
 
-def _describe(error: Exception) -> str:
+def describe_error(error: Exception) -> str:
     """Return an error as one line.
 
     The engine's own errors are already worded for a person. Anything a node
@@ -324,7 +324,7 @@ def _describe(error: Exception) -> str:
     str
         The error, worded for a person.
     """
-    if isinstance(error, _MissingInputError | _BadReturnError):
+    if isinstance(error, MissingInputError | BadReturnError):
         return str(error)
     return f"{type(error).__name__}: {error}"
 
@@ -366,17 +366,46 @@ def _evaluate(
 ) -> tuple[Mapping[str, Carried], Mapping[str, Carried]]:
     """Call one node's function and check what comes back.
 
-    A chart node takes no value for a series input nothing is linked to: that
-    is an empty row, a place to link, not a missing value.
-
     Returns
     -------
     tuple[Mapping[str, Carried], Mapping[str, Carried]]
         The value of each of the node's output ports, and of each input.
+    """
+    inputs = resolve_inputs(node, incoming, function, outputs_by_node)
+    return collect_outputs(function, function.call(inputs)), inputs
+
+
+def resolve_inputs(
+    node: PlacedNode,
+    incoming: Sequence[Link],
+    function: Registered,
+    outputs_by_node: Mapping[str, Mapping[str, Carried]],
+) -> dict[str, Carried]:
+    """Find the value of each of a node's inputs.
+
+    An input takes its link, then the node's own value, then the default. A
+    chart node takes no value for a series input nothing is linked to: that is
+    an empty row, a place to link, not a missing value.
+
+    Parameters
+    ----------
+    node
+        The node in the graph.
+    incoming
+        The links into the node.
+    function
+        The node's registered type.
+    outputs_by_node
+        The outputs of every node that has run, by node id and port name.
+
+    Returns
+    -------
+    dict[str, Carried]
+        The value of each input by port name.
 
     Raises
     ------
-    _MissingInputError
+    MissingInputError
         If an input has neither a link nor a default.
     """
     inputs: dict[str, Carried] = {}
@@ -400,8 +429,8 @@ def _evaluate(
             continue
         else:
             msg = f"input {port.name!r} has no value"
-            raise _MissingInputError(msg)
-    return _collect_outputs(function, function.call(inputs)), inputs
+            raise MissingInputError(msg)
+    return inputs
 
 
 def _input_ports(node_type: NodeType, incoming: Sequence[Link]) -> list[Port]:
@@ -427,7 +456,7 @@ def _input_ports(node_type: NodeType, incoming: Sequence[Link]) -> list[Port]:
     return [*ports, *(Port(name=name, kind=variadic.kind) for _, name in rows)]
 
 
-def _collect_outputs(
+def collect_outputs(
     function: Registered, result: object
 ) -> Mapping[str, Carried]:
     """Check what a node returned and turn it into a value per output port.
@@ -439,7 +468,7 @@ def _collect_outputs(
 
     Raises
     ------
-    _BadReturnError
+    BadReturnError
         If the node returned something its output ports cannot carry.
     """
     model = function.output_model
@@ -450,10 +479,10 @@ def _collect_outputs(
         if carries(result, port.kind):
             return {port.name: result}
         msg = f"returned {type(result).__name__}, expected {port.kind}"
-        raise _BadReturnError(msg)
+        raise BadReturnError(msg)
     if not isinstance(result, model):
         msg = f"returned {type(result).__name__}, expected {model.__name__}"
-        raise _BadReturnError(msg)
+        raise BadReturnError(msg)
     outputs: dict[str, Carried] = {}
     for port in function.node_type.outputs:
         value = getattr(result, port.name)
@@ -462,6 +491,6 @@ def _collect_outputs(
                 f"output {port.name!r} is {type(value).__name__}, "
                 f"expected {port.kind}"
             )
-            raise _BadReturnError(msg)
+            raise BadReturnError(msg)
         outputs[port.name] = value
     return outputs

@@ -622,7 +622,7 @@ Tier 1, the walking skeleton and what the rest needs:
     Serves: criteria 1, 3 (the skipped job), 4 (Run never starts one). Risk: low to medium
     (the typing spike). Cost: about 250 lines, one new concept (`fixed`). Verify: new unit
     tests; the 325 Python and 292 native tests pass unchanged.
-2. **`JobRunner` and `App.start_job`, `stop_job` (Python).** What: new `jobs.py`
+2. **DONE 2026-10-21. `JobRunner` and `App.start_job`, `stop_job` (Python).** What: new `jobs.py`
     (`JobState`, `JobRunner`, thread, update merge, 50 ms publisher with an injected
     clock), `App` methods and a job-update subscription, refusal reasons, delete and load
     handling, the end-of-job run. Files: `jobs.py`, `session.py`, `tests/test_jobs.py`,
@@ -721,6 +721,9 @@ Oldest first.
 
 ## Known problems
 
+- After `job-nodes` tasks 1 and 2, `src/element_51/engine.py` (496 lines), `jobs.py` (500) and
+    `nodes.py` (473) are over the 400-line mark. The graph reach helpers (`ancestors`,
+    `descendants`, `closure`) could move to their own module if a restructure pass runs again.
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
     fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).

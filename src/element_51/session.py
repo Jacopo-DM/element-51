@@ -4,14 +4,19 @@ import threading
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from element_51.edits import AddLink, AddNode, AnyEdit, apply_edit
-from element_51.engine import RunResult, run_graph
+from element_51.edits import AddLink, AddNode, AnyEdit, DeleteNode, apply_edit
+from element_51.engine import RunResult, closure, descendants, run_graph
+from element_51.jobs import JobRunner, JobState
 from element_51.model import Graph, NodeType, PortRef
 from element_51.nodes import Registered
 from element_51.protocol import Snapshot, SourceReply
 from element_51.store import load_graph, save_graph
 from element_51.theme import ThemeChanges, ThemeFile, resolve_theme
 from element_51.visuals import Carried
+
+type JobEvent = JobState | RunResult
+"""What `App.subscribe_jobs` listeners hear: a job's state, or the outcomes of
+the nodes after a job that has ended."""
 
 
 class App:
@@ -46,6 +51,10 @@ class App:
         self._listeners: list[Callable[[Snapshot], None]] = []
         self._theme = ThemeFile()
         self._lock = threading.RLock()
+        self._job_listeners: list[Callable[[JobEvent], None]] = []
+        self._jobs = JobRunner(
+            self.node_functions, self._job_published, self._job_ended
+        )
 
     def add_node(self, function: Registered, *, x: float, y: float) -> str:
         """Place a new node of a registered type.
@@ -92,6 +101,8 @@ class App:
         """
         with self._lock:
             self.graph = apply_edit(self.graph, self._node_types(), edit)
+            if isinstance(edit, DeleteNode):
+                self._jobs.drop(edit.id)
 
     def add_link(
         self, source: str, source_port: str, target: str, target_port: str
@@ -144,6 +155,7 @@ class App:
         graph = load_graph(Path(path), self._node_types())
         with self._lock:
             self.graph = graph
+            self._jobs.clear()
             self._changed()
 
     def _node_types(self) -> dict[str, NodeType]:
@@ -200,6 +212,88 @@ class App:
             for listener in self._listeners:
                 listener(snapshot)
 
+    def subscribe_jobs(self, listener: Callable[[JobEvent], None]) -> None:
+        """Call `listener` as jobs change.
+
+        It hears a `JobState` after each change of a job, at most 20 a second
+        for one job and at once when a job ends, and then, when a job finished
+        or was stopped, a `RunResult` with the nodes after it run once.
+
+        Parameters
+        ----------
+        listener
+            Called from the job's thread, so it must not block.
+        """
+        with self._lock:
+            self._job_listeners.append(listener)
+
+    def start_job(self, node: str) -> None:
+        """Start the job of a job node.
+
+        The nodes it depends on run once first; its inputs are their values and
+        the node's own boxes as they are now. Raises `JobRefusedError`, with a
+        reason, if there is no such node, it is not a job, it is already
+        running or stopping, or a node it depends on fails.
+
+        Parameters
+        ----------
+        node
+            The node's id.
+        """
+        with self._lock:
+            graph = self.graph
+        self._jobs.start(graph, node)
+
+    def stop_job(self, node: str) -> None:
+        """Ask the job of a node to end at its next step or report.
+
+        Raises `JobRefusedError` if the node has no running job.
+
+        Parameters
+        ----------
+        node
+            The node's id.
+        """
+        self._jobs.stop(node)
+
+    def job_states(self) -> tuple[JobState, ...]:
+        """Describe every job that has been started.
+
+        Returns
+        -------
+        tuple[JobState, ...]
+            One state per job node that has a job.
+        """
+        return self._jobs.states()
+
+    def _job_published(self, state: JobState) -> None:
+        """Tell the job listeners a job's state."""
+        with self._lock:
+            listeners = tuple(self._job_listeners)
+        for listener in listeners:
+            listener(state)
+
+    def _job_ended(self, node: str) -> None:
+        """Run the nodes after an ended job once and tell the listeners."""
+        with self._lock:
+            graph = self.graph
+            listeners = tuple(self._job_listeners)
+        after = descendants(graph, node)
+        if not after:
+            return
+        result = run_graph(
+            graph,
+            self.node_functions,
+            raise_errors=False,
+            only=closure(graph, after),
+            fixed=self._jobs.results(),
+        )
+        shown = RunResult(
+            outcomes=tuple(o for o in result.outcomes if o.node in after)
+        )
+        for listener in listeners:
+            listener(shown)
+
     def execute(self) -> RunResult:
         """Run the graph and report what happened to every node.
 
@@ -208,7 +302,12 @@ class App:
         RunResult
             One outcome per node; nothing is raised for a failing node.
         """
-        return run_graph(self.graph, self.node_functions, raise_errors=False)
+        return run_graph(
+            self.graph,
+            self.node_functions,
+            raise_errors=False,
+            fixed=self._jobs.results(),
+        )
 
     def run(self) -> dict[str, dict[str, Carried]]:
         """Run the graph and return every node's outputs.
@@ -222,7 +321,12 @@ class App:
             For each node id, the value of each of its output ports by name.
             A picture is an `Image`.
         """
-        result = run_graph(self.graph, self.node_functions, raise_errors=True)
+        result = run_graph(
+            self.graph,
+            self.node_functions,
+            raise_errors=True,
+            fixed=self._jobs.results(),
+        )
         return {
             outcome.node: {**outcome.outputs, **outcome.shown}
             for outcome in result.outcomes

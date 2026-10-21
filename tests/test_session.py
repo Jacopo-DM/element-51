@@ -7,9 +7,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, override
 
 import pytest
+from sample_jobs import FIRST_TOTAL, WAIT, Pause, Steps
 from sample_nodes import add, show
 
-from element_51.edits import AddLink, AddNode, EditError
+from element_51.edits import AddLink, AddNode, DeleteNode, EditError
+from element_51.engine import NO_OUTPUT, RunResult
+from element_51.jobs import JobRefusedError, JobState
 from element_51.model import Link, PortRef, PortType
 from element_51.nodes import (
     Node,
@@ -382,3 +385,131 @@ def test_the_source_of_a_node_that_is_not_there_says_so() -> None:
     reply = App([add]).source("n9")
     assert reply.source is None
     assert reply.reason == "There is no node n9"
+
+
+def job_app() -> tuple[App, list[JobState], list[RunResult], threading.Event]:
+    """Build an app with a step job feeding `show`, and listen to its jobs.
+
+    Returns
+    -------
+    tuple[App, list[JobState], list[RunResult], threading.Event]
+        The app, the states and run results heard, and an event set once the
+        run after the job has been heard.
+    """
+    app = App([Steps, show])
+    app.add_node(Steps, x=0.0, y=0.0)
+    app.add_node(show, x=200.0, y=0.0)
+    app.add_link("n1", "total", "n2", "value")
+    states: list[JobState] = []
+    runs: list[RunResult] = []
+    heard = threading.Event()
+
+    def listener(event: JobState | RunResult) -> None:
+        if isinstance(event, JobState):
+            states.append(event)
+        else:
+            runs.append(event)
+            heard.set()
+
+    app.subscribe_jobs(listener)
+    return app, states, runs, heard
+
+
+def test_a_plain_run_skips_a_job_that_has_not_run_and_what_follows() -> None:
+    """Run never starts a job, so a job node has no output until Start."""
+    app, _, _, _ = job_app()
+    result = app.execute()
+    by_node = {o.node: o for o in result.outcomes}
+    assert by_node["n1"].status == "skipped"
+    assert by_node["n1"].error == NO_OUTPUT
+    assert by_node["n2"].status == "skipped"
+    with pytest.raises(ValueError, match="no output yet"):
+        app.run()
+
+
+def test_start_job_runs_it_then_the_nodes_after_it_once() -> None:
+    """Listeners hear the states, then the nodes after the job run once."""
+    app, states, runs, heard = job_app()
+    app.start_job("n1")
+    assert heard.wait(WAIT)
+    assert states[0].state == "running"
+    assert states[-1].state == "finished"
+    assert [o.node for o in runs[0].outcomes] == ["n2"]
+    assert runs[0].outcomes[0].outputs == {"out": FIRST_TOTAL + 2}
+    assert [s.state for s in app.job_states()] == ["finished"]
+
+
+def test_a_plain_run_after_a_job_uses_its_latest_values() -> None:
+    """Run and `run` take a job's outputs as if it had run."""
+    app, _, _, heard = job_app()
+    app.start_job("n1")
+    assert heard.wait(WAIT)
+    by_node = {o.node: o for o in app.execute().outcomes}
+    assert by_node["n1"].outputs == {"total": FIRST_TOTAL + 2}
+    assert by_node["n2"].outputs == {"out": FIRST_TOTAL + 2}
+    assert app.run()["n2"]["out"] == FIRST_TOTAL + 2
+
+
+def test_stop_job_stops_it_and_the_nodes_after_it_still_run() -> None:
+    """A stopped job leaves partial results; the run after it still happens."""
+    app, states, runs, heard = job_app()
+    Pause.reset()
+    Steps.pause_at = 1
+    try:
+        app.start_job("n1")
+        assert Pause.entered.wait(WAIT)
+        app.stop_job("n1")
+        Pause.release.set()
+        assert heard.wait(WAIT)
+    finally:
+        Steps.pause_at = -1
+    assert states[-1].state == "stopped"
+    assert runs[0].outcomes[0].outputs == {"out": FIRST_TOTAL + 1}
+
+
+def test_start_and_stop_are_refused_with_a_reason() -> None:
+    """Refusals come as `JobRefusedError`, whose reason is for the person."""
+    app, _, _, _ = job_app()
+    with pytest.raises(JobRefusedError, match="not a job"):
+        app.start_job("n2")
+    with pytest.raises(JobRefusedError, match="no running job"):
+        app.stop_job("n1")
+
+
+def test_deleting_a_job_node_forgets_its_job() -> None:
+    """A deleted node leaves no job state and no results."""
+    app, _, _, heard = job_app()
+    app.start_job("n1")
+    assert heard.wait(WAIT)
+    app.apply(DeleteNode(id="n1"))
+    assert app.job_states() == ()
+    assert {o.node for o in app.execute().outcomes} == {"n2"}
+
+
+def test_loading_a_graph_clears_every_job(tmp_path: Path) -> None:
+    """Jobs belong to the graph that was replaced."""
+    app, _, _, heard = job_app()
+    app.start_job("n1")
+    assert heard.wait(WAIT)
+    path = tmp_path / "graph.json"
+    app.save(path)
+    app.load(path)
+    assert app.job_states() == ()
+
+
+def test_a_job_with_nothing_after_it_sends_no_run() -> None:
+    """When no node follows, the end of the job is only a state."""
+    app = App([Steps])
+    app.add_node(Steps, x=0.0, y=0.0)
+    heard: list[JobState | RunResult] = []
+    finished = threading.Event()
+
+    def listener(event: JobState | RunResult) -> None:
+        heard.append(event)
+        if isinstance(event, JobState) and event.state == "finished":
+            finished.set()
+
+    app.subscribe_jobs(listener)
+    app.start_job("n1")
+    assert finished.wait(WAIT)
+    assert all(isinstance(event, JobState) for event in heard)
