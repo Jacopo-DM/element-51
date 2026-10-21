@@ -189,9 +189,8 @@ met (spec and decisions in DESIGN.md; `docs/jobs.md`, "A job in its own process"
         new theme key (both theme files, `docs/themes.md`, `contrast_pairs`, 3:1
         against the canvas, checked for every palette); the border is never the only
         signal (the banner and the node's text say it too).
-- Status: approved 2026-10-21 (items 1 to 4). Items 5 to 8 were chosen by the user
-    on 2026-10-21 in the spec round and need approval in words as part of the goal;
-    the architecture and task list are not written yet. Independent: it can start any time
+- Status: approved 2026-10-21, criteria 1 to 8 (the user's words). Spec in DESIGN.md,
+    "auto-run spec". Tasks written below; they wait for approval in words. Independent: it can start any time
     after `canvas-accessibility`.
 - Added: 2026-10-21
 
@@ -285,7 +284,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `restructure-2` is done, merged to `main` and pushed (2026-10-21, `main` is at `origin/main`; the merged branch `restructure-2` is not deleted yet and needs the user's say-so; GitHub's CI, Docs and Rust and WASM runs for it were not read); the user's try-out comes first. `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
+Next step: `restructure-2` is done, merged to `main` and pushed (2026-10-21, `main` is at `origin/main`; the merged branch `restructure-2` is not deleted yet and needs the user's say-so; GitHub's CI, Docs and Rust and WASM runs for it were not read); the user's try-out comes first. `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes`, `job-isolation` and `plot-polish` (a legend row, axes and grid, a taller chart) are done and pushed (2026-10-21, `main` is at `origin/main`). `auto-run` has its spec (DESIGN.md) and four tasks that wait for approval in words; `mnist-experiment` is approved but has no spec (the user runs `/zz-02-project-plan` for it). The user's own try-out of the editor and the new features comes first (they started `g2_job_nodes.py` on 2026-10-21 and asked for the plot polish; the light theme and the palettes were not looked at by eye for the new plot).
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -624,6 +623,42 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
+
+### Goal `auto-run`: tasks (written 2026-10-21, awaiting approval)
+
+Tier 1 (the walking skeleton: a ticked box runs the graph after an edit):
+
+1. The auto-run rule in `element-51-core` (new `autorun.rs`, `lib.rs` export), with
+    native tests in `tests/autorun.rs`. Serves criteria 2, 3 (nothing here starts a job)
+    and 6. Risk low, about 120 lines, no new concept beyond the rule itself. Verified by the
+    new native tests (debounce, move gives none, change during a run queues one, unticking
+    clears); `cargo test` and `clippy` stay clean.
+2. The checkbox and its wiring (new `autorun_ui.rs`, edits in `edit_ui.rs`,
+    `messages.rs`, `run_ui.rs`, `lib.rs`, `index.html`). Serves criteria 1, 2, 4, 5, 6 and 7.
+    Risk medium (it touches the edit, snapshot and run paths), about 200 lines. The error
+    banner already shows one text at a time; this task checks that a passing run clears
+    it and a failing run replaces it, and fixes it if not. Verified by: all three
+    walk-throughs (90, 16, 21 rows) plus new rows for the box (Tab to it, Space ticks,
+    Run reports disabled, unticking enables it); in the browser pane: type into an add
+    node's box and see the result follow, three fast edits give one run, a 20-second
+    node with an edit during the run shows "Still running, will run again" and then
+    runs once more; axe 0 violations with the box in both themes; contrast for the
+    label. No automated page test exists, so the rule's tests (task 1) pin the logic.
+
+Tier 2:
+
+3. The red node border (`card_error_border`: `theme.rs`, both theme JSON files,
+    `docs/themes.md`, `palette.rs`, `draw_card.rs`). Serves criterion 8. Risk medium (a
+    new theme colour touches the AA tests for every palette), about 40 lines. Verified by
+    the native theme tests (key in both files, a docs row, the contrast pair, every
+    palette at 0 failures) and by eye on a failing node in both themes; the redraw
+    benchmark (`tools/bench_page.js`) must stay inside the known 1.3 to 1.6 ms.
+4. A runnable example `examples/d_editor/d6_auto_run.py`, a row in
+    `tests/test_examples.py`, and a line in `docs/` where the Run button is described.
+    Serves criterion 2 for the user's try-out. Risk low, about 60 lines.
+
+Tier 3: none. Nothing here has tests that pin the page code (the web crate has none);
+task 2 relies on the walk-throughs and the browser pane, as the earlier page tasks did.
 
 ### Tier 3: listed, not executed
 

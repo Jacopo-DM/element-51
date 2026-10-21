@@ -718,6 +718,60 @@ Built 2026-10-21 (task 8). Where the build differs from, or settles, the spec:
     one line of `Chatty`), as CLAUDE.md allows.
 
 
+### auto-run spec (approved 2026-10-21)
+
+Part of the experiment goals (PLAN.md). Criteria 1 to 8 are in PLAN.md and were
+approved in words on 2026-10-21.
+
+- Users: anyone editing a graph in the browser who wants results to follow their
+    edits (a number box, a link, a deleted node) without pressing Run each time.
+    Non-goals: starting a `JobNode` (jobs keep Start and Stop), saving the
+    checkbox between page loads, a different delay than 300 ms, running while a
+    node is only being moved or dragged.
+- Integration points: `submit_edit` in `edit_ui.rs` (every user edit, undo and redo
+    pass through it), the `Message::Snapshot` arm of `on_message` in `messages.rs`
+    (a change pushed from Python arrives as a snapshot), `on_run` and `set_running`
+    in `run_ui.rs`, `draw_card` in `draw_card.rs`, the Run button and its row in the
+    page. Python does not change: `Message::Run` already runs every node except job
+    nodes (`engine.py`, "A job node is never run here").
+- Architecture:
+    * `element-51-core`, new module `autorun`: a pure rule, no clock and no DOM.
+        `AutoRun` holds `ticked`, the time of the last change and whether a run is in
+        progress. `change(now_ms)` says what to do (wait for 300 ms, or warn that a run
+        is going and queue one more); `due(now_ms)` says whether the time has come;
+        `run_started()` and `run_finished()` update it; `finished` says whether a queued
+        run must start. `DEBOUNCE_MS = 300`. Native tests in `tests/autorun.rs` cover the
+        rule: three changes inside 300 ms give one run, a move gives none, a change during
+        a run queues exactly one run, unticking drops anything pending.
+    * `element-51-web`, new module `autorun_ui`: the checkbox, one `setTimeout`, and
+        the glue. It calls `on_run` when the rule says so. `State` gets one `AutoRun`.
+        `submit_edit` reports every edit except `MoveNode`; the snapshot arm reports a
+        pushed change while the box is ticked; `RunResult` (not partial) reports the end
+        of a run.
+    * Page: `Run automatically` as a real `<input type="checkbox">` with a `<label>`
+        next to Run, styled with the page's custom properties (no hex colour). Ticking
+        sets `aria-disabled="true"` on Run, the same way `Running` does (it stays focusable;
+        a click does nothing); unticking restores it. The warning goes through the existing
+        `announce` status line, not the banner.
+    * Red border: a new theme colour `card_error_border` (key in `Colours` and both
+        theme JSON files, a row in `docs/themes.md`, a pair in `Theme::contrast_pairs`
+        at 3:1 against the canvas, `ensure` in `palette.rs` so every palette passes).
+        `draw_card` strokes it, in the selection width, for `Status::Error`. The title
+        bar already turns `header_error` red today; the border is a second cue, and the
+        banner and the node's own error text stay.
+- Existing behaviour that must not regress: Run still works with the box unticked; moving a
+    node keeps the shown values; job rows and Start and Stop are untouched; every
+    other keyboard row of the walk-through (90, 16 and 21) still passes.
+- Rejected alternatives: debounce in Python (a round trip per keystroke, and the timer
+    state would live in two places); saving the checkbox in `localStorage` (criterion 1
+    says unticked at every load); the `disabled` attribute on Run (it drops keyboard focus,
+    which `Running` deliberately keeps); a banner for the "still running" warning (it is
+    not an error and would need a Dismiss on every slow-run edit); a timer-free "run on
+    every edit" (a slow node would start many runs).
+- Risk noted: today an edit clears the shown run (`clear_run`), so with auto-run the
+    values and red borders blank for about 300 ms and come back with the result. This
+    keeps the existing rule; softening it is a separate decision.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
