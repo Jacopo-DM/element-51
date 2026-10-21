@@ -184,6 +184,39 @@ Results). `tests/test_mnist_example.py` (31 tests, fake data), a row in `tests/t
 and a fixture that runs every example from an empty folder, `docs/experiments.md`. The user's own
 try-out is still to come; the keyboard walk-throughs do not cover this example.
 
+### card-resize (draft, asked 2026-10-22)
+
+- Goal: a resize handle (the hatched grip) in the bottom-right corner of a card, to drag it
+    bigger or smaller.
+- Kind: new behaviour.
+- Open, for the user: which cards get it (only picture and chart cards, or every card); whether
+    the size is part of the graph (saved, seen by Python, undoable: it changes the wire record
+    and the saved file's version) or only lasts for the page session.
+- Status: draft, nothing approved, no spec.
+- Added: 2026-10-22
+
+### png-paper (draft, asked 2026-10-22)
+
+- Goal: Save as PNG gives a picture that is ready for an academic paper, not what it saves today.
+- Kind: new behaviour (changes what the card menu saves).
+- Open, for the user: the look (white page, black text, serif font and colour-blind-safe lines
+    that survive greyscale, independent of the editor theme; or the editor's colours made
+    bigger) and the size (about 2100 x 1400 px, 7 inches at 300 dpi; or a single column about
+    1000 x 700 px). The file should record its dpi.
+- Status: draft, nothing approved, no spec.
+- Added: 2026-10-22
+
+### readme-gif (approved by the user's words 2026-10-22, not started)
+
+- Goal: the MNIST demo as a GIF header in the README. The user chose to build it from
+    screenshots with Pillow (a dev dependency already): about 15 frames from the built-in
+    browser, `docs/images/mnist.gif` under about 3 MB, GIF kept as it is by
+    `tools/compress_images.py`. The README lines are a draft for the user's review (the
+    README prose is the user's).
+- Kind: new behaviour (docs).
+- Status: waiting; the capture is choppy at about one frame a second unless training is slowed.
+- Added: 2026-10-22
+
 ### speed-up-frame: done (2026-10-21)
 
 Tasks 1 and 2 kept (wires that cannot reach the view are not drawn, the grid's dots are one path
