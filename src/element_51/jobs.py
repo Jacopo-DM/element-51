@@ -11,15 +11,15 @@ from pydantic import BaseModel, ConfigDict, Field
 from element_51.engine import (
     MissingInputError,
     ancestors,
-    collect_outputs,
     describe_error,
     resolve_inputs,
     run_graph,
 )
+from element_51.job_exec import CallbackSink, execute
 from element_51.job_node import JobNode, Stopped
 from element_51.model import Graph, Model, NodeType, PlacedNode, PortValue
 from element_51.nodes import Registered
-from element_51.visuals import Carried, Image, Series, Shown, carries
+from element_51.visuals import Carried, Image, Series, Shown
 
 PUBLISH_INTERVAL = 0.05
 """Seconds between two updates sent for one job: at most 20 a second."""
@@ -110,56 +110,6 @@ class _Job(BaseModel):
             outputs=outputs,
             shown=shown,
         )
-
-
-class _JobReport:
-    """The `Report` a work job calls; it raises `Stopped` after Stop."""
-
-    def __init__(
-        self,
-        stop: threading.Event,
-        node_type: NodeType,
-        update: Callable[[Mapping[str, Carried]], None],
-    ) -> None:
-        self._stop = stop
-        self._node_type = node_type
-        self._update = update
-
-    @property
-    def stopped(self) -> bool:
-        """Whether Stop was pressed."""
-        return self._stop.is_set()
-
-    def __call__(self, **fields: Carried) -> None:
-        """Show new values for some outputs.
-
-        Raises
-        ------
-        Stopped
-            If Stop was pressed; the values are dropped.
-        ValueError
-            If a name is not an output of the node.
-        TypeError
-            If a value does not fit its output.
-        """
-        if self.stopped:
-            raise Stopped
-        kinds = {port.name: port.kind for port in self._node_type.outputs}
-        for name, value in fields.items():
-            if name not in kinds:
-                listed = ", ".join(kinds) or "none"
-                msg = (
-                    f"{name!r} is not an output of {self._node_type.name}; "
-                    f"its outputs are: {listed}"
-                )
-                raise ValueError(msg)
-            if not carries(value, kinds[name]):
-                msg = (
-                    f"output {name!r} is {type(value).__name__}, "
-                    f"expected {kinds[name]}"
-                )
-                raise TypeError(msg)
-        self._update(fields)
 
 
 def _merged(
@@ -419,46 +369,25 @@ class JobRunner:
         function: type[JobNode[object]],
         inputs: Mapping[str, Carried],
     ) -> None:
-        """Build the node and run it, as steps or in one call."""
-        node = function(**inputs)
-        if function.is_stepped:
-            self._steps(job, node, function)
-            return
-        report = _JobReport(job.stop, job.node_type, partial(self._update, job))
-        self._update_from(job, function, node.work(report))
+        """Run the job's code on this thread."""
+        sink = CallbackSink(
+            begin=partial(self._set_steps, job),
+            update=partial(self._update, job),
+            advance=partial(self._set_step, job),
+        )
+        execute(function, inputs, job.stop, sink)
 
-    def _steps(
-        self,
-        job: _Job,
-        node: JobNode[object],
-        function: type[JobNode[object]],
-    ) -> None:
-        """Run a step job: `begin`, then `step` for each step.
-
-        Raises
-        ------
-        Stopped
-            Before a step, if Stop was pressed.
-        """
-        total = node.steps()
+    def _set_steps(self, job: _Job, total: int) -> None:
+        """Record how many steps a job has and publish."""
         with self._lock:
             job.steps = total
         self._emit(job)
-        state = node.begin()
-        for i in range(total):
-            if job.stop.is_set():
-                raise Stopped
-            self._update_from(job, function, node.step(state, i))
-            with self._lock:
-                job.step = i + 1
-            self._emit(job)
 
-    def _update_from(
-        self, job: _Job, function: type[JobNode[object]], result: object
-    ) -> None:
-        """Add a step's or a work job's return value to the results."""
-        if result is not None:
-            self._update(job, collect_outputs(function, result))
+    def _set_step(self, job: _Job, step: int) -> None:
+        """Record how many steps are done and publish."""
+        with self._lock:
+            job.step = step
+        self._emit(job)
 
     def _update(self, job: _Job, fields: Mapping[str, Carried]) -> None:
         """Add new values to a job's results and publish."""
