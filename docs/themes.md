@@ -98,6 +98,11 @@ Any CSS colour: `"#1a1a1a"`, `"rgb(26, 26, 26)"`, `"rgba(0, 0, 0, 0.5)"` or a na
 | `menu_shadow` | The shadow under the right-click menu. | `rgba(0, 0, 0, 0.6)` | `rgba(0, 0, 0, 0.18)` | `rgba(0, 0, 0, 0.6)` |
 | `menu_hover` | The menu entry under the pointer. | `#2c2c31` | `#ececf0` | `#3a3595` |
 | `menu_hover_text` | Text of the menu entry under the pointer. | `#e6e6e8` | `#1f1f23` | `#afb0bf` |
+| `code_keyword` | A Python keyword (`def`, `return`, `None`) in the source panel. | `#b9a2f5` | `#6a3fb5` | `#ff8bd8` |
+| `code_string` | A string, docstrings included, in the source panel. | `#8fd18f` | `#2a7a2a` | `#8ef0c0` |
+| `code_comment` | A comment in the source panel. | `#9b9ba3` | `#5f5f68` | `#9e9cc1` |
+| `code_number` | A number in the source panel. | `#e0b36a` | `#8a5a00` | `#ffd479` |
+| `code_name` | A decorator, or the name after `def` or `class`, in the source panel. | `#7fc3e8` | `#1a6a9a` | `#7fd4ff` |
 | `run_bg` | The Run button's background. | `#5e6ad2` | `#4f46e5` | `#473bf0` |
 | `run_text` | The Run button's text and triangle. | `#ffffff` | `#ffffff` | `#d4d4dc` |
 | `run_border` | The line round the Run button. | `#5e6ad2` | `#4f46e5` | `#473bf0` |

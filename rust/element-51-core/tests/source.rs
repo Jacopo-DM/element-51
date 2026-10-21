@@ -1,5 +1,6 @@
 //! The panel that shows a node's source code, and the messages that ask for it.
 
+use element_51_core::highlight::{Kind, highlight};
 use element_51_core::source::{SourcePanel, source_panel, source_request_text};
 use element_51_core::{Message, SourceReply, SourceRequest};
 use serde_json::Value;
@@ -65,9 +66,14 @@ fn code_gets_a_title_the_code_itself_and_a_sentence_with_its_length() {
         SourcePanel {
             title: "Source of n2 (add)".to_string(),
             body: code.to_string(),
+            spans: highlight(code),
             announcement: "Source of n2, add, 3 lines. Press Escape to close".to_string(),
         }
     );
+    // The coloured runs are the code, and some of them are coloured.
+    let joined: String = panel.spans.iter().map(|span| span.text.as_str()).collect();
+    assert_eq!(joined, code);
+    assert!(panel.spans.iter().any(|span| span.kind == Kind::Keyword));
 }
 
 #[test]
@@ -85,6 +91,10 @@ fn a_reason_is_shown_in_place_of_the_code_and_said() {
     let panel = source_panel(&reply(None, Some("The source cannot be read")), "made");
     assert_eq!(panel.title, "Source of n2 (made)");
     assert_eq!(panel.body, "The source cannot be read");
+    // A reason is plain text: it is not code, so nothing in it is coloured.
+    assert_eq!(panel.spans.len(), 1);
+    assert_eq!(panel.spans[0].kind, Kind::Plain);
+    assert_eq!(panel.spans[0].text, "The source cannot be read");
     assert_eq!(
         panel.announcement,
         "No source for n2: The source cannot be read. Press Escape to close"

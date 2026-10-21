@@ -76,6 +76,16 @@ pub struct Colours {
     pub menu_hover: String,
     /// Text of the menu entry under the pointer.
     pub menu_hover_text: String,
+    /// A Python keyword (`def`, `return`, `None`) in the source panel.
+    pub code_keyword: String,
+    /// A string, docstrings included, in the source panel.
+    pub code_string: String,
+    /// A comment in the source panel.
+    pub code_comment: String,
+    /// A number in the source panel.
+    pub code_number: String,
+    /// A decorator, or the name after `def` or `class`, in the source panel.
+    pub code_name: String,
     /// The Run button's background.
     pub run_bg: String,
     /// The Run button's text and triangle.
@@ -365,6 +375,11 @@ impl Theme {
             ("--menu-shadow", &colours.menu_shadow),
             ("--menu-hover-bg", &colours.menu_hover),
             ("--menu-hover-text", &colours.menu_hover_text),
+            ("--code-keyword", &colours.code_keyword),
+            ("--code-string", &colours.code_string),
+            ("--code-comment", &colours.code_comment),
+            ("--code-number", &colours.code_number),
+            ("--code-name", &colours.code_name),
             ("--error-bg", &colours.error),
             ("--error-text", &colours.error_text),
             ("--font", &self.fonts.family),
@@ -457,6 +472,11 @@ impl Theme {
             text("menu_text on menu", &c.menu_text, &c.menu),
             text("menu_muted on menu", &c.menu_muted, &c.menu),
             text("menu_text on menu_field", &c.menu_text, &c.menu_field),
+            text("code_keyword on menu_field", &c.code_keyword, &c.menu_field),
+            text("code_string on menu_field", &c.code_string, &c.menu_field),
+            text("code_comment on menu_field", &c.code_comment, &c.menu_field),
+            text("code_number on menu_field", &c.code_number, &c.menu_field),
+            text("code_name on menu_field", &c.code_name, &c.menu_field),
             text(
                 "menu_hover_text on menu_hover",
                 &c.menu_hover_text,

@@ -258,7 +258,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `code-colours` (approved in words 2026-10-21: the user chose an own Rust tokenizer over highlight.js): colour the source panel and let a long line scroll sideways, then task 37 of `visual-ports` (Save as PNG). `card-polish` is done; `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) is done on branch `box-summaries`.
+Next step: task 37 of `visual-ports` (approved 2026-10-21): Save as PNG. `card-polish` is done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`).
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart) and 36 (rows that grow with links) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two

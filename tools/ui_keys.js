@@ -335,6 +335,7 @@ async function uiKeys() {
     check("the source panel opens with the code focused", !sourcePanel.hidden && active() === sourceText, active().id);
     check("it has a title and says how long the code is", /^Source of n\d+ \(/.test(document.getElementById("source-title").textContent) && /^Source of n\d+, \S+, \d+ lines?\./.test(status.textContent), status.textContent);
     check("the code is shown", sourceText.textContent.length > 0, sourceText.textContent.slice(0, 30));
+    check("the code is coloured, keywords and names apart", sourceText.querySelector(".tok-keyword") !== null && sourceText.querySelector(".tok-name") !== null, sourceText.querySelectorAll("span[class]").length + " coloured runs");
     await pressWith("Escape", {});
     check("Escape closes it and returns to the node", sourcePanel.hidden && active().id === sourceOpener, active().id);
     check("closing is said", status.textContent === "Source closed", status.textContent);

@@ -64,7 +64,19 @@ pub(crate) fn show_source(shared: &Shared, reply: &SourceReply) {
         return;
     };
     title.set_text_content(Some(&words.title));
-    body.set_text_content(Some(&words.body));
+    // One span per run, each with its kind's class; the text is the code itself,
+    // so a screen reader and a copy get it plain.
+    body.set_text_content(None);
+    for run in &words.spans {
+        let Ok(span) = document.create_element("span") else {
+            continue;
+        };
+        if let Some(class) = run.kind.class() {
+            span.set_class_name(class);
+        }
+        span.set_text_content(Some(&run.text));
+        let _ = body.append_child(&span);
+    }
     body.set_scroll_top(0);
     let _ = panel.remove_attribute("hidden");
     if let Ok(body) = body.dyn_into::<HtmlElement>() {

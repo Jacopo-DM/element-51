@@ -1,5 +1,6 @@
 //! Showing a node's source code: the request, and the panel's words.
 
+use crate::highlight::{Kind, Span, highlight};
 use crate::{Message, SourceReply, SourceRequest};
 
 /// What the source panel shows for one reply.
@@ -9,6 +10,9 @@ pub struct SourcePanel {
     pub title: String,
     /// The code, or the reason there is none.
     pub body: String,
+    /// `body` in coloured runs: the code cut by `highlight`, or the reason as
+    /// one plain run.
+    pub spans: Vec<Span>,
     /// What a screen reader is told when the panel opens.
     pub announcement: String,
 }
@@ -31,6 +35,7 @@ pub fn source_panel(reply: &SourceReply, type_name: &str) -> SourcePanel {
             SourcePanel {
                 title,
                 body: code.clone(),
+                spans: highlight(code),
                 announcement: format!(
                     "Source of {}, {type_name}, {lines} {unit}. Press Escape to close",
                     reply.node
@@ -42,6 +47,10 @@ pub fn source_panel(reply: &SourceReply, type_name: &str) -> SourcePanel {
             SourcePanel {
                 title,
                 body: reason.to_string(),
+                spans: vec![Span {
+                    kind: Kind::Plain,
+                    text: reason.to_string(),
+                }],
                 announcement: format!(
                     "No source for {}: {reason}. Press Escape to close",
                     reply.node

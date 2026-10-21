@@ -10,6 +10,7 @@ pub mod contrast;
 pub mod display;
 mod edit;
 pub mod fields;
+pub mod highlight;
 pub mod history;
 pub mod layout;
 pub mod menu;

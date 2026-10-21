@@ -145,6 +145,14 @@ pub fn with_palette(theme: &Theme, link: &str) -> Result<Theme, String> {
     c.menu_text = ensure(&text, &[&menu, &c.menu_field], TEXT_RATIO);
     c.menu_muted = ensure(&mix(&text, &menu, 0.35), &[&menu], TEXT_RATIO);
     c.menu_hover_text = ensure(&text, &[&c.menu_hover], TEXT_RATIO);
+    // Code colours keep the theme's hues and move only until they read on the
+    // code box; the comment follows the palette's muted text.
+    let code_box = [&c.menu_field];
+    c.code_keyword = ensure(&mix(&accent, &text, 0.35), &code_box, TEXT_RATIO);
+    c.code_string = ensure(&c.code_string, &code_box, TEXT_RATIO);
+    c.code_comment = ensure(&mix(&text, &menu, 0.35), &code_box, TEXT_RATIO);
+    c.code_number = ensure(&c.code_number, &code_box, TEXT_RATIO);
+    c.code_name = ensure(&c.code_name, &code_box, TEXT_RATIO);
     c.run_text = ensure(&text, &[&c.run_bg], TEXT_RATIO);
     c.run_hover_text = ensure(&text, &[&c.run_hover], TEXT_RATIO);
     c.error_text = ensure(&c.error_text, &[&c.error], TEXT_RATIO);

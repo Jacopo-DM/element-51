@@ -29,6 +29,11 @@ canvas { display: block; width: 100%; height: 100%; }
     border: 1px solid var(--run-border); border-radius: var(--menu-item-radius); }
 #source-text { margin: 0; padding: 8px 10px; overflow: auto; tab-size: 4; white-space: pre; background: var(--menu-field-bg);
     color: var(--menu-text); border-radius: var(--search-radius); font: var(--font-px) var(--value-font, monospace); }
+.tok-keyword { color: var(--code-keyword); }
+.tok-string { color: var(--code-string); }
+.tok-comment { color: var(--code-comment); }
+.tok-number { color: var(--code-number); }
+.tok-name { color: var(--code-name); }
 #source-close:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 #source-text:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 #toolbar { position: fixed; left: var(--button-x); top: var(--button-y); display: flex; align-items: stretch; gap: var(--button-gap); }
