@@ -776,7 +776,7 @@ approved in words on 2026-10-21.
     values and red borders blank for about 300 ms and come back with the result. This
     keeps the existing rule; softening it is a separate decision.
 
-### mnist-experiment spec (answers of 2026-10-21, awaiting approval)
+### mnist-experiment spec (approved 2026-10-21)
 
 Part of the experiment goals (PLAN.md). The goal and its five criteria were approved on
 2026-10-21; this spec fills in what the criteria leave open.
@@ -815,9 +815,9 @@ Part of the experiment goals (PLAN.md). The goal and its five criteria were appr
     * `MnistSample` (plain node): inputs `index: int = 0` and `dataset: str = "mnist"` (a text box
         holding `mnist` or `fashion`; anything else is an error naming both words); outputs an
         `Image`, the `label: int` and the `dataset` word, so `Train`'s own `dataset` box can be linked to it.
-    * `Train` (`JobNode`): fields `hidden: int = 64`, `learning_rate: float = 0.1`, `epochs: int = 10`,
-        `dataset: str = "mnist"`; one step is 100 batches (938 batches make an epoch, so about 94 steps
-        for 10 epochs); each step returns one new point of `loss` (mean over the step) and of
+    * `Train` (`JobNode`): fields `hidden: int = 128`, `learning_rate: float = 0.1`, `epochs: int = 30`,
+        `dataset: str = "mnist"`; one step is 100 batches (938 batches make an epoch, so 282 steps
+        for 30 epochs); each step returns one new point of `loss` (mean over the step) and of
         `accuracy` (on the first 1,000 test pictures, and on all 10,000 in the last step); the job's
         outputs are the two series.
     * `PlotNode` after `Train`.
@@ -827,8 +827,12 @@ Part of the experiment goals (PLAN.md). The goal and its five criteria were appr
     trains to 100% in the test; Start on `Train` fills a `Plot` with `loss` falling and `accuracy`
     rising on the fake set; `dataset = "fashion"` selects the other folder; a bad word is a clear
     error. By hand, with the real data after an approved download: the default settings reach at
-    least 95% test accuracy on MNIST, in at most two minutes on this Mac (expected 20 to 40 s and
-    about 97%); no accuracy target is set for Fashion-MNIST (about 85% is normal for this network).
+    least 95% test accuracy on MNIST, in at most two minutes on this Mac (measured: 7 to 8 s and
+    97.7%, see Results); no accuracy target is set for Fashion-MNIST (87.8% measured).
+- Changed after measuring (2026-10-21): the spec's first defaults, hidden 64 and 10 epochs, ended in
+    1.8 s at 97.2%, so the plot filled before anyone could watch it. Hidden 128 and 30 epochs take
+    about 7 s (282 points) and reach 97.7%, still far inside the two-minute budget; the example is
+    meant to be watched.
 - Existing behaviour that must not regress: every other example still builds and runs; `g2_job_nodes.py`
     is untouched; the library gets no new dependency and no new public name.
 - Open points decided by the user on 2026-10-21: the sources above; a text box `dataset` (not a tick
@@ -1770,6 +1774,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | `plot-polish`: legend row, axes and grid, thicker lines, taller chart | 3 new native tests in `tests/display.rs` (the legend row sits above the plot inside the area, `legend_slots` splits a row equally, a 0.05 to 0.95 series gets at least four y labels), the chart height test now 0.85; 397 Python tests and all Rust tests pass, clippy and fmt clean; in the browser pane with `examples/g_experiments/g2_job_nodes.py`: before, one y label (0.5), no visible grid and labels over the lines; after, labels 0.2 to 0.8, a legend with swatches, the plot about twice as tall. Chart workload (`tools/bench_page.py --workload chart`, Run pressed, one set of 11 batches): 2.11 ms median (2.00 to 2.25) after, 2.11 to 2.19 before, so no change and under the 4 ms budget. To try it: `uv run python tools/build_wasm.py`, then `uv run python examples/g_experiments/g2_job_nodes.py`, press Start on `Training` |
 | 2026-10-21 | `auto-run` task 2: the `Run automatically` box | native: the rule's 8 tests (task 1); by hand in the browser pane: `uiKeys` 90 of 90, `uiKeysAuto` 19 of 19 (labelled box, unticked at load, tab order Run then box then tree, Run `aria-disabled` while ticked and a press does nothing, one run 302 ms after an edit, three edits 60 ms apart give one run, an edit during a held run says `Still running, will run again` and starts exactly one more run when it ends, unticking restores Run and stops runs); light theme looks right; the sentence also shows on the Run button (`Running, will run again`) so sighted users see it; axe, a screen reader and touch not run |
 | 2026-10-21 | `auto-run` task 3: a red border on a node whose last run failed | native theme tests (key in all three themes, docs row, `card_error_border on canvas` at 3:1, every palette at 0 failures); by hand in the browser pane (dark): `n3` and `n5` get the border beside the red title bar; the banner replaced its text on a new failing run (`n4: input 'angle' has no value`) and hid after a passing run (`Run finished: 3 ok`); redraw at 200 nodes 1.52, 1.53 and 1.67 ms, inside the known 1.3 to 1.6 ms plus its spread; the light theme and palettes not looked at by eye |
+| 2026-10-21 | `mnist-experiment`: `examples/g_experiments/g3_mnist.py` | 31 tests in `tests/test_mnist_example.py` on fake data (reader errors, `.part` and sha256 refusal, finite-difference gradients, seed, learning a separable set, sample, settings, a Start that fills the Plot) and a row in `tests/test_examples.py`; real data downloaded after the user's yes (MNIST 11.6 MB from Google's cvdf-datasets, identical sha256 to PyTorch's S3 copy; Fashion-MNIST 30.9 MB from Zalando's GitHub, md5 equal to the dataset README's), sha256 pinned in the example; measured on this Mac (numpy 2.5.4): MNIST at 64 hidden, 10 epochs 1.8 s 97.21%; Fashion the same 1.7 s 86.72%; defaults (128 hidden, 30 epochs, 282 points) MNIST 6.8 s 97.73% (first point 85.8%, loss 0.887 to 0.0106), Fashion 7.1 s 87.77%; hidden 16 3.2 s 95.36%; learning rate 0.01 6.8 s 96.20%; 1.0 6.9 s 97.52%; by hand in the browser pane: Run automatically shows the digit, Start fills the Plot live (step 77 of 282 seen), `fashion` in the sample swaps to a boot and its linked `dataset` follows, `epochs` 0 fails with its reason |
 
 ## Gotchas
 

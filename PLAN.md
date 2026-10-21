@@ -173,30 +173,16 @@ passing run clears, and a red `card_error_border` on every failed node. The rule
 (`examples/d_editor/d6_auto_run.py`); axe, a real screen reader, a narrow window or touch
 and the light theme's red border were not checked.
 
-### mnist-experiment
+### mnist-experiment: done (2026-10-21)
 
-- Goal: the example that proves the other three: sample an MNIST digit, train a
-    small network live, watch the curves. Depends on `visual-ports`, `job-nodes`
-    (and uses `auto-run` for the sample node).
-- Kind: new behaviour (an example, plus its tests and docs page).
-- Success measure:
-    1. `examples/g_experiments/g3_mnist.py` (`g2` is `g2_job_nodes.py`) builds three linked nodes: `MnistSample`
-        (an `index` box; outputs the image and its label), `Train` (a `JobNode`;
-        inputs for hidden size, learning rate and epochs; outputs the `loss` and
-        `accuracy` series) and a `PlotNode`.
-    2. numpy only; no new dependency. The data are fetched once into
-        `__data__/mnist/` (git-ignored) from a source the user approves by name,
-        with a sha256 check; tests use a tiny fake dataset and never download.
-    3. Pressing Start fills the plot live, and the default settings reach at least
-        95% test accuracy (measured here, with the time it takes, before the
-        example is called done).
-    4. A `dataset` choice also offers Fashion-MNIST, with its own checked download.
-    5. The docstring lists what to try; a row in `tests/test_examples.py` (with the
-        fake data); a docs page.
-- Status: approved 2026-10-21. Spec written 2026-10-21 (DESIGN.md, "mnist-experiment spec"),
-    with these choices from the user: the dataset is a text box `dataset`, one plot point per 100
-    batches, the default run may take up to two minutes. Tasks below wait for approval in words.
-- Added: 2026-10-21
+Commits `edcbcbf..HEAD` on `main`. `examples/g_experiments/g3_mnist.py`: `MnistSample` (a picture, its
+label and its dataset), `Train` (a job, 128 hidden units and 30 epochs by default, a point every
+100 batches) and a Plot, in numpy only; the data (MNIST 11.6 MB from Google's cvdf-datasets,
+Fashion-MNIST 30.9 MB from Zalando's GitHub) download in `main()` into `__data__/` with a pinned
+sha256 per file. Measured on this Mac: MNIST 97.7% in 7 s, Fashion-MNIST 87.8% (DESIGN.md,
+Results). `tests/test_mnist_example.py` (31 tests, fake data), a row in `tests/test_examples.py`
+and a fixture that runs every example from an empty folder, `docs/experiments.md`. The user's own
+try-out is still to come; the keyboard walk-throughs do not cover this example.
 
 ### speed-up-frame: done (2026-10-21)
 
@@ -261,7 +247,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user's try-out of the editor comes first (`d6_auto_run.py`, `g2_job_nodes.py`; the light theme, the palettes and the red failed-node border were not looked at by eye). Then, in this order: the user publishes 0.2.0 (the version is bumped and `tools/check_wheel.py` passes; the user builds, publishes and tags `v0.2.0`) and revokes the exposed PyPI token; `/zz-02-project-plan` writes the spec for `mnist-experiment` (approved, no spec yet; the MNIST download needs the user's approval by name, source and size). Done and pushed 2026-10-21: `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run`, `box-summaries`, `code-colours`. GitHub's CI, Docs and Rust and WASM runs passed for every push up to `c3a412b` except that the Rust and WASM run for the last push was still running when read.
+Next step: the user's try-out of the editor comes first (`d6_auto_run.py`, `g2_job_nodes.py`; the light theme, the palettes and the red failed-node border were not looked at by eye). Then, in this order: the user publishes 0.2.0 (the version is bumped and `tools/check_wheel.py` passes; the user builds, publishes and tags `v0.2.0`) and revokes the exposed PyPI token; the user tries `g3_mnist.py` (`uv run examples/g_experiments/g3_mnist.py`; the first start downloads 42.5 MB into `__data__/`). No approved goal is left open; the next goal needs `/zz-02-project-plan`. Done 2026-10-21: `mnist-experiment` (merged, not pushed), `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run`, `box-summaries`, `code-colours`. GitHub's CI, Docs and Rust and WASM runs passed for every push up to `c3a412b` except that the Rust and WASM run for the last push was still running when read.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -600,35 +586,6 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
-
-### Goal `mnist-experiment`: tasks (written 2026-10-21, awaiting approval)
-
-All in `examples/g_experiments/g3_mnist.py` and its tests; no new dependency (`numpy` is in the
-`examples` group). No task changes the library.
-
-Tier 1 (a working example on fake data):
-
-1. Done (2026-10-21). The data part in `examples/g_experiments/g3_mnist.py` (`IdxHeader`, `read_idx`, `load_images`, `load_labels`, the `DATASETS` table with the sizes and empty sha256 fields, `download_file`, `fetch`) and `tests/test_mnist_example.py` (13 tests, no network). The hashes are filled in by task 4.
-2. Done (2026-10-21). The network in `g3_mnist.py` (`Weights`, `init_weights`, `to_floats`, `forward`, `loss_and_gradients`, `apply_gradients`, `accuracy`; float64, in-place updates) and 5 tests: the gradients match finite differences for every array, the same seed gives the same weights, probabilities sum to 1, a separable fake set trains to 100% with the loss falling by more than a factor of 4, a zero network says class 0.
-3. Done (2026-10-21). `Split`, `load_split`, `MnistSample`, `Train` and `build_app()` in `g3_mnist.py`; `tests/test_mnist_example.py` (31 tests in all, fake data) and a row in `tests/test_examples.py` (no data: `n1` error, `n2` and `n3` skipped) with a fixture that runs every example from an empty temporary folder, so none reads real data. Not looked at in the browser yet (needs the real data from task 4 to be worth it).
-
-Tier 2:
-
-4. The real data: needs the user's yes, by name, source and size (MNIST 11.6 MB from Google's
-    cvdf-datasets bucket and from PyTorch's S3 bucket as the cross-check; Fashion-MNIST 30.9 MB
-    from Zalando's GitHub repository). Download into `__data__/`, pin the sha256 of each file in the
-    example, add the `fetch` calls to `main()`, then measure: the default settings' test accuracy and
-    time on MNIST (the goal says at least 95%, at most two minutes) and the same for Fashion.
-    Serves criteria 2 to 4. Risk medium (the 95% target is measured, not assumed; if it is missed,
-    I tune `epochs` or the learning rate and say so). A native or Python test cannot run it, so the
-    numbers are recorded in DESIGN.md under Results.
-5. The docs and the notes: the docstring's `Notes` section, a docs page `docs/experiments.md` in the
-    toctree, the example's row in CODEMAP.md, and the commands in CLAUDE.md if any. Serves criterion 5.
-    Risk low, about 60 lines of prose; the docs build must stay free of warnings.
-
-Tier 3 (listed, not executed): Adam or momentum; a saved trained network; a prediction or confusion
-node; data augmentation; a convolutional layer. Each is outside the goal and adds code that hides
-what the example shows.
 
 ### Tier 3: listed, not executed
 

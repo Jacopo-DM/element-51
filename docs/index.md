@@ -52,6 +52,8 @@ instead. A node that failed gets a red border, and the banner says why.
     between nodes, show it on a card, draw lines on a Plot card, save a PNG.
 - [Jobs](jobs.md): a node you start and stop by hand that works in the background and
     shows what it has so far, such as a training run.
+- [An experiment](experiments.md): train a small network on digits, live,
+    with a picture, a job and a Plot.
 - [Embedding](embedding.md): put the editor inside a FastAPI or NiceGUI app,
     next to a side panel of your own.
 - [API reference](reference.md): every public function and class.
@@ -66,6 +68,7 @@ topic. Each one starts with notes on what to try.
 themes
 visual-ports
 jobs
+experiments
 embedding
 reference
 ```

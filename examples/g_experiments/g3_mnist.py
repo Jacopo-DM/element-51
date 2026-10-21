@@ -1,6 +1,38 @@
-"""Train a small network on MNIST and watch it learn.
+"""Train a small network on handwritten digits and watch it learn.
 
-Work in progress: the notes for this example come with its last task.
+Three nodes. `MnistSample` shows one picture of the MNIST training set and
+its label. `Train` is a job: a network with one hidden layer, written in
+numpy, that learns to read the digits. A Plot draws its loss and its
+accuracy as they change.
+
+The first start downloads the data, 42.5 MB for MNIST (digits) and
+Fashion-MNIST (clothes), into `__data__/mnist` and `__data__/fashion`, which
+git ignores. Each file is checked against a sha256 pinned in this file.
+
+Build the browser layer first: `uv run python tools/build_wasm.py`.
+
+Notes
+-----
+    * Tick `Run automatically`. The graph runs once: `MnistSample` shows a
+        28 by 28 picture, a 5, and its label.
+    * Change `index` (0 to 59999): another picture, and its label follows
+        by itself.
+    * Press Start on `Train`. The Plot fills as it learns, one point every
+        100 batches, 282 in all. On this Mac it takes about 7 seconds. The
+        loss falls to about 0.01 and the accuracy on the 10,000 test pictures
+        rises to about 97.7%.
+    * Type `fashion` into the `dataset` box of `MnistSample`: it shows a
+        piece of clothing, and the linked `dataset` box of `Train` follows.
+        Press Start again: about 87.8%, because clothes are harder to tell
+        apart than digits.
+    * Set `hidden` to 16 and press Start: three seconds, about 95.4%. A
+        smaller network learns less.
+    * Set `learning_rate` to 0.01: the first points are poor (about 61%
+        accuracy) and it ends near 96.2%. The step size matters.
+    * Set `epochs` to 0 and press Start: the job fails at once and the banner
+        says why. The results of the last Start stay on the Plot until the next
+        one.
+
 """
 
 # Standard library
@@ -83,10 +115,26 @@ DATASETS = {
         folder="mnist",
         base="https://storage.googleapis.com/cvdf-datasets/mnist",
         parts=(
-            Part(name=TRAIN_IMAGES, size=9_912_422, sha256=""),
-            Part(name=TRAIN_LABELS, size=28_881, sha256=""),
-            Part(name=TEST_IMAGES, size=1_648_877, sha256=""),
-            Part(name=TEST_LABELS, size=4_542, sha256=""),
+            Part(
+                name=TRAIN_IMAGES,
+                size=9_912_422,
+                sha256="440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609",
+            ),
+            Part(
+                name=TRAIN_LABELS,
+                size=28_881,
+                sha256="3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c",
+            ),
+            Part(
+                name=TEST_IMAGES,
+                size=1_648_877,
+                sha256="8d422c7b0a1c1c79245a5bcf07fe86e33eeafee792b84584aec276f5a2dbc4e6",
+            ),
+            Part(
+                name=TEST_LABELS,
+                size=4_542,
+                sha256="f7ae60f92e00ec6debd23a6088c31dbd2371eca3ffa0defaefb259924204aec6",
+            ),
         ),
     ),
     "fashion": Dataset(
@@ -97,10 +145,26 @@ DATASETS = {
             "/raw/master/data/fashion"
         ),
         parts=(
-            Part(name=TRAIN_IMAGES, size=26_421_880, sha256=""),
-            Part(name=TRAIN_LABELS, size=29_515, sha256=""),
-            Part(name=TEST_IMAGES, size=4_422_102, sha256=""),
-            Part(name=TEST_LABELS, size=5_148, sha256=""),
+            Part(
+                name=TRAIN_IMAGES,
+                size=26_421_880,
+                sha256="3aede38d61863908ad78613f6a32ed271626dd12800ba2636569512369268a84",
+            ),
+            Part(
+                name=TRAIN_LABELS,
+                size=29_515,
+                sha256="a04f17134ac03560a47e3764e11b92fc97de4d1bfaf8ba1a3aa29af54cc90845",
+            ),
+            Part(
+                name=TEST_IMAGES,
+                size=4_422_102,
+                sha256="346e55b948d973a97e58d2351dde16a484bd415d4595297633bb08f03db6a073",
+            ),
+            Part(
+                name=TEST_LABELS,
+                size=5_148,
+                sha256="67da17c76eaffca5446c3361aaab5c3cd6d1c2608764d35dfb1850b086bf8dd5",
+            ),
         ),
     ),
 }
@@ -585,9 +649,9 @@ class TrainState(BaseModel):
 class Train(element_51.JobNode[TrainState]):
     """Train the network on the training pictures, a hundred batches a step."""
 
-    hidden: int = 64
+    hidden: int = 128
     learning_rate: float = 0.1
-    epochs: int = 10
+    epochs: int = 30
     dataset: str = "mnist"
 
     def batches(self) -> int:
@@ -724,7 +788,17 @@ def build_app() -> element_51.App:
 
 
 def main() -> None:
-    """Entry point."""
+    """Download the data that is missing, then serve the editor."""
+    for dataset in DATASETS.values():
+        folder = DATA_ROOT / dataset.folder
+        missing = [p for p in dataset.parts if not (folder / p.name).exists()]
+        if missing:
+            megabytes = sum(part.size for part in missing) / 1_000_000
+            console.print(
+                f"Downloading {dataset.name}: {megabytes:.1f} MB "
+                f"from {dataset.base}"
+            )
+            fetch(dataset, DATA_ROOT)
     element_51.serve(build_app())
 
 
