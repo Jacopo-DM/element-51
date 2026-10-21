@@ -131,32 +131,72 @@ screen reader were not tried, and the narrow window and touch were not checked.
 
 ### job-nodes
 
-- Goal: a node that you start and stop by hand, works in the background and
-    reports as it goes, so a long task can drive live displays. The class is
-    `element_51.JobNode` (the user's choice; names weighed: `ExecutorNode` clashes
+- Goal: a node that you start and stop by hand, works in the background in
+    steps and reports as it goes, so a long task can drive live displays. The class
+    is `element_51.JobNode` (the user's choice; names weighed: `ExecutorNode` clashes
     with `concurrent.futures`, `TaskNode` with this repo's tasks). Depends on
-    `visual-ports`.
+    `visual-ports`. Runs in a thread; the separate-process variant is the goal
+    `job-isolation`.
 - Kind: new behaviour.
 - Success measure (each is a test or a recorded walk-through):
-    1. A `JobNode` subclass declares inputs and outputs like `Node` and does its
-        work in a method that calls `report(...)` with partial outputs; its card has
-        Start and Stop buttons and shows its state (idle, running, finished,
-        stopped, failed).
-    2. Run and `Run automatically` never start a `JobNode`; Start does, with the
-        node's current input values; Start while it is running is refused with a
-        reason.
-    3. Each report reaches open pages at most 20 times a second; display nodes
-        (Plot, Image) after the job redraw on every report; every other node after
-        it runs once, when the job ends. Measured: a report reaches the page within
-        100 ms on localhost.
-    4. Stop ends the job within 1 s; a job that raises shows its error on the card
-        and in the banner (with Dismiss) and leaves the editor working; a page
-        reload shows the job's current state and data.
-    5. The Run button has a running state while a plain run is in progress (this
+    1. A `JobNode` subclass declares inputs and outputs like `Node` and works in
+        steps: `steps()` says how many, `begin()` makes the job's state, and
+        `step(state, i)` returns what to show after step `i`. A job that cannot be
+        split overrides `work(report)` instead and calls `report(...)` itself (the
+        step form is built on it). No global `report()`.
+    2. The card has Start and Stop buttons and shows the state (idle, running,
+        stopping, finished, stopped, failed). A step job also shows a thin bar and
+        `step 3 of 5`; a `work` job shows `running` only.
+    3. A series output grows by what a step or report returns; a picture or a number
+        is replaced. A node downstream of a job sees its latest reported values;
+        before the first report it is skipped, with the reason. The results stay
+        until the next Start, even if an input changes, and are not saved with the
+        graph.
+    4. Run and `Run automatically` never start a `JobNode`. Start first runs the
+        nodes the job depends on, once (the others are untouched), then starts it
+        with their values and its own boxes; if one of them fails the job does not
+        start and the card names it. Start while the node's job is running or
+        stopping is refused with a reason. Jobs of different nodes may run together.
+    5. Each report reaches open pages at most 20 times a second; display nodes
+        (Plot, Image) linked directly to the job redraw on every report; every other
+        node after it runs once, when the job ends. Measured: a report reaches the
+        page within 100 ms on localhost.
+    6. Stop shows `stopping` at once; a step job ends before its next step, a `work`
+        job at its next `report` call, which raises `Stopped` (the job may catch it
+        to clean up). A job whose steps or reports come at least every 0.5 s ends
+        within 1 s. A job that never reports cannot be stopped; the card says so.
+    7. A job that raises shows its error on the card and in the banner (with
+        Dismiss) and leaves the editor working; a page reload shows the job's
+        current state and data.
+    8. The Run button has a running state while a plain run is in progress (this
         clears the known problem in this file).
-    6. Python tests with a fake job (no sleeping longer than a few milliseconds);
-        the existing 226 Python tests and all Rust tests pass unchanged.
-- Status: approved 2026-10-21; no spec yet (it comes after `visual-ports`).
+    9. Every new page part is labelled, operable by keyboard, AA in all themes, and
+        described in the hidden tree (the constraint of the experiment goals).
+    10. Python tests with a fake job (no sleeping longer than a few milliseconds);
+        the existing 325 Python tests and 292 native tests pass unchanged.
+- Status: revised 2026-10-21 after the planning talk; needs the user's re-approval
+    (approved earlier the same day with the first wording). No spec in DESIGN.md yet.
+- Added: 2026-10-21
+
+### job-isolation
+
+- Goal: a `JobNode` class with `isolated = True` runs its job in a separate process,
+    so Stop works even on a job that never reports, and a crash cannot take the
+    editor down.
+- Kind: new behaviour.
+- Success measure:
+    1. The same job code (step or `work`) runs unchanged with the switch.
+    2. Stop on an unresponsive job (a step that sleeps 30 s) ends it within 1 s:
+        Stop first asks as in `job-nodes`, and the process is killed if no report
+        comes within 0.5 s.
+    3. A child that dies (`os._exit` in a test) shows `failed` with a reason; the
+        editor keeps working.
+    4. A node class the child cannot import (defined inside a function) is refused at
+        Start with a reason on the card.
+    5. Inputs, reports and the final result cross the boundary pickled; tests use
+        tiny jobs; no test sleeps longer than a fraction of a second.
+- Status: draft 2026-10-21, needs approval. Depends on `job-nodes`. Nothing else
+    depends on it: `auto-run` and `mnist-experiment` do not wait for it.
 - Added: 2026-10-21
 
 ### auto-run
