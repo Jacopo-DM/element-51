@@ -672,11 +672,11 @@ fn the_new_controls_have_focus_and_press_styles() {
 #[test]
 fn the_page_code_applies_a_palette_to_the_page_theme_only() {
     assert!(
-        MENU_UI.contains("with_palette"),
+        THEME_UI.contains("with_palette"),
         "the palette box does not apply a palette"
     );
     assert!(
-        !MENU_UI.contains("send(") && !MENU_UI.contains("socket"),
+        !THEME_UI.contains("send(") && !THEME_UI.contains("socket"),
         "a tried palette must not be sent to Python"
     );
 }
