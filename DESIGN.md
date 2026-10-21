@@ -1028,6 +1028,24 @@ Built 2026-10-21 (task 8). Where the build differs from, or settles, the spec:
     underscore, since `nodes` imports them). Each was a pure move, checked by the
     same tests, and the web split by hand in the browser. The hex-colour scan in
     `rust/element-51-core/tests/theme.rs` reads the new web files too.
+- Second restructure pass (2026-10-21, approved by the user: all six tasks). Thresholds
+    as before, 400 lines and five imports. The web crate and the core had grown
+    since the first pass, so the first pass's decision to leave `draw.rs` whole (it
+    was 497 lines) was reversed at 932: it held the chart legend, the job row and
+    the focus ring beside the frame. Splits, all pure moves: web `menu_ui` into
+    `menu_ui`, `menu_keys` and `theme_ui`; `a11y_ui` into `a11y_ui` and `tree_keys`
+    (with the field return going to `fields_ui` and the link preview and the
+    keyboard zoom and pan to `input`); `draw` into `draw`, `draw_card`,
+    `draw_chart`, `draw_focus` and `draw_wires`; `lib` into `lib`, `edit_ui`,
+    `messages`, `run_ui` and `canvas_ui`; core `access` into `access` and
+    `announce` (the status-line sentences). jscpd found 2 clones (the arrow, Home
+    and End step and the key-target lookup, in `on_menu_key` and `on_card_menu_key`);
+    they change together, so each became one function (`focus_step`,
+    `button_target`). Cost: modules over five imports went from 11 to 17, since a
+    piece that moved out still calls its old neighbours; the line count fell and
+    the number of things a reader must hold at once per file fell with it, which
+    is what the pass was for. Two commits left a Rust test failing because the
+    test read a file by name (`menu_ui.rs`, `lib.rs`); the next commit fixed each.
 - A README per module (restructure pass): the Python package is one flat set of
     modules, so it has one README (`src/element_51/README.md`); each Rust crate
     has its own. They say what each assumes and must never depend on, and point
@@ -1464,6 +1482,19 @@ have to go through `tools/compress_images.py`).
     - Extracting shared code between clones: none to extract, jscpd found 0
         clones (5,363 lines, `--min-lines 8 --min-tokens 70`).
 
+- Second restructure pass, left alone on purpose (2026-10-21, the user approved the list):
+    - Core `theme.rs` (561) and `model.rs` (539): one concern each (a struct per theme
+        section plus the merge code; the wire records).
+    - `session.py` (435, 9 imports), `engine.py` (502), `nodes.py` (473), `jobs.py` (438):
+        one concern each, a little over the line limit; a split adds a layer with one
+        call site.
+    - `tools/run_notebooks.py` and `tools/compress_images.py`: copies of the user's
+        templates that a project does not edit.
+    - The 11 test files over 400 lines: each mirrors one module. `tests/access.rs` (916)
+        still tests both `access` and `announce`; it was not split.
+    - `messages.rs` (11 imports): it is the one handler for every message from Python,
+        so it touches every part of the page by design.
+
 - Speed-up pass, left alone on purpose (2026-10-20, the user confirmed):
     - `Graph.next_id` (about 0.9 s of the 2.2 s the build took after task 2): it
         scans every node id. A faster version needs a cached counter, and a counter
@@ -1548,6 +1579,7 @@ have to go through `tools/compress_images.py`).
 
 | Date | Change | Result |
 | --- | --- | --- |
+| 2026-10-21 | goal restructure-2: split the large web modules and core `access`, remove the last 2 clones | source files over 400 lines 13 to 8 (the 8 left alone on purpose), jscpd clones 2 to 0 (0.15% to 0.00%), `draw.rs` 932 to 371, `menu_ui.rs` 805 to 375, `a11y_ui.rs` 826 to 369, `lib.rs` 703 to 342, `access.rs` 583 to 361; modules over five imports 11 to 17; redraw 1.36 to 1.65 ms medians on 4 sets (before 1.3 to 1.6); all Rust tests and clippy pass, `uiKeys` 90, `uiKeysDisplay` 16, `uiKeysJob` 21 rows pass |
 | 2026-10-21 | first push to GitHub, Pages, Dependabot | `CI` (ruff, mypy, pytest through uv with `--locked`) passed; `Rust and WASM` (fmt, clippy, tests, wasm build, `tools/check_wheel.py`) passed on `a22a269`; `Docs` built with `-W` and 0 warnings but its deploy step failed with "Get Pages site failed" until the user enabled Pages (build type `workflow`), then passed; Dependabot ran at once for github-actions, uv and cargo and opened pull request #1 (setup-uv 9.0.0 to 10.3.0); the site answers 200 at https://jacopo-dm.github.io/element-51/; 225 Python tests at 100% and 153 Rust tests locally |
 | 2026-10-20 | goal palette-try: paste a Coolors link, the editor takes its colours | native tests (9 in `tests/palette.rs`, 3 more for the page, 3 for `contrast_failures`): the link parser (the example, five other written forms, eight bad links each with its reason), the mapping for the example (canvas `#000500`, text `#acadbc`, accent `#473bf0`, cards and headers dark, menus take the card colour), two colours are enough, the order in the link does not matter, six palettes (the example, all light, all dark, one hue, near-grey, ten colours) leave both base themes with 0 AA failures, a palette changes colours only (not metrics, page, fonts or port shapes), a bad link leaves the theme as it was, the page has the menu button after Run, the `Try palette` entry and the box, focus and press styles for them, and the page code never sends a palette to Python; by hand in the browser pane: the menu button opens a menu with Try palette, the box takes the link, Enter applies it at once (near-black canvas, blue-violet cards, violet Run), `hello` shows "That is not a Coolors link" in the banner and leaves the box open, a reload brings back `#1a1a1a`, the page made no request to coolors.co, and axe-core reported 0 violations with the menu closed, the menu open, the box open and after applying; screenshots `docs/ui-baseline/palette-1-menu-beside-run.jpg` to `palette-4-bad-link-banner.jpg`; example `examples/e_look/e3_palette.py`; 153 Rust tests, 221 Python tests at 100% |
 | 2026-10-20 | ui-design-pass task 4: the soft modern look for the page parts | native tests: the page font is the system UI font, menu and banner radii 8, new `menu_border` colour and `menu_item_radius` page key reach the page and are used by it, the focus ring is the theme's focus colour in menus too, every colour pair still at AA (including the focus ring on the menu and its search box); the old test pinning the previous page values now pins only what did not change; by hand in both themes: violet Run button, dark rounded menu with an inset hover row and flyout, 8 px banner with a styled Dismiss, violet checkbox tick; axe-core 0 violations in both themes in the default state, after Run, and the search with and without a match; before `docs/ui-baseline/dark-1280-default.jpg`, `-menu.jpg`, `-run-and-banner.jpg`, after `docs/ui-baseline/task4-dark-1280-default.jpg`, `task4-dark-1280-menu-flyout.jpg`, `task4-dark-1280-run-and-banner.jpg`, `task4-light-1280-menu-flyout.jpg`, `task4-light-1280-run-and-banner.jpg`; 140 Rust tests, 220 Python tests at 100% |
@@ -1708,3 +1740,8 @@ have to go through `tools/compress_images.py`).
 - `importlib.util.find_spec` finds a module that is only in `sys.modules`, which a fresh child
     would not. `check_importable` uses `importlib.machinery.PathFinder.find_spec(top, sys.path)`
     for that reason.
+- A test that reads a source file by name (`include_str!`) breaks when the code moves out of
+    that file. After moving web or core code, run the Rust tests before committing: the
+    no-hex-colour scan lists its files by name (add each new web file that holds drawing or
+    menu code), and the palette, page-hidden and similar tests read one file each
+    (found while splitting `menu_ui` and `lib`, 2026-10-21).

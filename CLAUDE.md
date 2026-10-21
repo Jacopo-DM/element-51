@@ -220,3 +220,7 @@ No tool ignore or deny file exists in this repo, so none was changed.
     menu that is not there yet); take a second screenshot before deciding something is wrong.
 - An override of `Node.run` takes `@override` (from `typing`), or ruff's
     `no-self-use` flags every `run` that does not use `self`.
+- Moving code out of a web or core file can break a Rust test that reads that file by name
+    with `include_str!`, and the no-hex-colour scan in `rust/element-51-core/tests/theme.rs`
+    only reads the files it lists: add a new web module that holds drawing or menu code to
+    that list, and run `cargo test` before the commit.
