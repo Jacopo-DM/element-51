@@ -630,14 +630,7 @@ pub(crate) fn on_menu_key(shared: &Shared, event: &KeyboardEvent) {
                 focus_menu_search(&document);
                 return;
             }
-            let next = match key.as_str() {
-                "Home" => (!items.is_empty()).then_some(0),
-                "End" => items.len().checked_sub(1),
-                _ => step_menu(here, items.len(), key == "ArrowDown"),
-            };
-            if let Some(item) = next.and_then(|index| items.get(index)) {
-                focus_element(item);
-            }
+            focus_step(&items, here, &key);
         }
         "ArrowRight" if is_category => {
             event.prevent_default();
@@ -662,6 +655,19 @@ pub(crate) fn on_menu_key(shared: &Shared, event: &KeyboardEvent) {
         }
         "Tab" => close_menu_and_return(shared),
         _ => {}
+    }
+}
+
+/// Move the focus within a menu list for ArrowDown, ArrowUp, Home or End;
+/// `here` is the index of the item that has it.
+fn focus_step(items: &[Element], here: Option<usize>, key: &str) {
+    let next = match key {
+        "Home" => (!items.is_empty()).then_some(0),
+        "End" => items.len().checked_sub(1),
+        _ => step_menu(here, items.len(), key == "ArrowDown"),
+    };
+    if let Some(item) = next.and_then(|index| items.get(index)) {
+        focus_element(item);
     }
 }
 
@@ -694,14 +700,7 @@ pub(crate) fn on_card_menu_key(shared: &Shared, event: &KeyboardEvent) {
             };
             let items = menu_items(&list);
             let here = items.iter().position(|item| *item == target);
-            let next = match key.as_str() {
-                "Home" => (!items.is_empty()).then_some(0),
-                "End" => items.len().checked_sub(1),
-                _ => step_menu(here, items.len(), key == "ArrowDown"),
-            };
-            if let Some(item) = next.and_then(|index| items.get(index)) {
-                focus_element(item);
-            }
+            focus_step(&items, here, &key);
         }
         "Escape" => {
             event.prevent_default();
