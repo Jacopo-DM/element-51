@@ -15,6 +15,7 @@ mod input;
 mod menu_keys;
 mod menu_ui;
 mod pictures;
+mod run_ui;
 mod save_png;
 mod source_ui;
 mod theme_ui;
@@ -26,14 +27,10 @@ use std::rc::Rc;
 
 use element_51_core::address::websocket_url;
 use element_51_core::history::History;
-use element_51_core::job::JobButton;
 use element_51_core::layout::PortHit;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{
-    Edit, EditRequest, JobStatus, JobUpdate, Message, PortRef, Replica, RunRequest, RunResult,
-    StartRequest, StopRequest,
-};
+use element_51_core::{Edit, EditRequest, JobUpdate, Message, PortRef, Replica, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -41,9 +38,10 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
+use crate::run_ui::{clear_run, on_job_update, on_run, send_job_request, set_running};
 use a11y_ui::{announce, on_tree_focus_in, on_tree_focus_out, sync_tree};
 use draw::{Focus, Frame, Selected, draw};
-use element_51_core::access::{edit_text, job_announcement, refusal_text, run_text, undo_text};
+use element_51_core::access::{edit_text, refusal_text, run_text, undo_text};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
@@ -62,7 +60,7 @@ use theme_ui::{
 use tree_keys::on_tree_key;
 
 /// Everything the event handlers share.
-struct State {
+pub(crate) struct State {
     document: Document,
     canvas: HtmlCanvasElement,
     context: CanvasRenderingContext2d,
@@ -95,7 +93,7 @@ struct State {
     theme_key: String,
 }
 
-type Shared = Rc<RefCell<State>>;
+pub(crate) type Shared = Rc<RefCell<State>>;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 extern "C" {
@@ -407,7 +405,7 @@ fn mark_ready(document: &Document) {
 }
 
 /// Put `message` in the error banner. It stays until the user presses Dismiss.
-fn show_error(document: &Document, message: &str) {
+pub(crate) fn show_error(document: &Document, message: &str) {
     mark_ready(document);
     let Some(banner) = document.get_element_by_id("error") else {
         return;
@@ -495,65 +493,6 @@ fn step_history(shared: &Shared, undo: bool) {
         announce(&shared.borrow().document, &undo_text(undo, changed));
     }
     redraw(shared);
-}
-
-/// Forget the last run, then show what the jobs have reported: a job's results
-/// are not the result of a run, so an edit must not lose them.
-fn clear_run(state: &mut State) {
-    state.run = None;
-    show_jobs(state);
-}
-
-/// Put every job's reported outputs into the run result, and draw its pictures.
-fn show_jobs(state: &mut State) {
-    if state.jobs.is_empty() {
-        return;
-    }
-    let mut run = state.run.take().unwrap_or_default();
-    for update in state.jobs.values() {
-        run.apply_job(update);
-    }
-    state.pictures = Pictures::from_result(&state.document, &run);
-    state.run = Some(run);
-}
-
-/// A job changed: keep it, show what it reported, and tell the person when its
-/// state changes. A failed job also shows its error in the banner.
-fn on_job_update(state: &mut State, update: JobUpdate) {
-    let before = state.jobs.get(&update.node).map(|job| job.state);
-    let changed = before != Some(update.state);
-    if changed {
-        announce(&state.document, &job_announcement(&update));
-    }
-    if update.state == JobStatus::Failed && changed {
-        let why = update.error.as_deref().unwrap_or("failed");
-        show_error(&state.document, &format!("{}: {why}", update.node));
-    }
-    // The update joins the last result; it must not replace it, or the run after
-    // another job, or a plain run, would be lost with every report.
-    let mut run = state.run.take().unwrap_or_default();
-    run.apply_job(&update);
-    state.pictures = Pictures::from_result(&state.document, &run);
-    state.run = Some(run);
-    state.jobs.insert(update.node.clone(), update);
-    if changed {
-        state.tree_stale = true;
-    }
-}
-
-/// Ask Python to start or stop the job of node `id`.
-fn send_job_request(state: &State, id: &str, button: JobButton) {
-    let node = id.to_string();
-    let message = match button {
-        JobButton::Start => Message::Start(StartRequest { node }),
-        JobButton::Stop => Message::Stop(StopRequest { node }),
-    };
-    if state.socket.send_with_str(&message.to_json()).is_err() {
-        show_error(
-            &state.document,
-            "Could not send the request: not connected to Python.",
-        );
-    }
 }
 
 fn on_message(shared: &Shared, event: &MessageEvent) {
@@ -667,47 +606,5 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
     // it is shown once the borrow above has ended.
     if let Some(reply) = source_reply {
         show_source(shared, &reply);
-    }
-}
-
-/// Press Run: send the request and show that a run is in progress until its
-/// result comes. A press while a run is in progress does nothing.
-fn on_run(shared: &Shared) {
-    let state = shared.borrow();
-    let busy = state
-        .document
-        .get_element_by_id("run")
-        .is_some_and(|button| button.get_attribute("aria-busy").as_deref() == Some("true"));
-    if busy {
-        return;
-    }
-    if state
-        .socket
-        .send_with_str(&Message::Run(RunRequest {}).to_json())
-        .is_err()
-    {
-        show_error(
-            &state.document,
-            "Could not send the run request: not connected to Python.",
-        );
-    } else {
-        set_running(&state.document, true);
-    }
-}
-
-/// Show the Run button as busy, `Running`, or as it was. It stays focusable
-/// (`aria-busy`, not `disabled`), so a keyboard user keeps their place.
-fn set_running(document: &Document, running: bool) {
-    let Some(button) = document.get_element_by_id("run") else {
-        return;
-    };
-    if running {
-        let _ = button.set_attribute("aria-busy", "true");
-        let _ = button.set_attribute("aria-disabled", "true");
-        button.set_text_content(Some("Running"));
-    } else {
-        let _ = button.remove_attribute("aria-busy");
-        let _ = button.remove_attribute("aria-disabled");
-        button.set_text_content(Some("Run"));
     }
 }

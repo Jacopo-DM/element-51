@@ -10,6 +10,7 @@ const DRAW_CARD: &str = include_str!("../../element-51-web/src/draw_card.rs");
 const DRAW_CHART: &str = include_str!("../../element-51-web/src/draw_chart.rs");
 const DRAW_FOCUS: &str = include_str!("../../element-51-web/src/draw_focus.rs");
 const DRAW_WIRES: &str = include_str!("../../element-51-web/src/draw_wires.rs");
+const RUN_UI: &str = include_str!("../../element-51-web/src/run_ui.rs");
 const MENU_UI: &str = include_str!("../../element-51-web/src/menu_ui.rs");
 const MENU_KEYS: &str = include_str!("../../element-51-web/src/menu_keys.rs");
 const THEME_UI: &str = include_str!("../../element-51-web/src/theme_ui.rs");
@@ -105,6 +106,7 @@ fn no_colour_is_written_in_the_drawing_code_or_the_page() {
         ("draw_focus.rs", DRAW_FOCUS),
         ("draw_wires.rs", DRAW_WIRES),
         ("lib.rs", WEB),
+        ("run_ui.rs", RUN_UI),
         ("fields_ui.rs", FIELDS_UI),
         ("input.rs", INPUT),
         ("menu_ui.rs", MENU_UI),
