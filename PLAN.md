@@ -175,7 +175,7 @@ screen reader were not tried, and the narrow window and touch were not checked.
     10. Python tests with a fake job (no sleeping longer than a few milliseconds);
         the existing 325 Python tests and 292 native tests pass unchanged.
 - Status: approved 2026-10-21 with the revised wording ("lets go"); spec in DESIGN.md;
-    the task list is proposed below and awaits approval.
+    the task list (1 to 7) is approved ("Approve all") and listed under Tasks.
 - Added: 2026-10-21
 
 ### job-isolation
@@ -195,7 +195,7 @@ screen reader were not tried, and the narrow window and touch were not checked.
         Start with a reason on the card.
     5. Inputs, reports and the final result cross the boundary pickled; tests use
         tiny jobs; no test sleeps longer than a fraction of a second.
-- Status: approved 2026-10-21 ("lets go"); spec in DESIGN.md; task 8 awaits approval.
+- Status: approved 2026-10-21 ("lets go"); spec in DESIGN.md; task 8 is approved.
     Depends on `job-nodes`. Nothing else
     depends on it: `auto-run` and `mnist-experiment` do not wait for it.
 - Added: 2026-10-21
@@ -297,7 +297,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes` and `job-isolation` have approved specs (DESIGN.md) and proposed task lists (tasks 1 to 7 and 8, below under Tasks) that await the user's approval in words; nothing is built. `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
+Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). The goals `job-nodes` and `job-isolation` have approved specs (DESIGN.md) and approved task lists (tasks 1 to 7 and 8, under Tasks); work starts with `job-nodes` task 1. `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -599,9 +599,9 @@ geometry helper in `element-51-core` gets native tests.
 
 Tasks 34 to 38 are done (DESIGN.md, Results and the spec's task outcomes).
 
-### Goal `job-nodes`: proposed 2026-10-21, awaiting approval in words
+### Goal `job-nodes`: tasks 1 to 7 approved 2026-10-21
 
-Goals and specs approved 2026-10-21 ("lets go"); the task list is not. One task per commit,
+Goals and specs approved 2026-10-21 ("lets go"); the task list approved the same day ("Approve all"). One task per commit,
 each ending in something that runs and passes its tests. Spec: DESIGN.md, "job-nodes spec".
 Criteria are the numbers in the goal. Tests that pin existing behaviour: `test_engine.py`,
 `test_nodes.py`, `test_session.py`, `test_server_websocket.py`, the shared fixtures and the
@@ -681,10 +681,10 @@ test runner. The pure parts (layout, merge, text) go in `element-51-core` where 
 tested, as in the earlier goals; the user decides whether to add characterisation tests
 first.
 
-### Goal `job-isolation`: proposed 2026-10-21, awaiting approval in words
+### Goal `job-isolation`: task 8 approved 2026-10-21 (coverage inside a child still to ask)
 
-Spec: DESIGN.md, "job-isolation spec". Depends on `job-nodes` tasks 1 to 3. Nothing is
-started before the user approves it.
+Spec: DESIGN.md, "job-isolation spec". Depends on `job-nodes` tasks 1 to 3. Approved; it starts
+after task 3.
 
 8. **Separate process.** What: `isolated = True` on a `JobNode` class; a child process
     (spawn) that imports the class, builds the node and runs `work` with a queue-backed
