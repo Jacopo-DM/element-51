@@ -295,3 +295,30 @@ pub fn cannot_delete_text(side: Side) -> String {
     }
     .to_string()
 }
+
+/// The edit that links output `source` to input `target`. The mouse and the
+/// keyboard both build it here, so both meet the same rules and refusals.
+pub fn link_edit(source: &PortRef, target: &PortRef) -> Edit {
+    Edit::AddLink {
+        source: source.clone(),
+        target: target.clone(),
+    }
+}
+
+/// The sentence when a keyboard link was started from `source`.
+pub fn link_started_text(source: &PortRef) -> String {
+    format!(
+        "Link from {} started. Move to an input port and press Enter, or Escape to cancel",
+        end_name(source)
+    )
+}
+
+/// The sentence when a started link was cancelled.
+pub fn link_cancelled_text() -> String {
+    "Link cancelled".to_string()
+}
+
+/// The sentence when Enter on an input port finds no link started.
+pub fn no_link_started_text() -> String {
+    "No link started. Press Enter on an output port first".to_string()
+}

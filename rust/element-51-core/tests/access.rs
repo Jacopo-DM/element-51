@@ -2,13 +2,17 @@
 //! around it.
 
 use element_51_core::access::{
-    Direction, cannot_delete_text, describe_graph, describe_ports, edit_text, list_nodes,
-    neighbour, pan_to_show, refusal_text, selected_text, undo_text,
+    Direction, cannot_delete_text, describe_graph, describe_ports, edit_text, link_cancelled_text,
+    link_edit, link_started_text, list_nodes, neighbour, no_link_started_text, pan_to_show,
+    refusal_text, selected_text, undo_text,
 };
 use element_51_core::layout::{Rect, Side};
 use element_51_core::theme::{Metrics, Theme};
 use element_51_core::view::View;
-use element_51_core::{Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
+use element_51_core::{
+    Edit, Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType, apply_edit,
+};
+use serde::Deserialize;
 
 fn m() -> Metrics {
     Theme::default().metrics
@@ -430,4 +434,56 @@ fn delete_on_a_port_that_has_nothing_to_delete_explains_why() {
         "Delete works on a node, or on an input port with a link"
     );
     assert_eq!(cannot_delete_text(Side::Input), "That input has no link");
+}
+
+const LINK_CASES: &str = include_str!("../../../tests/fixtures/link_cases.json");
+
+#[derive(Deserialize)]
+struct LinkCase {
+    name: String,
+    source: PortRef,
+    target: PortRef,
+    result: String,
+}
+
+#[derive(Deserialize)]
+struct LinkCases {
+    node_types: Vec<NodeType>,
+    graph: Graph,
+    cases: Vec<LinkCase>,
+}
+
+#[test]
+fn a_link_made_from_the_keyboard_gets_the_verdict_the_mouse_gets() {
+    let fixture: LinkCases = serde_json::from_str(LINK_CASES).unwrap();
+    for case in &fixture.cases {
+        let edit = link_edit(&case.source, &case.target);
+        assert_eq!(
+            edit,
+            Edit::AddLink {
+                source: case.source.clone(),
+                target: case.target.clone()
+            },
+            "{}",
+            case.name
+        );
+        let verdict = match apply_edit(&fixture.graph, &fixture.node_types, &edit) {
+            Ok(_) => "ok".to_string(),
+            Err(error) => error.kind().to_string(),
+        };
+        assert_eq!(verdict, case.result, "{}", case.name);
+    }
+}
+
+#[test]
+fn the_link_sentences_say_what_to_do_next() {
+    assert_eq!(
+        link_started_text(&end("n1", "out")),
+        "Link from n1 out started. Move to an input port and press Enter, or Escape to cancel"
+    );
+    assert_eq!(link_cancelled_text(), "Link cancelled");
+    assert_eq!(
+        no_link_started_text(),
+        "No link started. Press Enter on an output port first"
+    );
 }

@@ -142,6 +142,83 @@ async function uiKeys() {
     await wait(400);
     check("Ctrl+Z brings the node back", nodes().length === count && status.textContent === "Undid the last change", nodes().length + " / " + status.textContent);
 
+    // Task 29: link by keyboard. Take an input that is linked, free it with
+    // Delete, then link it again by keyboard (and try a link the rules refuse).
+    const ports = [];
+    for (const li of nodes()) {
+        li.focus();
+        await wait(30);
+        await press("ArrowRight");
+        let last = "";
+        for (let i = 0; i < 12 && active().id !== last; i++) {
+            last = active().id;
+            if (active().dataset.port !== undefined)
+                ports.push({ id: active().id, node: active().dataset.node, side: active().dataset.side, label: active().getAttribute("aria-label") });
+            await press("ArrowDown");
+        }
+        await press("ArrowLeft");
+    }
+    const kind = (port) => /, (float|int|str|bool),/.exec(port.label)[1];
+    const fits = (from, to) => from === to || (from === "int" && to === "float");
+    const goTo = async (port) => {
+        document.getElementById("tree-" + port.node).focus();
+        await wait(30);
+        await press("ArrowRight");
+        for (let i = 0; i < 12 && active().id !== port.id; i++) await press("ArrowDown");
+        return active().id === port.id;
+    };
+    const target = ports.find((port) => port.side === "input" && /linked from n\d+ \w+/.test(port.label));
+    const from = target && /linked from (n\d+) (\w+)/.exec(target.label);
+    const source = from && ports.find((port) => port.id === `tree-${from[1]}-output-${from[2]}`);
+    const clashing = target && ports.find((port) => port.side === "output" && port.node !== target.node && !fits(kind(port), kind(target)));
+    check("a linked input and its source were found", Boolean(target && source), target && target.id);
+    check("an output whose type does not fit that input was found", Boolean(clashing), clashing && clashing.id);
+
+    if (target && source) {
+        await goTo(target);
+        await press("Delete");
+        await wait(300);
+        await goTo(target);
+        await press("Enter");
+        check("Enter on an input with no link started says so", /^No link started/.test(status.textContent), status.textContent);
+        await goTo(source);
+        await press("Enter");
+        check("Enter on an output starts a link", /^Link from n\d+ \w+ started/.test(status.textContent), status.textContent);
+        await press("Escape");
+        check("Escape cancels it", status.textContent === "Link cancelled", status.textContent);
+        await goTo(target);
+        await press("Enter");
+        check("after Escape an input finds no link started", /^No link started/.test(status.textContent), status.textContent);
+
+        if (clashing) {
+            document.getElementById("error").setAttribute("hidden", "");
+            await goTo(clashing);
+            await press("Enter");
+            await goTo(target);
+            await press("Enter");
+            await wait(300);
+            check("a link the rules refuse is refused with the reason", /^Refused: /.test(status.textContent), status.textContent);
+            check("the refusal also shows in the banner", !document.getElementById("error").hidden, document.getElementById("error").hidden);
+            await press("Enter");
+            check("a refused link ends the pending link", /^No link started/.test(status.textContent), status.textContent);
+            document.getElementById("error").setAttribute("hidden", "");
+        }
+
+        await goTo(source);
+        await press("Enter");
+        await goTo(target);
+        await press("Enter");
+        await wait(300);
+        check("Enter on a fitting input links, and says so", /^Linked n\d+ \w+ to n\d+ \w+$/.test(status.textContent), status.textContent);
+        const linkedNow = document.getElementById(target.id);
+        check("the input says it is linked again", linkedNow && linkedNow.getAttribute("aria-label") === target.label, linkedNow && linkedNow.getAttribute("aria-label"));
+        for (let i = 0; i < 2; i++) {
+            document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true }));
+            await wait(300);
+        }
+        check("two Ctrl+Z put the graph back as it was", status.textContent === "Undid the last change", status.textContent);
+    }
+
     // Leave focus on a port of the first node, for a screenshot of the ring.
     first.focus();
     await wait(60);

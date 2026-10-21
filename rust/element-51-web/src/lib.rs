@@ -19,7 +19,7 @@ use element_51_core::layout::PortHit;
 use element_51_core::menu::card_actions;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{Edit, EditRequest, Message, Replica, RunRequest, RunResult};
+use element_51_core::{Edit, EditRequest, Message, PortRef, Replica, RunRequest, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -27,7 +27,9 @@ use web_sys::{
     MessageEvent, MouseEvent, WebSocket, WheelEvent,
 };
 
-use a11y_ui::{announce, on_tree_focus_in, on_tree_focus_out, on_tree_key, sync_tree};
+use a11y_ui::{
+    announce, on_tree_focus_in, on_tree_focus_out, on_tree_key, pending_preview, sync_tree,
+};
 use draw::{Focus, Frame, Selected, draw};
 use element_51_core::access::{edit_text, refusal_text, undo_text};
 use fields_ui::sync_fields;
@@ -53,6 +55,9 @@ struct State {
     selected: Option<Selected>,
     /// The hidden tree's item that has the keyboard focus, if any.
     focus: Option<Focus>,
+    /// The output port a keyboard link was started from, until it is finished
+    /// or cancelled.
+    pending_link: Option<PortRef>,
     /// Whether the replica changed since the hidden tree was built.
     tree_stale: bool,
     gesture: Gesture,
@@ -110,6 +115,7 @@ pub fn start() -> Result<(), JsValue> {
         history: History::default(),
         selected: None,
         focus: None,
+        pending_link: None,
         tree_stale: true,
         gesture: Gesture::None,
         hover: None,
@@ -321,6 +327,7 @@ fn redraw(shared: &Shared) {
 fn draw_canvas(state: &Shared) {
     let state = state.borrow();
     let preview = dragged_graph(&state);
+    let keyboard_link = pending_preview(&state);
     let frame = Frame {
         theme: &state.theme,
         graph: preview
@@ -332,11 +339,15 @@ fn draw_canvas(state: &Shared) {
             .map_or(&[], |replica| replica.node_types()),
         view: &state.view,
         selected: state.selected.as_ref(),
-        drag: match &state.gesture {
-            Gesture::Link(drag) => Some(drag),
+        drag: match (&state.gesture, &keyboard_link) {
+            (Gesture::Link(drag), _) => Some(drag),
+            (_, Some((drag, _))) => Some(drag),
             _ => None,
         },
-        hover: state.hover.as_ref(),
+        hover: match &keyboard_link {
+            Some((_, hit)) => hit.as_ref(),
+            None => state.hover.as_ref(),
+        },
         focus: state.focus.as_ref(),
         run: state.run.as_ref(),
     };

@@ -1,5 +1,6 @@
 //! Pointer and key handling on the canvas: pan, zoom, move, link, delete.
 
+use element_51_core::access::link_edit;
 use element_51_core::layout::{PortHit, Side, icon_at, link_at, node_at, port_at};
 use element_51_core::{Edit, Graph, PortRef, apply_edit};
 use wasm_bindgen::JsCast;
@@ -168,12 +169,12 @@ pub(crate) fn on_mouse_up(shared: &Shared, event: &MouseEvent) {
         match std::mem::replace(&mut state.gesture, Gesture::None) {
             Gesture::Link(drag) => port_under(&state, x, y)
                 .filter(|hit| hit.side == Side::Input)
-                .map(|hit| Edit::AddLink {
-                    source: drag.source,
-                    target: PortRef {
+                .map(|hit| {
+                    let target = PortRef {
                         node: hit.node,
                         port: hit.port,
-                    },
+                    };
+                    link_edit(&drag.source, &target)
                 }),
             Gesture::Move(moving) if moving.now != moving.start => Some(Edit::MoveNode {
                 id: moving.id,

@@ -2,16 +2,17 @@
 //! the graph. Its items take the keyboard focus, the canvas draws a ring on the
 //! focused node or port, and the view pans to keep it in sight.
 
-use element_51_core::Edit;
 use element_51_core::access::{
-    Direction, NodeItem, cannot_delete_text, describe_ports, list_nodes, neighbour, pan_to_show,
-    selected_text,
+    Direction, NodeItem, cannot_delete_text, describe_ports, link_cancelled_text, link_edit,
+    link_started_text, list_nodes, neighbour, no_link_started_text, pan_to_show, selected_text,
 };
-use element_51_core::layout::{Side, node_rect};
+use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
+use element_51_core::{Edit, PortRef};
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, FocusEvent, HtmlElement, KeyboardEvent};
 
-use crate::draw::{Focus, Selected};
+use crate::State;
+use crate::draw::{Drag, Focus, Selected};
 use crate::{Shared, redraw, submit};
 
 /// The least gap, in pixels, between a focused node and the window edge. It is
@@ -296,7 +297,11 @@ pub(crate) fn on_tree_focus_out(shared: &Shared, event: &FocusEvent) {
         .zip(document.get_element_by_id("graph-tree"))
         .is_some_and(|(next, tree)| tree.contains(Some(&next)));
     if !inside {
-        shared.borrow_mut().focus = None;
+        {
+            let mut state = shared.borrow_mut();
+            state.focus = None;
+            state.pending_link = None;
+        }
         redraw(shared);
     }
 }
@@ -317,11 +322,23 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
     };
     match event.key().as_str() {
         "Enter" | " " => {
-            if let Focus::Node(id) = &focus_now {
-                event.prevent_default();
-                event.stop_propagation();
-                select_node(shared, id);
+            event.prevent_default();
+            event.stop_propagation();
+            match &focus_now {
+                Focus::Node(id) => select_node(shared, id),
+                Focus::Port { node, port, side } => {
+                    let end = PortRef {
+                        node: node.clone(),
+                        port: port.clone(),
+                    };
+                    press_port(shared, end, *side);
+                }
             }
+            return;
+        }
+        "Escape" if shared.borrow().pending_link.is_some() => {
+            event.stop_propagation();
+            cancel_link(shared);
             return;
         }
         "Delete" | "Backspace" => {
@@ -354,6 +371,73 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
         expand_for(&next);
         focus(&next);
     }
+}
+
+/// Enter on a port: an output starts a link, an input finishes one.
+fn press_port(shared: &Shared, end: PortRef, side: Side) {
+    let document = shared.borrow().document.clone();
+    match side {
+        Side::Output => {
+            shared.borrow_mut().pending_link = Some(end.clone());
+            announce(&document, &link_started_text(&end));
+            redraw(shared);
+        }
+        Side::Input => {
+            let source = shared.borrow_mut().pending_link.take();
+            match source {
+                Some(source) => submit(shared, link_edit(&source, &end)),
+                None => announce(&document, &no_link_started_text()),
+            }
+        }
+    }
+}
+
+/// Escape with a link started: drop it.
+fn cancel_link(shared: &Shared) {
+    let document = {
+        let mut state = shared.borrow_mut();
+        state.pending_link = None;
+        state.document.clone()
+    };
+    announce(&document, &link_cancelled_text());
+    redraw(shared);
+}
+
+/// The wire to draw for a link started from the keyboard: from its output port
+/// to the input port that has the focus, or to the output port itself while the
+/// focus is elsewhere. The input port that has the focus is also returned, so
+/// the canvas colours it green or red as it does under the mouse.
+pub(crate) fn pending_preview(state: &State) -> Option<(Drag, Option<PortHit>)> {
+    let source = state.pending_link.as_ref()?;
+    let replica = state.replica.as_ref()?;
+    let (graph, types, metrics) = (replica.graph(), replica.node_types(), &state.theme.metrics);
+    let from = anchor_of(graph, types, source, Side::Output, metrics)?;
+    let target = match &state.focus {
+        Some(Focus::Port {
+            node,
+            port,
+            side: Side::Input,
+        }) => Some(PortRef {
+            node: node.clone(),
+            port: port.clone(),
+        }),
+        _ => None,
+    };
+    let end = target
+        .as_ref()
+        .and_then(|target| anchor_of(graph, types, target, Side::Input, metrics))
+        .unwrap_or(from);
+    let hit = target.map(|target| PortHit {
+        node: target.node,
+        port: target.port,
+        side: Side::Input,
+    });
+    let drag = Drag {
+        source: source.clone(),
+        x: end.0,
+        y: end.1,
+    };
+    Some((drag, hit))
 }
 
 /// Enter or Space on a node: select it, as a click does.
