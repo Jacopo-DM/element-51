@@ -481,3 +481,28 @@ fn a_wire_wholly_outside_the_view_does_not_overlap_it() {
         );
     }
 }
+
+#[test]
+fn a_rectangle_under_a_later_card_is_covered() {
+    let area = Rect {
+        x: 10.0,
+        y: 10.0,
+        w: 20.0,
+        h: 10.0,
+    };
+    let beside = Rect {
+        x: 30.0,
+        y: 10.0,
+        w: 50.0,
+        h: 50.0,
+    };
+    let over = Rect {
+        x: 25.0,
+        y: 0.0,
+        w: 50.0,
+        h: 50.0,
+    };
+    assert!(!area.is_covered_by(&[]));
+    assert!(!area.is_covered_by(&[beside]));
+    assert!(area.is_covered_by(&[beside, over]));
+}

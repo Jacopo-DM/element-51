@@ -207,6 +207,29 @@ resize action), so a screen reader user cannot resize.
 - Status: waiting for the recording.
 - Added: 2026-10-22
 
+### save-as-csv (draft, 2026-10-22)
+
+- Goal: a Plot card can save its series as a CSV file, so the user's own script can draw them.
+- Decided by the user 2026-10-22: one file, a column per series (`index,loss,accuracy`, one row
+    per point, an empty cell where a series has a gap).
+- Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan` and
+    approval in words.
+- Added: 2026-10-22
+
+### matplotlib-png (draft, 2026-10-22)
+
+- Goal: Save as PNG gives a plot that looks as good as matplotlib's, drawn by real matplotlib.
+- Decided by the user 2026-10-22: "Real matplotlib renders the PNG" (not only its look). The
+    user called the current PGFPlots-style PNG "quite fugly".
+- Open for the spec (record in DESIGN.md once decided): matplotlib is a dev dependency only
+    today, so it would become a runtime dependency or an optional extra (its wheel and its
+    dependencies are several MB; a new dependency needs the user's yes by name, source and size);
+    the page's Save as PNG would send the series to Python and receive a file, so it needs the
+    server (the standalone page cannot); what happens when matplotlib is missing; whether
+    `paper.rs` and `png.rs` (the Rust PNG) go away or stay as the fallback.
+- Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan`.
+- Added: 2026-10-22
+
 ### speed-up-frame: done (2026-10-21)
 
 Tasks 1 and 2 kept (wires that cannot reach the view are not drawn, the grid's dots are one path
@@ -272,7 +295,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user's try-out comes first: `d6_auto_run.py` (Run automatically, red failed-node border), `g3_mnist.py` (`uv run examples/g_experiments/g3_mnist.py`; data is in `__data__/` already on the user's machine), the hover text on series boxes, Save as PNG on a Plot and a picture card (the new paper figure, opened in the user's own paper tools), and dragging the grip on a Plot or picture card. Then, in this order: the user revokes the exposed PyPI tokens (unconfirmed) and answers open question 1 (blurry text, needs a screenshot) and open question 2 (my choices for the paper PNG and the resize handle, which the user may overrule); the user records the page (macOS Cmd+Shift+5, about 10 s) so Claude can convert it with `ffmpeg` into `docs/images/mnist.gif` and draft the README lines (goal `readme-gif`, waiting); later, a keyboard way to resize a card (hidden tree) if the user wants it. No approved goal is open besides `readme-gif`; the next new goal needs `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22 (`origin/main` is at `3ffd16c`; the notes commit `853f3a3` is not pushed): `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper`, `card-resize`, and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close) and the series box bare number with a hover text. GitHub CI, Docs and Rust and WASM passed for every push up to `3ffd16c` (read 2026-10-22 with `gh run list --branch main --limit 3`).
+Next step: the user's try-out comes first: `d6_auto_run.py` (Run automatically, red failed-node border), `g3_mnist.py` (`uv run examples/g_experiments/g3_mnist.py`; data is in `__data__/` already on the user's machine), the hover text on series boxes, Save as PNG on a Plot and a picture card (the new paper figure, opened in the user's own paper tools), and dragging the grip on a Plot or picture card. Then, in this order: the user revokes the exposed PyPI tokens (unconfirmed) and answers open question 1 (blurry text, needs a screenshot) and open question 2 (my choices for the paper PNG and the resize handle, which the user may overrule); the user records the page (macOS Cmd+Shift+5, about 10 s) so Claude can convert it with `ffmpeg` into `docs/images/mnist.gif` and draft the README lines (goal `readme-gif`, waiting); later, a keyboard way to resize a card (hidden tree) if the user wants it. No approved goal is open besides `readme-gif`; the drafts `save-as-csv` and `matplotlib-png` (added 2026-10-22 on the user's words after the try-out) need `/zz-02-project-plan` for their specs and an approval in words. Fixed on 2026-10-22 on the user's word (approved: overlap drawing order, title contrast): a card on top hides the value boxes and ports of the cards under it, and the `purple-synthwave` card title is lighter. Done and pushed 2026-10-21 and 2026-10-22 (`origin/main` is at `3ffd16c`; the notes commit `853f3a3` is not pushed): `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper`, `card-resize`, and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close) and the series box bare number with a hover text. GitHub CI, Docs and Rust and WASM passed for every push up to `3ffd16c` (read 2026-10-22 with `gh run list --branch main --limit 3`).
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -628,9 +651,10 @@ Oldest first.
 1. (2026-10-20) Text is still blurry on the user's screen (their answer in
     housekeeping 2026-10-20; zoom speed was not reported as a problem). Three
     fixes were already made (device-pixel canvas, opaque context, Verdana and
-    Monaco). Options not yet tried: a larger card font, or snapping text
-    positions to whole device pixels. Needs a task approved in words, and a
-    screenshot from the user showing what looks blurry (which text, which zoom).
+    Monaco). On 2026-10-22 the user said the cause is the grey text in the title bars
+    not contrasting enough; the `purple-synthwave` title went from `#acadbc` (4.6:1 on the
+    header) to `#dcdcee` (7.3:1). Open: whether the other grey text (`label` 4.6:1 on the
+    card, `text_dim`, `placeholder` 3.7:1) should be lighter too; the user's screen decides.
 
 2. (2026-10-22) On "go" the user did not answer my questions for `png-paper` and `card-resize`, so
     I picked the recommended options and recorded the reasons in DESIGN.md ("png-paper spec",
@@ -641,6 +665,12 @@ Oldest first.
 
 ## Known problems
 
+- A wire drawn over the cards (the translucent pass in `draw.rs`) is clipped to every visible card,
+    so a wire of a card that another card hides still shows across the card on top (seen
+    2026-10-22 with Train under Plot). The port squares and the value boxes of a covered card are
+    hidden since the overlap fix; the wire is left, because it is the link itself. Checked in the
+    browser pane only (the fix to `fields_ui.rs` hides a box with `visibility: hidden`, so a
+    hidden box is also out of the Tab order; the hidden tree keeps the field for a screen reader).
 - No keyboard way to resize a card: the hidden tree has no resize action, so a screen reader or
     keyboard user cannot use the grip (the size only changes how the card looks). A touch screen
     was not tried either (the grip is 14 graph units square).

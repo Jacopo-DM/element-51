@@ -2,7 +2,7 @@
 
 use element_51_core::PortType;
 use element_51_core::fields::{field_label, format_value, parse_input};
-use element_51_core::layout::{Side, node_rect, output_row};
+use element_51_core::layout::{Rect, Side, node_rect, output_row};
 use element_51_core::rows::{find_input, type_of};
 use element_51_core::{Edit, PlacedNode, Port, Status};
 use wasm_bindgen::JsCast;
@@ -34,11 +34,22 @@ pub(crate) fn sync_fields(shared: &Shared) {
     let zoom = state.view.zoom();
     let focused = state.document.active_element().map(|element| element.id());
     let mut wanted: Vec<String> = Vec::new();
-    for node in &graph.nodes {
+    let cards: Vec<Option<Rect>> = graph
+        .nodes
+        .iter()
+        .map(|node| {
+            type_of(graph, replica.node_types(), node)
+                .map(|node_type| node_rect(node, &node_type, metrics))
+        })
+        .collect();
+    for (index, node) in graph.nodes.iter().enumerate() {
         let Some(node_type) = type_of(graph, replica.node_types(), node) else {
             continue;
         };
         let rect = node_rect(node, &node_type, metrics);
+        // The boxes are page elements above the whole canvas, so a card drawn
+        // later cannot hide them by painting over them; hide them instead.
+        let above: Vec<Rect> = cards[index + 1..].iter().flatten().copied().collect();
         for (row, port) in node_type.inputs.iter().enumerate() {
             if graph.is_linked(&node.id, &port.name)
                 || matches!(port.kind, PortType::Image | PortType::Series)
@@ -52,6 +63,13 @@ pub(crate) fn sync_fields(shared: &Shared) {
             else {
                 continue;
             };
+            let covered = Rect {
+                x,
+                y,
+                w: width,
+                h: height,
+            }
+            .is_covered_by(&above);
             let (left, top) = state.view.to_screen(x, y);
             let Some(field) = field_for(shared, &state.document, &container, &id, node, port)
             else {
@@ -74,10 +92,11 @@ pub(crate) fn sync_fields(shared: &Shared) {
                 "style",
                 &format!(
                     "left: {left}px; top: {top}px; width: {width}px; height: {height}px; \
-                     font-size: {}px; padding: 0 {}px; border-radius: {}px",
+                     font-size: {}px; padding: 0 {}px; border-radius: {}px{}",
                     state.theme.fonts.field_px * zoom,
                     metrics.box_pad * zoom,
                     metrics.box_radius * zoom,
+                    if covered { "; visibility: hidden" } else { "" },
                 ),
             );
             let own = node.values.get(&port.name);

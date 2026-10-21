@@ -25,6 +25,12 @@ impl Rect {
             && other.y < self.y + self.h
     }
 
+    /// Whether any of the `above` rectangles, cards drawn after this one's card,
+    /// shares area with it; the card on top hides it.
+    pub fn is_covered_by(&self, above: &[Rect]) -> bool {
+        above.iter().any(|card| self.overlaps(card))
+    }
+
     /// The rectangle with `by` added on every side.
     pub fn grown(&self, by: f64) -> Rect {
         Rect {

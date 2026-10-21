@@ -1971,3 +1971,9 @@ have to go through `tools/compress_images.py`).
     gzip IDX files into their own temporary `__data__/`.
 - A `cd` in one Bash command persists into the next (the working directory drifted into `rust/`
     and `__data__/fashion` during this work): use absolute paths or `git -C`.
+- The value boxes of a card are real `<input>` elements in `#fields`, laid over the whole canvas,
+    not canvas drawing, so a card drawn later cannot hide them by painting over them (the user saw
+    the boxes of one card on top of another on 2026-10-22). `sync_fields` in `fields_ui.rs` hides
+    (`visibility: hidden`) a box that a later card overlaps, using `Rect::is_covered_by`; the port
+    squares are canvas drawing and are skipped in `draw.rs` by the same rule. A box covered only
+    in part is hidden whole. Any new element placed over the canvas needs the same rule.

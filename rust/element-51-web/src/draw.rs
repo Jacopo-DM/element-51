@@ -21,6 +21,9 @@ use std::f64::consts::TAU;
 use wasm_bindgen::JsValue;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
+/// The centre and style of each port marker of one card.
+type Markers<'a> = Vec<(f64, f64, &'a PortStyle)>;
+
 /// The grid is left out when its dots would be closer than this on screen.
 const MIN_GRID_PIXELS: f64 = 8.0;
 /// How far a diamond marker reaches from its centre, as a fraction of the port
@@ -227,7 +230,10 @@ pub fn draw(
         wire(context, from, (drag.x, drag.y), metrics);
     }
 
-    // Ports go over the wires, so a wire ends at the port's square.
+    // Ports go over the wires, so a wire ends at the port's square. A port a
+    // later card covers is left out, as the card hides it.
+    let size = metrics.port_size;
+    let mut placed: Vec<(Rect, Markers)> = Vec::new();
     for node in &graph.nodes {
         let Some(node_type) = type_of(graph, types, node) else {
             continue;
@@ -236,13 +242,29 @@ pub fn draw(
             continue;
         }
         let rect = node_rect(node, &node_type, metrics);
+        let mut markers: Markers = Vec::new();
         for (row, port) in node_type.inputs.iter().enumerate() {
             let (x, y) = input_anchor(&rect, row, metrics);
-            marker(context, (x, y), theme.port_style(port.kind, false), metrics);
+            markers.push((x, y, theme.port_style(port.kind, false)));
         }
         for (index, port) in node_type.outputs.iter().enumerate() {
             let (x, y) = output_anchor(&rect, output_row(&node_type, index), metrics);
-            marker(context, (x, y), theme.port_style(port.kind, true), metrics);
+            markers.push((x, y, theme.port_style(port.kind, true)));
+        }
+        placed.push((rect, markers));
+    }
+    for (index, (_, markers)) in placed.iter().enumerate() {
+        let above: Vec<Rect> = placed[index + 1..].iter().map(|(rect, _)| *rect).collect();
+        for (x, y, style) in markers {
+            let reach = Rect {
+                x: x - size / 2.0,
+                y: y - size / 2.0,
+                w: size,
+                h: size,
+            };
+            if !reach.is_covered_by(&above) {
+                marker(context, (*x, *y), style, metrics);
+            }
         }
     }
     if let (Some(drag), Some(hit)) = (drag, hover)
