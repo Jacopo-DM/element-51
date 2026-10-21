@@ -91,3 +91,27 @@ fn a_run_that_ends_after_unticking_starts_nothing() {
     auto.set_ticked(true);
     assert!(!auto.finished());
 }
+
+#[test]
+fn ticking_starts_one_run_at_once() {
+    let mut auto = ticked();
+    assert!(auto.tick_run());
+    assert!(!auto.tick_run(), "a run is already going");
+    assert!(auto.finished(), "the second tick queued one more run");
+    assert!(!auto.finished());
+}
+
+#[test]
+fn ticking_during_a_run_queues_one_run() {
+    let mut auto = AutoRun::new();
+    auto.started();
+    auto.set_ticked(true);
+    assert!(!auto.tick_run());
+    assert!(auto.finished());
+}
+
+#[test]
+fn an_unticked_box_starts_nothing() {
+    let mut auto = AutoRun::new();
+    assert!(!auto.tick_run());
+}

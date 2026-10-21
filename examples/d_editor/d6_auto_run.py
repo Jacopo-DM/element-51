@@ -10,7 +10,8 @@ Notes
 -----
     * Press Run: `share` fails. Its card gets a red border and a red title bar,
         and the banner says why.
-    * Tick `Run automatically`. Run turns grey: the box runs the graph for you.
+    * Tick `Run automatically`. The graph runs once at once, and Run turns grey:
+        the box runs the graph for you from now on.
     * In the `parts` box of `share`, type `4` and press Enter. Without pressing
         Run, `scale` and `share` show 6.0 and 1.5, the red border goes and the
         banner clears.

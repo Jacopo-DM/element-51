@@ -761,6 +761,8 @@ approved in words on 2026-10-21.
         `draw_card` strokes it, in the selection width, for `Status::Error`. The title
         bar already turns `header_error` red today; the border is a second cue, and the
         banner and the node's own error text stay.
+- Ticking the box runs the graph once at once (the user's request, 2026-10-21), so the
+    screen is current without an edit; if a run is going, one more is queued (`tick_run`).
 - Existing behaviour that must not regress: Run still works with the box unticked; moving a
     node keeps the shown values; job rows and Start and Stop are untouched; every
     other keyboard row of the walk-through (90, 16 and 21) still passes.

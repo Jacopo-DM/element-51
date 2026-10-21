@@ -45,6 +45,20 @@ impl AutoRun {
         }
     }
 
+    /// The box was just ticked: the graph is run once at once. True means:
+    /// start a run now. If a run is going, one more is queued instead.
+    pub fn tick_run(&mut self) -> bool {
+        if !self.ticked {
+            return false;
+        }
+        if self.running {
+            self.queued = true;
+            return false;
+        }
+        self.running = true;
+        true
+    }
+
     /// A change that alters a result happened at `now`.
     pub fn change(&mut self, now: f64) -> Reaction {
         if !self.ticked {

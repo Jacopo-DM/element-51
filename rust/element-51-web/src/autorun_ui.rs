@@ -26,6 +26,10 @@ pub(crate) fn on_toggle(shared: &Shared) {
     };
     if on {
         let _ = button.set_attribute("aria-disabled", "true");
+        // Ticking runs the graph once, so the screen is current from the start.
+        if state.auto.tick_run() {
+            start_run(&state);
+        }
     } else if button.get_attribute("aria-busy").as_deref() != Some("true") {
         let _ = button.remove_attribute("aria-disabled");
     }

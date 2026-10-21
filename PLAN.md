@@ -164,12 +164,12 @@ met (spec and decisions in DESIGN.md; `docs/jobs.md`, "A job in its own process"
 ### auto-run: done (2026-10-21)
 
 Commits `f26351e..f941456`. A `Run automatically` box next to Run: unticked at every load,
-runs the graph 300 ms after the last change that alters a result (never a move, never a
+runs the graph once when ticked (added at the user's request on 2026-10-21) and 300 ms after the last change that alters a result (never a move, never a
 job), Run is `aria-disabled` while ticked, a change during a run says "Still running, will
 run again" and starts one more run when it ends, one replaceable error banner that a
 passing run clears, and a red `card_error_border` on every failed node. The rule is
 `autorun.rs` in the core crate (8 native tests); the page side is `autorun_ui.rs`;
-`tools/ui_keys.js` has `uiKeysAuto` (19 rows). The user's own try-out is still to come
+`tools/ui_keys.js` has `uiKeysAuto` (21 rows). The user's own try-out is still to come
 (`examples/d_editor/d6_auto_run.py`); axe, a real screen reader, a narrow window or touch
 and the light theme's red border were not checked.
 

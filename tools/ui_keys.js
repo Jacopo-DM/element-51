@@ -638,6 +638,10 @@ async function uiKeysAuto() {
     box.click();
     await wait(100);
     check("ticking disables Run for assistive technology", box.checked && run.getAttribute("aria-disabled") === "true", run.getAttribute("aria-disabled"));
+    await wait(300);
+    check("ticking runs the graph once at once", sent.length === 1, sent.length);
+    check("that run ends and Run stays disabled", await until(() => run.textContent === "Run") && run.getAttribute("aria-disabled") === "true", run.textContent);
+    sent.length = 0;
     run.click();
     await wait(300);
     check("pressing Run while ticked does nothing", sent.length === 0 && run.textContent === "Run", sent.length);
