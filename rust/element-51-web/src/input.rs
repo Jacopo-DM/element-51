@@ -13,6 +13,7 @@ use crate::draw::Focus;
 use crate::draw::{Drag, Selected};
 use crate::fields_ui::{restore_field, return_from_field};
 use crate::menu_ui::{hide_menu, open_card_menu};
+use crate::source_ui::{close_source, source_open};
 use crate::{Shared, State, redraw, send_job_request, step_history, submit};
 
 /// What the pointer is doing between a press and a release.
@@ -230,6 +231,13 @@ pub(crate) fn on_wheel(shared: &Shared, event: &WheelEvent) {
 /// Delete or Backspace removes what is selected; Escape lets go of it. Keys
 /// typed into an input box belong to the box; Enter there ends the edit.
 pub(crate) fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
+    // The source panel is on top of everything: Escape closes it wherever the
+    // focus is.
+    if event.key() == "Escape" && source_open(&shared.borrow().document) {
+        event.prevent_default();
+        close_source(shared);
+        return;
+    }
     if let Some(field) = event
         .target()
         .and_then(|target| target.dyn_into::<HtmlInputElement>().ok())

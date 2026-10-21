@@ -517,7 +517,9 @@ the reason:
     code. Anyone who can open the page can read the code of every node type, which is
     why the user was asked; an opt-in switch for embedding hosts was offered and not
     chosen. The panel is a non-modal `role="dialog"`: the code takes the focus, Tab
-    reaches Dismiss, Escape or Dismiss closes it and the focus goes back to where it
+    reaches Close, and Close, Escape (wherever the focus is) or a mouse press outside the
+    panel closes it (changed 2026-10-21 at the user's request; the button said Dismiss
+    before), and the focus goes back to where it
     was when the request was made (a keyboard-opened menu remembers it). The method on
     nodes is `source_text`, not `source`, because a `Node` field may be called `source`.
 - Rejected: renaming a node. The id (`n1`) is what links and saved files refer to, so

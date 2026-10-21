@@ -1,10 +1,11 @@
 //! The panel that shows a node's source code. The card menu asks Python for it,
-//! and the reply fills a read-only panel that stays until Dismiss or Escape.
+//! and the reply fills a read-only panel that stays until Close, Escape or a
+//! press outside it.
 
 use element_51_core::SourceReply;
 use element_51_core::source::{source_panel, source_request_text};
 use wasm_bindgen::JsCast;
-use web_sys::{HtmlElement, KeyboardEvent};
+use web_sys::{Document, Element, HtmlElement, KeyboardEvent, MouseEvent};
 
 use crate::a11y_ui::announce;
 use crate::{Shared, show_error};
@@ -111,6 +112,27 @@ pub(crate) fn on_source_key(shared: &Shared, event: &KeyboardEvent) {
     if event.key() == "Escape" {
         event.prevent_default();
         event.stop_propagation();
+        close_source(shared);
+    }
+}
+
+/// Whether the panel is showing.
+pub(crate) fn source_open(document: &Document) -> bool {
+    document
+        .get_element_by_id("source-panel")
+        .is_some_and(|panel| !panel.has_attribute("hidden"))
+}
+
+/// A mouse press anywhere outside the panel closes it.
+pub(crate) fn on_press_outside(shared: &Shared, event: &MouseEvent) {
+    if !source_open(&shared.borrow().document) {
+        return;
+    }
+    let inside = event
+        .target()
+        .and_then(|target| target.dyn_into::<Element>().ok())
+        .is_some_and(|element| matches!(element.closest("#source-panel"), Ok(Some(_))));
+    if !inside {
         close_source(shared);
     }
 }

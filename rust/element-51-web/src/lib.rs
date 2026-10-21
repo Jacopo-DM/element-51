@@ -54,7 +54,7 @@ use input::{Gesture, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_
 use menu_keys::{on_card_menu_key, on_menu_key, on_menu_search_key};
 use menu_ui::{on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search};
 use pictures::Pictures;
-use source_ui::{close_source, on_source_key};
+use source_ui::{close_source, on_press_outside, on_source_key};
 use theme_ui::{
     on_app_menu_button, on_palette_key, on_palette_submit, on_select_theme, on_theme_click,
     on_try_palette,
@@ -255,6 +255,12 @@ pub fn start() -> Result<(), JsValue> {
         let shared = state.clone();
         listen(&card_menu, "keydown", move |event: KeyboardEvent| {
             on_card_menu_key(&shared, &event)
+        })?;
+    }
+    {
+        let shared = state.clone();
+        listen(&document, "mousedown", move |event: MouseEvent| {
+            on_press_outside(&shared, &event)
         })?;
     }
     if let Some(close) = document.get_element_by_id("source-close") {
