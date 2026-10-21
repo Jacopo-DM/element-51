@@ -3,6 +3,7 @@
 import gzip
 import hashlib
 import struct
+import threading
 from pathlib import Path
 from types import ModuleType
 
@@ -10,6 +11,10 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 from test_examples import load
+
+from element_51.edits import SetValue
+from element_51.protocol import JobUpdate
+from element_51.visuals import Series
 
 PICTURES = 200
 CLASSES = 10
@@ -318,3 +323,197 @@ def test_a_network_with_no_weights_always_says_class_zero(
     images = np.zeros((4, CLASSES), dtype=np.uint8)
     labels = np.array([0, 0, 3, 7], dtype=np.uint8)
     assert mnist.accuracy(weights, images, labels) == pytest.approx(HALF)
+
+
+TRAIN = 200
+TEST = 100
+FASHION_TRAIN = 300
+FASHION_TEST = 150
+WAIT = 10.0
+INDEX = 3
+EPOCHS = 3
+BATCHES = 12
+FASHION_BATCHES = 15
+POINTS = 6
+STEPS = 3
+
+
+@pytest.fixture
+def data(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Write fake MNIST and Fashion-MNIST files under `__data__` and go there.
+
+    Returns
+    -------
+    Path
+        The `__data__` folder.
+    """
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "__data__"
+    for folder, train, test in (
+        ("mnist", TRAIN, TEST),
+        ("fashion", FASHION_TRAIN, FASHION_TEST),
+    ):
+        (root / folder).mkdir(parents=True)
+        write_images(root / folder / "train-images-idx3-ubyte.gz", train)
+        write_labels(root / folder / "train-labels-idx1-ubyte.gz", train)
+        write_images(root / folder / "t10k-images-idx3-ubyte.gz", test)
+        write_labels(root / folder / "t10k-labels-idx1-ubyte.gz", test)
+    return root
+
+
+def test_a_sample_is_a_picture_a_label_and_its_dataset(
+    mnist: ModuleType, data: Path
+) -> None:
+    """Index 3 is the fourth picture, with label 3."""
+    del data
+    sample = mnist.MnistSample(index=INDEX).run()
+    assert (sample.image.width, sample.image.height) == (SIDE, SIDE)
+    assert sample.image.channels == 1
+    assert sample.image.pixels[0] == (INDEX * SIDE * SIDE) % 256
+    assert sample.label == INDEX
+    assert sample.dataset == "mnist"
+
+
+def test_a_sample_can_come_from_the_fashion_folder(
+    mnist: ModuleType, data: Path
+) -> None:
+    """The fashion folder holds 300 pictures, so index 250 exists there only."""
+    del data
+    assert mnist.MnistSample(index=250, dataset="fashion").run().label == 0
+    with pytest.raises(ValueError, match="from 0 to 199, not 250"):
+        mnist.MnistSample(index=250).run()
+
+
+def test_a_sample_refuses_a_dataset_word_it_does_not_know(
+    mnist: ModuleType, data: Path
+) -> None:
+    """The error names both words."""
+    del data
+    with pytest.raises(ValueError, match="mnist or fashion, not 'mnst'"):
+        mnist.MnistSample(dataset="mnst").run()
+
+
+def test_missing_data_says_how_to_download_it(
+    mnist: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With no folder, the error names the command that fetches the files."""
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ValueError, match=r"g3_mnist\.py` once to download"):
+        mnist.MnistSample().run()
+
+
+def test_the_graph_runs_its_sample_and_leaves_the_job_for_start(
+    mnist: ModuleType, data: Path
+) -> None:
+    """Run gives the sample's outputs; the job and the plot wait for Start."""
+    del data
+    result = mnist.build_app().execute()
+    by_id = {outcome.node: outcome for outcome in result.outcomes}
+    assert by_id["n1"].status == "ok"
+    assert by_id["n1"].outputs == {"label": 0, "dataset": "mnist"}
+    assert by_id["n2"].status == by_id["n3"].status == "skipped"
+
+
+def test_training_steps_cover_every_batch_once(
+    mnist: ModuleType, data: Path
+) -> None:
+    """200 pictures make 4 batches an epoch; 3 epochs make 12 batches."""
+    del data
+    train = mnist.Train(epochs=EPOCHS)
+    assert train.batches() == BATCHES
+    assert train.steps() == 1
+    assert (
+        mnist.Train(epochs=EPOCHS, dataset="fashion").batches()
+        == FASHION_BATCHES
+    )
+
+
+def test_a_step_makes_one_point_of_each_curve(
+    mnist: ModuleType, data: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Five batches of 100-batch steps become 3 steps; the last is shorter."""
+    del data
+    monkeypatch.setattr(mnist, "STEP_BATCHES", 5)
+    train = mnist.Train(epochs=EPOCHS, hidden=4)
+    state = train.begin()
+    assert train.steps() == STEPS
+    points = [train.step(state, i) for i in range(STEPS)]
+    for curves in points:
+        assert len(curves.loss.values) == len(curves.accuracy.values) == 1
+        assert 0.0 <= curves.accuracy.values[0] <= 1.0
+
+
+def test_the_last_step_tests_every_test_picture(
+    mnist: ModuleType, data: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Early steps test QUICK_TEST pictures; the last step tests them all."""
+    del data
+    monkeypatch.setattr(mnist, "STEP_BATCHES", 6)
+    monkeypatch.setattr(mnist, "QUICK_TEST", 10)
+    train = mnist.Train(epochs=3, hidden=4)
+    state = train.begin()
+    early = train.step(state, 0).accuracy.values[0]
+    last = train.step(state, 1).accuracy.values[0]
+    assert early * 10 == pytest.approx(round(early * 10))
+    assert last * TEST == pytest.approx(round(last * TEST))
+
+
+def test_training_is_the_same_twice(
+    mnist: ModuleType, data: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two runs from the same seed draw the same curves."""
+    del data
+    monkeypatch.setattr(mnist, "STEP_BATCHES", 4)
+
+    def curves() -> list[float]:
+        train = mnist.Train(epochs=2, hidden=4)
+        state = train.begin()
+        return [
+            train.step(state, i).loss.values[0] for i in range(train.steps())
+        ]
+
+    assert curves() == curves()
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "method", "message"),
+    [
+        ("hidden", 0, "begin", "hidden must be at least 1"),
+        ("learning_rate", 0.0, "begin", "learning_rate must be above 0"),
+        ("epochs", 0, "steps", "epochs must be at least 1"),
+    ],
+)
+@pytest.mark.usefixtures("data")
+def test_a_setting_out_of_range_says_which(
+    mnist: ModuleType, field: str, value: float, method: str, message: str
+) -> None:
+    """Each bad setting is a clear error, not a crash in numpy."""
+    train = mnist.Train(**{field: value})
+    with pytest.raises(ValueError, match=message):
+        getattr(train, method)()
+
+
+def test_start_fills_the_plot_with_one_point_a_step(
+    mnist: ModuleType, data: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Start on `Train` ends with both curves in the Plot."""
+    del data
+    monkeypatch.setattr(mnist, "STEP_BATCHES", 2)
+    app = mnist.build_app()
+    ended = threading.Event()
+
+    def listener(event: object) -> None:
+        if isinstance(event, JobUpdate) and event.state == "finished":
+            ended.set()
+
+    app.subscribe_jobs(listener)
+    app.apply(SetValue(node="n2", port="epochs", value=EPOCHS))
+    app.apply(SetValue(node="n2", port="hidden", value=4))
+    app.start_job("n2")
+    assert ended.wait(WAIT)
+    outcomes = {o.node: o for o in app.execute().outcomes}
+    loss = outcomes["n3"].shown["series_1"]
+    accuracy = outcomes["n3"].shown["series_2"]
+    assert isinstance(loss, Series)
+    assert isinstance(accuracy, Series)
+    assert len(loss.values) == len(accuracy.values) == POINTS

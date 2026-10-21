@@ -610,12 +610,7 @@ Tier 1 (a working example on fake data):
 
 1. Done (2026-10-21). The data part in `examples/g_experiments/g3_mnist.py` (`IdxHeader`, `read_idx`, `load_images`, `load_labels`, the `DATASETS` table with the sizes and empty sha256 fields, `download_file`, `fetch`) and `tests/test_mnist_example.py` (13 tests, no network). The hashes are filled in by task 4.
 2. Done (2026-10-21). The network in `g3_mnist.py` (`Weights`, `init_weights`, `to_floats`, `forward`, `loss_and_gradients`, `apply_gradients`, `accuracy`; float64, in-place updates) and 5 tests: the gradients match finite differences for every array, the same seed gives the same weights, probabilities sum to 1, a separable fake set trains to 100% with the loss falling by more than a factor of 4, a zero network says class 0.
-3. The nodes and the graph: `MnistSample`, `Train`, `PlotNode`, `build_app()`, the row in
-    `tests/test_examples.py` (fake data folder; Start on `Train` fills the Plot, `dataset = "fashion"`
-    picks the other folder, a bad word is an error naming both). Serves criteria 1, 4 and 5. Risk
-    medium, about 120 lines. Verified by those tests and the keyboard walk-through still passing
-    (the example is not in it, so by hand in the browser pane: the sample's picture changes with
-    `index` under auto-run, Start fills the plot).
+3. Done (2026-10-21). `Split`, `load_split`, `MnistSample`, `Train` and `build_app()` in `g3_mnist.py`; `tests/test_mnist_example.py` (31 tests in all, fake data) and a row in `tests/test_examples.py` (no data: `n1` error, `n2` and `n3` skipped) with a fixture that runs every example from an empty temporary folder, so none reads real data. Not looked at in the browser yet (needs the real data from task 4 to be worth it).
 
 Tier 2:
 

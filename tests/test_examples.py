@@ -14,6 +14,8 @@ from element_51.protocol import JobUpdate
 from element_51.session import App
 from element_51.visuals import Image, Series
 
+pytestmark = pytest.mark.usefixtures("in_an_empty_folder")
+
 EXAMPLES = Path(__file__).parent.parent / "examples"
 DEFAULT_STEPS = 60
 TRAINING_STEPS = 40
@@ -84,7 +86,11 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "ok", {}),
         ("n5", "ok", {}),
     ],
-    "g_experiments/g3_mnist.py": [],
+    "g_experiments/g3_mnist.py": [
+        ("n1", "error", {}),
+        ("n2", "skipped", {}),
+        ("n3", "skipped", {}),
+    ],
     "g_experiments/g2_job_nodes.py": [
         ("n1", "skipped", {}),
         ("n2", "skipped", {}),
@@ -171,6 +177,12 @@ EXPECTED: dict[str, Expected] = {
         ("n4", "error", {}),
     ],
 }
+
+
+@pytest.fixture
+def in_an_empty_folder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run every example from a temporary folder, so none reads real data."""
+    monkeypatch.chdir(tmp_path)
 
 
 def load(name: str) -> ModuleType:

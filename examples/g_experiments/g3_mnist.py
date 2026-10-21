@@ -6,11 +6,14 @@ Work in progress: the notes for this example come with its last task.
 # Standard library
 import gzip
 import hashlib
+import math
 import shutil
 import struct
 import urllib.request
 from collections.abc import Callable
+from functools import cache
 from pathlib import Path
+from typing import override
 
 # Third-party libraries
 import numpy as np
@@ -33,6 +36,10 @@ CLASSES = 10
 SEED = 51
 MAX_PIXEL = 255.0
 TINY = 1e-12
+SIDE = 28
+BATCH = 64
+STEP_BATCHES = 100
+QUICK_TEST = 1000
 TIMEOUT_SECONDS = 60
 
 # --- Warnings --- #
@@ -40,6 +47,7 @@ TIMEOUT_SECONDS = 60
 # --- Typing --- #
 type Bytes = NDArray[np.uint8]
 type Floats = NDArray[np.float64]
+type Indices = NDArray[np.intp]
 type Downloader = Callable[[str, Path], None]
 
 # --- TERMINAL OUTPUT SETUP --- #
@@ -421,15 +429,298 @@ def accuracy(weights: Weights, images: Bytes, labels: Bytes) -> float:
     return float((probs.argmax(axis=1) == labels).mean())
 
 
+class Split(BaseModel):
+    """The four arrays of a dataset: training and test pictures and labels."""
+
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", arbitrary_types_allowed=True
+    )
+
+    train_images: Bytes
+    train_labels: Bytes
+    test_images: Bytes
+    test_labels: Bytes
+
+
+def dataset_named(name: str) -> Dataset:
+    """Find a dataset by the word the `dataset` box holds.
+
+    Parameters
+    ----------
+    name
+        `mnist` or `fashion`.
+
+    Returns
+    -------
+    Dataset
+        The record in `DATASETS`.
+
+    Raises
+    ------
+    ValueError
+        If `name` is neither of the two words.
+    """
+    if name not in DATASETS:
+        msg = f"dataset must be mnist or fashion, not {name!r}"
+        raise ValueError(msg)
+    return DATASETS[name]
+
+
+@cache
+def read_split(folder: Path) -> Split:
+    """Read the four files of a dataset from `folder`, once.
+
+    Parameters
+    ----------
+    folder
+        The dataset's folder, as an absolute path (it is the cache key).
+
+    Returns
+    -------
+    Split
+        The pictures and labels.
+
+    Raises
+    ------
+    ValueError
+        If a file is missing; the message says how to download them.
+    """
+    for name in (TRAIN_IMAGES, TRAIN_LABELS, TEST_IMAGES, TEST_LABELS):
+        if not (folder / name).exists():
+            msg = (
+                f"{folder / name} is missing: run "
+                "`uv run examples/g_experiments/g3_mnist.py` once to "
+                "download the data"
+            )
+            raise ValueError(msg)
+    return Split(
+        train_images=load_images(folder / TRAIN_IMAGES),
+        train_labels=load_labels(folder / TRAIN_LABELS),
+        test_images=load_images(folder / TEST_IMAGES),
+        test_labels=load_labels(folder / TEST_LABELS),
+    )
+
+
+def load_split(name: str) -> Split:
+    """Load a dataset by name from `DATA_ROOT`.
+
+    Parameters
+    ----------
+    name
+        `mnist` or `fashion`.
+
+    Returns
+    -------
+    Split
+        The pictures and labels.
+    """
+    folder = (DATA_ROOT / dataset_named(name).folder).resolve()
+    return read_split(folder)
+
+
+class Sample(element_51.Model):
+    """What `MnistSample` outputs: a picture, its label and its dataset."""
+
+    image: element_51.Image
+    label: int
+    dataset: str
+
+
+class MnistSample(element_51.Node):
+    """One picture from the training set, with the digit it shows."""
+
+    index: int = 0
+    dataset: str = "mnist"
+
+    @override
+    def run(self) -> Sample:
+        """Pick the picture at `index`.
+
+        Returns
+        -------
+        Sample
+            The picture, its label and the dataset it came from.
+
+        Raises
+        ------
+        ValueError
+            If `index` is outside the training set.
+        """
+        split = load_split(self.dataset)
+        count = len(split.train_images)
+        if not 0 <= self.index < count:
+            msg = f"index must be from 0 to {count - 1}, not {self.index}"
+            raise ValueError(msg)
+        return Sample(
+            image=element_51.Image(
+                width=SIDE,
+                height=SIDE,
+                channels=1,
+                pixels=split.train_images[self.index].tobytes(),
+            ),
+            label=int(split.train_labels[self.index]),
+            dataset=self.dataset,
+        )
+
+
+class Curves(element_51.Model):
+    """The two series `Train` makes, one new point of each per step."""
+
+    loss: element_51.Series
+    accuracy: element_51.Series
+
+
+class TrainState(BaseModel):
+    """What the steps of one training share."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    weights: Weights
+    split: Split
+    rng: np.random.Generator
+    order: Indices
+    cursor: int = 0
+
+
+class Train(element_51.JobNode[TrainState]):
+    """Train the network on the training pictures, a hundred batches a step."""
+
+    hidden: int = 64
+    learning_rate: float = 0.1
+    epochs: int = 10
+    dataset: str = "mnist"
+
+    def batches(self) -> int:
+        """Count the batches of the whole training.
+
+        Returns
+        -------
+        int
+            Batches per epoch times `epochs`.
+
+        Raises
+        ------
+        ValueError
+            If `epochs` is below 1.
+        """
+        if self.epochs < 1:
+            msg = f"epochs must be at least 1, not {self.epochs}"
+            raise ValueError(msg)
+        pictures = len(load_split(self.dataset).train_images)
+        return self.epochs * math.ceil(pictures / BATCH)
+
+    @override
+    def steps(self) -> int:
+        """Say how many steps there are.
+
+        Returns
+        -------
+        int
+            One step per `STEP_BATCHES` batches, the last one shorter.
+        """
+        return math.ceil(self.batches() / STEP_BATCHES)
+
+    @override
+    def begin(self) -> TrainState:
+        """Make the network and shuffle the pictures.
+
+        Returns
+        -------
+        TrainState
+            The weights, the data and the shuffled order.
+
+        Raises
+        ------
+        ValueError
+            If `hidden` is below 1 or `learning_rate` is not above 0.
+        """
+        if self.hidden < 1:
+            msg = f"hidden must be at least 1, not {self.hidden}"
+            raise ValueError(msg)
+        if self.learning_rate <= 0.0:
+            msg = f"learning_rate must be above 0, not {self.learning_rate}"
+            raise ValueError(msg)
+        split = load_split(self.dataset)
+        rng = np.random.default_rng(SEED)
+        return TrainState(
+            weights=init_weights(self.hidden, rng),
+            split=split,
+            rng=rng,
+            order=rng.permutation(len(split.train_images)),
+        )
+
+    @override
+    def step(self, state: TrainState, i: int) -> Curves:
+        """Train on up to `STEP_BATCHES` batches and test the network.
+
+        Parameters
+        ----------
+        state
+            What `begin` made; the steps change it.
+        i
+            The step, from 0.
+
+        Returns
+        -------
+        Curves
+            The mean loss of the batches, and the accuracy on the first
+            `QUICK_TEST` test pictures (on all of them in the last step).
+        """
+        total = self.batches()
+        first = i * STEP_BATCHES
+        count = min(STEP_BATCHES, total - first)
+        split = state.split
+        losses: list[float] = []
+        for _ in range(count):
+            if state.cursor >= len(state.order):
+                state.order = state.rng.permutation(len(state.order))
+                state.cursor = 0
+            rows = state.order[state.cursor : state.cursor + BATCH]
+            state.cursor += BATCH
+            loss, grads = loss_and_gradients(
+                state.weights,
+                to_floats(split.train_images[rows]),
+                split.train_labels[rows],
+            )
+            apply_gradients(state.weights, grads, self.learning_rate)
+            losses.append(loss)
+        size = (
+            len(split.test_images)
+            if first + count >= total
+            else min(QUICK_TEST, len(split.test_images))
+        )
+        return Curves(
+            loss=element_51.Series(values=(float(np.mean(losses)),)),
+            accuracy=element_51.Series(
+                values=(
+                    accuracy(
+                        state.weights,
+                        split.test_images[:size],
+                        split.test_labels[:size],
+                    ),
+                )
+            ),
+        )
+
+
 def build_app() -> element_51.App:
-    """Build the app.
+    """Build the app: a sample, a training job and a plot.
 
     Returns
     -------
     element_51.App
-        An empty app, until the nodes are added.
+        An app whose first node is `MnistSample` (n1), the second `Train`
+        (n2) with its `dataset` linked to the sample's, and the third a Plot
+        (n3) with the loss and the accuracy linked.
     """
-    return element_51.App([])
+    app = element_51.App([MnistSample, Train, element_51.PlotNode])
+    sample = app.add_node(MnistSample, x=60.0, y=60.0)
+    train = app.add_node(Train, x=380.0, y=60.0)
+    chart = app.add_node(element_51.PlotNode, x=700.0, y=60.0)
+    app.add_link(sample, "dataset", train, "dataset")
+    app.add_link(train, "loss", chart, "series_1")
+    app.add_link(train, "accuracy", chart, "series_2")
+    return app
 
 
 def main() -> None:
