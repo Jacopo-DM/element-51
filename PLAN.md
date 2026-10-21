@@ -654,7 +654,7 @@ Tier 2, in order of value over risk plus cost:
     native tests; `tools/bench_page.py` on the three workloads before and after (no job
     rows in them, so no change expected); a walk-through of Start, a live Plot, Stop, a
     failing job and a reload with a real example in the pane.
-5. **Keyboard, screen reader, contrast.** What: job items in the hidden tree (Start,
+5. **DONE 2026-10-21. Keyboard, screen reader, contrast.** What: job items in the hidden tree (Start,
     Stop, state text), the announcements, `ui_states.py --graph job`, `uiKeys` rows, an axe
     scan in the three themes, any contrast pair the new parts need. Files: `access.rs`,
     `a11y_ui.rs`, `theme.rs` and the theme files only if a pair is missing, `tools/ui_states.py`,
@@ -721,15 +721,6 @@ Oldest first.
 
 ## Known problems
 
-- The job buttons work by mouse only until `job-nodes` task 5: the hidden tree does not list Start,
-    Stop or the state yet, and a screen reader hears nothing of a job's progress. A page that is
-    given a job's update does not announce it either.
-- After `job-nodes` tasks 1 and 2, `src/element_51/engine.py` (496 lines), `jobs.py` (500) and
-    `nodes.py` (473) are over the 400-line mark. The graph reach helpers (`ancestors`,
-    `descendants`, `closure`) could move to their own module if a restructure pass runs again.
-- Nothing on the page works by touch: panning, zooming and the menus need a mouse
-    and a wheel, and a 375 px wide window shows a clipped part of the graph with no
-    fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
 - The redraw time at 200 nodes (`tools/bench_page.js`) is 1.3 to 1.6 ms per wheel event (1.54 median on 2026-10-21 after the last visual-ports task) in
     the browser pane today (1024 by 768 CSS pixels at device ratio 2; measured 2026-10-21 on
     `main` before task 34, with it, and at `e90563a` before the accessibility work), not the

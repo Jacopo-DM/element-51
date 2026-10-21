@@ -8,11 +8,14 @@
 use std::collections::BTreeMap;
 
 use crate::display::{last_value, line_names, short_number};
+use crate::job::{JobButton, can_start, can_stop, progress_text, state_text};
 use crate::layout::{Rect, Side, node_rect};
 use crate::rows::type_of;
 use crate::theme::Metrics;
 use crate::view::View;
-use crate::{Edit, Graph, NodeType, PlacedNode, PortRef, RunResult, Shown, Status};
+use crate::{
+    Edit, Graph, JobStatus, JobUpdate, NodeType, PlacedNode, PortRef, RunResult, Shown, Status,
+};
 
 /// How much more a step sideways counts than a step ahead, when the keyboard
 /// looks for the nearest node in a direction.
@@ -353,6 +356,92 @@ pub fn selected_text(id: &str) -> String {
     format!("Selected {id}")
 }
 
+/// The sentence about a job node's job, added to the node's label: `Job idle.`,
+/// `Job running.`, `Job failed: boom.`.
+pub fn job_text(update: Option<&JobUpdate>) -> String {
+    let state = state_text(update);
+    match update {
+        Some(update) if update.state == JobStatus::Failed => {
+            let why = update.error.as_deref().unwrap_or("failed");
+            format!("Job {state}: {why}.")
+        }
+        _ => format!("Job {state}."),
+    }
+}
+
+/// The list with each job node's job added to its label. A node that is not a
+/// job keeps its label.
+pub fn with_jobs(
+    items: Vec<NodeItem>,
+    graph: &Graph,
+    node_types: &[NodeType],
+    jobs: &BTreeMap<String, JobUpdate>,
+) -> Vec<NodeItem> {
+    items
+        .into_iter()
+        .map(|item| {
+            let is_job = graph
+                .nodes
+                .iter()
+                .find(|node| node.id == item.id)
+                .and_then(|node| type_of(graph, node_types, node))
+                .is_some_and(|node_type| node_type.job);
+            if !is_job {
+                return item;
+            }
+            NodeItem {
+                label: format!("{} {}", item.label, job_text(jobs.get(&item.id))),
+                ..item
+            }
+        })
+        .collect()
+}
+
+/// What a screen reader is told when a job's state changes: `n1: running.`,
+/// `n1: finished, step 12 of 12.`, `n1: failed: boom.`.
+pub fn job_announcement(update: &JobUpdate) -> String {
+    let state = state_text(Some(update));
+    let mut text = format!("{}: {state}", update.node);
+    match (update.state, update.error.as_deref()) {
+        (JobStatus::Failed, why) => text.push_str(&format!(": {}", why.unwrap_or("failed"))),
+        (JobStatus::Finished | JobStatus::Stopped, _) => {
+            if let Some(progress) = progress_text(Some(update)) {
+                text.push_str(&format!(", {progress}"));
+            }
+        }
+        _ => {}
+    }
+    text.push('.');
+    text
+}
+
+/// The label of a tree item for a job button: its name, and why it does not
+/// work now if that is so.
+pub fn job_button_label(button: JobButton, update: Option<&JobUpdate>) -> String {
+    let name = match button {
+        JobButton::Start => "Start the job",
+        JobButton::Stop => "Stop the job",
+    };
+    match job_button_refusal(button, update) {
+        Some(why) => format!("{name}, button. Not available: {why}"),
+        None => format!("{name}, button."),
+    }
+}
+
+/// Why a job button does nothing now, or None if it works.
+pub fn job_button_refusal(button: JobButton, update: Option<&JobUpdate>) -> Option<String> {
+    match button {
+        JobButton::Start if !can_start(update) => {
+            Some(format!("the job is {}.", state_text(update)))
+        }
+        JobButton::Stop if !can_stop(update) => Some(match update.map(|update| update.state) {
+            Some(JobStatus::Stopping) => "the job is already stopping.".to_string(),
+            _ => "no job is running.".to_string(),
+        }),
+        _ => None,
+    }
+}
+
 /// Why Delete did nothing on a port of this side.
 pub fn cannot_delete_text(side: Side) -> String {
     match side {
@@ -476,7 +565,12 @@ pub fn run_text(result: &RunResult) -> String {
     if parts.is_empty() {
         return "Run finished: no nodes".to_string();
     }
-    let mut text = format!("Run finished: {}", parts.join(", "));
+    let lead = if result.partial {
+        "After the job"
+    } else {
+        "Run finished"
+    };
+    let mut text = format!("{lead}: {}", parts.join(", "));
     if let Some(first) = result
         .outcomes
         .iter()

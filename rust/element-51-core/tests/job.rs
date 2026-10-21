@@ -3,6 +3,9 @@
 
 use std::collections::BTreeMap;
 
+use element_51_core::access::{
+    NodeItem, job_announcement, job_button_label, job_button_refusal, job_text, run_text, with_jobs,
+};
 use element_51_core::display::{chart_rect, picture_rect};
 use element_51_core::job::{
     JobButton, can_start, can_stop, job_button_at, job_height, job_layout, progress_fraction,
@@ -300,4 +303,111 @@ fn a_job_that_has_reported_nothing_changes_nothing() {
     let mut run = RunResult::default();
     run.apply_job(&update("n1", JobStatus::Running, 0, Some(5)));
     assert!(run.outcomes.is_empty());
+}
+
+fn item(id: &str, label: &str) -> NodeItem {
+    NodeItem {
+        id: id.to_string(),
+        label: label.to_string(),
+        port_count: 2,
+        ports: vec![],
+    }
+}
+
+#[test]
+fn a_job_node_label_says_where_its_job_is_and_a_plain_one_is_left_alone() {
+    let types = vec![
+        kind("train", true, CardDisplay::None),
+        kind("plain", false, CardDisplay::None),
+    ];
+    let graph = Graph {
+        nodes: vec![
+            placed("n1", "train", 0.0, 0.0),
+            placed("n2", "plain", 0.0, 100.0),
+        ],
+        links: vec![],
+    };
+    let items = vec![
+        item("n1", "n1, train. 1 input, 1 output."),
+        item("n2", "n2, plain. 1 input, 1 output."),
+    ];
+    let mut jobs = BTreeMap::new();
+    let idle = with_jobs(items.clone(), &graph, &types, &jobs);
+    assert_eq!(idle[0].label, "n1, train. 1 input, 1 output. Job idle.");
+    assert_eq!(idle[1].label, "n2, plain. 1 input, 1 output.");
+    jobs.insert(
+        "n1".to_string(),
+        update("n1", JobStatus::Running, 3, Some(12)),
+    );
+    assert!(
+        with_jobs(items, &graph, &types, &jobs)[0]
+            .label
+            .ends_with("Job running.")
+    );
+}
+
+#[test]
+fn the_job_sentences_name_the_state_and_a_failure_says_why() {
+    assert_eq!(job_text(None), "Job idle.");
+    let mut failed = update("n1", JobStatus::Failed, 0, None);
+    assert_eq!(job_text(Some(&failed)), "Job failed: failed.");
+    failed.error = Some("boom".to_string());
+    assert_eq!(job_text(Some(&failed)), "Job failed: boom.");
+    assert_eq!(job_announcement(&failed), "n1: failed: boom.");
+    let running = update("n1", JobStatus::Running, 1, Some(5));
+    assert_eq!(job_announcement(&running), "n1: running.");
+    let finished = update("n1", JobStatus::Finished, 5, Some(5));
+    assert_eq!(job_announcement(&finished), "n1: finished, step 5 of 5.");
+    let stopped = update("n1", JobStatus::Stopped, 2, None);
+    assert_eq!(job_announcement(&stopped), "n1: stopped.");
+    let no_reason = update("n1", JobStatus::Failed, 0, None);
+    assert_eq!(job_announcement(&no_reason), "n1: failed: failed.");
+}
+
+#[test]
+fn a_job_button_says_when_it_does_not_work_and_why() {
+    assert_eq!(
+        job_button_label(JobButton::Start, None),
+        "Start the job, button."
+    );
+    assert_eq!(
+        job_button_label(JobButton::Stop, None),
+        "Stop the job, button. Not available: no job is running."
+    );
+    let running = update("n1", JobStatus::Running, 1, Some(5));
+    assert_eq!(
+        job_button_label(JobButton::Start, Some(&running)),
+        "Start the job, button. Not available: the job is running."
+    );
+    assert_eq!(
+        job_button_label(JobButton::Stop, Some(&running)),
+        "Stop the job, button."
+    );
+    let stopping = update("n1", JobStatus::Stopping, 1, Some(5));
+    assert_eq!(
+        job_button_refusal(JobButton::Stop, Some(&stopping)).as_deref(),
+        Some("the job is already stopping.")
+    );
+    assert_eq!(
+        job_button_refusal(
+            JobButton::Start,
+            Some(&update("n1", JobStatus::Failed, 0, None))
+        ),
+        None
+    );
+}
+
+#[test]
+fn a_run_after_a_job_is_not_called_a_run() {
+    let partial = RunResult {
+        outcomes: vec![NodeOutcome {
+            node: "n2".to_string(),
+            status: Status::Ok,
+            outputs: BTreeMap::new(),
+            shown: BTreeMap::new(),
+            error: None,
+        }],
+        partial: true,
+    };
+    assert_eq!(run_text(&partial), "After the job: 1 ok");
 }

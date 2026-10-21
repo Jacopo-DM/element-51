@@ -64,6 +64,11 @@ pub enum Focus {
         port: String,
         side: Side,
     },
+    /// The Start or Stop button of a job node.
+    Job {
+        node: String,
+        button: JobButton,
+    },
 }
 
 /// Everything one frame shows. With no graph yet, only the background.
@@ -228,6 +233,10 @@ pub fn draw(
             (node, &node_type),
             (run, pictures, jobs.get(&node.id)),
             is_selected,
+            match focus {
+                Some(Focus::Job { node: id, button }) if *id == node.id => Some(*button),
+                _ => None,
+            },
         )?;
         cards.push(node_rect(node, &node_type, metrics));
     }
@@ -356,7 +365,7 @@ fn focus_ring(
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     let pixel = 1.0 / view.zoom();
     let node_id = match focus {
-        Focus::Node(id) | Focus::Port { node: id, .. } => id,
+        Focus::Node(id) | Focus::Port { node: id, .. } | Focus::Job { node: id, .. } => id,
     };
     let Some(node) = graph.nodes.iter().find(|node| &node.id == node_id) else {
         return Ok(());
@@ -374,6 +383,24 @@ fn focus_ring(
         context.set_line_width(width);
         card_path(context, &rect, radius);
         context.stroke();
+    }
+    if let Focus::Job { button, .. } = focus
+        && let Some(layout) = job_layout(&node_rect(node, &node_type, metrics), &node_type, metrics)
+    {
+        let button_rect = match button {
+            JobButton::Start => layout.start,
+            JobButton::Stop => layout.stop,
+        }
+        .grown(FOCUS_GAP * pixel);
+        for (colour, width) in [
+            (&colours.canvas, (FOCUS_WIDTH + 2.0 * FOCUS_HALO) * pixel),
+            (&colours.focus, FOCUS_WIDTH * pixel),
+        ] {
+            context.set_stroke_style_str(colour);
+            context.set_line_width(width);
+            round_rect_path(context, &button_rect, metrics.box_radius);
+            context.stroke();
+        }
     }
     if let Focus::Port { port, side, .. } = focus {
         let target = PortRef {
@@ -437,6 +464,7 @@ fn card(
     (node, node_type): (&PlacedNode, &NodeType),
     (run, pictures, job): (Option<&RunResult>, &Pictures, Option<&JobUpdate>),
     selected: bool,
+    focused_button: Option<JobButton>,
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     let rect = node_rect(node, node_type, metrics);
@@ -583,7 +611,7 @@ fn card(
         }
     }
     if let Some(layout) = job_layout(&rect, node_type, metrics) {
-        job_row(context, theme, &layout, job)?;
+        job_row(context, theme, &layout, (job, focused_button))?;
     }
     if let Some(area) = picture_rect(&rect, node_type, metrics) {
         context.set_fill_style_str(&colours.field);
@@ -747,7 +775,7 @@ fn job_row(
     context: &CanvasRenderingContext2d,
     theme: &Theme,
     layout: &JobLayout,
-    job: Option<&JobUpdate>,
+    (job, focused_button): (Option<&JobUpdate>, Option<JobButton>),
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     let button = |rect: &Rect, which: JobButton, usable: bool| -> Result<(), JsValue> {
@@ -772,8 +800,9 @@ fn job_row(
     };
     context.set_font(&theme.fonts.card);
     button(&layout.start, JobButton::Start, can_start(job))?;
-    if can_stop(job) {
-        button(&layout.stop, JobButton::Stop, true)?;
+    // Stop is there while the job runs, and while the keyboard is on it.
+    if can_stop(job) || focused_button == Some(JobButton::Stop) {
+        button(&layout.stop, JobButton::Stop, can_stop(job))?;
     }
     context.set_fill_style_str(&colours.label);
     context.set_text_align("right");

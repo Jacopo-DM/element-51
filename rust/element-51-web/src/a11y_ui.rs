@@ -4,10 +4,11 @@
 
 use element_51_core::access::{
     Direction, NodeItem, ZOOM_STEP, cannot_delete_text, describe_ports, editing_text,
-    link_cancelled_text, link_edit, link_started_text, linked_input_text, list_nodes, moved_to,
-    neighbour, pan_delta, pan_text, pan_to_show, picture_input_text, selected_text, with_displays,
-    zoom_text,
+    job_button_label, job_button_refusal, link_cancelled_text, link_edit, link_started_text,
+    linked_input_text, list_nodes, moved_to, neighbour, pan_delta, pan_text, pan_to_show,
+    picture_input_text, selected_text, with_displays, with_jobs, zoom_text,
 };
+use element_51_core::job::JobButton;
 use element_51_core::layout::{PortHit, Side, anchor_of, node_rect};
 use element_51_core::rows::{find_input, type_of};
 use element_51_core::{Edit, PortRef, PortType, Replica};
@@ -17,7 +18,7 @@ use web_sys::{Document, Element, FocusEvent, HtmlElement, HtmlInputElement, Keyb
 use crate::State;
 use crate::draw::{Drag, Focus, Selected};
 use crate::menu_ui::{open_add_menu_from_keyboard, open_card_menu_from_keyboard};
-use crate::{Shared, redraw, submit};
+use crate::{Shared, redraw, send_job_request, submit};
 
 /// The least gap, in pixels, between a focused node and the window edge. It is
 /// big enough to clear the Run button and the menu button, so the focus is not
@@ -44,6 +45,18 @@ fn node_element_id(id: &str) -> String {
 /// The id of the tree item for a port.
 fn port_element_id(node: &str, port: &str, side: Side) -> String {
     format!("tree-{node}-{}-{port}", side_name(side))
+}
+
+/// The id of the tree item for a job button.
+fn job_element_id(node: &str, button: JobButton) -> String {
+    format!("tree-{node}-job-{}", button_name(button))
+}
+
+fn button_name(button: JobButton) -> &'static str {
+    match button {
+        JobButton::Start => "start",
+        JobButton::Stop => "stop",
+    }
 }
 
 fn side_name(side: Side) -> &'static str {
@@ -88,15 +101,23 @@ fn ensure_ports(shared: &Shared, node: &Element) -> Option<Element> {
         return Some(group);
     }
     let id = node.get_attribute("data-node")?;
-    let (document, ports) = {
+    let (document, ports, job) = {
         let state = shared.borrow();
         let replica = state.replica.as_ref()?;
+        let is_job = replica
+            .graph()
+            .nodes
+            .iter()
+            .find(|n| n.id == id)
+            .and_then(|n| type_of(replica.graph(), replica.node_types(), n))
+            .is_some_and(|node_type| node_type.job);
         (
             state.document.clone(),
             describe_ports(replica.graph(), replica.node_types(), &id),
+            is_job.then(|| state.jobs.get(&id).cloned()),
         )
     };
-    if ports.is_empty() {
+    if ports.is_empty() && job.is_none() {
         return None;
     }
     let group = element(&document, "ul", &[("role", "group"), ("hidden", "")])?;
@@ -116,6 +137,29 @@ fn ensure_ports(shared: &Shared, node: &Element) -> Option<Element> {
         )?;
         group.append_child(&entry).ok()?;
     }
+    // A job node's buttons come after its ports. A button that does not work
+    // now is `aria-disabled`, and its label says why.
+    if let Some(update) = &job {
+        for button in [JobButton::Start, JobButton::Stop] {
+            let refused = job_button_refusal(button, update.as_ref()).is_some();
+            let entry = element(
+                &document,
+                "li",
+                &[
+                    ("role", "treeitem"),
+                    ("id", &job_element_id(&id, button)),
+                    ("data-node", &id),
+                    ("data-job", button_name(button)),
+                    ("aria-label", &job_button_label(button, update.as_ref())),
+                    ("tabindex", "-1"),
+                ],
+            )?;
+            if refused {
+                entry.set_attribute("aria-disabled", "true").ok()?;
+            }
+            group.append_child(&entry).ok()?;
+        }
+    }
     node.append_child(&group).ok()?;
     Some(group)
 }
@@ -133,12 +177,13 @@ pub(crate) fn sync_tree(shared: &Shared) {
             return;
         }
         let items = list_nodes(replica.graph(), replica.node_types());
+        let items = match state.run.as_ref() {
+            Some(result) => with_displays(items, replica.graph(), result),
+            None => items,
+        };
         (
             state.document.clone(),
-            match state.run.as_ref() {
-                Some(result) => with_displays(items, replica.graph(), result),
-                None => items,
-            },
+            with_jobs(items, replica.graph(), replica.node_types(), &state.jobs),
         )
     };
     let Some(tree) = document.get_element_by_id("graph-tree") else {
@@ -169,7 +214,7 @@ pub(crate) fn sync_tree(shared: &Shared) {
     }
     // A focused port needs its node's port list, which the rebuild dropped.
     shared.borrow_mut().focus = saved.clone();
-    if let Some(Focus::Port { node, .. }) = &saved
+    if let Some(Focus::Port { node, .. } | Focus::Job { node, .. }) = &saved
         && let Some(item) = document.get_element_by_id(&node_element_id(node))
     {
         ensure_ports(shared, &item);
@@ -195,6 +240,7 @@ fn focus_element_id(focus: &Focus) -> String {
     match focus {
         Focus::Node(id) => node_element_id(id),
         Focus::Port { node, port, side } => port_element_id(node, port, *side),
+        Focus::Job { node, button } => job_element_id(node, *button),
     }
 }
 
@@ -206,7 +252,7 @@ fn focus(item: &Element) {
 
 /// Open the port list of the node that holds `item`, so a port can take focus.
 fn expand_for(item: &Element) {
-    if item.has_attribute("data-port")
+    if (item.has_attribute("data-port") || item.has_attribute("data-job"))
         && let Some(group) = item.parent_element()
     {
         let _ = group.remove_attribute("hidden");
@@ -238,6 +284,14 @@ fn collapse_others(tree: &Element, keep: &Element) {
 /// What the tree item `item` stands for.
 fn focus_of(item: &Element) -> Option<Focus> {
     let node = item.get_attribute("data-node")?;
+    if let Some(button) = item.get_attribute("data-job") {
+        let button = if button == "stop" {
+            JobButton::Stop
+        } else {
+            JobButton::Start
+        };
+        return Some(Focus::Job { node, button });
+    }
     match item.get_attribute("data-port") {
         None => Some(Focus::Node(node)),
         Some(port) => {
@@ -273,7 +327,9 @@ pub(crate) fn on_tree_focus_in(shared: &Shared, event: &FocusEvent) {
     {
         let mut state = shared.borrow_mut();
         let node_id = match &focus {
-            Focus::Node(id) | Focus::Port { node: id, .. } => id.clone(),
+            Focus::Node(id) | Focus::Port { node: id, .. } | Focus::Job { node: id, .. } => {
+                id.clone()
+            }
         };
         pan_to_node(&mut state, &node_id);
         state.focus = Some(focus);
@@ -389,6 +445,7 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
                     };
                     press_port(shared, end, *side);
                 }
+                Focus::Job { node, button } => press_job(shared, node, *button),
             }
             return;
         }
@@ -416,9 +473,11 @@ pub(crate) fn on_tree_key(shared: &Shared, event: &KeyboardEvent) {
         (Focus::Node(_), "PageUp") => item.previous_element_sibling(),
         (Focus::Node(_), "Home") => item.parent_element().and_then(|t| t.first_element_child()),
         (Focus::Node(_), "End") => item.parent_element().and_then(|t| t.last_element_child()),
-        (Focus::Port { .. }, "ArrowDown") => item.next_element_sibling(),
-        (Focus::Port { .. }, "ArrowUp") => item.previous_element_sibling(),
-        (Focus::Port { .. }, "ArrowLeft") => item.parent_element().and_then(|g| g.parent_element()),
+        (Focus::Port { .. } | Focus::Job { .. }, "ArrowDown") => item.next_element_sibling(),
+        (Focus::Port { .. } | Focus::Job { .. }, "ArrowUp") => item.previous_element_sibling(),
+        (Focus::Port { .. } | Focus::Job { .. }, "ArrowLeft") => {
+            item.parent_element().and_then(|g| g.parent_element())
+        }
         _ => return,
     };
     event.prevent_default();
@@ -507,6 +566,16 @@ fn move_focused(shared: &Shared, event: &KeyboardEvent, direction: Direction) {
     };
     if let Some(edit) = edit {
         submit(shared, edit);
+    }
+}
+
+/// Enter on a job button: ask Python to start or stop the job, or say why the
+/// button does nothing now. The job's own updates announce the result.
+fn press_job(shared: &Shared, node: &str, button: JobButton) {
+    let state = shared.borrow();
+    match job_button_refusal(button, state.jobs.get(node)) {
+        Some(why) => announce(&state.document, &format!("Not available: {why}")),
+        None => send_job_request(&state, node, button),
     }
 }
 
@@ -729,7 +798,8 @@ fn delete_focused(shared: &Shared, item: &Element, focus_now: &Focus) {
         }
         Focus::Port {
             side: Side::Output, ..
-        } => announce(&document, &cannot_delete_text(Side::Output)),
+        }
+        | Focus::Job { .. } => announce(&document, &cannot_delete_text(Side::Output)),
     }
 }
 

@@ -31,6 +31,34 @@
     tree.children[0].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
     await wait(200);
     found.treePort = await scan();
+    // Job nodes (`--graph job`): a focused job button, a running job, a stopped one,
+    // and a failed one with its banner.
+    if (/Job idle\./.test(tree.children[0].getAttribute("aria-label"))) {
+        const key = async (name) => {
+            document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: name, bubbles: true, cancelable: true }));
+            await wait(200);
+        };
+        tree.children[0].focus();
+        await wait(100);
+        await key("ArrowRight");
+        await key("ArrowDown");
+        found.jobButton = await scan();
+        await key("Enter");
+        await wait(600);
+        found.jobRunning = await scan();
+        await key("ArrowDown");
+        await key("Enter");
+        await wait(600);
+        found.jobStopped = await scan();
+        document.getElementById("tree-n3").focus();
+        await wait(100);
+        await key("ArrowRight");
+        await key("ArrowDown");
+        await key("Enter");
+        await wait(900);
+        found.jobFailed = await scan();
+        document.querySelector("#error button").click();
+    }
     document.getElementById("run").focus();
     document.getElementById("run").click();
     await wait(600);

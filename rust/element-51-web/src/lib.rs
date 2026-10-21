@@ -38,7 +38,7 @@ use a11y_ui::{
     announce, on_tree_focus_in, on_tree_focus_out, on_tree_key, pending_preview, sync_tree,
 };
 use draw::{Focus, Frame, Selected, draw};
-use element_51_core::access::{edit_text, refusal_text, run_text, undo_text};
+use element_51_core::access::{edit_text, job_announcement, refusal_text, run_text, undo_text};
 use fields_ui::sync_fields;
 use input::{
     Gesture, dragged_graph, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_wheel,
@@ -511,6 +511,9 @@ fn show_jobs(state: &mut State) {
 fn on_job_update(state: &mut State, update: JobUpdate) {
     let before = state.jobs.get(&update.node).map(|job| job.state);
     let changed = before != Some(update.state);
+    if changed {
+        announce(&state.document, &job_announcement(&update));
+    }
     if update.state == JobStatus::Failed && changed {
         let why = update.error.as_deref().unwrap_or("failed");
         show_error(&state.document, &format!("{}: {why}", update.node));
@@ -602,7 +605,11 @@ fn on_message(shared: &Shared, event: &MessageEvent) {
                 if let Some(summary) = result.error_summary() {
                     show_error(&state.document, &summary);
                 }
-                announce(&state.document, &run_text(&result));
+                // The run after a job follows the job's own announcement; it is only
+                // spoken when something in it failed.
+                if !result.partial || result.error_summary().is_some() {
+                    announce(&state.document, &run_text(&result));
+                }
                 // A partial result covers the nodes after a job that ended; it
                 // joins the last result instead of replacing it.
                 let whole = match (result.partial, state.run.take()) {

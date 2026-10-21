@@ -492,3 +492,94 @@ async function uiKeysDisplay() {
         rows,
     };
 }
+
+// The same kind of walk for job nodes. Run it in the page of
+// `uv run python tools/ui_states.py --graph job` (a fresh server, a fresh page,
+// the empty canvas clicked for focus), then `await uiKeysJob()`. It starts and stops
+// the jobs itself: the slow job n1 takes ten seconds unless it is stopped. Each row
+// is [step, passed, what was seen].
+async function uiKeysJob() {
+    const rows = [];
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const check = (step, passed, seen) => rows.push([step, Boolean(passed), String(seen)]);
+    const tree = document.getElementById("graph-tree");
+    const status = document.getElementById("status");
+    const banner = document.getElementById("error");
+    const active = () => document.activeElement;
+    const nodes = () => [...tree.children];
+    const label = (id) => document.getElementById("tree-" + id).getAttribute("aria-label");
+    const press = async (key) => {
+        active().dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+        await wait(150);
+    };
+    const until = async (predicate) => {
+        const end = Date.now() + 5000;
+        while (Date.now() < end) {
+            if (predicate()) return true;
+            await wait(50);
+        }
+        return false;
+    };
+    // The node, then its first port, then down to the Start item.
+    const toStart = async (id) => {
+        document.getElementById("tree-" + id).focus();
+        await wait(60);
+        await press("ArrowRight");
+        await press("ArrowDown");
+    };
+
+    check("four nodes are in the tree", nodes().length === 4, nodes().length);
+    check(
+        "a job node's label says its job is idle",
+        ["n1", "n2", "n3"].every((id) => /\. Job idle\.$/.test(label(id))),
+        ["n1", "n2", "n3"].map(label).join(" | "),
+    );
+    check("a plain node's label says nothing of a job", !/Job/.test(label("n4")), label("n4"));
+
+    await toStart("n1");
+    check("down from the port is the Start button", active().dataset.job === "start" && active().id === "tree-n1-job-start", active().id);
+    check("Start says it is a button and works", active().getAttribute("aria-label") === "Start the job, button." && !active().hasAttribute("aria-disabled"), active().getAttribute("aria-label"));
+    await press("ArrowDown");
+    check("down again is Stop, which says why it does not work yet", active().dataset.job === "stop" && /Not available: no job is running\.$/.test(active().getAttribute("aria-label")) && active().getAttribute("aria-disabled") === "true", active().getAttribute("aria-label"));
+    await press("Enter");
+    check("Enter on Stop with no job says so and starts nothing", status.textContent === "Not available: no job is running." && /Job idle\.$/.test(label("n1")), status.textContent);
+
+    await press("ArrowUp");
+    await press("Enter");
+    check("Enter on Start starts the job and announces it", await until(() => /^n1: running\.$/.test(status.textContent)), status.textContent);
+    await until(() => /Job running\.$/.test(label("n1")));
+    check("the node's label now says the job runs", /Job running\.$/.test(label("n1")), label("n1"));
+    check("the focus stayed on Start, which is now unavailable", active().id === "tree-n1-job-start" && active().getAttribute("aria-disabled") === "true" && /Not available: the job is running\.$/.test(active().getAttribute("aria-label")), active().id + " / " + active().getAttribute("aria-label"));
+    await press("Enter");
+    check("Enter on Start while it runs says why not", status.textContent === "Not available: the job is running.", status.textContent);
+
+    await press("ArrowDown");
+    check("while it runs Stop works", active().dataset.job === "stop" && !active().hasAttribute("aria-disabled") && active().getAttribute("aria-label") === "Stop the job, button.", active().getAttribute("aria-label"));
+    await press("Enter");
+    check("Enter on Stop ends the job at its next step and announces it", await until(() => /^n1: stopped, step \d+ of 40\.$/.test(status.textContent)), status.textContent);
+    await press("Delete");
+    check("Delete on a job button says what Delete works on", status.textContent === "Delete works on a node, or on an input port with a link", status.textContent);
+    await press("ArrowLeft");
+    check("Left goes back to the node", active().id === "tree-n1", active().id);
+
+    await toStart("n3");
+    await press("Enter");
+    check("a failing job announces its reason", await until(() => /^n3: failed: RuntimeError: boom\.$/.test(status.textContent)), status.textContent);
+    check("the banner shows it, with Dismiss", !banner.hidden && /^n3: RuntimeError: boom/.test(banner.textContent) && banner.querySelector("button").textContent === "Dismiss", banner.textContent);
+    banner.querySelector("button").click();
+    check("Dismiss closes it", banner.hidden, banner.hidden);
+    await until(() => /Job failed: RuntimeError: boom\.$/.test(label("n3")));
+    check("the failed job's node label says why", /Job failed: RuntimeError: boom\.$/.test(label("n3")), label("n3"));
+
+    await toStart("n2");
+    await press("Enter");
+    check("a short job finishes and says how far it got", await until(() => /^n2: finished, step 3 of 3\.$/.test(status.textContent)), status.textContent);
+    await until(() => /Shows a plot of 1 line/.test(label("n4")));
+    check("the Plot linked to it describes the line it drew", /Shows a plot of 1 line, loss last 0\.333\.$/.test(label("n4")), label("n4"));
+    banner.setAttribute("hidden", "");
+    return {
+        passed: rows.filter((row) => row[1]).length,
+        failed: rows.filter((row) => !row[1]).length,
+        rows,
+    };
+}

@@ -642,8 +642,12 @@ design behind it. The separate-process variant is the goal `job-isolation` (spec
     (a new colour needs a contrast pair, CLAUDE.md). A click on Start or Stop sends the
     request; Stop is shown only while the job runs. `State` keeps a job map by node id,
     applied from `Snapshot.jobs` and `JobUpdate`; a chart node's lines come from the
-    patch in `linked`. The hidden tree gives a job node two button items and a state
-    text, and announces state changes on the status line (not every report). Start and
+    patch in `linked`. The hidden tree gives a job node two button items (after its ports; Start and Stop are
+    `aria-disabled` and say why while they do nothing) and a sentence about its job in
+    its label (`Job running.`, `Job failed: boom.`), and announces state changes on the
+    status line (not every report: the tree is rebuilt on a state change only, so a chart's
+    label shows the line as it stood at the last change). The run after a job is spoken
+    only if something in it failed, so it does not replace the job's own announcement. Start and
     Stop are reachable by Tab/arrows and Enter like the other items.
 - Interpretation recorded: "display nodes" in criterion 5 means chart nodes (`Plot`)
     linked directly to a job output. A picture or series on the job's own card follows
@@ -1546,6 +1550,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-21 | speed-up-frame task 1: draw only the wires that can reach the view (`wire_bounds` in `layout.rs`, used by `draw_links`) | `tools/bench_page.py` (200 nodes, 12 in view), `tools/bench_page.js` batches (11 of 100 wheel events), a throwaway build with a `data-nocull` switch on the canvas and four interleaved rounds in one page session: 1.53, 1.56, 1.56, 1.62 ms before (culling off), 1.37, 1.31, 1.30, 1.31 after, about 0.24 ms or 15% faster, above the 0.06 spread inside a session. Pixels: the canvas of the new and the old build hashed the same (SHA-256 of `toDataURL`) in 7 states (first frame, zoom out, drag pan, zoom in at a corner, pan far left, zoom far out, pan down right). Tests: 4 new in `rust/element-51-core/tests/layout.rs` (the box holds the control points and half the thickest line, a wire inside, a wire crossing with both ends outside, a wire wholly outside on each side); 292 Rust tests. Runs of the same build on different page loads gave 0.10, 7.0 and 1.5 ms, so only interleaved comparisons count (see Gotchas) |
 
 | 2026-10-21 | speed-up-frame task 2: the grid's dots as one path with one fill (`grid` in `draw.rs`) | 12 picture cards, `tools/bench_page.js` batches, a throwaway build with a `data-oldgrid` switch, four interleaved rounds in one page session: 1.42, 1.31, 1.34, 1.40 ms before, 1.00, 0.94, 0.96, 0.92 after, about 0.4 ms or 30% faster; the 200-node page did not change (0.26 to 0.32 ms both ways in that session). Not pixel-identical, and the user accepted it (2026-10-21): 3,029 of 3,145,728 pixels differ, at most 27 of 255 per channel, on the anti-aliased edge of the dots (one fill of many arcs is rasterised slightly differently from many fills). No new test: the web crate has none and the grid has no native logic. Whole set after tasks 1 and 2, clean build, 4 sets of 11 batches, medians: 200 nodes 1.32, 1.40, 1.42, 1.43 ms (before 1.55, 1.55, 1.51, 1.52); 12 pictures 0.96, 0.97, 1.04, 1.07 (before 1.22, 1.22, 1.16, 1.16), at the 1.0 ms budget but not clearly under it; chart 0.46 to 0.53 before Run (0.52 to 0.62) and 2.11 to 2.19 after Run (2.36 to 2.55), so no workload got slower |
+| 2026-10-21 | `job-nodes` task 5: keyboard and screen reader for job nodes | `uiKeysJob` on `ui_states.py --graph job`: 21 of 21 rows pass; axe-core 0 violations in the default state, with a job button focused, with a job running, stopped and failed (banner shown) in `antimony`, `antimony-light` and `purple-synthwave`; no new theme colour (the job row uses `field`, `field_text`, `field_border`, `placeholder` and `label`, whose pairs the native AA test already covers) |
 
 ## Gotchas
 

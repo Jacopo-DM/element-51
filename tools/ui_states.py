@@ -3,7 +3,9 @@
 The graph has nodes that run, fail and are skipped, a long text value, a
 tick box, and node types in several menu categories. With `--graph display` it
 is a picture, its negative, two series and a Plot card instead (the states of
-`tools/ui_keys.js`' `uiKeysDisplay`). Open the page, then put
+`tools/ui_keys.js`' `uiKeysDisplay`). With `--graph job` it is three job nodes
+and a Plot (the states of `uiKeysJob`: a slow job to stop, a quick one that
+finishes into the Plot, and one that fails). Open the page, then put
 it in a state with `tools/ui_states.js` (which opens the menus, runs the graph
 and shows the error banner). Run it from the repo root: `uv run python
 tools/ui_states.py [--theme antimony-light] [--graph display]`. Ctrl+C stops it.
@@ -17,10 +19,21 @@ Notes
 # Standard library
 import argparse
 import math
-from typing import cast
+import time
+from typing import cast, override
 
 # Local libraries
-from element_51 import App, Image, Model, PlotNode, Series, node, serve
+from element_51 import (
+    App,
+    Image,
+    JobNode,
+    Model,
+    PlotNode,
+    Report,
+    Series,
+    node,
+    serve,
+)
 from element_51.edits import SetValue
 
 PORT = 8768
@@ -215,15 +228,91 @@ def build_display_app() -> App:
     return app
 
 
+class Loss(Model):
+    """The series a job makes."""
+
+    loss: Series
+
+
+class Slow(JobNode[None]):
+    """A step job that takes ten seconds: forty steps of a quarter second."""
+
+    @override
+    def steps(self) -> int:
+        return 40
+
+    @override
+    def begin(self) -> None:
+        return None
+
+    @override
+    def step(self, state: None, i: int) -> Loss:
+        del state
+        time.sleep(0.25)
+        return Loss(loss=Series(values=(math.exp(-i / 10),)))
+
+
+class Quick(JobNode[None]):
+    """A step job of three short steps, linked to a Plot."""
+
+    @override
+    def steps(self) -> int:
+        return 3
+
+    @override
+    def begin(self) -> None:
+        return None
+
+    @override
+    def step(self, state: None, i: int) -> Loss:
+        del state
+        time.sleep(0.05)
+        return Loss(loss=Series(values=(1.0 / (i + 1),)))
+
+
+class Fail(JobNode[None]):
+    """A work job that fails after a moment."""
+
+    @override
+    def work(self, report: Report) -> int:
+        del report
+        time.sleep(0.2)
+        msg = "boom"
+        raise RuntimeError(msg)
+
+
+def build_job_app() -> App:
+    """Build the graph: a slow job, a quick one into a Plot, a failing one.
+
+    Returns
+    -------
+    App
+        An app whose first node is `Slow` (n1), the second `Quick` (n2), the
+        third `Fail` (n3) and the fourth a Plot with `Quick`'s loss linked.
+    """
+    app = App([Slow, Quick, Fail, PlotNode])
+    app.add_node(Slow, x=60.0, y=60.0)
+    quick = app.add_node(Quick, x=320.0, y=60.0)
+    app.add_node(Fail, x=60.0, y=300.0)
+    chart = app.add_node(PlotNode, x=320.0, y=300.0)
+    app.add_link(quick, "loss", chart, "series_1")
+    return app
+
+
 def main() -> None:
     """Serve the graph."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--theme", default="antimony")
     parser.add_argument(
-        "--graph", choices=["standard", "display"], default="standard"
+        "--graph", choices=["standard", "display", "job"], default="standard"
     )
     args = parser.parse_args()
-    app = build_display_app() if args.graph == "display" else build_app()
+    builders = {
+        "standard": build_app,
+        "display": build_display_app,
+        "job": build_job_app,
+    }
+    app = builders[args.graph]()
     serve(app, port=PORT, theme=args.theme)
 
 
