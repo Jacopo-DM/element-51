@@ -1,13 +1,17 @@
 """Tests for the theme names Python offers."""
 
 import json
+import tempfile
 from pathlib import Path
 
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
 
 from element_51.theme import (
     DEFAULT_THEME,
     THEME_NAMES,
+    ThemeFile,
     check_theme,
     resolve_theme,
 )
@@ -130,3 +134,42 @@ def test_a_bad_theme_file_is_refused(tmp_path: Path, text: str) -> None:
     """Wrong shapes, unknown sections and unknown bases are errors."""
     with pytest.raises(ValueError, match=r"."):
         resolve_theme(write(tmp_path / "t.json", text))
+
+
+@given(st.text())
+@example('{"base": "antimony", "colours": {"canvas": "#000000"}}')
+@example("{}")
+def test_theme_file_boundary(text: str) -> None:
+    """Any file text is a theme or a ValueError, nothing else."""
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "t.json"
+        path.write_text(text, encoding="utf-8")
+        try:
+            theme = resolve_theme(path)
+        except ValueError:
+            return
+    assert theme.base in THEME_NAMES
+
+
+FINITE = st.floats(allow_nan=False, allow_infinity=False)
+THEME_FILES = st.builds(
+    ThemeFile,
+    base=st.sampled_from(THEME_NAMES),
+    colours=st.dictionaries(st.text(), st.text()),
+    ports=st.dictionaries(
+        st.text(),
+        st.dictionaries(st.text(), st.dictionaries(st.text(), st.text())),
+    ),
+    metrics=st.dictionaries(st.text(), FINITE),
+    page=st.dictionaries(st.text(), FINITE),
+    fonts=st.dictionaries(st.text(), st.one_of(st.text(), FINITE)),
+)
+
+
+@given(THEME_FILES)
+def test_theme_file_round_trip(theme: ThemeFile) -> None:
+    """A theme file read back from what it dumps is the same theme."""
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "t.json"
+        path.write_text(theme.model_dump_json(), encoding="utf-8")
+        assert resolve_theme(path) == theme
