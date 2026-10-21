@@ -53,6 +53,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Check the wheel before publishing | `uv run python tools/check_wheel.py` | about 3 s; builds a wheel in a temp folder and exits 1 if `src/element_51/web/` was not built first (run `tools/build_wasm.py`) |
 | Publish a release (the user runs it, never Claude) | `read -rs UV_PUBLISH_TOKEN && export UV_PUBLISH_TOKEN && uv run python tools/check_wheel.py && uv publish; unset UV_PUBLISH_TOKEN` | after `uv run python tools/build_wasm.py` and `uv build`, and a version bump in `pyproject.toml` and `uv.lock`; paste a PyPI token scoped to the project at the silent prompt, never at a username prompt, never in chat; then tag `v<version>` on the release commit |
 | Serve the editor | `uv run examples/a_basics/a2_two_nodes.py` | needs the build first; opens the page in your browser; Ctrl+C stops it with exit 0 |
+| Run the functional notebooks | `uv run python tools/run_notebooks.py [file ...]` | one line per notebook (PASS, FAIL, SKIP); `--save` writes new outputs into a notebook that passed; pre-commit runs them at commit (staged ones) and at push (all); see `tests/functional/README.md` |
 | Serve another example | `uv run python examples/a_basics/a3_arithmetic.py` (every example except `c1_script_api.py`, which prints and exits, serves on http://127.0.0.1:8765) | same port, so stop one before starting the next |
 
 ## Code rules

@@ -199,6 +199,19 @@ screen reader were not tried, and the narrow window and touch were not checked.
 - Status: approved 2026-10-21; no spec yet (it comes last).
 - Added: 2026-10-21
 
+### functional-notebooks
+
+- Goal: functional notebooks (`tests/functional/*.ipynb`, run by `tools/run_notebooks.py`)
+    for the Python side: every public module of `src/element_51/` has a row in
+    `tests/functional/README.md`, with a notebook or "none yet".
+- Kind: improvement (behaviour unchanged).
+- Success measure: every public module has a row (a unit test fails without one);
+    four notebooks pass: `nodes_and_running`, `save_and_load`, `themes`,
+    `pictures_and_series`.
+- Left out on purpose (user's answer, 2026-10-21): the live-push and server part
+    (`edits`, `protocol`, `server`): `tests/test_server_websocket.py` covers it.
+- Status: in progress. Added: 2026-10-21.
+
 ### card-polish: done (2026-10-21)
 
 See-through wires over cards, the value beside a linked input's source, and View source
@@ -480,10 +493,6 @@ Oldest first.
 
 ## Known problems
 
-- `.pre-commit-config.yaml` lacks the template's notebook hooks (`run-notebooks`,
-    `run-notebooks-all`, a pre-push stage). Left on purpose (2026-10-20): the repo has no
-    `tests/functional/` and no `tools/run_notebooks.py`; the pre-push hook would fail
-    without the runner. Adopt it together with the first notebooks.
 - Nothing on the page works by touch: panning, zooming and the menus need a mouse
     and a wheel, and a 375 px wide window shows a clipped part of the graph with no
     fit-to-view (`docs/ui-baseline/dark-375-default.jpg`).
