@@ -209,6 +209,16 @@ on purpose (user's answer, 2026-10-21): `edits`, `protocol` and `server` (the li
 and websocket part); `tests/test_server_websocket.py` covers it, and a notebook there
 needs a local port. The table says "none yet" for them. Decisions are in DESIGN.md.
 
+### plot-polish: done (2026-10-21)
+
+The user asked for plots that look more professional and approved three steps. Done: a legend
+row above the plot in place of the labels on the lines, a y axis that aims for five labels, a
+faint grid with the two axes at full strength, thicker round-capped lines, and a chart area
+0.85 of the card width high (was 0.6). Left out on purpose: a hover readout (offered, not
+wanted). Not checked: the light theme and the palettes by eye (colours are the existing theme
+ones), `uiKeysDisplay` and axe (the page DOM did not change), and a chart of more than three
+lines.
+
 ### card-polish: done (2026-10-21)
 
 See-through wires over cards, the value beside a linked input's source, and View source
