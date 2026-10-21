@@ -1639,6 +1639,10 @@ have to go through `tools/compress_images.py`).
     canvas read by a throwaway build) and interleaved rounds. Timing the parts of a frame with
     `performance.now()` is unreliable for the same reason: the cost of a section moved to
     the next one that flushed. An ablation (switch a part off, time the whole frame) works.
+- A page's `JobUpdate` must be applied to its last run result, not replace it: replacing it lost the
+    run after another job (and a plain Run) at every report. Found by running
+    `examples/g_experiments/g2_job_nodes.py` with both jobs going; `uiKeysJob` does not run two jobs at
+    once, so it does not catch it.
 - A pydantic generic such as `JobNode[int]` looks up the module of the class that uses it in
     `sys.modules`. A module loaded with `importlib.util.module_from_spec` and `exec_module` and
     not registered there fails with `KeyError: '<module name>'`: `tests/test_examples.py` registers

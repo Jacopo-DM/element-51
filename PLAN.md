@@ -258,7 +258,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes` is done (2026-10-21). `job-isolation` (task 8, a separate process for a job) has an approved spec and task and can start; the user is asked about coverage in a child process first. `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
+Next step: `speed-up-frame` tasks 1 and 2 are done; task 3 (a much cheaper grid, which changes how the dots look) needs the user's decision; apart from it none is approved. `visual-ports` and `card-polish` are done, and so are two small follow-ups the user asked for on 2026-10-21 after trying it: `box-summaries` (a picture or series says `28 x 28 grey` or `last 0.05` in its box) and `code-colours` (the source panel is coloured by an own tokenizer, `highlight.rs`). `job-nodes` is done (2026-10-21; 11 commits on `main`, not pushed). `job-isolation` (task 8, a separate process for a job) has an approved spec and task; it waits for the user's answer to open question 2 (how the tests cover the child process). `auto-run` and `mnist-experiment` are approved but have no spec (the user runs `/zz-02-project-plan` for them; `mnist-experiment` waits for `job-nodes`). The user's own try-out of the editor and the new features comes first.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -604,9 +604,31 @@ Oldest first.
     Monaco). Options not yet tried: a larger card font, or snapping text
     positions to whole device pixels. Needs a task approved in words, and a
     screenshot from the user showing what looks blurry (which text, which zoom).
+2. (2026-10-21) `job-isolation` task 8: how do the tests cover code that runs inside the child
+    process? A: the logic is a function the tests call in the parent with a fake queue, and the
+    thin child wrapper (`_child_main`, 2 lines) takes `# pragma: no cover  # runs in the child
+    process`; a few real-process tests (kill after 0.5 s, `os._exit`, a class the child cannot
+    import) prove the wrapper, and a test that the wrapper stays at most a few lines guards it
+    (my recommendation; no settings change). B: turn on coverage's subprocess support in the
+    shared coverage settings (needs the user's say-so; honest 100%, slower tests, and a killed
+    child never writes its data, so the kill test's lines would not count anyway). The user asked
+    what they lose with A: only the count's proof that those 2 lines run, and the risk that
+    the wrapper grows unnoticed; the guard test covers that. Waiting on the answer.
 
 ## Known problems
 
+- `main` is 11 commits ahead of `origin/main` (`eeafa87` is pushed; `6992c47` to `e12ca5a` are not):
+    the `job-nodes` goal. Every push needs the user's say-so. The branches `job-nodes-1` to
+    `job-nodes-7` are merged and not deleted (deleting needs the user's say-so).
+- Job updates were checked in the browser pane only: the job row, a live Plot and picture, a reload
+    mid-job, Stop, a failing job, the run after a job. Not checked: a real screen reader, a narrow
+    window or touch, a job with a picture output on a card, many jobs reporting at once, and the
+    redraw cost of a page with job rows (only the 200-node benchmark ran, 1.37 to 1.42 ms on 2026-10-21,
+    inside the known 1.3 to 1.6 ms). Each job update rebuilds every picture canvas
+    (`Pictures::from_result` in `on_job_update`), which is wasted work with many picture cards.
+- A step job's bar draws oddly for a very small fraction (a rounded rectangle narrower than its
+    corners, a small diamond at step 1 of 40). The hidden tree's chart label shows the line as it stood at
+    the last state change, not at the last report (the tree is rebuilt on a state change only).
 - The redraw time at 200 nodes (`tools/bench_page.js`) is 1.3 to 1.6 ms per wheel event (1.54 median on 2026-10-21 after the last visual-ports task) in
     the browser pane today (1024 by 768 CSS pixels at device ratio 2; measured 2026-10-21 on
     `main` before task 34, with it, and at `e90563a` before the accessibility work), not the
