@@ -222,6 +222,33 @@ the library (datasets live in examples), and running two jobs of one node at onc
 - Status: approved 2026-10-21; no spec yet (it comes last).
 - Added: 2026-10-21
 
+### card-polish
+
+- Goal: three small improvements to what a card shows and offers, from the user's
+    feedback on the picture example (2026-10-21): wires are see-through where they
+    cross a card, a linked input shows its value beside its source, and the card
+    menu can show a node's source code.
+- Kind: new behaviour.
+- Success measure:
+    1. A wire is drawn solid on the canvas and, where it crosses a card, a second
+        time at the theme's `wire_over_card` opacity (default 0.5), so the card's
+        boxes show through; a native test pins the key in every theme and in
+        `docs/themes.md`.
+    2. After a run, a linked input shows `21.0 [n1.out]`: the value first, the source
+        dim after it, the source cut first when the box is narrow; before a run it
+        shows `n1.out`; a native test covers the text and its fitting.
+    3. The card menu has `View source code`: Python answers a request for the node's
+        source (`inspect.getsource`) and the page shows it in a read-only panel with
+        Dismiss; a node whose source cannot be read says so; it is reachable and
+        closable by keyboard, labelled, and axe-core reports 0 violations; Python
+        tests cover the request and the unreadable case.
+    4. Nothing that works today changes: both suites pass apart from the new tests.
+- Non-goals: renaming a node (the user asked; judged useful but later, it needs a
+    display-name field in the saved file), editing the source, syntax colours.
+- Status: approved 2026-10-21 (tasks 39 to 41 below), to run after `visual-ports`
+    task 35 (they touch the same drawing code).
+- Added: 2026-10-21
+
 ### palette-try: done (2026-10-20)
 
 Pasting a Coolors link in the page (menu button at the top right, Load palette from Coolors link) applies
@@ -276,7 +303,7 @@ Nothing is uncommitted in this repo (checked 2026-10-21 after the header change)
 `main` was pushed to `origin/main` at `e151401` on 2026-10-21 at the user's say-so (the
 experiment goals and tasks, keyboard access and the one-node `a1_hello_world`); the
 GitHub workflows for `1488eb2` (CI, Rust and WASM, Docs) all finished with success
-(checked 2026-10-21). Task 34 of `visual-ports` is committed on `main` and not pushed.
+(checked 2026-10-21). Task 34 of `visual-ports` was pushed the same day (`527571e`).
 No other local branch is left: every merged branch was deleted on 2026-10-21 at the
 user's say-so.
 In `~/Functions`, the VS Code profile settings and the project template
@@ -531,6 +558,29 @@ first. The example for these tasks is `examples/g_experiments/g1_picture_and_plo
 - Binary channel for large data: a non-goal for now.
 - Export the graph as Python code: not in the goals.
 - Docs prose and README body: not unasked.
+
+### Goal `card-polish` (approved 2026-10-21, after `visual-ports` task 35)
+
+Estimates are by analogy with the card menu work. Existing behaviour near the changes
+is pinned by `theme.rs`, `layout.rs`, `menu.rs`, `test_server_websocket.py`.
+
+39. **See-through wires over cards.** `wire_over_card` in `Metrics` (all three theme
+    files, `docs/themes.md`, the native key test); `draw.rs` draws each wire solid,
+    then again at that opacity clipped to the visible cards. Risk: low. Cost: about
+    60 lines. Verify: native tests for the key, the 200-node redraw next to its baseline
+    (the wire pass doubles wire drawing), by hand with the picture example.
+40. **A linked input shows its value.** A pure function in `core` builds the text from
+    the source's output text and `node.port`, with the source dim; `draw.rs` draws two
+    runs of text in the box. Risk: low. Cost: about 80 lines. Verify: native tests
+    (value only, source only before a run, both, cut when narrow, a picture source shows
+    only the source), by hand.
+41. **View source code.** A `source` request and reply in `protocol.py` and
+    `model.rs` (shared fixtures), `inspect.getsource` on the node's function or class
+    (an unreadable source gives a reason), `CardAction::Source`, a panel in `index.html`
+    with Dismiss, keyboard open and close, a tree announcement. Risk: medium (a new
+    message pair). Cost: about 250 lines. Verify: Python tests (a function, a class, an
+    unreadable one, an unknown node), native tests for the action and fixtures, axe
+    and the keyboard walk-through.
 
 ## Open questions
 
