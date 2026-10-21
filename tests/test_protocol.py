@@ -5,6 +5,8 @@ import math
 from pathlib import Path
 
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from element_51.edits import (
@@ -16,6 +18,7 @@ from element_51.edits import (
     SetValue,
 )
 from element_51.engine import RunResult
+from element_51.model import PortRef
 from element_51.protocol import (
     Ack,
     ClientMessage,
@@ -169,3 +172,59 @@ def test_client_messages_are_told_apart_by_op() -> None:
     assert isinstance(source, SourceRequest)
     with pytest.raises(ValidationError):
         ClientMessage.validate_python(MESSAGES["ack"])
+
+
+@given(st.text())
+@example(json.dumps(MESSAGES["edit_add_node"]))
+@example(json.dumps(MESSAGES["run"]))
+@example(json.dumps(MESSAGES["source"]))
+def test_client_message_boundary(raw: str) -> None:
+    """Any text from the page is a client message or a ValidationError."""
+    try:
+        message = ClientMessage.validate_json(raw)
+    except ValidationError:
+        return
+    assert isinstance(message, EditRequest | RunRequest | SourceRequest)
+
+
+NODE_IDS = st.from_regex(r"n[0-9]+", fullmatch=True)
+COORDINATES = st.floats(allow_nan=False, allow_infinity=False)
+PORT_REFS = st.builds(PortRef, node=NODE_IDS, port=st.text())
+EDITS = st.one_of(
+    st.builds(
+        AddNode,
+        id=NODE_IDS,
+        node_type=st.text(),
+        x=COORDINATES,
+        y=COORDINATES,
+    ),
+    st.builds(AddLink, source=PORT_REFS, target=PORT_REFS),
+    st.builds(MoveNode, id=NODE_IDS, x=COORDINATES, y=COORDINATES),
+    st.builds(DeleteNode, id=NODE_IDS),
+    st.builds(DeleteLink, source=PORT_REFS, target=PORT_REFS),
+    st.builds(
+        SetValue,
+        node=NODE_IDS,
+        port=st.text(),
+        value=st.one_of(
+            st.none(),
+            COORDINATES,
+            st.integers(),
+            st.text(),
+            st.booleans(),
+        ),
+    ),
+)
+MESSAGES_FROM_THE_PAGE = st.one_of(
+    st.builds(EditRequest, id=st.integers(min_value=0), edit=EDITS),
+    st.builds(RunRequest),
+    st.builds(SourceRequest, node=st.text()),
+)
+
+
+@given(MESSAGES_FROM_THE_PAGE)
+def test_client_message_round_trip(
+    message: EditRequest | RunRequest | SourceRequest,
+) -> None:
+    """What the page's message dumps to reads back as the same message."""
+    assert ClientMessage.validate_json(message.model_dump_json()) == message
