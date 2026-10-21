@@ -202,15 +202,20 @@ blue and red lines with markers, boxed legend); a picture is enlarged by a whole
 size and labels were my choices when the user said go (DESIGN.md, "png-paper spec"); the user's own look at
 the saved files, and in Word or LaTeX, is still to come.
 
-### readme-gif (approved by the user's words 2026-10-22, not started)
+### readme-gif (waiting on the user's recording, 2026-10-22)
 
-- Goal: the MNIST demo as a GIF header in the README. The user chose to build it from
-    screenshots with Pillow (a dev dependency already): about 15 frames from the built-in
-    browser, `docs/images/mnist.gif` under about 3 MB, GIF kept as it is by
-    `tools/compress_images.py`. The README lines are a draft for the user's review (the
-    README prose is the user's).
+- Goal: the MNIST demo as a GIF header in the README.
+- Tried 2026-10-22 and dropped: building it from browser-pane screenshots with Pillow. The pane
+    throttles a page it is not showing (a run slowed to 0.09 s a step reached step 4 in about 20
+    screenshots) and every screenshot costs a large amount of context, so about 15 smooth frames
+    were not reachable.
+- Plan now: the user records the page (macOS Cmd+Shift+5, about 10 s: tick `Run automatically`,
+    press Start on `Train`, then type `fashion` in the sample's `dataset` box), and Claude converts
+    the `.mov` with `ffmpeg` (already installed at `/opt/homebrew/bin/ffmpeg`, nothing to download)
+    into `docs/images/mnist.gif`, under about 3 MB, and drafts the README lines for the user's
+    review (the README prose is the user's).
 - Kind: new behaviour (docs).
-- Status: waiting; the capture is choppy at about one frame a second unless training is slowed.
+- Status: waiting for the recording.
 - Added: 2026-10-22
 
 ### speed-up-frame: done (2026-10-21)
