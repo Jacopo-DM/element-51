@@ -10,6 +10,7 @@ use web_sys::{Document, Element, HtmlElement, HtmlInputElement, MouseEvent};
 
 use crate::draw::Selected;
 use crate::menu_keys::{close_all_flyouts, return_focus};
+use crate::save_csv::save_csv;
 use crate::save_png::save_png;
 use crate::source_ui::request_source;
 use crate::{Shared, State, redraw, submit};
@@ -246,7 +247,7 @@ pub(crate) fn open_card_menu(state: &mut State, id: String, event: &MouseEvent) 
 }
 
 /// Give the card menu the entries node `id` is offered: Save as PNG only where
-/// the card shows a picture or a chart. A button's `data-card-action` is its
+/// the card shows a picture or a chart, Save as CSV only where it shows a chart. A button's `data-card-action` is its
 /// place in `card_actions()`, so it does not change with what is left out.
 pub(crate) fn fill_card_menu(state: &State, menu: &Element, id: &str) {
     let display = state
@@ -317,6 +318,18 @@ pub(crate) fn on_card_menu_click(shared: &Shared, event: &MouseEvent) {
         };
         if let Some(id) = id {
             save_png(shared, &id);
+        }
+        return_focus(shared);
+        return;
+    }
+    if action == Some(CardAction::SaveCsv) {
+        let id = {
+            let mut state = shared.borrow_mut();
+            hide_menu(&state);
+            state.card_menu_node.take()
+        };
+        if let Some(id) = id {
+            save_csv(shared, &id);
         }
         return_focus(shared);
         return;

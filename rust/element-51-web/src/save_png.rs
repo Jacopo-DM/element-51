@@ -1,14 +1,14 @@
 //! Save as PNG: the picture or chart on a card, as a file the browser
 //! downloads. Python is not involved.
 
+use element_51_core::CardDisplay;
 use element_51_core::menu::png_file_name;
 use element_51_core::paper::{PAPER_HEIGHT, PAPER_WIDTH, paper_chart, picture_scale};
-use element_51_core::rows::type_of;
-use element_51_core::{CardDisplay, Status};
 use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, HtmlElement};
+use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement};
 
 use crate::a11y_ui::announce;
+use crate::download::{Shown, download, nothing_to_save, shown_node};
 use crate::draw_chart::plotted;
 use crate::paper_ui::{draw_chart, draw_picture, page, to_paper_url};
 use crate::{Shared, State, show_error};
@@ -26,22 +26,13 @@ pub(crate) fn save_png(shared: &Shared, id: &str) {
 
 /// The file name and the PNG, as a data URL, for node `id`'s picture or chart.
 fn render(state: &State, id: &str) -> Result<(String, String), String> {
-    let nothing = || format!("{id} has nothing to save yet: press Run first.");
-    let replica = state.replica.as_ref().ok_or("Not connected to Python.")?;
-    let graph = replica.graph();
-    let node = graph
-        .nodes
-        .iter()
-        .find(|node| node.id == id)
-        .ok_or_else(|| format!("{id} is not in the graph."))?;
-    let node_type = type_of(graph, replica.node_types(), node)
-        .ok_or_else(|| format!("{id} has an unknown node type."))?;
-    let outcome = state
-        .run
-        .as_ref()
-        .and_then(|result| result.outcome_for(id))
-        .filter(|outcome| outcome.status == Status::Ok)
-        .ok_or_else(nothing)?;
+    let nothing = || nothing_to_save(id);
+    let Shown {
+        graph,
+        node,
+        node_type,
+        outcome,
+    } = shown_node(state, id)?;
     let failed = || "The browser could not make the picture.".to_string();
     match node_type.display {
         CardDisplay::None => Err(format!("{id} shows no picture or chart.")),
@@ -90,19 +81,4 @@ fn context_of(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContext2d> {
         .ok()
         .flatten()
         .and_then(|context| context.dyn_into().ok())
-}
-
-/// Hand the browser a link to download, and click it.
-fn download(document: &Document, name: &str, url: &str) -> Result<(), String> {
-    let failed = || "The browser could not start the download.".to_string();
-    let link = document.create_element("a").map_err(|_| failed())?;
-    link.set_attribute("href", url).map_err(|_| failed())?;
-    link.set_attribute("download", name).map_err(|_| failed())?;
-    let body = document.body().ok_or_else(failed)?;
-    body.append_child(&link).map_err(|_| failed())?;
-    if let Ok(link) = link.clone().dyn_into::<HtmlElement>() {
-        link.click();
-    }
-    link.remove();
-    Ok(())
 }

@@ -430,11 +430,11 @@ async function uiKeysDisplay() {
         return originalClick.call(this);
     };
     // Open the card menu of a node from the keyboard, and press Save as PNG.
-    const save = async (id) => {
+    const save = async (id, presses = 1) => {
         document.getElementById("tree-" + id).focus();
         await wait(60);
         await pressWith("F10", { shiftKey: true });
-        await pressWith("ArrowDown", {});
+        for (let press = 0; press < presses; press += 1) await pressWith("ArrowDown", {});
         const entry = active().textContent;
         active().click();
         await wait(300);
@@ -461,6 +461,9 @@ async function uiKeysDisplay() {
     check("Save as PNG before a run says there is nothing to save", (await save("n1")) === "Save as PNG" && !banner.hidden && /^n1 has nothing to save yet/.test(banner.textContent) && downloads.length === 0, banner.textContent);
     check("the message has a Dismiss button that closes it", banner.querySelector("button").textContent === "Dismiss" && (banner.querySelector("button").click(), banner.hidden), banner.hidden);
 
+    check("Save as CSV before a run says there is nothing to save", (await save("n4", 2)) === "Save as CSV" && !banner.hidden && /^n4 has nothing to save yet/.test(banner.textContent) && downloads.length === 0, banner.textContent);
+    banner.querySelector("button").click();
+
     document.getElementById("run").click();
     await wait(900);
     check("a picture card says its size after a run", /Shows a 28 by 28 picture\.$/.test(label("n1")) && /Shows a 28 by 28 picture\.$/.test(label("n2")), label("n1"));
@@ -480,6 +483,15 @@ async function uiKeysDisplay() {
     check("the focus is back on the node", active().id === "tree-n1", active().id);
     await save("n4");
     check("Save as PNG on the Plot downloads n4-chart.png", downloads.length === 2 && downloads[1].name === "n4-chart.png" && /^data:image\/png;base64,/.test(downloads[1].href), downloads[1] && downloads[1].name);
+    const csvBefore = downloads.length;
+    check("a chart card offers View source code, Save as PNG, Save as CSV and Delete node", (document.getElementById("tree-n4").focus(), await pressWith("F10", { shiftKey: true }), entries().join("|") === "View source code|Save as PNG|Save as CSV|Delete node"), entries().join("|"));
+    await pressWith("Escape", {});
+    check("Save as CSV downloads n4-chart.csv and says so", (await save("n4", 2)) === "Save as CSV" && downloads.length === csvBefore + 1 && downloads[csvBefore].name === "n4-chart.csv" && /^Saving n4-chart\.csv$/.test(status.textContent), downloads.map((d) => d.name).join(", ") + " / " + status.textContent);
+    const csv = decodeURIComponent(downloads[csvBefore].href.replace(/^data:text\/csv;charset=utf-8,/, ""));
+    const csvLines = csv.trimEnd().split("\n");
+    check("the CSV has an index column, a column per line named as the legend, and a row per step", csvLines[0] === "index,loss,accuracy" && csvLines.length === 61 && /^0,[\d.]+,[\d.]+$/.test(csvLines[1]) && csv.endsWith("\n"), csvLines[0] + " / " + csvLines.length + " lines");
+    check("no picture card offers Save as CSV", (document.getElementById("tree-n1").focus(), await pressWith("F10", { shiftKey: true }), !entries().includes("Save as CSV")), entries().join("|"));
+    await pressWith("Escape", {});
     const image = new Image();
     image.src = downloads[1].href;
     await image.decode();

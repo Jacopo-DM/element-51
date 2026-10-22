@@ -7,6 +7,7 @@
 mod a11y_ui;
 mod autorun_ui;
 mod canvas_ui;
+mod download;
 mod draw;
 mod draw_card;
 mod draw_chart;
@@ -21,6 +22,7 @@ mod messages;
 mod paper_ui;
 mod pictures;
 mod run_ui;
+mod save_csv;
 mod save_png;
 mod source_ui;
 mod swatch_ui;
