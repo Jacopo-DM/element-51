@@ -83,6 +83,18 @@ Ctrl+Z undoes a resize. A saved file with a card size is format version 3;
 version 1 and 2 files still load (version 4 adds series colours; all
 earlier versions still load).
 
+## Line colours
+
+Beside each `series_N` name of a Plot card is a small colour box in the colour of
+that line. Click it and pick a colour: the line and its legend entry change. A
+small `x` then appears beside the box, and pressing it gives the line the
+theme's colour again. A colour that is hard to see on the chart (below 3:1
+against its background) is drawn as you chose it, and the box gets a red outline
+with the ratio as its hover text. The colour belongs to the series input: Python
+holds it (`app.graph`, `SetColour`), Ctrl+Z undoes it, and a saved file keeps it
+(format version 4). `examples/d_editor/d7_series_colours.py` sets two colours
+from the script.
+
 ## Save as PNG
 
 The card menu (the three bars on a card, or Shift+F10 with the node focused)
