@@ -720,7 +720,7 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, awaiting approval
+### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (series-colour task 1 done)
 
 Written 2026-10-22 after the user approved the three goals and their order. On approval the
 architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).
@@ -755,18 +755,7 @@ the page behaviour is checked by hand in the browser pane.
 
 #### Goal `series-colour`
 
-Proposed architecture: `PlacedNode.colours: Mapping[str, str]` (input port name to `#rrggbb`, empty
-by default) in Python and Rust; a new edit `SetColour(node, port, colour | None)` (`kind`
-`set_colour`; `None` removes the colour) with `EditErrorKind.BAD_COLOUR` (not `#rrggbb`, a port that
-is not a series input of the node); graph file version 4, versions 1 to 3 read as having no
-colours; `history.rs` inverse restores the earlier colour or none; `announce.rs` says
-"Colour of series_1 on n3 set to #aabbcc"; a pure core function `line_colour(chosen, index, theme)`
-and a contrast check against `colours.field` (3:1, `contrast::ratio`); one `<input type="color">`
-and one `x` button per series input of a Plot card, in a new `#swatches` container (placed by a core
-`layout::swatch_box`, hidden by the covered-card rule, named in the hidden tree); the warning mark
-is a `data-low` attribute with CSS using `--refused` (a new CSS variable for the existing colour, no
-new theme key). Alternatives not taken (user's answers 2026-10-22): a wheel drawn in Rust, a
-colour that is refused when pale, reset only by Undo.
+Architecture and the alternatives not taken: DESIGN.md, `series-colour spec`.
 
 Tier 1 (the thinnest slice through every layer, in this order):
 
@@ -803,17 +792,7 @@ a colour for anything but a series line; a Python call `app.set_colour(...)` bes
 
 #### Goal `save-as-csv`
 
-Proposed architecture: pure core function `chart_csv(lines: &[(&str, &Series)]) -> Option<String>`
-in a new `csv.rs` (header `index,name,...`; one row per index to the longest series; a gap or a
-non-finite number or a missing value is an empty cell; numbers are Rust's shortest round-trip text;
-a name with a comma, quote or newline is quoted as RFC 4180 says; lines end `\n`), `csv_file_name(node)`
-(`n3-chart.csv`, the same safe-name rule as `png_file_name`) and `CardAction::SaveCsv` (label
-`Save as CSV`, offered where the card shows a chart, no edit) in `menu.rs`; the page builds the
-text from `plotted()` and downloads it as a `data:text/csv` URL through the download helper, which
-moves out of `save_png.rs` into a new `download.rs` (the PNG goal deletes `save_png.rs`, so the
-helper must not live there). Python is not involved. Alternatives not taken: long format
-(index, series, value) (the user chose columns), a Python round trip (the page already has the
-numbers).
+Architecture and the alternatives not taken: DESIGN.md, `save-as-csv spec`.
 
 Tier 1:
 
@@ -834,23 +813,7 @@ Tier 3: a choice of separator or decimal mark; a CSV of a picture's pixels; copy
 
 #### Goal `matplotlib-png`
 
-Proposed architecture: Python draws. A new module `src/element_51/figures.py` holds
-`chart_png(lines: tuple[Line, ...]) -> bytes` (matplotlib, the Agg backend, a 7 by 4.667 inch
-figure at 300 dpi = 2100 by 1400 pixels, white, a light grid, a legend, the x label `index`, the y
-label the line's name when there is one line; `matplotlib` is imported inside the function, so
-`import element_51` stays fast), `picture_png(image: Image) -> bytes` (Pillow, enlarged by the whole
-factor that brings the longer side nearest to 1400 pixels, `dpi=(300, 300)`) and
-`darken_to(colour, ratio=3.0)` (keeps the hue, lowers the lightness until the contrast with white
-reaches the ratio; used for the card's colours, never for a chosen colour). `protocol.py` gets
-`PngRequest` (`op` `png`, `node`, and either `lines` (name, values with `null` for a gap, colour,
-chosen flag) or `picture` (width, height, channels, pixels)) and `PngReply` (`op` `png`, `node`,
-`name`, `data` base64, or `reason`); `server.py` `reply_to` answers it in a worker thread so the
-event loop is not blocked while matplotlib draws. The page sends the request from the lines it
-already has, receives the reply and downloads the file; a refusal or a missing connection shows the
-banner with Dismiss. Deleted: `paper.rs`, `png.rs`, `paper_ui.rs`, `save_png.rs`, `tests/paper.rs`,
-`tests/png.rs`. Alternatives not taken (user's answers 2026-10-22): matplotlib as an optional extra
-with the Rust PNG kept as a fallback; matplotlib's own colour cycle; a figure that follows the
-theme.
+Architecture and the alternatives not taken: DESIGN.md, `matplotlib-png spec`.
 
 Tier 1:
 

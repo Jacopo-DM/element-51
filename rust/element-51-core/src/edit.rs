@@ -33,6 +33,16 @@ pub enum EditError {
         port: String,
     },
     BadSize(&'static str),
+    BadColour(String),
+}
+
+/// Whether `text` is a colour written as `#rrggbb`, in lower case.
+pub fn is_colour(text: &str) -> bool {
+    text.len() == 7
+        && text.starts_with('#')
+        && text[1..]
+            .chars()
+            .all(|digit| digit.is_ascii_digit() || ('a'..='f').contains(&digit))
 }
 
 /// The largest width or height a card may be given, in graph units.
@@ -52,6 +62,7 @@ impl EditError {
             EditError::UnknownLink => "unknown_link",
             EditError::BadValue { .. } => "bad_value",
             EditError::BadSize(_) => "bad_size",
+            EditError::BadColour(_) => "bad_colour",
         }
     }
 }
@@ -90,6 +101,7 @@ impl fmt::Display for EditError {
                     "{name} must be above 0 and at most {MAX_CARD_SIZE}"
                 )
             }
+            EditError::BadColour(what) => write!(formatter, "{what}"),
         }
     }
 }
@@ -120,6 +132,7 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 values: Default::default(),
                 width: None,
                 display_height: None,
+                colours: Default::default(),
             });
             Ok(next)
         }
@@ -211,6 +224,37 @@ pub fn apply_edit(graph: &Graph, node_types: &[NodeType], edit: &Edit) -> Result
                 match value {
                     Some(value) => placed.values.insert(name.clone(), value.clone()),
                     None => placed.values.remove(name),
+                };
+            }
+            Ok(next)
+        }
+        Edit::SetColour {
+            node,
+            port: name,
+            colour,
+        } => {
+            let reference = PortRef {
+                node: node.clone(),
+                port: name.clone(),
+            };
+            let input = port(graph, node_types, &reference, false)?;
+            if input.kind != crate::PortType::Series {
+                return Err(EditError::BadColour(format!(
+                    "{node}.{name} is not a series input"
+                )));
+            }
+            if let Some(colour) = colour
+                && !is_colour(colour)
+            {
+                return Err(EditError::BadColour(format!(
+                    "{colour:?} is not a colour written as #rrggbb"
+                )));
+            }
+            let mut next = graph.clone();
+            if let Some(placed) = next.nodes.iter_mut().find(|placed| placed.id == *node) {
+                match colour {
+                    Some(colour) => placed.colours.insert(name.clone(), colour.clone()),
+                    None => placed.colours.remove(name),
                 };
             }
             Ok(next)

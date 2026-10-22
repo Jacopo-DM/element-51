@@ -193,6 +193,8 @@ class PlacedNode(Model):
     name. They win over the node type's defaults. `width` and `display_height`
     are the size the user gave the card, in graph units: the card's width, and
     the height of the picture or chart on it. `None` means the default size.
+    `colours` holds the line colour the user chose for a series input, as
+    `#rrggbb` by input name; an input with no entry follows the theme.
     """
 
     id: NodeId
@@ -202,6 +204,7 @@ class PlacedNode(Model):
     values: Mapping[str, PortValue] = {}
     width: float | None = None
     display_height: float | None = None
+    colours: Mapping[str, str] = {}
 
 
 class Graph(Model):

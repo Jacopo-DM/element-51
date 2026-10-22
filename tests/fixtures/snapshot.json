@@ -120,7 +120,8 @@
                     "a": 4.0
                 },
                 "width": null,
-                "display_height": null
+                "display_height": null,
+                "colours": {}
             },
             {
                 "id": "n2",
@@ -129,7 +130,8 @@
                 "y": 80.0,
                 "values": {},
                 "width": null,
-                "display_height": null
+                "display_height": null,
+                "colours": {}
             }
         ],
         "links": [

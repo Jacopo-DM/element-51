@@ -110,6 +110,19 @@ fn inverse(before: &Graph, edit: &Edit) -> Vec<Edit> {
                 value: old,
             }]
         }
+        Edit::SetColour { node, port, .. } => {
+            let old = before
+                .nodes
+                .iter()
+                .find(|placed| placed.id == *node)
+                .and_then(|placed| placed.colours.get(port))
+                .cloned();
+            vec![Edit::SetColour {
+                node: node.clone(),
+                port: port.clone(),
+                colour: old,
+            }]
+        }
         Edit::DeleteNode { id } => restore_node(before, id),
     }
 }
@@ -137,6 +150,11 @@ fn restore_node(before: &Graph, id: &str) -> Vec<Edit> {
         node: id.to_string(),
         port: port.clone(),
         value: Some(value.clone()),
+    }));
+    edits.extend(node.colours.iter().map(|(port, colour)| Edit::SetColour {
+        node: id.to_string(),
+        port: port.clone(),
+        colour: Some(colour.clone()),
     }));
     edits.extend(
         before

@@ -30,6 +30,7 @@ fn placed(width: Option<f64>, display_height: Option<f64>) -> PlacedNode {
         values: Default::default(),
         width,
         display_height,
+        colours: Default::default(),
     }
 }
 

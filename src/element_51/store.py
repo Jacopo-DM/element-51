@@ -16,15 +16,16 @@ from element_51.edits import (
     AddNode,
     EditError,
     ResizeNode,
+    SetColour,
     SetValue,
     apply_edit,
 )
 from element_51.model import Graph, Link, Model, NodeType, PlacedNode
 
-FORMAT_VERSION = 3
-# Version 1 had no node values and version 2 no card sizes; they read as
-# version 3 with none.
-READABLE_VERSIONS = frozenset({1, 2, FORMAT_VERSION})
+FORMAT_VERSION = 4
+# Version 1 had no node values, version 2 no card sizes and version 3 no series
+# colours; they read as version 4 with none.
+READABLE_VERSIONS = frozenset({1, 2, 3, FORMAT_VERSION})
 
 
 class StoreError(Exception):
@@ -40,7 +41,7 @@ class _Header(Model):
 
 
 class _SavedGraph(Model):
-    """A graph file, as version 3 writes it and versions 1 and 2 read."""
+    """A graph file, as version 4 writes it and versions 1 to 3 read."""
 
     format_version: int
     nodes: tuple[PlacedNode, ...]
@@ -100,7 +101,7 @@ def load_graph(path: Path, node_types: Mapping[str, NodeType]) -> Graph:
         if header.format_version not in READABLE_VERSIONS:
             msg = (
                 f"{path} is format version {header.format_version}; "
-                "this library reads versions 1, 2 and 3"
+                "this library reads versions 1, 2, 3 and 4"
             )
             raise StoreError(msg)
         saved = _SavedGraph.model_validate(data)
@@ -115,7 +116,7 @@ def load_graph(path: Path, node_types: Mapping[str, NodeType]) -> Graph:
 
 
 def _replay(saved: _SavedGraph, node_types: Mapping[str, NodeType]) -> Graph:
-    """Build the graph of a file by applying each node, size, value and link.
+    """Build a file's graph by applying each node, size, value, colour, link.
 
     Returns
     -------
@@ -151,6 +152,13 @@ def _replay(saved: _SavedGraph, node_types: Mapping[str, NodeType]) -> Graph:
                 graph,
                 node_types,
                 SetValue(node=placed.id, port=port, value=value),
+            )
+    for placed in saved.nodes:
+        for port, colour in placed.colours.items():
+            graph = apply_edit(
+                graph,
+                node_types,
+                SetColour(node=placed.id, port=port, colour=colour),
             )
     for link in saved.links:
         graph = apply_edit(

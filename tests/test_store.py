@@ -96,7 +96,7 @@ def test_a_version_this_library_does_not_read_is_refused(
     )
     app = built_app()
     before = app.graph
-    with pytest.raises(StoreError, match=r"version 99.*versions 1, 2 and 3"):
+    with pytest.raises(StoreError, match=r"version 99.*versions 1, 2, 3 and 4"):
         app.load(path)
     assert app.graph == before
 

@@ -186,6 +186,10 @@ pub struct PlacedNode {
     /// the default.
     #[serde(default)]
     pub display_height: Option<f64>,
+    /// The line colour the user chose for a series input, as `#rrggbb`, by
+    /// input name. An input with no entry follows the theme.
+    #[serde(default)]
+    pub colours: BTreeMap<String, String>,
 }
 
 /// The nodes and links the user has built.
@@ -256,6 +260,13 @@ pub enum Edit {
         node: String,
         port: String,
         value: Option<serde_json::Value>,
+    },
+    /// Give a series input its own line colour (`#rrggbb`), or take it away
+    /// with `None`.
+    SetColour {
+        node: String,
+        port: String,
+        colour: Option<String>,
     },
 }
 

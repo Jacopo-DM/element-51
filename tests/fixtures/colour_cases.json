@@ -1,0 +1,289 @@
+{
+    "node_types": [
+        {
+            "name": "add",
+            "inputs": [
+                {
+                    "name": "a",
+                    "kind": "float"
+                },
+                {
+                    "name": "b",
+                    "kind": "float"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "float"
+                }
+            ],
+            "defaults": {},
+            "category": ""
+        },
+        {
+            "name": "Plot",
+            "inputs": [
+                {
+                    "name": "series_1",
+                    "kind": "series"
+                }
+            ],
+            "outputs": [],
+            "defaults": {},
+            "category": "",
+            "display": "chart",
+            "variadic": {
+                "prefix": "series",
+                "kind": "series"
+            },
+            "job": false
+        }
+    ],
+    "graph": {
+        "nodes": [
+            {
+                "id": "n1",
+                "node_type": "add",
+                "x": 10.0,
+                "y": 20.0,
+                "values": {},
+                "width": null,
+                "display_height": null,
+                "colours": {}
+            },
+            {
+                "id": "n2",
+                "node_type": "Plot",
+                "x": 300.0,
+                "y": 20.0,
+                "values": {},
+                "width": null,
+                "display_height": null,
+                "colours": {
+                    "series_1": "#112233"
+                }
+            }
+        ],
+        "links": []
+    },
+    "cases": [
+        {
+            "name": "a series input takes a colour",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_1",
+                "colour": "#ff8800"
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "Plot",
+                        "x": 300.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {
+                            "series_1": "#ff8800"
+                        }
+                    }
+                ],
+                "links": []
+            }
+        },
+        {
+            "name": "an input that has no link yet takes one too",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_2",
+                "colour": "#00aa55"
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "Plot",
+                        "x": 300.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {
+                            "series_1": "#112233",
+                            "series_2": "#00aa55"
+                        }
+                    }
+                ],
+                "links": []
+            }
+        },
+        {
+            "name": "a colour is taken away with none",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_1",
+                "colour": null
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "Plot",
+                        "x": 300.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {}
+                    }
+                ],
+                "links": []
+            }
+        },
+        {
+            "name": "taking away a colour that was never set is fine",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_2",
+                "colour": null
+            },
+            "result": "ok",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "node_type": "add",
+                        "x": 10.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {}
+                    },
+                    {
+                        "id": "n2",
+                        "node_type": "Plot",
+                        "x": 300.0,
+                        "y": 20.0,
+                        "values": {},
+                        "width": null,
+                        "display_height": null,
+                        "colours": {
+                            "series_1": "#112233"
+                        }
+                    }
+                ],
+                "links": []
+            }
+        },
+        {
+            "name": "an unknown node is refused",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n9",
+                "port": "series_1",
+                "colour": "#ff8800"
+            },
+            "result": "unknown_node"
+        },
+        {
+            "name": "an unknown port is refused",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "nothing",
+                "colour": "#ff8800"
+            },
+            "result": "unknown_port"
+        },
+        {
+            "name": "an input that is not a series is refused",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n1",
+                "port": "a",
+                "colour": "#ff8800"
+            },
+            "result": "bad_colour"
+        },
+        {
+            "name": "a colour name is not a colour",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_1",
+                "colour": "red"
+            },
+            "result": "bad_colour"
+        },
+        {
+            "name": "a short colour is refused",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_1",
+                "colour": "#fff"
+            },
+            "result": "bad_colour"
+        },
+        {
+            "name": "upper case is refused",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_1",
+                "colour": "#FF8800"
+            },
+            "result": "bad_colour"
+        },
+        {
+            "name": "a colour with a stray letter is refused",
+            "edit": {
+                "kind": "set_colour",
+                "node": "n2",
+                "port": "series_1",
+                "colour": "#ff88zz"
+            },
+            "result": "bad_colour"
+        }
+    ]
+}

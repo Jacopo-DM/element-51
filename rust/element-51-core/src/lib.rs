@@ -27,7 +27,7 @@ pub mod source;
 pub mod theme;
 pub mod view;
 
-pub use edit::{EditError, MAX_CARD_SIZE, apply_edit, value_fits};
+pub use edit::{EditError, MAX_CARD_SIZE, apply_edit, is_colour, value_fits};
 pub use model::{
     Ack, CardDisplay, Edit, EditRequest, Graph, Image, JobRefusal, JobStatus, JobUpdate, Link,
     LinkedSeries, Message, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType, Reject,

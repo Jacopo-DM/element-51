@@ -5,6 +5,7 @@ run the same rules; `tests/fixtures/link_cases.json` is read by the tests of
 both, so they cannot drift apart unnoticed.
 """
 
+import re
 from collections.abc import Mapping
 from enum import StrEnum
 from typing import Annotated, Literal, assert_never
@@ -20,6 +21,7 @@ from element_51.model import (
     PlacedNode,
     Port,
     PortRef,
+    PortType,
     PortValue,
     can_link,
     find_input,
@@ -40,6 +42,7 @@ class EditErrorKind(StrEnum):
     UNKNOWN_LINK = "unknown_link"
     BAD_VALUE = "bad_value"
     BAD_SIZE = "bad_size"
+    BAD_COLOUR = "bad_colour"
 
 
 class EditError(Exception):
@@ -87,6 +90,7 @@ class MoveNode(Model):
 
 
 MAX_CARD_SIZE = 4000.0
+COLOUR = re.compile(r"#[0-9a-f]{6}")
 
 
 class ResizeNode(Model):
@@ -126,6 +130,18 @@ class SetValue(Model):
     value: PortValue | None
 
 
+class SetColour(Model):
+    """Give a series input its own line colour, or take it away with `None`.
+
+    `colour` is `#rrggbb` in lower case, as a browser's colour box gives it.
+    """
+
+    kind: Literal["set_colour"] = "set_colour"
+    node: NodeId
+    port: str
+    colour: str | None
+
+
 type AnyEdit = (
     AddNode
     | AddLink
@@ -134,6 +150,7 @@ type AnyEdit = (
     | DeleteNode
     | DeleteLink
     | SetValue
+    | SetColour
 )
 type Edit = Annotated[AnyEdit, Field(discriminator="kind")]
 
@@ -172,6 +189,8 @@ def apply_edit(
             after = _delete_link(graph, edit)
         case SetValue():
             after = _set_value(graph, node_types, edit)
+        case SetColour():
+            after = _set_colour(graph, node_types, edit)
         case _:  # pragma: no cover  # unreachable: the match is exhaustive
             assert_never(edit)
     return after
@@ -284,6 +303,32 @@ def _set_value(
         for node in graph.nodes
     )
     return Graph(nodes=nodes, links=graph.links)
+
+
+def _set_colour(
+    graph: Graph, node_types: Mapping[str, NodeType], edit: SetColour
+) -> Graph:
+    port = _port(
+        graph, node_types, PortRef(node=edit.node, port=edit.port), output=False
+    )
+    if port.kind is not PortType.SERIES:
+        msg = f"{edit.node}.{edit.port} is not a series input"
+        raise EditError(EditErrorKind.BAD_COLOUR, msg)
+    if edit.colour is not None and not COLOUR.fullmatch(edit.colour):
+        msg = f"{edit.colour!r} is not a colour written as #rrggbb"
+        raise EditError(EditErrorKind.BAD_COLOUR, msg)
+    nodes = tuple(
+        _with_colour(node, edit) if node.id == edit.node else node
+        for node in graph.nodes
+    )
+    return Graph(nodes=nodes, links=graph.links)
+
+
+def _with_colour(node: PlacedNode, edit: SetColour) -> PlacedNode:
+    colours = {k: v for k, v in node.colours.items() if k != edit.port}
+    if edit.colour is not None:
+        colours[edit.port] = edit.colour
+    return node.model_copy(update={"colours": colours})
 
 
 def _with_value(node: PlacedNode, edit: SetValue) -> PlacedNode:

@@ -80,7 +80,8 @@ chart taller; the boxes on the card widen with it. A card never gets smaller
 than its default size. The size is part of the graph: Python sees it in
 `app.graph`, `app.save` writes it, a reload and a loaded file bring it back, and
 Ctrl+Z undoes a resize. A saved file with a card size is format version 3;
-version 1 and 2 files still load.
+version 1 and 2 files still load (version 4 adds series colours; all
+earlier versions still load).
 
 ## Save as PNG
 

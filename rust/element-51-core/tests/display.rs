@@ -26,6 +26,7 @@ fn card(display: CardDisplay) -> (PlacedNode, NodeType) {
         values: Default::default(),
         width: None,
         display_height: None,
+        colours: Default::default(),
     };
     let kind = if display == CardDisplay::Image {
         PortType::Image
@@ -331,6 +332,7 @@ fn plot_card() -> (PlacedNode, NodeType) {
         values: Default::default(),
         width: None,
         display_height: None,
+        colours: Default::default(),
     };
     let node_type = NodeType {
         job: false,

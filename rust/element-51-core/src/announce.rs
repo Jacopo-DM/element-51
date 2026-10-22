@@ -56,6 +56,16 @@ pub fn edit_text(edit: &Edit) -> String {
             port,
             value: None,
         } => format!("Cleared the value of {port} of {node}"),
+        Edit::SetColour {
+            node,
+            port,
+            colour: Some(colour),
+        } => format!("Set the colour of {port} of {node} to {colour}"),
+        Edit::SetColour {
+            node,
+            port,
+            colour: None,
+        } => format!("The colour of {port} of {node} follows the theme"),
     }
 }
 
