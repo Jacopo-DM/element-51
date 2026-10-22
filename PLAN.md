@@ -255,12 +255,16 @@ with one fill): 200 nodes 1.55 to 1.4 ms, 12 pictures 1.2 to 1.0 ms, chart after
 
 ### functional-notebooks: done (2026-10-21)
 
-Four notebooks in `tests/functional/` (`nodes_and_running`, `save_and_load`, `themes`,
-`pictures_and_series`), the runner `tools/run_notebooks.py`, pre-commit hooks at commit
-and at push, and a coverage table with a test (commits `0988e97` to `6b48b32`). Left out
-on purpose (user's answer, 2026-10-21): `edits`, `protocol` and `server` (the live-push
-and websocket part); `tests/test_server_websocket.py` covers it, and a notebook there
-needs a local port. The table says "none yet" for them. Decisions are in DESIGN.md.
+Five notebooks in `tests/functional/` (`nodes_and_running`, `save_and_load`, `themes`,
+`pictures_and_series`, `jobs`), the runner `tools/run_notebooks.py`, pre-commit hooks at commit
+and at push, and a coverage table with a test (commits `0988e97` to `6b48b32`). On 2026-10-22
+the user asked for the rest: `editing` (the edit records and their refusals, card resize),
+`server_and_protocol` (the handler in-process, then a real WebSocket on a free port with a
+stand-in page; if the machine blocks local sockets that half stops without failing) and
+`mnist_example` (the example's functions on made-up pictures, no download). Every public module
+now has a notebook. Not covered by any notebook: the Rust canvas and the browser page
+(auto-run, Save as PNG, the resize grip, the colour of a series), by their nature. Decisions are
+in DESIGN.md.
 
 ### plot-polish: done (2026-10-21)
 

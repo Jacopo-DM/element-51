@@ -134,7 +134,7 @@ Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_examples.py` (loads every example in `examples/` and runs its graph), `test_mnist_example.py` (the MNIST example's reader, downloads, network and nodes, on fake data), `test_functional_coverage.py` (every public module has a row in `tests/functional/README.md`).
 `sample_nodes.py` holds node functions shared by several test files; `sample_jobs.py` holds the step job `Steps` and its gate `Pause`, `Timed`, and the isolated jobs `Counting`, `IsoSteps`, `Sleeper`, `Chatty`, `Dies` and `Raises`.
 
-Functional notebooks, `tests/functional/`: `nodes_and_running.ipynb`, `save_and_load.ipynb`, `themes.ipynb`, `pictures_and_series.ipynb`, `jobs.ipynb`, and `README.md` with the coverage table (a row per public module of `src/element_51/`: its notebook or "none yet"). They cover the Python side only.
+Functional notebooks, `tests/functional/`: `nodes_and_running.ipynb`, `save_and_load.ipynb`, `themes.ipynb`, `pictures_and_series.ipynb`, `jobs.ipynb`, `editing.ipynb`, `server_and_protocol.ipynb`, `mnist_example.ipynb` (the example `g3_mnist.py`, on made-up pictures), and `README.md` with the coverage table (a row per public module of `src/element_51/`: its notebook, plus a row for the example). Every public module has a notebook. They cover the Python side only.
 
 Rust, `rust/element-51-core/tests/`: `address.rs`, `snapshot.rs`, `messages.rs`, `rules.rs`
 (the shared fixtures), `replica.rs`, `layout.rs`, `run.rs`, `view.rs`, `fields.rs`,
