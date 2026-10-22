@@ -54,6 +54,8 @@ instead. A node that failed gets a red border, and the banner says why.
     shows what it has so far, such as a training run.
 - [An experiment](experiments.md): train a small network on digits, live,
     with a picture, a job and a Plot.
+- [Wrapping existing functions](wrapping.md): make nodes from the typed functions of
+    a module, or from numpy's ufuncs, with one call.
 - [Embedding](embedding.md): put the editor inside a FastAPI or NiceGUI app,
     next to a side panel of your own.
 - [API reference](reference.md): every public function and class.
@@ -69,6 +71,7 @@ themes
 visual-ports
 jobs
 experiments
+wrapping
 embedding
 reference
 ```

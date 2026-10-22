@@ -760,10 +760,9 @@ Tier 1:
 
 Tier 2:
 
-3. **Two examples and the docs page** (criterion 4). `examples/h_wrapping/h1_numpy_ufuncs.py`
-    and `h2_own_module.py` (a module that scans itself), laid out like `examples/template.py`,
-    rows in `tests/test_examples.py`, `docs/wrapping.md` in the toctree (docs build with `-W`).
-    About 120 lines of Python and a page of prose that I draft for the user's review. Risk low.
+3. Done (2026-10-22): `examples/h_wrapping/h1_numpy_ufuncs.py` and `h2_own_module.py`, their rows in
+    `tests/test_examples.py`, two checks in `tests/test_wrapping_examples.py`, and `docs/wrapping.md` (a draft for the
+    user's review; the docs build with `-W` passes).
 4. **Notebook and notes.** `tests/functional/wrapping.ipynb` and its row in
     `tests/functional/README.md` (a test fails without it), a README line, CODEMAP.md, the
     Results row in DESIGN.md, and the browser walk-throughs run once with the cargo suites.

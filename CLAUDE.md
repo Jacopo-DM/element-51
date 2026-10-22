@@ -80,7 +80,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
     for graphics); `tests/palette.rs` then checks it for every palette too.
 - A feature the user can try gets a runnable example in `examples/`, in the group
     folder it belongs to (`a_basics`, `b_node_types`, `c_python_api`, `d_editor`,
-    `e_look`, `f_embedding`, `g_experiments`; the file is named with the folder's letter and the next
+    `e_look`, `f_embedding`, `g_experiments`, `h_wrapping`; the file is named with the folder's letter and the next
     number), laid out like
     `examples/template.py` (the project template; copy it, it is not an example
     of the library): a docstring with a `Notes` section that
