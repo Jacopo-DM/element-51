@@ -8,11 +8,13 @@ and a Plot (the states of `uiKeysJob`: a slow job to stop, a quick one that
 finishes into the Plot, and one that fails). Open the page, then put
 it in a state with `tools/ui_states.js` (which opens the menus, runs the graph
 and shows the error banner). Run it from the repo root: `uv run python
-tools/ui_states.py [--theme antimony-light] [--graph display]`. Ctrl+C stops it.
+tools/ui_states.py [--theme antimony-light] [--graph display] [--port 8768]`.
+Ctrl+C stops it.
 
 Notes
 -----
-    * It serves on http://127.0.0.1:8768, not the examples' port.
+    * It serves on http://127.0.0.1:8768 unless `--port` says otherwise, not the
+        examples' port; `tools/run_browser_tests.py` starts it on a free port.
     * The graph is fixed, so two captures of the same state are identical.
 """
 
@@ -303,6 +305,7 @@ def main() -> None:
     """Serve the graph."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--theme", default="antimony")
+    parser.add_argument("--port", type=int, default=PORT)
     parser.add_argument(
         "--graph", choices=["standard", "display", "job"], default="standard"
     )
@@ -313,7 +316,7 @@ def main() -> None:
         "job": build_job_app,
     }
     app = builders[args.graph]()
-    serve(app, port=PORT, theme=args.theme)
+    serve(app, port=args.port, theme=args.theme)
 
 
 if __name__ == "__main__":

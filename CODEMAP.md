@@ -15,6 +15,7 @@ the ignore list in CLAUDE.md.
     each state, for screenshots and accessibility scans, and walk the hidden tree by keyboard (`uiKeys` on the standard graph, `uiKeysDisplay` on the display one, `uiKeysJob` on the job one; commands in CLAUDE.md).
 - `tools/bench_python.py`, `tools/bench_page.py` (workloads `nodes`, `pictures`, `chart`) and `tools/bench_page.js`: the speed
     benchmarks (see the commands in CLAUDE.md).
+- `uv run python tools/run_browser_tests.py`: start a fresh `tools/ui_states.py --port <free port>` for each walk-through, open it in Playwright's headless Chromium, call the function from `tools/ui_keys.js` and print PASS or FAIL with the rows (so far `uiKeys`; commands in CLAUDE.md). Its pure parts are tested in `tests/test_browser_runner.py`.
 - `uv run python tools/run_notebooks.py [file ...]`: run the functional notebooks in `tests/functional/` and print PASS, FAIL or SKIP for each (the shared copy from `~/Functions/_rsync/python/tools/`; commands in CLAUDE.md).
 - `uv run python tools/check_wheel.py`: build the wheel in a temporary folder and
     fail if it lacks the browser layer.

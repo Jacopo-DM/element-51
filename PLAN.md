@@ -690,7 +690,7 @@ today: `ui_states.py` and `ui_keys.js` (the rows are the pins); the user's `--po
 
 Tier 1 (the walking skeleton):
 
-1. One walk-through end to end. Add `playwright` to the dev group (PyPI, wheel 43 to 48 MB; needs
+1. Done (2026-10-22; `uiKeys` 90 of 90 rows in 19.4, 18.9 and 19.0 s, the wheel 43 MB from PyPI plus `greenlet` and `pyee`, the headless shell 103.8 MB and ffmpeg 1.4 MB downloaded with the user's yes; headless Chromium gave the page keyboard focus with one click on the empty canvas). One walk-through end to end. Add `playwright` to the dev group (PyPI, wheel 43 to 48 MB; needs
     the user's yes by name, source and size when I ask, and the Chromium download too, about 100 to
     170 MB by Playwright's figures, exact size to be read before the ask). Add `--port` to
     `tools/ui_states.py`. Write `tools/run_browser_tests.py` for `uiKeys` on the standard graph and
