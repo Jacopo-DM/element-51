@@ -63,15 +63,9 @@
     criteria 1 to 5 are met); the goal waits only for the user's look at task 18.
 - Added: 2026-10-19
 
-### restructure-3 (in progress, 2026-10-22)
+### restructure-3: done (2026-10-22)
 
-- Goal: remove the clones the card-resize and paper-PNG work added, and say what was left alone.
-- Kind: improvement (behaviour unchanged).
-- Success measure: jscpd clones 2 to 0 (it was 0 after `restructure-2`), every Rust and Python test
-    passing unchanged, no new file over 400 lines. The counts over the line and import thresholds
-    are reported, not targeted: see the skipped list under Tasks.
-- Status: plan written, waiting for the user's approval in words.
-- Added: 2026-10-22
+Commits `restructure-3` branch: the plan, `bounds` shared by `display.rs` and `paper.rs`, `topmost_hit` shared by `node_at` and `handle_at`. jscpd clones 2 to 0; the other numbers are reported, not targeted. Skipped on purpose (DESIGN.md, Rejected approaches): the modules over five imports and the large non-test files.
 
 ### restructure-2: done (2026-10-21)
 
@@ -532,7 +526,7 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
     `display.rs` 390-401 with `paper.rs` 118-129 (12 lines, the padded value range of a chart) and
     `layout.rs` 180-195 with 203-218 (16 lines, `node_at` and `handle_at` each find the topmost
     node by the same walk). Vulture found nothing at 80% in `src` (the 20 hits at 60% were pydantic
-    and `Protocol` members).
+    and `Protocol` members). After the pass (same day): 0 clones, 0 duplicated lines (0.00%); 145 files, 30,905 lines; 23 files over 400 lines and 18 modules over five imports, unchanged.
 
 ## Tasks
 
@@ -677,33 +671,6 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
-
-### Goal `restructure-3`: awaiting approval
-
-Tier 1 (both low risk, small diffs, covered by existing tests):
-
-1. Share the padded value range of a chart. What: one function in `display.rs` that finds the
-    lowest and highest finite value and pads them, called by `display.rs` and by `paper.rs`
-    (the paper chart is meant to scale its axes the way the card does, so the copies change
-    together). Files: `rust/element-51-core/src/display.rs`, `paper.rs`. Why: one place for the
-    axis rule. Risk: low. Verify: `tests/display.rs` and `tests/paper.rs` pass unchanged, jscpd.
-2. Share the topmost-node walk. What: one private helper in `layout.rs` that returns the id of
-    the topmost node a test accepts; `node_at` and `handle_at` call it (both change if the
-    z-order rule changes, as the overlap fix of 2026-10-22 shows). Files: `layout.rs`. Risk:
-    low. Verify: `tests/layout.rs` and `resize.rs` pass unchanged, jscpd.
-
-Tier 3, listed and not executed (each to be recorded in DESIGN.md as a rejected approach if
-confirmed):
-
-- The 18 modules over five imports. The web ones (`messages.rs` 13, `input.rs` 11, `lib.rs` 10)
-    are the places that hand each message or gesture to the part that handles it, so their imports
-    are their job; splitting them would add a layer. `session.py` (9) and `jobs.py` (7) were left
-    on purpose in `restructure-2`. Nothing grew past what the plan of 2026-10-21 accepted except
-    `messages.rs` (new job messages).
-- The 12 non-test files over 400 lines: `theme.rs` is a table of colours and sizes, `model.rs` the
-    wire records, `g3_mnist.py` a single-file example for a reader to follow top to bottom, and the
-    two `tools/` files copies of the user's templates. `input.rs` (464) and `display.rs` (454) are
-    the ones that grew; each holds one concern, and no split cut the size by a useful amount.
 
 ### Tier 3: listed, not executed
 

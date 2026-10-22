@@ -1772,6 +1772,15 @@ have to go through `tools/compress_images.py`).
     `browser_batch` is inlined into the conversation, so a 15 to 30 frame capture costs tens of
     thousands of tokens for a choppy result. A real screen recording (macOS Cmd+Shift+5) converted
     with the installed `ffmpeg` is smoother and free.
+- Splitting the modules `restructure-3` left alone (2026-10-22; the user approved the skips):
+    - Web `messages.rs` (13 imports), `input.rs` (11), `lib.rs` (10): each is where a message
+        or a gesture is handed to the part that handles it, so the imports are the job; a split
+        would add a layer that only forwards. `session.py` (9) and `jobs.py` (7) stay as in
+        `restructure-2`.
+    - The non-test files over 400 lines: `theme.rs` is a table of colours and sizes, `model.rs`
+        the wire records, `g3_mnist.py` a single file an example reader follows top to bottom,
+        `run_notebooks.py` and `compress_images.py` copies of the user's templates; `input.rs`
+        (464) and `display.rs` (454) each hold one concern and no split cut them usefully.
 
 ## Results
 
@@ -1841,6 +1850,7 @@ have to go through `tools/compress_images.py`).
 | 2026-10-22 | a series box shows a bare number, the words are a hover text (the user's request) | native tests: `shown_summary` gives `0.05`, `shown_tooltip` gives `last of 2 points`, `grey picture, 28 x 20`, `2 points, none of them a number`, and `NodeOutcome::output_tooltip` is None for a plain value; by hand in the browser pane (MNIST example): the loss box reads `0.0106`, hovering it sets the canvas's `title` to `last of 282 points`, and the Plot's linked box says `last of 282 points, from n2.loss`; the hidden tree and the status line keep the word `last` (`access.rs`), so a keyboard or screen-reader user loses nothing, and touch has no hover text |
 | 2026-10-22 | Save as PNG is paper ready (the user's request, PGFPlots look) | native tests: 10 in `tests/paper.rs` (plot inside the figure, y label only for one line, blue circle then red cross then dashed again after six, ticks inside the plot with a true minus, about ten markers spread along a long line and all on a short one, a gap breaks the line and has no marker, no numbers gives no chart, a flat line has a scale, points are pixels at 300 dpi, a 28 by 28 picture is enlarged 50 times) and 3 in `tests/png.rs` (CRC-32 standard value, the `pHYs` chunk of 11811 pixels per metre placed after IHDR with a valid CRC, a non-PNG refused); by hand in the browser pane on the MNIST example: the chart saves as `n3-chart.png`, 2100 by 1400 with `pHYs` 11811, and looks like the gallery (white page, frame, serif numbers, blue circles and red crosses, boxed legend); the digit saves as `n1-image.png`, 1400 by 1400; not checked: opening the file in Word or LaTeX, a font that is really Latin Modern (this Mac's fallback was a Times-like serif) |
 | 2026-10-22 | a resize handle on picture and chart cards (the user's request) | Python: shared edit cases (a resize, a reset to the default, one direction only, an unknown node, a size of zero, a size of 100000), a size saved and loaded, a version 2 file still loads, the property test of save and load now draws sizes; Rust: 10 tests in `tests/resize.rs` (default size, a bigger card and picture area, the chart area, a size below the default drawn at the default, a card that shows nothing, the handle in the corner, a drag clamped between the default and 4000, undo and redo, undo of a delete brings back the size, the status line); by hand in the browser pane (MNIST example): the grip shows on the picture and Plot cards, dragging the Plot's grip widened and heightened the card and its boxes, a reload kept the size (Python holds it), a second drag shrank it and Ctrl+Z restored the bigger size; not checked: a keyboard way to resize, a touch screen, the light theme, the redraw benchmark |
+| 2026-10-22 | goal restructure-3: share the chart's padded range and the topmost-node walk | jscpd clones 2 to 0 (28 duplicated lines, 0.21%, to 0), `bounds` in `display.rs` takes the pad because the card uses 0.05 and the paper figure 0.04; `topmost_hit` in `layout.rs` serves `node_at` and `handle_at`; 27 Rust test results ok and clippy clean, both unchanged; files over 400 lines 23 and modules over five imports 18, left alone (see Rejected approaches) |
 
 ## Gotchas
 
