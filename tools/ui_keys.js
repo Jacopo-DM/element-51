@@ -436,8 +436,12 @@ async function uiKeysDisplay() {
         await pressWith("F10", { shiftKey: true });
         for (let press = 0; press < presses; press += 1) await pressWith("ArrowDown", {});
         const entry = active().textContent;
+        const before = downloads.length;
         active().click();
-        await wait(300);
+        // A PNG comes back from Python (matplotlib loads on the first one), so
+        // wait for the file or for a banner.
+        for (let tries = 0; tries < 100 && downloads.length === before && banner.hidden; tries += 1) await wait(100);
+        await wait(200);
         return entry;
     };
 

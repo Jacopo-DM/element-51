@@ -446,6 +446,47 @@ pub struct SourceReply {
     pub reason: Option<String>,
 }
 
+/// One line of a chart sent for a PNG file: its numbers, `None` for a gap, and
+/// its colour as `#rrggbb`. `chosen` says the user picked the colour.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PngLine {
+    pub name: String,
+    pub values: Vec<Option<f64>>,
+    pub colour: String,
+    pub chosen: bool,
+}
+
+/// The browser asks Python for a PNG file of a chart. `name` is the file name
+/// the page will offer; the reply carries it back.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PngChartRequest {
+    pub node: String,
+    pub name: String,
+    pub lines: Vec<PngLine>,
+}
+
+/// The browser asks Python for a PNG file of a picture.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PngPictureRequest {
+    pub node: String,
+    pub name: String,
+    pub picture: Image,
+}
+
+/// Python answers a PNG request: the file as base64 text, or the reason there
+/// is none.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PngReply {
+    pub node: String,
+    pub name: String,
+    pub data: Option<String>,
+    pub reason: Option<String>,
+}
+
 /// The browser asks Python to start the job of one node.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -519,6 +560,9 @@ pub enum Message {
     RunResult(RunResult),
     Source(SourceRequest),
     SourceReply(SourceReply),
+    PngChart(PngChartRequest),
+    PngPicture(PngPictureRequest),
+    PngReply(PngReply),
     Start(StartRequest),
     Stop(StopRequest),
     JobUpdate(JobUpdate),

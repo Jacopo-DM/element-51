@@ -263,5 +263,64 @@
         "op": "job_refused",
         "node": "n1",
         "reason": "Node n1 is already running"
+    },
+    "png_chart": {
+        "op": "png_chart",
+        "node": "n4",
+        "name": "n4-chart.png",
+        "lines": [
+            {
+                "name": "loss",
+                "values": [
+                    1.0,
+                    0.5,
+                    null,
+                    0.25
+                ],
+                "colour": "#edc27b",
+                "chosen": false
+            },
+            {
+                "name": "accuracy",
+                "values": [
+                    0.1,
+                    0.5,
+                    0.9,
+                    0.95
+                ],
+                "colour": "#1b9e77",
+                "chosen": true
+            }
+        ]
+    },
+    "png_picture": {
+        "op": "png_picture",
+        "node": "n1",
+        "name": "n1-out.png",
+        "picture": {
+            "width": 2,
+            "height": 2,
+            "channels": 1,
+            "pixels": [
+                0,
+                85,
+                170,
+                255
+            ]
+        }
+    },
+    "png_reply": {
+        "op": "png_reply",
+        "node": "n4",
+        "name": "n4-chart.png",
+        "data": "iVBORw0KGgo=",
+        "reason": null
+    },
+    "png_reply_refused": {
+        "op": "png_reply",
+        "node": "n4",
+        "name": "n4-chart.png",
+        "data": null,
+        "reason": "the chart has no numbers to draw"
     }
 }

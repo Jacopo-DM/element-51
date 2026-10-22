@@ -26,6 +26,9 @@ from element_51.protocol import (
     JobRefusal,
     JobUpdate,
     JobView,
+    PngChartRequest,
+    PngPictureRequest,
+    PngReply,
     Reject,
     RunRequest,
     Snapshot,
@@ -293,3 +296,38 @@ def test_client_message_round_trip(
 ) -> None:
     """What the page's message dumps to reads back as the same message."""
     assert ClientMessage.validate_json(message.model_dump_json()) == message
+
+
+@pytest.mark.parametrize(
+    ("model", "key"),
+    [
+        (PngChartRequest, "png_chart"),
+        (PngPictureRequest, "png_picture"),
+        (PngReply, "png_reply"),
+        (PngReply, "png_reply_refused"),
+    ],
+)
+def test_png_messages_round_trip(
+    model: type[PngChartRequest | PngPictureRequest | PngReply], key: str
+) -> None:
+    """The PNG requests and replies are the shape Rust writes."""
+    parsed = model.model_validate(MESSAGES[key])
+    assert json.loads(parsed.model_dump_json()) == MESSAGES[key]
+
+
+def test_a_png_request_is_a_client_message() -> None:
+    """The server reads both PNG requests, and refuses a reply from a page."""
+    chart = ClientMessage.validate_python(MESSAGES["png_chart"])
+    picture = ClientMessage.validate_python(MESSAGES["png_picture"])
+    assert isinstance(chart, PngChartRequest)
+    assert isinstance(picture, PngPictureRequest)
+    with pytest.raises(ValidationError):
+        ClientMessage.validate_python(MESSAGES["png_reply"])
+
+
+def test_a_chart_line_needs_a_lower_case_rrggbb_colour() -> None:
+    """The colour is checked when the request is read."""
+    bad = json.loads(json.dumps(MESSAGES["png_chart"]))
+    bad["lines"][0]["colour"] = "orange"
+    with pytest.raises(ValidationError):
+        PngChartRequest.model_validate(bad)

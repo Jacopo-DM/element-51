@@ -684,7 +684,7 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (`series-colour` and `save-as-csv` done)
+### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (`series-colour` and `save-as-csv` done; `matplotlib-png` tasks 1 to 4 done, 5 left)
 
 Written 2026-10-22 after the user approved the three goals and their order. On approval the
 architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).

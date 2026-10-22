@@ -1,6 +1,7 @@
 """Tests for the editor server's websocket."""
 
 import asyncio
+import base64
 import json
 import time
 from collections.abc import Callable
@@ -16,20 +17,27 @@ from websockets.sync.client import ClientConnection, connect
 
 from element_51 import server
 from element_51.engine import RunResult
+from element_51.figures import Line
 from element_51.protocol import (
     Ack,
     JobRefusal,
     JobUpdate,
+    PngChartRequest,
+    PngPictureRequest,
+    PngReply,
     Reject,
     Snapshot,
     SourceReply,
 )
 from element_51.session import App
+from element_51.visuals import Image
 
 REQUEST_ID_7 = 7
 REQUEST_ID_8 = 8
 INVALID_PAYLOAD = 1007
 SILENCE = 0.3
+PNG_WAIT = 30.0
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
 def test_websocket_sends_a_snapshot_on_connect(web_dir: Path) -> None:
@@ -216,6 +224,87 @@ def test_a_source_request_is_answered_to_the_asking_page_only(
     assert reply.node == "n1"
     assert reply.source is not None
     assert "def add(" in reply.source
+
+
+def test_a_png_request_is_answered_with_the_file_to_the_asking_page_only(
+    web_dir: Path,
+) -> None:
+    """The reply holds the PNG as base64 and reaches no other page."""
+    assert web_dir.exists()
+    app = App([add])
+    request = PngChartRequest(
+        node="n4",
+        name="n4-chart.png",
+        lines=(
+            Line(
+                name="loss",
+                values=(1.0, 0.5, None),
+                colour="#1a1a80",
+                chosen=True,
+            ),
+        ),
+    )
+    with (
+        running(server.asgi_app(app)) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as asker,
+        connect(f"ws://{server.HOST}:{port}/ws") as other,
+    ):
+        asker.recv()
+        other.recv()
+        asker.send(request.model_dump_json())
+        reply = PngReply.model_validate_json(asker.recv(timeout=PNG_WAIT))
+        with pytest.raises(TimeoutError):
+            other.recv(timeout=SILENCE)
+    assert (reply.node, reply.name, reply.reason) == (
+        "n4",
+        "n4-chart.png",
+        None,
+    )
+    assert reply.data is not None
+    assert base64.b64decode(reply.data).startswith(PNG_MAGIC)
+
+
+def test_a_picture_request_is_answered_with_a_png(web_dir: Path) -> None:
+    """A picture comes back enlarged, as a PNG file in base64."""
+    assert web_dir.exists()
+    request = PngPictureRequest(
+        node="n1",
+        name="n1-out.png",
+        picture=Image(width=2, height=1, channels=1, pixels=bytes([0, 255])),
+    )
+    with (
+        running(server.asgi_app(App([add]))) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as page,
+    ):
+        page.recv()
+        page.send(request.model_dump_json())
+        reply = PngReply.model_validate_json(page.recv(timeout=PNG_WAIT))
+    assert reply.data is not None
+    assert base64.b64decode(reply.data).startswith(PNG_MAGIC)
+
+
+def test_a_chart_with_no_numbers_is_answered_with_the_reason(
+    web_dir: Path,
+) -> None:
+    """Nothing is drawn, and the page is told why."""
+    assert web_dir.exists()
+    request = PngChartRequest(
+        node="n4",
+        name="n4-chart.png",
+        lines=(
+            Line(name="loss", values=(None,), colour="#1a1a80", chosen=True),
+        ),
+    )
+    with (
+        running(server.asgi_app(App([add]))) as port,
+        connect(f"ws://{server.HOST}:{port}/ws") as page,
+    ):
+        page.recv()
+        page.send(request.model_dump_json())
+        reply = PngReply.model_validate_json(page.recv(timeout=PNG_WAIT))
+    assert reply.data is None
+    assert reply.reason is not None
+    assert "no numbers" in reply.reason
 
 
 def test_a_script_edit_reaches_a_page_that_is_already_open(

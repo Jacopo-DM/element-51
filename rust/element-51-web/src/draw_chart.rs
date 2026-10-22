@@ -176,7 +176,7 @@ pub(crate) fn plotted<'a>(
 
 /// The colour line `index` is drawn in: the one the user chose, else the
 /// theme's for the line's kind.
-fn line_colour(theme: &Theme, kind: PortType, chosen: Option<&str>) -> String {
+pub(crate) fn line_colour(theme: &Theme, kind: PortType, chosen: Option<&str>) -> String {
     chosen.map_or_else(
         || theme.port_style(kind, true).colour.clone(),
         str::to_string,

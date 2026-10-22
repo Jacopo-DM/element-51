@@ -20,8 +20,6 @@ pub mod layout;
 pub mod menu;
 mod model;
 pub mod palette;
-pub mod paper;
-pub mod png;
 mod replica;
 pub mod rows;
 pub mod source;
@@ -31,9 +29,9 @@ pub mod view;
 pub use edit::{EditError, MAX_CARD_SIZE, apply_edit, is_colour, value_fits};
 pub use model::{
     Ack, CardDisplay, Edit, EditRequest, Graph, Image, JobRefusal, JobStatus, JobUpdate, Link,
-    LinkedSeries, Message, NodeOutcome, NodeType, PlacedNode, Port, PortRef, PortType, Reject,
-    RunRequest, RunResult, Series, Shown, Snapshot, SourceReply, SourceRequest, StartRequest,
-    Status, StopRequest, Variadic,
+    LinkedSeries, Message, NodeOutcome, NodeType, PlacedNode, PngChartRequest, PngLine,
+    PngPictureRequest, PngReply, Port, PortRef, PortType, Reject, RunRequest, RunResult, Series,
+    Shown, Snapshot, SourceReply, SourceRequest, StartRequest, Status, StopRequest, Variadic,
 };
 pub use replica::Replica;
 

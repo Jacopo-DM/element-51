@@ -10,6 +10,7 @@ use crate::menu_ui::fill_menu;
 use crate::pictures::Pictures;
 use crate::redraw;
 use crate::run_ui::{clear_run, on_job_update, set_running, start_run};
+use crate::save_png::on_png_reply;
 use crate::show_error;
 use crate::source_ui::show_source;
 use element_51_core::announce::{refusal_text, run_text};
@@ -24,6 +25,7 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
         .ok_or_else(|| "Python sent a message that is not text".to_string())
         .and_then(|text| Message::from_json(&text).map_err(|error| error.to_string()));
     let mut source_reply = None;
+    let mut png_reply = None;
     let mut graph_changed = false;
     {
         let mut state = shared.borrow_mut();
@@ -117,6 +119,7 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
                 }
             }
             Ok(Message::SourceReply(reply)) => source_reply = Some(reply),
+            Ok(Message::PngReply(reply)) => png_reply = Some(reply),
             Ok(Message::JobUpdate(update)) => on_job_update(&mut state, update),
             Ok(Message::JobRefused(refusal)) => {
                 show_error(&state.document, &refusal.reason);
@@ -126,6 +129,8 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
                 Message::Edit(_)
                 | Message::Run(_)
                 | Message::Source(_)
+                | Message::PngChart(_)
+                | Message::PngPicture(_)
                 | Message::Start(_)
                 | Message::Stop(_),
             ) => {
@@ -145,5 +150,8 @@ pub(crate) fn on_message(shared: &Shared, event: &MessageEvent) {
     // it is shown once the borrow above has ended.
     if let Some(reply) = source_reply {
         show_source(shared, &reply);
+    }
+    if let Some(reply) = png_reply {
+        on_png_reply(shared, &reply);
     }
 }

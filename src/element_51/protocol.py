@@ -5,10 +5,11 @@ from typing import Annotated, Literal
 from pydantic import Field, TypeAdapter
 
 from element_51.edits import Edit
+from element_51.figures import Line
 from element_51.jobs import JobState
 from element_51.model import Graph, Model, NodeType
 from element_51.theme import ThemeChanges
-from element_51.visuals import Series
+from element_51.visuals import Image, Series
 
 
 class LinkedSeries(Model):
@@ -118,11 +119,50 @@ class SourceReply(Model):
     reason: str | None = None
 
 
-ClientMessage: TypeAdapter[
-    EditRequest | RunRequest | SourceRequest | StartRequest | StopRequest
-] = TypeAdapter(
-    Annotated[
-        EditRequest | RunRequest | SourceRequest | StartRequest | StopRequest,
-        Field(discriminator="op"),
-    ]
+class PngChartRequest(Model):
+    """The browser asks for a PNG file of a chart, with the lines it shows.
+
+    `name` is the file name the page will offer; the reply carries it back.
+    """
+
+    op: Literal["png_chart"] = "png_chart"
+    node: str
+    name: str
+    lines: tuple[Line, ...]
+
+
+class PngPictureRequest(Model):
+    """The browser asks for a PNG file of a picture."""
+
+    op: Literal["png_picture"] = "png_picture"
+    node: str
+    name: str
+    picture: Image
+
+
+class PngReply(Model):
+    """Python answers a PNG request: the file, or why there is none.
+
+    Exactly one of `data` (the PNG file as base64 text) and `reason` is set.
+    The reply goes to the page that asked and to no other.
+    """
+
+    op: Literal["png_reply"] = "png_reply"
+    node: str
+    name: str
+    data: str | None = None
+    reason: str | None = None
+
+
+type _Client = (
+    EditRequest
+    | RunRequest
+    | SourceRequest
+    | StartRequest
+    | StopRequest
+    | PngChartRequest
+    | PngPictureRequest
+)
+ClientMessage: TypeAdapter[_Client] = TypeAdapter(
+    Annotated[_Client, Field(discriminator="op")]
 )

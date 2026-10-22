@@ -1,84 +1,102 @@
-//! Save as PNG: the picture or chart on a card, as a file the browser
-//! downloads. Python is not involved.
+//! Save as PNG: Python draws the file. The page sends the lines of a chart or
+//! the picture on a card, and downloads the PNG that comes back.
 
-use element_51_core::CardDisplay;
+use element_51_core::display::line_style;
 use element_51_core::menu::png_file_name;
-use element_51_core::paper::{PAPER_HEIGHT, PAPER_WIDTH, paper_chart, picture_scale};
-use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement};
+use element_51_core::{
+    CardDisplay, Message, PngChartRequest, PngLine, PngPictureRequest, PngReply,
+};
 
 use crate::a11y_ui::announce;
 use crate::download::{Shown, download, nothing_to_save, shown_node};
-use crate::draw_chart::plotted;
-use crate::paper_ui::{draw_chart, draw_picture, page, to_paper_url};
+use crate::draw_chart::{line_colour, plotted};
 use crate::{Shared, State, show_error};
 
-/// Save what node `id` shows. A node with nothing to save yet (no run, or a
-/// run that failed for it) gets a banner that says so, with Dismiss.
+/// Ask Python for the file of what node `id` shows. A node with nothing to save
+/// yet (no run, or a run that failed for it) gets a banner that says so, with
+/// Dismiss; so does a connection that is gone.
 pub(crate) fn save_png(shared: &Shared, id: &str) {
-    let made = render(&shared.borrow(), id);
+    let asked = request(&shared.borrow(), id);
     let document = shared.borrow().document.clone();
-    match made.and_then(|(name, url)| download(&document, &name, &url).map(|()| name)) {
-        Ok(name) => announce(&document, &format!("Saving {name}")),
+    match asked {
+        Ok(name) => announce(&document, &format!("Making {name}")),
         Err(reason) => show_error(&document, &reason),
     }
 }
 
-/// The file name and the PNG, as a data URL, for node `id`'s picture or chart.
-fn render(state: &State, id: &str) -> Result<(String, String), String> {
-    let nothing = || nothing_to_save(id);
-    let Shown {
-        graph,
-        node,
-        node_type,
-        outcome,
-    } = shown_node(state, id)?;
-    let failed = || "The browser could not make the picture.".to_string();
-    match node_type.display {
-        CardDisplay::None => Err(format!("{id} shows no picture or chart.")),
-        CardDisplay::Image => {
-            // The card shows the first picture in port name order; so does the file.
-            let port = outcome
-                .shown
-                .iter()
-                .find(|(_, shown)| shown.as_image().is_some())
-                .map(|(port, _)| port)
-                .ok_or_else(nothing)?;
-            let picture = state.pictures.of(id).ok_or_else(nothing)?;
-            let (_, width, height) = picture_scale(picture.width(), picture.height());
-            let canvas = paper_canvas(&state.document, width, height).ok_or_else(failed)?;
-            let context = context_of(&canvas).ok_or_else(failed)?;
-            draw_picture(&context, picture, (width, height)).map_err(|_| failed())?;
-            Ok((png_file_name(id, port), to_paper_url(&canvas)?))
+/// Python's answer: download the file, or say why there is none.
+pub(crate) fn on_png_reply(shared: &Shared, reply: &PngReply) {
+    let document = shared.borrow().document.clone();
+    match (&reply.data, &reply.reason) {
+        (Some(data), _) => {
+            let url = format!("data:image/png;base64,{data}");
+            match download(&document, &reply.name, &url) {
+                Ok(()) => announce(&document, &format!("Saving {}", reply.name)),
+                Err(reason) => show_error(&document, &reason),
+            }
         }
-        CardDisplay::Chart => {
-            let lines = plotted(graph, (node, &node_type), outcome);
-            let series: Vec<(&str, &element_51_core::Series)> = lines
-                .iter()
-                .map(|line| (line.name.as_str(), line.series))
-                .collect();
-            let chart = paper_chart(&series).ok_or("The chart has no numbers to save.")?;
-            let canvas =
-                paper_canvas(&state.document, PAPER_WIDTH, PAPER_HEIGHT).ok_or_else(failed)?;
-            let context = context_of(&canvas).ok_or_else(failed)?;
-            page(&context);
-            draw_chart(&context, &chart).map_err(|_| failed())?;
-            Ok((png_file_name(id, "chart"), to_paper_url(&canvas)?))
-        }
+        (None, Some(reason)) => show_error(
+            &document,
+            &format!("Python could not make {}: {reason}", reply.name),
+        ),
+        (None, None) => show_error(&document, "Python sent an empty answer to the PNG request."),
     }
 }
 
-fn paper_canvas(document: &Document, width: u32, height: u32) -> Option<HtmlCanvasElement> {
-    let canvas: HtmlCanvasElement = document.create_element("canvas").ok()?.dyn_into().ok()?;
-    canvas.set_width(width);
-    canvas.set_height(height);
-    Some(canvas)
+/// Send the request for node `id` and return the file name it asks for.
+fn request(state: &State, id: &str) -> Result<String, String> {
+    let shown = shown_node(state, id)?;
+    let (name, message) = match shown.node_type.display {
+        CardDisplay::None => return Err(format!("{id} shows no picture or chart.")),
+        CardDisplay::Image => picture_request(id, &shown)?,
+        CardDisplay::Chart => chart_request(state, id, &shown),
+    };
+    state
+        .socket
+        .send_with_str(&message.to_json())
+        .map_err(|_| "Not connected to Python.".to_string())?;
+    Ok(name)
 }
 
-fn context_of(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContext2d> {
-    canvas
-        .get_context("2d")
-        .ok()
-        .flatten()
-        .and_then(|context| context.dyn_into().ok())
+/// The request for the first picture of the node, in port name order; so does
+/// the card.
+fn picture_request(id: &str, shown: &Shown) -> Result<(String, Message), String> {
+    let (port, picture) = shown
+        .outcome
+        .shown
+        .iter()
+        .find_map(|(port, shown)| shown.as_image().map(|image| (port, image)))
+        .ok_or_else(|| nothing_to_save(id))?;
+    let name = png_file_name(id, port);
+    let request = PngPictureRequest {
+        node: id.to_string(),
+        name: name.clone(),
+        picture: picture.clone(),
+    };
+    Ok((name, Message::PngPicture(request)))
+}
+
+/// The request for the chart of the node: each line with the colour the card
+/// draws it in, and whether the user chose it.
+fn chart_request(state: &State, id: &str, shown: &Shown) -> (String, Message) {
+    let lines = plotted(shown.graph, (shown.node, &shown.node_type), shown.outcome)
+        .into_iter()
+        .enumerate()
+        .map(|(index, line)| {
+            let (kind, _) = line_style(index);
+            PngLine {
+                colour: line_colour(&state.theme, kind, line.colour.as_deref()),
+                chosen: line.colour.is_some(),
+                name: line.name,
+                values: line.series.values.clone(),
+            }
+        })
+        .collect();
+    let name = png_file_name(id, "chart");
+    let request = PngChartRequest {
+        node: id.to_string(),
+        name: name.clone(),
+        lines,
+    };
+    (name, Message::PngChart(request))
 }

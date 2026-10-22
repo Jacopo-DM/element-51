@@ -1,6 +1,7 @@
 """Serve the editor page, its WASM files and the websocket."""
 
 import asyncio
+import base64
 import contextlib
 import socket
 import webbrowser
@@ -18,11 +19,15 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from element_51.edits import EditError
 from element_51.engine import RunResult
+from element_51.figures import chart_png, picture_png
 from element_51.jobs import JobRefusedError
 from element_51.protocol import (
     Ack,
     ClientMessage,
     JobRefusal,
+    PngChartRequest,
+    PngPictureRequest,
+    PngReply,
     Reject,
     RunRequest,
     SourceReply,
@@ -96,9 +101,19 @@ class Hub:
                 connection.send(text)
 
 
-async def reply_to(
-    app: App, text: str
-) -> Ack | Reject | RunResult | SourceReply | JobRefusal | NoReply | None:
+type Reply = (
+    Ack
+    | Reject
+    | RunResult
+    | SourceReply
+    | PngReply
+    | JobRefusal
+    | NoReply
+    | None
+)
+
+
+async def reply_to(app: App, text: str) -> Reply:
     """Act on a message from the browser and say how it went.
 
     Parameters
@@ -110,12 +125,12 @@ async def reply_to(
 
     Returns
     -------
-    Ack | Reject | RunResult | SourceReply | JobRefusal | NoReply | None
+    Reply
         `Ack` if an edit was applied, `Reject` with a reason if the rules
         refused it, `RunResult` for a run request, `SourceReply` for a source
-        request, `JobRefusal` if a start or stop was refused, `NoReply.NONE`
-        if it was accepted (the job's updates are broadcast), `None` if the
-        message is not valid.
+        request, `PngReply` for a PNG request, `JobRefusal` if a start or stop
+        was refused, `NoReply.NONE` if it was accepted (the job's updates are
+        broadcast), `None` if the message is not valid.
     """
     try:
         message = ClientMessage.validate_json(text)
@@ -123,8 +138,8 @@ async def reply_to(
         return None
     if isinstance(message, RunRequest):
         return await run_in_threadpool(app.execute)
-    if isinstance(message, SourceRequest):
-        return await run_in_threadpool(app.source, message.node)
+    if isinstance(message, SourceRequest | PngChartRequest | PngPictureRequest):
+        return await _asked(app, message)
     if isinstance(message, StartRequest | StopRequest):
         return await _job_request(app, message)
     try:
@@ -132,6 +147,43 @@ async def reply_to(
     except EditError as error:
         return Reject(id=message.id, reason=error.reason)
     return Ack(id=message.id)
+
+
+async def _asked(
+    app: App, message: SourceRequest | PngChartRequest | PngPictureRequest
+) -> SourceReply | PngReply:
+    """Answer a request for a node's source or for a PNG file.
+
+    Returns
+    -------
+    SourceReply | PngReply
+        The answer, which goes to the asking page only.
+    """
+    if isinstance(message, SourceRequest):
+        return await run_in_threadpool(app.source, message.node)
+    return await run_in_threadpool(_png_reply, message)
+
+
+def _png_reply(message: PngChartRequest | PngPictureRequest) -> PngReply:
+    """Draw the PNG file a request asks for.
+
+    Returns
+    -------
+    PngReply
+        The file as base64 text, or the reason it could not be drawn.
+    """
+    try:
+        if isinstance(message, PngChartRequest):
+            data = chart_png(message.lines)
+        else:
+            data = picture_png(message.picture)
+    except ValueError as error:
+        return PngReply(node=message.node, name=message.name, reason=str(error))
+    return PngReply(
+        node=message.node,
+        name=message.name,
+        data=base64.b64encode(data).decode("ascii"),
+    )
 
 
 async def _job_request(
