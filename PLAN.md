@@ -534,6 +534,12 @@ Measured 2026-10-20 after the palette goal, Apple silicon, Python 3.13:
     node by the same walk). Vulture found nothing at 80% in `src` (the 20 hits at 60% were pydantic
     and `Protocol` members). After the pass (same day): 0 clones, 0 duplicated lines (0.00%); 145 files, 30,905 lines; 23 files over 400 lines and 18 modules over five imports, unchanged.
 
+- Browser tests, measured 2026-10-22 for `browser-tests` (`uv run python tools/run_browser_tests.py`,
+    Chromium 156.0.8078.4 headless shell, playwright 1.64.0, this Mac, the optimised wasm build):
+    `uiKeys` 90 rows 18.9 to 19.4 s, `uiKeysDisplay` 28 rows 7.9 to 8.1 s, `uiKeysJob` 21 rows
+    3.5 s, `uiKeysAuto` 21 rows 6.1 to 6.2 s; the whole run 37.2 to 37.3 s wall (3 runs, 160 of
+    160 rows). A row broken on purpose gave `FAIL` with its step and exit code 1.
+
 ## Tasks
 
 Tasks 1 to 15 approved 2026-10-19; tasks 1 to 15 are done (removed from the
@@ -704,7 +710,7 @@ Tier 1 (the walking skeleton):
 
 Tier 2 (ordered by value over risk plus cost):
 
-2. The other three walk-throughs (`uiKeysDisplay` 28 on `--graph display`, `uiKeysJob` 21 on `--graph
+2. Done (2026-10-22; 160 of 160 rows, 37.3 s for the whole run, a broken row gives exit 1; see Baseline). The other three walk-throughs (`uiKeysDisplay` 28 on `--graph display`, `uiKeysJob` 21 on `--graph
     job`, `uiKeysAuto` 21 on the standard graph), the failed-row listing, an `--only` option and the
     missing-Chromium message. Files: `tools/run_browser_tests.py`, its test. Serves measures 1, 2 and
     5. Risk: medium (the rows were written for the browser pane; a row may need a longer wait in

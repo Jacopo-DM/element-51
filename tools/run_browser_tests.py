@@ -7,6 +7,7 @@ The runner loads `tools/ui_keys.js` into the page, calls the walk-through's
 function and reads the rows it returns. One line is printed per walk-through:
 its name, `PASS` or `FAIL`, the seconds and the number of rows that passed. A
 failure adds each failed row. The exit code is 1 when any walk-through failed.
+`--only uiKeysJob` runs one walk-through (repeat it for more).
 
 Run it from the repo root, after `uv run python tools/build_wasm.py`::
 
@@ -92,7 +93,12 @@ class Outcome(Strict):
     detail: tuple[str, ...] = ()
 
 
-WALKS = (Walk(function="uiKeys", graph="standard"),)
+WALKS = (
+    Walk(function="uiKeys", graph="standard"),
+    Walk(function="uiKeysDisplay", graph="display"),
+    Walk(function="uiKeysJob", graph="job"),
+    Walk(function="uiKeysAuto", graph="standard"),
+)
 
 
 def expression(function: str, timeout: int) -> str:
@@ -327,6 +333,24 @@ def serving(graph: Graph, port: int) -> Generator[str]:
             server.kill()
 
 
+def select_walks(only: Sequence[str] | None) -> tuple[Walk, ...]:
+    """Pick the walk-throughs to run.
+
+    Parameters
+    ----------
+    only
+        Function names to run, or None or empty for all of them.
+
+    Returns
+    -------
+    tuple[Walk, ...]
+        The chosen walks, in the order of `WALKS`.
+    """
+    if not only:
+        return WALKS
+    return tuple(walk for walk in WALKS if walk.function in only)
+
+
 def _drive(page: Page, walk: Walk, address: str, timeout: int) -> Result:
     """Open the page, give it focus and run the walk's function in it.
 
@@ -400,6 +424,12 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument(
+        "--only",
+        action="append",
+        choices=[walk.function for walk in WALKS],
+        help="run only this walk-through (repeat the option for more)",
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=DEFAULT_TIMEOUT,
@@ -444,7 +474,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 1
         with contextlib.closing(browser):
-            for walk in WALKS:
+            for walk in select_walks(args.only):
                 outcome = run_walk(browser, walk, args.timeout)
                 sys.stdout.write(report(outcome) + "\n")
                 sys.stdout.flush()

@@ -163,3 +163,22 @@ def test_every_walk_names_a_function_in_the_keys_script(
     source = runner.KEYS_SCRIPT.read_text()
     for walk in runner.WALKS:
         assert f"async function {walk.function}(" in source
+
+
+def test_all_walks_run_unless_some_are_named(runner: ModuleType) -> None:
+    """No names means all four; names pick walks and keep their order."""
+    assert runner.select_walks(None) == runner.WALKS
+    assert runner.select_walks([]) == runner.WALKS
+    picked = runner.select_walks(["uiKeysJob", "uiKeys"])
+    assert [walk.function for walk in picked] == ["uiKeys", "uiKeysJob"]
+
+
+def test_the_four_walks_match_the_graphs_they_need(runner: ModuleType) -> None:
+    """The display walk needs the display graph, the job walk the job one."""
+    graphs = {walk.function: walk.graph for walk in runner.WALKS}
+    assert graphs == {
+        "uiKeys": "standard",
+        "uiKeysDisplay": "display",
+        "uiKeysJob": "job",
+        "uiKeysAuto": "standard",
+    }
