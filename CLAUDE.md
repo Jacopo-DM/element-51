@@ -220,6 +220,11 @@ the user approved this difference on 2026-10-21.
     (it refuses anything that is not a fast-forward, and also refuses while `main` is checked
     out in the folder; then commit from a `git worktree add <scratchpad>/wt -b <branch> main`
     and, once `main` is checked out and clean, `git merge --ff-only <branch>` there).
+- The permission check refuses a push or a branch delete unless the user's message says it in
+    explicit words: a bare "Go" was refused three times, and "Push main to origin." or "Push main to
+    origin, then delete the local branches X and Y (both merged into main)." worked. Ask with
+    buttons whose message is that sentence, and keep a push in a command of its own (a push chained
+    behind a commit and a merge was refused as a whole).
 - A synthetic Enter in a script does not press a button: `click()` the focused entry (the
     walk-through rows do). The walk-through has 90 rows.
 - A pane screenshot taken right after a script action can show the previous frame (a ring or
