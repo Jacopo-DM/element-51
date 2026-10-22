@@ -752,11 +752,8 @@ end).
 
 Tier 1:
 
-1. **Scan a module** (criteria 1 and 2). New `src/element_51/wrap.py` with `Skipped`, `Scan` and
-    `nodes_from_module`; both names exported from `src/element_51/__init__.py`; tests in
-    `tests/test_wrap.py` (fitting functions in order, each skip reason, private, imported and
-    `__all__` rules, a duplicate name, an already decorated function and a `Node` subclass passing
-    through). About 120 lines, no new concept beyond the spec, no new dependency. Risk low.
+1. Done (2026-10-22): `nodes_from_module`, `Scan` and `Skipped` in `src/element_51/wrap.py`, 9 tests in
+    `tests/test_wrap.py`, a "none yet" row for `wrap` in `tests/functional/README.md` until task 4.
 2. **Scan numpy's ufuncs** (criterion 3). `UfuncNode` and `nodes_from_ufuncs` in `wrap.py`: loop
     choice from `types`, ports from `nin` and `nout`, the result model for two outputs, the
     one-line source text, `np.errstate`, aliases and the gufunc and no-loop skips. Tests: every
