@@ -9,6 +9,7 @@ pub mod address;
 pub mod announce;
 pub mod autorun;
 pub mod contrast;
+pub mod csv;
 pub mod display;
 mod edit;
 pub mod fields;

@@ -93,6 +93,8 @@ pub enum CardAction {
     ViewSource,
     /// Save the card's picture or chart as a PNG file. Not an edit.
     SavePng,
+    /// Save the numbers of the card's chart as a CSV file. Not an edit.
+    SaveCsv,
     DeleteNode,
 }
 
@@ -101,6 +103,7 @@ pub fn card_actions() -> Vec<CardAction> {
     vec![
         CardAction::ViewSource,
         CardAction::SavePng,
+        CardAction::SaveCsv,
         CardAction::DeleteNode,
     ]
 }
@@ -111,15 +114,18 @@ impl CardAction {
         match self {
             CardAction::ViewSource => "View source code",
             CardAction::SavePng => "Save as PNG",
+            CardAction::SaveCsv => "Save as CSV",
             CardAction::DeleteNode => "Delete node",
         }
     }
 
     /// Whether a card whose node shows `display` has this entry in its menu:
-    /// saving a picture needs a picture or a chart on the card.
+    /// saving a picture needs a picture or a chart on the card, and saving
+    /// numbers needs a chart.
     pub fn offered(self, display: CardDisplay) -> bool {
         match self {
             CardAction::SavePng => display != CardDisplay::None,
+            CardAction::SaveCsv => display == CardDisplay::Chart,
             CardAction::ViewSource | CardAction::DeleteNode => true,
         }
     }
@@ -128,7 +134,7 @@ impl CardAction {
     /// action that changes nothing in the graph.
     pub fn edit(self, id: &str) -> Option<Edit> {
         match self {
-            CardAction::ViewSource | CardAction::SavePng => None,
+            CardAction::ViewSource | CardAction::SavePng | CardAction::SaveCsv => None,
             CardAction::DeleteNode => Some(Edit::DeleteNode { id: id.to_string() }),
         }
     }
@@ -138,18 +144,26 @@ impl CardAction {
 /// picture on port `what`, `n5-chart.png` for a chart. Anything that is not a
 /// letter, digit, `_` or `-` becomes `_`, so the name is safe on every system.
 pub fn png_file_name(node: &str, what: &str) -> String {
-    let safe = |text: &str| -> String {
-        text.chars()
-            .map(|c| {
-                if c.is_ascii_alphanumeric() || c == '_' || c == '-' {
-                    c
-                } else {
-                    '_'
-                }
-            })
-            .collect()
-    };
-    format!("{}-{}.png", safe(node), safe(what))
+    format!("{}-{}.png", safe_name(node), safe_name(what))
+}
+
+/// The name of the file `Save as CSV` offers: `n3-chart.csv` for the chart of
+/// node `node`, made safe the same way.
+pub fn csv_file_name(node: &str) -> String {
+    format!("{}-chart.csv", safe_name(node))
+}
+
+/// `text` with anything that is not a letter, digit, `_` or `-` turned into `_`.
+fn safe_name(text: &str) -> String {
+    text.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '_' || c == '-' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
 }
 
 /// Where to put a popup of `size` that was asked for at `want`, so that it

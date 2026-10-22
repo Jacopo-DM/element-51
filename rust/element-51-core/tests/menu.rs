@@ -120,11 +120,13 @@ fn a_card_offers_to_view_its_source_to_save_and_to_delete_the_node_last() {
         vec![
             CardAction::ViewSource,
             CardAction::SavePng,
+            CardAction::SaveCsv,
             CardAction::DeleteNode
         ]
     );
     assert_eq!(CardAction::ViewSource.label(), "View source code");
     assert_eq!(CardAction::SavePng.label(), "Save as PNG");
+    assert_eq!(CardAction::SaveCsv.label(), "Save as CSV");
     assert_eq!(CardAction::DeleteNode.label(), "Delete node");
     assert_eq!(
         CardAction::DeleteNode.edit("n3"),
@@ -137,6 +139,7 @@ fn viewing_the_source_and_saving_are_not_edits() {
     use element_51_core::menu::CardAction;
     assert_eq!(CardAction::ViewSource.edit("n3"), None);
     assert_eq!(CardAction::SavePng.edit("n3"), None);
+    assert_eq!(CardAction::SaveCsv.edit("n3"), None);
 }
 
 #[test]
@@ -144,11 +147,24 @@ fn save_as_png_is_offered_only_for_a_picture_or_a_chart() {
     use element_51_core::CardDisplay;
     use element_51_core::menu::{CardAction, card_actions};
     for action in card_actions() {
-        let on_plain = action.offered(CardDisplay::None);
-        assert_eq!(on_plain, action != CardAction::SavePng, "{action:?}");
-        assert!(action.offered(CardDisplay::Image));
+        let saves = matches!(action, CardAction::SavePng | CardAction::SaveCsv);
+        assert_eq!(action.offered(CardDisplay::None), !saves, "{action:?}");
+        assert_eq!(
+            action.offered(CardDisplay::Image),
+            action != CardAction::SaveCsv,
+            "{action:?}"
+        );
         assert!(action.offered(CardDisplay::Chart));
     }
+}
+
+#[test]
+fn save_as_csv_is_offered_only_for_a_chart() {
+    use element_51_core::CardDisplay;
+    use element_51_core::menu::CardAction;
+    assert!(CardAction::SaveCsv.offered(CardDisplay::Chart));
+    assert!(!CardAction::SaveCsv.offered(CardDisplay::Image));
+    assert!(!CardAction::SaveCsv.offered(CardDisplay::None));
 }
 
 #[test]
