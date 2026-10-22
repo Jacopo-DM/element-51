@@ -184,18 +184,7 @@ pub fn node_at(
     y: f64,
     metrics: &Metrics,
 ) -> Option<String> {
-    graph
-        .nodes
-        .iter()
-        .rev()
-        .find(|node| {
-            let Some(node_type) = type_of(graph, node_types, node) else {
-                return false;
-            };
-            let rect = node_rect(node, &node_type, metrics);
-            x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
-        })
-        .map(|node| node.id.clone())
+    topmost_hit(graph, node_types, (x, y), |card, _| Some(*card), metrics)
 }
 
 /// The topmost node whose resize handle holds `(x, y)`, if any. The handle is
@@ -207,6 +196,19 @@ pub fn handle_at(
     y: f64,
     metrics: &Metrics,
 ) -> Option<String> {
+    topmost_hit(graph, node_types, (x, y), resize_handle, metrics)
+}
+
+/// The topmost node, last in the graph, whose `target` area holds the point.
+/// `target` takes the node's box and type and gives the area to test, if the
+/// node has one. A node whose type is not in `node_types` is passed over.
+fn topmost_hit(
+    graph: &Graph,
+    node_types: &[NodeType],
+    (x, y): (f64, f64),
+    target: impl Fn(&Rect, &NodeType) -> Option<Rect>,
+    metrics: &Metrics,
+) -> Option<String> {
     graph
         .nodes
         .iter()
@@ -216,11 +218,8 @@ pub fn handle_at(
                 return false;
             };
             let card = node_rect(node, &node_type, metrics);
-            resize_handle(&card, &node_type).is_some_and(|handle| {
-                x >= handle.x
-                    && x <= handle.x + handle.w
-                    && y >= handle.y
-                    && y <= handle.y + handle.h
+            target(&card, &node_type).is_some_and(|area| {
+                x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h
             })
         })
         .map(|node| node.id.clone())
