@@ -211,43 +211,91 @@ resize action), so a screen reader user cannot resize.
 - Status: waiting for the recording.
 - Added: 2026-10-22
 
-### save-as-csv (draft, 2026-10-22)
+### series-colour (draft, waiting for approval, 2026-10-22)
+
+- Goal: the user chooses the line colour of each series on a Plot card with a swatch beside the
+    `series_N` name.
+- Kind: new behaviour. Order: first of the three plot goals (it changes the graph file; the PNG
+    goal reads its colours).
+- Success measure (each is a test, native, Python or by hand in the browser pane):
+    1. A Plot card shows a swatch beside each `series_N` name, in the colour the line has now (the
+        theme's, or the one chosen).
+    2. Picking a colour redraws the line and its legend entry at once and sends a `SetColour` edit
+        that Python acks; a value that is not `#rrggbb` is refused with a reason; Undo and Redo
+        cover it.
+    3. A small `x` beside the swatch shows only when a colour was chosen; pressing it makes the
+        series follow the theme again (an edit, so Undo covers it).
+    4. The colour is saved in the graph file (format version 4; versions 1, 2 and 3 still load),
+        is in `app.graph` in Python, and survives a reload.
+    5. A chosen colour is drawn as chosen on every theme. When it is below 3:1 against the chart
+        background of the current theme the swatch carries a warning mark with a hover text.
+    6. The swatch and the `x` have names in the hidden tree and work from the keyboard, are
+        hidden while a later card covers them (DESIGN.md, Gotchas), and every theme still passes
+        the AA pairs.
+    7. One shared fixture file holds the new edit's cases; the Rust and the Python suites read it.
+- Decided by the user 2026-10-22: saved in the graph file; the browser's own colour box
+    (`<input type="color">`), not a wheel we draw; allow a hard-to-see colour and mark the swatch;
+    a small `x` to go back to the theme colour.
+- Non-goals: a colour for anything but a series line, a palette or colour history, naming a
+    series, a log axis.
+- Status: draft.
+- Added: 2026-10-22
+
+### save-as-csv (draft, waiting for approval, 2026-10-22)
 
 - Goal: a Plot card can save its series as a CSV file, so the user's own script can draw them.
-- Decided by the user 2026-10-22: one file, a column per series (`index,loss,accuracy`, one row
-    per point, an empty cell where a series has a gap).
-- Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan` and
-    approval in words.
+- Kind: new behaviour. Order: second (independent of the colour, but it shares the card menu and
+    the series data with the PNG goal).
+- Success measure:
+    1. A Plot card's menu has `Save as CSV` (disabled, with the reason, while the chart shows no
+        numbers).
+    2. The file `<node id>.csv` has the header `index,<name>,...`, one column per series in port
+        order; a name is the linked source (`n2.loss`) or `series_N` when unlinked.
+    3. There is one row per index up to the longest series; a gap, or a shorter series, is an empty
+        cell; numbers are written in full (shortest text that reads back exactly).
+    4. It works in the page alone: the series are already there, nothing is asked of Python.
+    5. Native tests pin the text (a gap, series of different lengths, a series with a NaN) and the
+        file name; the download works by hand in the browser pane.
+- Decided by the user 2026-10-22: one file, a column per series.
+- Non-goals: a picture card's pixels as CSV, a choice of separator or decimal mark, copying to the
+    clipboard.
+- Status: draft.
 - Added: 2026-10-22
 
-### matplotlib-png (draft, 2026-10-22)
+### matplotlib-png (draft, waiting for approval, 2026-10-22)
 
-- Goal: Save as PNG gives a plot that looks as good as matplotlib's, drawn by real matplotlib.
-- Decided by the user 2026-10-22: "Real matplotlib renders the PNG" (not only its look). The
-    user called the current PGFPlots-style PNG "quite fugly".
-- Open for the spec (record in DESIGN.md once decided): matplotlib is a dev dependency only
-    today, so it would become a runtime dependency or an optional extra (its wheel and its
-    dependencies are several MB; a new dependency needs the user's yes by name, source and size);
-    the page's Save as PNG would send the series to Python and receive a file, so it needs the
-    server (the standalone page cannot); what happens when matplotlib is missing; whether
-    `paper.rs` and `png.rs` (the Rust PNG) go away or stay as the fallback.
-- Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan`.
-- Added: 2026-10-22
-
-### series-colour (draft, 2026-10-22)
-
-- Goal: a colour picker next to each `series_N` name on a Plot card, so the user chooses the
-    colour of each line.
-- Decided by the user 2026-10-22: the colour is saved in the graph file (a new format version 4,
-    a new edit that Undo covers, like `ResizeNode`), and the picker is the browser's own colour box
-    (`<input type="color">`, a small swatch beside the name; Chrome shows a square gradient, not a
-    wheel), not a wheel drawn in Rust.
-- Open for the spec: the swatch is a page element over the canvas, so it needs the covered-card
-    rule (DESIGN.md, Gotchas); the hidden tree needs a label for it; the Save as PNG (and a future
-    CSV or matplotlib PNG) must use the chosen colour; the default is the theme's series colour;
-    a colour must keep 3:1 against the chart background or the user is told (open).
-- Kind: new behaviour. Success measure and tasks: not written; needs `/zz-02-project-plan` and
-    approval in words.
+- Goal: Save as PNG gives a figure drawn by matplotlib (Plot card) or Pillow (picture card), made
+    by Python, and the Rust PNG code is removed.
+- Kind: new behaviour (replaces the PGFPlots-style PNG of `png-paper`). Order: third (it reads the
+    colours of `series-colour`).
+- Success measure:
+    1. Save as PNG on a Plot card sends the lines (name, values, colour) to Python, which answers
+        with a PNG of 2100 by 1400 pixels at 300 dpi (the file says so), white background,
+        matplotlib's clean style, axes, a light grid and a legend, the x label `index` and the
+        y label the line's name when there is one line.
+    2. A series with no chosen colour is drawn in the card's colour darkened, keeping its hue, to
+        at least 3:1 on white; a chosen colour is drawn exactly. A test covers this for every
+        built-in theme.
+    3. Save as PNG on a picture card is written by Pillow: the picture enlarged by whole pixels,
+        1400 pixels on a side, 300 dpi, as now.
+    4. matplotlib is a required dependency; `import element_51` does not import it (it loads on the
+        first PNG).
+    5. `paper.rs`, `png.rs`, `save_png.rs`, `paper_ui.rs` and their tests are gone, nothing the
+        Rust PNG did is left unreplaced, and the Rust and Python suites pass; the new Python code is
+        at 100% coverage.
+    6. If Python cannot make the file (no server, an error) the page shows a banner with a Dismiss
+        button.
+- Decided by the user 2026-10-22: matplotlib draws the Plot PNG, as a required dependency, and the
+    Rust PNG goes; Pillow writes the picture PNG; a white figure in matplotlib's clean style;
+    unchosen lines in the editor's colours, darkened to 3:1 on white.
+- Needs the user's yes by name, source and size before it is added: `matplotlib` 3.11.2 (PyPI, wheel
+    9.3 MB) with `contourpy` 0.29 MB, `fonttools` 1.21 MB, `kiwisolver` 0.06 MB, `cycler` 0.01 MB,
+    `pyparsing` 0.13 MB and `python-dateutil` 0.09 MB; `numpy` and `pillow` (already in `uv.lock`
+    as dev or examples dependencies) become runtime dependencies. All are in the lockfile now as
+    dev tools or through them, so `uv lock` downloads nothing new for most.
+- Non-goals: log axes, a title, editing the figure in the page, checking the file in Word or
+    LaTeX (still open), a choice of figure size or style.
+- Status: draft.
 - Added: 2026-10-22
 
 ### speed-up-frame: done (2026-10-21)
