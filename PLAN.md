@@ -270,6 +270,33 @@ the palette to the page's colours at once; kept until reload; text readable at A
 whatever the palette. Tests, behaviour and the mapping rule are in DESIGN.md
 (Results and Decisions); example `examples/e_look/e3_palette.py`.
 
+### browser-tests: draft (added 2026-10-22, waits for the user's approval)
+
+- Goal: one command runs the four keyboard walk-throughs of `tools/ui_keys.js` in a real browser
+    and fails on any failed row, so a break in the page no longer waits for someone to paste
+    the functions into the browser pane by hand.
+- Kind: new behaviour (test tooling; the editor itself does not change).
+- Success measure: (1) `uv run pytest tests/browser` (the exact command is for the spec) reports
+    all 160 rows passed (`uiKeys` 90, `uiKeysDisplay` 28, `uiKeysJob` 21, `uiKeysAuto` 21),
+    each against its own graph from `tools/ui_states.py`; (2) it exits non-zero when a row is
+    broken on purpose (shown once, with a throwaway change); (3) the pre-push hook runs it,
+    and a GitHub Actions job runs it; (4) the normal `uv run --locked pytest` keeps its 100%
+    coverage gate and is not slower beyond its noise (the browser tests stay out of it);
+    (5) the run time of the browser command is measured and recorded in Baseline.
+- The user's choices (2026-10-22): the driver is Playwright with its own Chromium; the scope is
+    all four walk-throughs; they run at pre-push as well as in CI. The tests reuse the rows in
+    `tools/ui_keys.js` (the driver loads the page, calls the function and reads the result); the
+    rows are not rewritten in Python.
+- Constraints: Playwright (PyPI, wheel 43 to 48 MB) goes in the dev group and needs the user's
+    yes by name, source and size, and so does the Chromium download (Playwright pins revision
+    1248, Chromium 156.0.8078.4 for 1.64.0; its size was not readable from the server, about 100
+    to 170 MB by Playwright's own figures, to be confirmed before any download). No test uses the
+    user's own page on port 8765 (scratch ports 8766 to 8769). No real data.
+- Non-goals: pixel or screenshot comparisons, touch, other browsers, the axe-core scan, a
+    rewrite of the rows in Python.
+- Open: how the 100% coverage gate and the Stop hook treat `tests/browser`; whether the pre-push
+    run needs Chromium installed on every clone (a clear message if it is missing).
+
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
@@ -655,7 +682,9 @@ restarts (not saved, by decision).
     already in `element-51-core`.
 - `wasm-opt` size pass on the 706 KB WASM: no size budget was set.
 - Binary channel for large data: a non-goal for now.
-- Export the graph as Python code: not in the goals.
+- Export the graph as Python code: a possible future feature (the user wants it on the list, 2026-10-22).
+- Touch screen support (the resize grip and the colour box were never tried on touch): a possible
+    future feature (the user wants it on the list, 2026-10-22).
 - Docs prose and README body: not unasked.
 
 ## Open questions
