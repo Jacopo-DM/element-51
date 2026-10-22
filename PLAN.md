@@ -270,13 +270,13 @@ the palette to the page's colours at once; kept until reload; text readable at A
 whatever the palette. Tests, behaviour and the mapping rule are in DESIGN.md
 (Results and Decisions); example `examples/e_look/e3_palette.py`.
 
-### browser-tests: draft (added 2026-10-22, waits for the user's approval)
+### browser-tests: goal approved 2026-10-22; spec and task list wait for approval (added 2026-10-22)
 
 - Goal: one command runs the four keyboard walk-throughs of `tools/ui_keys.js` in a real browser
     and fails on any failed row, so a break in the page no longer waits for someone to paste
     the functions into the browser pane by hand.
 - Kind: new behaviour (test tooling; the editor itself does not change).
-- Success measure: (1) `uv run pytest tests/browser` (the exact command is for the spec) reports
+- Success measure: (1) `uv run python tools/run_browser_tests.py` reports
     all 160 rows passed (`uiKeys` 90, `uiKeysDisplay` 28, `uiKeysJob` 21, `uiKeysAuto` 21),
     each against its own graph from `tools/ui_states.py`; (2) it exits non-zero when a row is
     broken on purpose (shown once, with a throwaway change); (3) the pre-push hook runs it,
@@ -294,8 +294,10 @@ whatever the palette. Tests, behaviour and the mapping rule are in DESIGN.md
     user's own page on port 8765 (scratch ports 8766 to 8769). No real data.
 - Non-goals: pixel or screenshot comparisons, touch, other browsers, the axe-core scan, a
     rewrite of the rows in Python.
-- Open: how the 100% coverage gate and the Stop hook treat `tests/browser`; whether the pre-push
-    run needs Chromium installed on every clone (a clear message if it is missing).
+- Clarified 2026-10-22 (the user's answers): the browser tests are a runner script, not pytest
+    tests, so the 100% coverage gate and the Stop hook never start a browser; with Chromium
+    missing the pre-push run fails and prints the install command (`uv run playwright install
+    chromium`); the GitHub job goes into `rust.yml` (it already builds the browser layer).
 
 ## Current state
 
@@ -675,6 +677,66 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 `element_51.report()` (hidden state; the stepper removes most of the need); a series that a report
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
+
+### Goal `browser-tests`: draft task list (2026-10-22, waits for the user's approval)
+
+Shape: `tools/run_browser_tests.py` starts a fresh `tools/ui_states.py --graph G --port P` for each
+walk-through, opens it in Playwright's Chromium, waits for `html.ready`, clicks the empty canvas for
+focus, loads `tools/ui_keys.js`, calls `uiKeys`, `uiKeysDisplay`, `uiKeysJob` or `uiKeysAuto`, parses
+`{passed, failed, rows}` with a pydantic model, prints one PASS or FAIL line per walk-through with
+the seconds and the failed rows, stops the server, and exits 1 if any row failed. No retries; 120 s
+per walk-through. The pure parts get unit tests in `tests/` (no browser). Areas with no tests
+today: `ui_states.py` and `ui_keys.js` (the rows are the pins); the user's `--port` default stays 8768.
+
+Tier 1 (the walking skeleton):
+
+1. One walk-through end to end. Add `playwright` to the dev group (PyPI, wheel 43 to 48 MB; needs
+    the user's yes by name, source and size when I ask, and the Chromium download too, about 100 to
+    170 MB by Playwright's figures, exact size to be read before the ask). Add `--port` to
+    `tools/ui_states.py`. Write `tools/run_browser_tests.py` for `uiKeys` on the standard graph and
+    `tests/test_browser_runner.py` for the parsing, the summary line and the exit code. Files:
+    `pyproject.toml`, `uv.lock`, `tools/ui_states.py`, `tools/run_browser_tests.py`,
+    `tests/test_browser_runner.py`, the commands table in `CLAUDE.md`. Serves goal measure 1 for the
+    first 90 rows, and shows whether headless Chromium gives the page keyboard focus (the main
+    risk). Risk: medium (focus, timing). Cost: about 150 lines, 1 dependency, 1 download.
+    Verify: the run prints 90 passed; `ruff`, `mypy`, `pytest` stay green at 100%; the redraw and
+    normal `pytest` time are unchanged (the runner is outside pytest).
+
+Tier 2 (ordered by value over risk plus cost):
+
+2. The other three walk-throughs (`uiKeysDisplay` 28 on `--graph display`, `uiKeysJob` 21 on `--graph
+    job`, `uiKeysAuto` 21 on the standard graph), the failed-row listing, an `--only` option and the
+    missing-Chromium message. Files: `tools/run_browser_tests.py`, its test. Serves measures 1, 2 and
+    5. Risk: medium (the rows were written for the browser pane; a row may need a longer wait in
+    a hidden or fast browser). Cost: about 80 lines. Verify: 160 of 160 pass; a throwaway change that
+    breaks one row makes the exit code 1 and lists the row (shown once, then reverted); the run
+    time is recorded in Baseline (3 runs, median and range).
+3. The pre-push hook: a `run-browser-tests` entry in `.pre-commit-config.yaml` (`pass_filenames:
+    false`, `always_run: true`, `stages: [pre-push]`), next to the notebooks. Serves measure 3.
+    Risk: low. Verify: `uv run pre-commit run run-browser-tests --hook-stage pre-push --all-files`
+    passes; the next push shows the line and the push time is recorded.
+4. The GitHub job: a `browser` job in `.github/workflows/rust.yml` (toolchain, wasm-bindgen CLI,
+    `uv sync --locked`, `tools/build_wasm.py`, `uv run playwright install --with-deps chromium`,
+    the runner). Serves measure 3. Risk: medium (a Linux-only failure shows only on GitHub; fix
+    forward with the user's say-so for each push). Verify: the run is green.
+5. Docs: `CLAUDE.md` (the keyboard walk-through row and the new command), `CODEMAP.md` (the tools
+    row and the new test), `DESIGN.md` (the spec, the decisions with the rejected alternatives, the
+    Results row), `tools/ui_keys.js`'s header (how it is run now), then the goal's one-line done
+    entry here. Risk: low.
+
+Tier 3 (listed, not executed):
+
+- Screenshot or pixel comparisons per theme: a non-goal; the pixel check by theme was made by eye
+    and the contrast pairs are tested natively.
+- The axe-core scan inside the runner: a non-goal (a download of `axe.min.js` and its own result
+    format).
+- Firefox and WebKit runs: Playwright can, but each is another download and the editor is
+    checked in one engine today.
+- Touch emulation: belongs to the possible future feature "Touch screen support".
+- Retries on a failed row: they would hide a flaky row instead of fixing it.
+- Running the four walk-throughs in parallel: saves some seconds at the price of a pool of ports
+    and browsers; revisit only if the pre-push run is too slow.
+- Running the browser tests in the Stop hook: it would start Chromium after every turn.
 
 ### Tier 3: listed, not executed
 
