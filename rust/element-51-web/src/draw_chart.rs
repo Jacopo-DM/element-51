@@ -4,7 +4,7 @@ use crate::draw::fit_text;
 use element_51_core::display::{chart_layout, legend_slots, line_names, line_style};
 use element_51_core::layout::Rect;
 use element_51_core::theme::Theme;
-use element_51_core::{Graph, NodeOutcome, NodeType, PlacedNode, Series};
+use element_51_core::{Graph, NodeOutcome, NodeType, PlacedNode, PortType, Series};
 use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 
@@ -19,7 +19,7 @@ pub(crate) fn chart(
 ) -> Result<(), JsValue> {
     let (colours, metrics) = (&theme.colours, &theme.metrics);
     let lines = plotted(graph, (node, node_type), outcome);
-    let series: Vec<&Series> = lines.iter().map(|(_, series)| *series).collect();
+    let series: Vec<&Series> = lines.iter().map(|line| line.series).collect();
     let Some(layout) = chart_layout(area, metrics, &series) else {
         return Ok(());
     };
@@ -75,7 +75,7 @@ pub(crate) fn chart(
     context.set_line_cap("round");
     for (index, runs) in layout.lines.iter().enumerate() {
         let (kind, dashed) = line_style(index);
-        context.set_stroke_style_str(&theme.port_style(kind, true).colour);
+        context.set_stroke_style_str(&line_colour(theme, kind, lines[index].colour.as_deref()));
         if dashed {
             context.set_line_dash(&crate::json_parse("[6, 4]"))?;
         }
@@ -103,11 +103,11 @@ pub(crate) fn chart(
     // so colour is not the only cue.
     context.set_text_align("left");
     let slots = legend_slots(&layout.legend, lines.len());
-    for (index, ((name, _), slot)) in lines.iter().zip(&slots).enumerate() {
+    for (index, (line, slot)) in lines.iter().zip(&slots).enumerate() {
         let (kind, dashed) = line_style(index);
         let middle = slot.y + slot.h / 2.0;
         context.set_line_width(metrics.wire_width * LINE_WIDTH_RATIO);
-        context.set_stroke_style_str(&theme.port_style(kind, true).colour);
+        context.set_stroke_style_str(&line_colour(theme, kind, line.colour.as_deref()));
         if dashed {
             context.set_line_dash(&crate::json_parse("[4, 3]"))?;
         }
@@ -119,7 +119,7 @@ pub(crate) fn chart(
             context.set_line_dash(&crate::json_parse("[]"))?;
         }
         let room = slot.w - SWATCH_WIDTH - metrics.box_pad;
-        let label = fit_text(context, name, room)?;
+        let label = fit_text(context, &line.name, room)?;
         context.fill_text(
             &label,
             slot.x + SWATCH_WIDTH + metrics.box_pad / 2.0,
@@ -129,14 +129,24 @@ pub(crate) fn chart(
     Ok(())
 }
 
-/// The lines of a plot node: each linked series with its name (the output port's
-/// name, or `n3 loss` when two lines share one), in input order.
+/// One line of a plot node's chart.
+pub(crate) struct Plotted<'a> {
+    /// The legend name: the output port's name, or `n3 loss` when two lines
+    /// share one.
+    pub name: String,
+    pub series: &'a Series,
+    /// The colour the user chose for this input, if any.
+    pub colour: Option<String>,
+}
+
+/// The lines of a plot node: each linked series with its name and its chosen
+/// colour, in input order.
 pub(crate) fn plotted<'a>(
     graph: &Graph,
     (node, node_type): (&PlacedNode, &NodeType),
     outcome: &'a NodeOutcome,
-) -> Vec<(String, &'a Series)> {
-    let sourced: Vec<((&str, &str), &Series)> = node_type
+) -> Vec<Plotted<'a>> {
+    let sourced: Vec<((&str, &str), &Series, &str)> = node_type
         .inputs
         .iter()
         .filter_map(|port| {
@@ -148,14 +158,29 @@ pub(crate) fn plotted<'a>(
             Some((
                 (source.source.node.as_str(), source.source.port.as_str()),
                 series,
+                port.name.as_str(),
             ))
         })
         .collect();
-    let sources: Vec<(&str, &str)> = sourced.iter().map(|(source, _)| *source).collect();
+    let sources: Vec<(&str, &str)> = sourced.iter().map(|(source, _, _)| *source).collect();
     line_names(&sources)
         .into_iter()
-        .zip(sourced.iter().map(|(_, series)| *series))
+        .zip(sourced)
+        .map(|(name, (_, series, port))| Plotted {
+            name,
+            series,
+            colour: node.colours.get(port).cloned(),
+        })
         .collect()
+}
+
+/// The colour line `index` is drawn in: the one the user chose, else the
+/// theme's for the line's kind.
+fn line_colour(theme: &Theme, kind: PortType, chosen: Option<&str>) -> String {
+    chosen.map_or_else(
+        || theme.port_style(kind, true).colour.clone(),
+        str::to_string,
+    )
 }
 
 /// A chart line's width as a fraction of a wire's.

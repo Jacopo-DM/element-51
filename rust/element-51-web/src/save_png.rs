@@ -64,7 +64,7 @@ fn render(state: &State, id: &str) -> Result<(String, String), String> {
             let lines = plotted(graph, (node, &node_type), outcome);
             let series: Vec<(&str, &element_51_core::Series)> = lines
                 .iter()
-                .map(|(name, series)| (name.as_str(), *series))
+                .map(|line| (line.name.as_str(), line.series))
                 .collect();
             let chart = paper_chart(&series).ok_or("The chart has no numbers to save.")?;
             let canvas =

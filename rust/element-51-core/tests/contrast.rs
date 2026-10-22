@@ -1,6 +1,6 @@
 //! WCAG contrast ratios between two hex colours.
 
-use element_51_core::contrast::{parse_hex, ratio};
+use element_51_core::contrast::{is_low_contrast, parse_hex, ratio};
 
 #[test]
 fn black_on_white_is_twenty_one_to_one() {
@@ -40,4 +40,20 @@ fn hex_is_read_in_either_case_and_wrong_forms_are_refused() {
         assert_eq!(parse_hex(bad), None, "{bad}");
         assert_eq!(ratio(bad, "#000000"), None, "{bad}");
     }
+}
+
+#[test]
+fn a_pale_line_on_white_is_low_and_a_dark_one_is_not() {
+    assert!(is_low_contrast("#edc27b", "#ffffff"));
+    assert!(!is_low_contrast("#1a1a80", "#ffffff"));
+}
+
+#[test]
+fn dark_blue_on_a_dark_chart_is_low() {
+    assert!(is_low_contrast("#1a1a80", "#161548"));
+}
+
+#[test]
+fn a_colour_that_is_not_hex_is_not_judged() {
+    assert!(!is_low_contrast("red", "#ffffff"));
 }

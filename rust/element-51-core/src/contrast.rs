@@ -31,3 +31,13 @@ pub fn ratio(first: &str, second: &str) -> Option<f64> {
     let (lighter, darker) = if a >= b { (a, b) } else { (b, a) };
     Some((lighter + 0.05) / (darker + 0.05))
 }
+
+/// The least contrast a graphic needs against what it is drawn on (WCAG 2.1,
+/// 1.4.11).
+pub const GRAPHIC_RATIO: f64 = 3.0;
+
+/// Whether `colour` is hard to see on `background`: below the contrast a
+/// graphic needs. A colour that is not `#rrggbb` is not judged.
+pub fn is_low_contrast(colour: &str, background: &str) -> bool {
+    ratio(colour, background).is_some_and(|ratio| ratio < GRAPHIC_RATIO)
+}
