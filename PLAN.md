@@ -292,8 +292,9 @@ the README credit).
 add the GitHub link to the PyPI page (`[project.urls]`). 0.2.0 was published by the user on
 2026-10-21 (wheel and sdist on PyPI, checked by Claude; tagged `v0.2.0` on `42ca779` and
 pushed). A version number cannot be reused: the next release is 0.2.1 or 0.3.0. Since 0.2.0 the
-repo added the hover text on series boxes, the paper-ready Save as PNG and the card resize
-handle (format version 3), none of it released. The user's first publish attempt on 2026-10-21
+repo added the hover text on series boxes, the card resize handle (format version 3), series
+colours (format version 4), Save as CSV and a matplotlib Save as PNG (matplotlib, numpy and pillow became
+runtime dependencies), none of it released. The user's first publish attempt on 2026-10-21
 was garbled by the app's command box and did not run; whatever was typed at its silent prompt
 may have shown on screen, so the user was told to revoke both that token and the older exposed
 one on pypi.org (not confirmed done).
@@ -304,7 +305,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user's try-out comes first: `d6_auto_run.py` (Run automatically, red failed-node border), `g3_mnist.py` (`uv run examples/g_experiments/g3_mnist.py`; data is in `__data__/` already on the user's machine), the hover text on series boxes, Save as PNG on a Plot and a picture card (the new paper figure, opened in the user's own paper tools), and dragging the grip on a Plot or picture card. Then, in this order: the user revokes the exposed PyPI tokens (unconfirmed) and answers open question 1 (blurry text, needs a screenshot) and open question 2 (my choices for the paper PNG and the resize handle, which the user may overrule); the user records the page (macOS Cmd+Shift+5, about 10 s) so Claude can convert it with `ffmpeg` into `docs/images/mnist.gif` and draft the README lines (goal `readme-gif`, waiting); later, a keyboard way to resize a card (hidden tree) if the user wants it. No approved goal is open besides `readme-gif`; the drafts `save-as-csv` and `matplotlib-png` (added 2026-10-22 on the user's words after the try-out) need `/zz-02-project-plan` for their specs and an approval in words. Fixed on 2026-10-22 on the user's word (approved: overlap drawing order, title contrast): a card on top hides the value boxes and ports of the cards under it, and the `purple-synthwave` card title is lighter. Done and pushed 2026-10-21 and 2026-10-22 (`origin/main` is at `3ffd16c`; the notes commit `853f3a3` is not pushed): `restructure-2`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper`, `card-resize`, and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close) and the series box bare number with a hover text. GitHub CI, Docs and Rust and WASM passed for every push up to `3ffd16c` (read 2026-10-22 with `gh run list --branch main --limit 3`).
+Next step: the user's try-out comes first (everything below is built and pushed, `origin/main` is at `e9f5c2c`, none of it released since 0.2.0): `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. Then: the user revokes the exposed PyPI tokens (unconfirmed), says whether text still looks blurry (open question 1; the user named the grey title text, which is fixed), records the page (macOS Cmd+Shift+5, about 10 s) so Claude can convert it with `ffmpeg` into `docs/images/mnist.gif` and draft the README lines (goal `readme-gif`, waiting), and says whether a keyboard way to resize a card (hidden tree) is wanted. A release would be 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version): `uv run python tools/build_wasm.py`, `uv build`, then the user's publish line. No approved goal is open besides `readme-gif`; the next new goal needs `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner). GitHub CI, Docs and Rust and WASM passed for every push up to `1e9b28a` (read 2026-10-22 with `gh run list --branch main --limit 3`); the runs for `e9f5c2c` were not read. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -678,15 +679,12 @@ Oldest first.
     header) to `#dcdcee` (7.3:1). Open: whether the other grey text (`label` 4.6:1 on the
     card, `text_dim`, `placeholder` 3.7:1) should be lighter too; the user's screen decides.
 
-2. (2026-10-22) On "go" the user did not answer my questions for `png-paper` and `card-resize`, so
-    I picked the recommended options and recorded the reasons in DESIGN.md ("png-paper spec",
-    "card-resize spec"): a 2100 by 1400 pixel PNG at 300 dpi (not single column), x label `index`
-    and y label the line's name only when there is one line, a picture enlarged by a whole number;
-    the resize handle only on picture and chart cards, never below the default size, saved in
-    the graph and undoable. Any of these can change if the user says so.
-
 ## Known problems
 
+- `uv run --locked ty check` (advisory) reports 3 items in the notebooks: `import g3_mnist` in
+    `tests/functional/mnist_example.ipynb` (the example is put on `sys.path` at run time) and
+    `model_dump_json` on the `Reply` union (it includes `None` and `NoReply`) in two cells of
+    `tests/functional/server_and_protocol.ipynb`. Not fixed: they are not errors at run time.
 - A wire drawn over the cards (the translucent pass in `draw.rs`) is clipped to every visible card,
     so a wire of a card that another card hides still shows across the card on top (seen
     2026-10-22 with Train under Plot). The port squares and the value boxes of a covered card are
