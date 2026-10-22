@@ -9,7 +9,11 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-![The element-51 editor in the purple-synthwave theme, with a graph of ten linked nodes](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/palette.jpg)
+![Training a small network on handwritten digits in the element-51 editor: a Train node learns while a Plot draws its loss and accuracy](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/mnist.gif)
+
+Three nodes: one shows a picture from the MNIST digits, one trains a small
+network on them, and a Plot draws the loss and the accuracy as they change.
+The example is `examples/g_experiments/g3_mnist.py`.
 
 Design node-editor GUIs from Python. You write nodes as typed functions or small
 classes. element-51 serves an editor in the browser where people wire them

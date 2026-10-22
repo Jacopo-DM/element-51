@@ -1451,6 +1451,10 @@ public area has a notebook or a row saying none yet", and a test keeps it true.
 - The accessibility scan with axe-core (`tools/ui_axe.js`) was not re-run for the new controls: it
     needs a download and the user's yes by name, source and size. They are checked by the keyboard
     walk-through rows (`uiKeysDisplay`, 28) and by hand.
+- The `purple-synthwave` card title is `#dcdcee` (7.3:1 on the header), up from `#acadbc`
+    (4.6:1), because the user found the grey title text hard to read (2026-10-22). The other
+    grey text (`label` 4.6:1 on the card, `text_dim`, `placeholder` 3.7:1) was left: the user
+    then said the text looks good.
 
 ## Rejected approaches
 
@@ -1850,6 +1854,15 @@ have to go through `tools/compress_images.py`).
     (about 900 lines with tests); the size, the 300 dpi and the whole-number picture scale were kept.
     Alternatives the user declined: matplotlib as an optional extra with the Rust PNG as a fallback,
     matplotlib's own colour cycle, a figure that follows the theme.
+- A README GIF built from browser-pane screenshots with Pillow (2026-10-22): the pane throttles
+    a page it is not showing (a run slowed to 0.09 s a step reached step 4 in about 20
+    screenshots) and every screenshot is inlined into the conversation, so about 15 smooth
+    frames were not reachable. The user's screen recording cropped and converted with `ffmpeg`
+    worked (`docs/images/mnist.gif`; at 10 fps and 1000 px it was 1.18 MB, at 4 fps, 720 px and
+    32 colours 220 KB, and the user chose that).
+- A keyboard way to resize a card (2026-10-22): the hidden accessibility tree has no resize
+    action, so a screen reader or keyboard user cannot use the grip, which only changes how
+    the card looks. The user chose not to add it.
 
 ## Results
 

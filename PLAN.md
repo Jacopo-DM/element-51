@@ -193,27 +193,13 @@ try-out is still to come; the keyboard walk-throughs do not cover this example.
 A grip in the bottom right corner of a picture or chart card resizes it; the size is part of the graph (Python sees it,
 save and load keep it as format version 3, undo covers it). The choices were mine when the user said go (DESIGN.md,
 "card-resize spec"); the user's own try-out is still to come. Not done: resizing by keyboard (the hidden tree has no
-resize action), so a screen reader user cannot resize.
+resize action), so a screen reader user cannot resize. The user chose not to add it
+(2026-10-22; DESIGN.md, Rejected approaches).
 
-### readme-gif (waiting on the user's recording, 2026-10-22)
+### readme-gif: done (2026-10-22)
 
-- Goal: the MNIST demo as a GIF header in the README.
-- Tried 2026-10-22 and dropped: building it from browser-pane screenshots with Pillow. The pane
-    throttles a page it is not showing (a run slowed to 0.09 s a step reached step 4 in about 20
-    screenshots) and every screenshot costs a large amount of context, so about 15 smooth frames
-    were not reachable.
-- Plan now: the user records the page (macOS Cmd+Shift+5, about 10 s: tick `Run automatically`,
-    press Start on `Train`, then type `fashion` in the sample's `dataset` box), and Claude converts
-    the `.mov` with `ffmpeg` (already installed at `/opt/homebrew/bin/ffmpeg`, nothing to download)
-    into `docs/images/mnist.gif`, under about 3 MB, and drafts the README lines for the user's
-    review (the README prose is the user's).
-- Kind: new behaviour (docs).
-- Done 2026-10-22: the user recorded the page (19.8 s, 2880 by 1800); `ffmpeg` cropped it to the graph
-    and made `docs/images/mnist.gif` (17 s, 4 fps, 720 px wide, 32 colours, 220 KB; the 10 fps
-    1000 px version was 1.18 MB and the user chose the small one). Left: the user decides where the
-    draft README lines go (the README prose is the user's, nothing in README.md changed).
-- Status: GIF done, README lines waiting on the user.
-- Added: 2026-10-22
+The MNIST demo GIF (`docs/images/mnist.gif`, 17 s, 4 fps, 720 px, 32 colours, 220 KB) cut with
+`ffmpeg` from the user's screen recording; it replaces the top picture of the README.
 
 ### series-colour: done (2026-10-22)
 
@@ -309,7 +295,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: the user's try-out comes first (everything below is built and pushed, `origin/main` is at `e9f5c2c`, none of it released since 0.2.0): `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. Then: the user revokes the exposed PyPI tokens (unconfirmed), says whether text still looks blurry (open question 1; the user named the grey title text, which is fixed), says where the README lines for `docs/images/mnist.gif` go (goal `readme-gif`, the GIF is made), and says whether a keyboard way to resize a card (hidden tree) is wanted. A release would be 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version): `uv run python tools/build_wasm.py`, `uv build`, then the user's publish line. No approved goal is open besides `readme-gif`; the next new goal needs `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner). GitHub CI, Docs and Rust and WASM passed for every push up to `1e9b28a` (read 2026-10-22 with `gh run list --branch main --limit 3`); the runs for `e9f5c2c` were not read. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
+Next step: release 0.3.0 (the user tried the examples below on 2026-10-22 and is happy; everything is built and pushed, none of it released since 0.2.0). The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version): `uv run python tools/build_wasm.py`, `uv build`, then the user's publish line. No approved goal is open; the next new goal needs `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner). GitHub CI, Docs and Rust and WASM passed for every push up to `1e9b28a` (read 2026-10-22 with `gh run list --branch main --limit 3`); the runs for `e9f5c2c` were not read. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -675,13 +661,7 @@ restarts (not saved, by decision).
 
 Oldest first.
 
-1. (2026-10-20) Text is still blurry on the user's screen (their answer in
-    housekeeping 2026-10-20; zoom speed was not reported as a problem). Three
-    fixes were already made (device-pixel canvas, opaque context, Verdana and
-    Monaco). On 2026-10-22 the user said the cause is the grey text in the title bars
-    not contrasting enough; the `purple-synthwave` title went from `#acadbc` (4.6:1 on the
-    header) to `#dcdcee` (7.3:1). Open: whether the other grey text (`label` 4.6:1 on the
-    card, `text_dim`, `placeholder` 3.7:1) should be lighter too; the user's screen decides.
+None open.
 
 ## Known problems
 
@@ -708,9 +688,7 @@ Oldest first.
     at 200 nodes after the swatches and the overlap fix: median 1.49 ms, range 0.99 to 2.66
     (11 runs of 100 wheel events, 2026-10-22; the known band is 1.3 to 1.6). Not checked: a screen
     reader on the colour box, touch.
-- No keyboard way to resize a card: the hidden tree has no resize action, so a screen reader or
-    keyboard user cannot use the grip (the size only changes how the card looks). A touch screen
-    was not tried either (the grip is 14 graph units square).
+- A touch screen was not tried on the resize grip (it is 14 graph units square) or the colour box.
 - The hover text on a series or picture box is the canvas's `title`, set on mouse move
     (`tip_at` in `fields_ui.rs`). It does nothing on touch or for the keyboard; the hidden tree
     and the status line keep the word `last`. Not measured: the redraw cost on the 200-node page
@@ -720,9 +698,6 @@ Oldest first.
     log axes (a chart has no log mode); axis names (a series carries none, so the x label is the
     fixed word `index`). Save as PNG needs the Python connection, and the first chart takes about a
     second (matplotlib loads).
-- `readme-gif`: capturing frames from browser-pane screenshots does not work (the pane throttles
-    a page it is not showing, and each screenshot in a `browser_batch` is inlined into the
-    conversation); a real screen recording converted with `ffmpeg` worked (see the goal).
 - The MNIST example downloads 42.5 MB into `__data__/` the first time `main()` runs; tests never
     download (they use fake files) and every example test runs from an empty temporary folder.
 - Isolated jobs were checked on macOS only (spawn), by the tests and live in the browser pane with
