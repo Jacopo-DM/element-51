@@ -41,6 +41,6 @@ a row (a test fails without it).
 | `store` | `save_and_load.ipynb` |
 | `theme` | `themes.ipynb` |
 | `visuals` | `pictures_and_series.ipynb` |
-| `edits` | none yet |
+| `edits` | `editing.ipynb` |
 | `protocol` | none yet |
 | `server` | none yet |
