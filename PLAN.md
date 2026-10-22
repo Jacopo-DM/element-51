@@ -573,7 +573,7 @@ with search) are done, and 15 (README credit); detail in DESIGN.md. Task 18 (the
 - Multi-select and moving several nodes: no multi-select exists, so it is new behaviour.
 - Rebinding shortcuts: a non-goal.
 
-### Goal `speed-up-frame`: tasks 1 and 2 done, 3 awaiting a decision
+### Goal `speed-up-frame`: tasks 1 and 2 done, 3 to 6 skipped (2026-10-21)
 
 Profile, 2026-10-21 (a throwaway build that timed each part of `redraw` with
 `performance.now()` and turned parts off from a `data-skip` attribute on the canvas;
@@ -613,7 +613,7 @@ Tier 2:
     200 nodes 1.75 to 1.73 to 1.80 (none within the spread). Risk low, 5 lines, no look
     change expected (verify by screenshot). It is the cheapest step toward the 1.0 ms
     budget but does not reach it alone.
-3. Needs the user's decision: make the grid much cheaper. The grid is 0.6 to 0.7 ms (38 to
+3. Skipped at the user's word on 2026-10-21 (DESIGN.md, Rejected approaches): make the grid much cheaper. The grid is 0.6 to 0.7 ms (38 to
     40%) of both pages and the ceiling of any grid change. Options: a pattern fill of a
     small tile (one `fill_rect` of the canvas; the tile is a bitmap scaled by the zoom, so
     the dots get a little soft at some zooms), or a cached bitmap of the grid that only
