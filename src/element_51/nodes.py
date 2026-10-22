@@ -207,7 +207,7 @@ class Node(Model):
             inputs=tuple(inputs),
             outputs=outputs,
             defaults=defaults,
-            category=_check_category(cls.category, name),
+            category=check_category(cls.category, name),
             display=display_of(outputs),
             job=cls.is_job,
         )
@@ -327,7 +327,7 @@ def _build_node[**P, R](
         inputs=tuple(inputs),
         outputs=outputs,
         defaults=defaults,
-        category=_check_category(category, name),
+        category=check_category(category, name),
         display=display_of(outputs),
     )
     return NodeFunction(func, node_type, defaults, output_model)
@@ -403,7 +403,7 @@ def node[**P, R](
     return _build_node(func, category)
 
 
-def _check_category(category: str, where: str) -> str:
+def check_category(category: str, where: str) -> str:
     """Return `category` if it is well formed.
 
     Returns

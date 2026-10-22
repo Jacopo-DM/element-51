@@ -754,13 +754,9 @@ Tier 1:
 
 1. Done (2026-10-22): `nodes_from_module`, `Scan` and `Skipped` in `src/element_51/wrap.py`, 9 tests in
     `tests/test_wrap.py`, a "none yet" row for `wrap` in `tests/functional/README.md` until task 4.
-2. **Scan numpy's ufuncs** (criterion 3). `UfuncNode` and `nodes_from_ufuncs` in `wrap.py`: loop
-    choice from `types`, ports from `nin` and `nout`, the result model for two outputs, the
-    one-line source text, `np.errstate`, aliases and the gufunc and no-loop skips. Tests: every
-    distinct ufunc is a node or skipped with a reason, the five known skips by name, `sin`,
-    `hypot`, `modf`, `isnan`, `ldexp` through `App.run`, and a Hypothesis test that each all-float
-    node equals numpy on random floats. About 200 lines. Risk medium: numpy's loop tables hold
-    surprises (the reason this task has the property test).
+2. Done (2026-10-22): `nodes_from_ufuncs` and `UfuncNode` in `wrap.py`, 17 tests and two property tests in
+    `tests/test_wrap_ufuncs.py`; 85 nodes and 5 skipped on numpy 2.5.4. One limit found, in Known
+    problems.
 
 Tier 2:
 
@@ -858,6 +854,10 @@ None open.
 - A card shows only the first picture of its node (the one first in port name order).
 - Not checked on a narrow window or by touch: the source panel, the growing Plot card, the
     chart. Not run in a real screen reader: the panel and the chart label.
+- The ufunc nodes `logical_and`, `logical_or`, `logical_xor` and `logical_not` take float inputs, because the
+    scan takes the first all-float64 loop, and a bool output cannot link to a float input (only int to float
+    links), so `isnan` into `logical_not` cannot be wired. A bool-first rule for those four, or letting bool feed
+    float, would change behaviour: the user decides.
 - A node's empty output box says `output`, the same word as the port name.
 - The page parts and the theme colours are checked at AA by tests and by axe in
     the built-in browser pane; a scan with a real screen reader was not done.

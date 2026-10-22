@@ -1010,7 +1010,13 @@ chose the recommended options:
         ufunc's `__name__`, so `acos` and `arccos` give one `arccos`). Each is a `UfuncNode`, a
         class that follows the `Registered` interface like `PlotNode`. Inputs: `x`, or `x1` and
         `x2` (numpy's own names). Outputs: `out`, or `out1` and `out2` (`modf`, `divmod`,
-        `frexp`), through a pydantic model made with `create_model`.
+        `frexp`), through one shared `UfuncOutputs` model that allows extra fields (mypy cannot
+        check a model made with `create_model` at run time; the engine only reads the fields
+        with `getattr`). numpy is imported inside the functions that need it, because
+        `tests/test_figures.py` requires that `import element_51` loads no numpy; `Ufunc` is a
+        `Protocol` for what the scan reads, so no numpy type appears in a signature. Every value
+        is turned into the port's type before the call (an int on a float port becomes a float, so
+        an integer loop cannot overflow) and back after it.
     - Port types come from the documented loops (`ufunc.types`): the first loop whose inputs are
         all float64, else all int64, else all bool, else a mix of those (`ldexp` is `dl->d`);
         outputs follow the loop (kind `f` float, `i` or `u` int, `b` bool). The result is
@@ -2035,6 +2041,8 @@ have to go through `tools/compress_images.py`).
 | 2026-10-22 | goal browser-tests, task 3: a `run-browser-tests` pre-push hook in `.pre-commit-config.yaml` (it now differs from the template copy by this one entry, the user's choice) | `uv run --locked pre-commit run run-browser-tests --hook-stage pre-push --all-files` passed; not yet: a real push, the GitHub job |
 | 2026-10-22 | goal browser-tests, tasks 4 and 5: the `browser` job on GitHub, the docs | the first run on GitHub (`af539ee`): `rust` 51 s, `wasm` 2 min 20 s, `browser` 3 min 40 s, all green; the pre-push run of that push took 57 s in all (notebooks and the walk-throughs); the same push turned CI red for another reason (three embedding tests, see Gotchas), fixed after |
 | 2026-10-22 | goal wrap-module, task 1: `nodes_from_module` in the new `src/element_51/wrap.py` (`Scan`, `Skipped`; exported from `element_51`) | 9 tests in `tests/test_wrap.py` (definition order, the ports equal `@node`'s, the category goes to plain functions only, a bad category raises, three skip reasons, private/imported/alias/constant/class left out, `__all__`, a taken name reported, the nodes feed `App` and `zscore` runs to 1.0); 509 tests at 100%; `ty` unchanged at 3 notebook items; a second name for one function is ignored silently (the ufunc scan will follow the same rule); `Scan.nodes` is `SkipValidation[tuple[Registered, ...]]` because `Registered` is a protocol pydantic cannot check |
+| 2026-10-22 | goal wrap-module, task 2: `nodes_from_ufuncs` and `UfuncNode` in `wrap.py` (`check_category` in `nodes.py` made public for it) | 17 tests in `tests/test_wrap_ufuncs.py` (every distinct ufunc is a node or a skip, the five known skips with their reasons, aliases, the category, ports for `sin`, `hypot`, `isnan`, `ldexp`, `gcd`, `modf`, `frexp`, plain Python results, a whole number on a float port cannot overflow, divide by zero gives `inf` with no warning, the source line, a graph through `App.run`, a made-up ufunc, a text on a number port is refused) and two Hypothesis tests that every one-input and two-input float ufunc node equals numpy on random floats; numpy 2.5.4: 106 names, 90 distinct ufuncs, 85 nodes, 5 skipped (`matmul`, `matvec`, `vecdot`, `vecmat`, `isnat`); 527 tests at 100%; ty unchanged at 3 notebook items; a limit found: `logical_and`, `logical_or`, `logical_xor` and `logical_not` take floats (the first all-float64 loop), and a bool output cannot link to a float input, so `isnan` into `logical_not` cannot be wired |
+
 
 ## Gotchas
 
