@@ -278,6 +278,75 @@ purpose gives `FAIL` and exit code 1; the pre-push hook runs it; the `browser` j
 `rust.yml` passed on GitHub (3 min 40 s with the toolchain and the Chromium install). Spec and
 decisions: DESIGN.md, `browser-tests spec`; numbers: Baseline and the Results rows.
 
+### wrap-module
+
+- Goal: a library author turns the plain functions they already have into nodes
+    with one call and no decorator on each: their own typed modules, and numpy's
+    element-wise functions (ufuncs).
+- Kind: new behaviour.
+- Success measure (each is a test):
+    1. `element_51.nodes_from_module(module, category="Stats")` returns a node for
+        every public function of `module` whose parameters and return value are
+        annotated with `float`, `int`, `str`, `bool` (or a pydantic model of those),
+        in the order they are defined, each in the menu under that category;
+        `App(...)` takes them as they are.
+    2. A function that does not fit (no hint, `*args` or `**kwargs`, a
+        positional-only parameter, an unsupported type) is skipped, not raised on, and
+        comes back in a second list with its name and the reason; the others still
+        become nodes. Names that start with `_`, names imported from elsewhere and
+        names outside `__all__` (when the module has one) are not scanned; two
+        functions with one name are reported, not silently dropped.
+    3. `element_51.nodes_from_ufuncs(np, category="Numpy")` makes a node for every
+        numpy ufunc without anything written by hand: inputs from `nin`, outputs
+        from `nout` (`modf` and `divmod` get two), port types from the ufunc's
+        documented loops (`types`: `d` float, `l` int, `?` bool), the result converted
+        back to a plain `float`, `int` or `bool`. An alias (`abs` for `absolute`) gives
+        one node. A ufunc with no float, int or bool loop is skipped with its reason.
+    4. `examples/h_wrapping/` has two short examples (numpy's ufuncs; a small module
+        of the user's own typed functions); a test builds the nodes from `np`, runs
+        a sample through `App.run` (`sin(0)` is 0, `hypot(3, 4)` is 5, `modf(2.5)`
+        gives 0.5 and 2.0, `isnan(nan)` is true) and checks the skipped list against
+        a written-out expected list.
+- Status: approved 2026-10-22 (both entry points; scalars first, arrays in
+    `array-ports`). Spec: proposed, waiting for the user's approval.
+- Constraints: no new dependency (numpy is a runtime dependency already); the public
+    surface grows by two functions; examples follow `examples/template.py` and get
+    rows in `tests/test_examples.py`; only scalar ports (arrays come with
+    `array-ports`, after which the same ufunc nodes take arrays).
+- Non-goals: arrays (the next goal); numpy functions that are not ufuncs (`np.mean`,
+    `np.clip`: no run-time hints; reading numpy's `.pyi` stubs would be a goal of its
+    own, MonkeyType was considered and left out, DESIGN.md); writing a decorated copy
+    of a module to disk; classes and methods; a job form of a wrapped function.
+- Added: 2026-10-22
+
+### array-ports
+
+- Goal: a port can carry an array of any shape and dtype, in place of `Series`, and
+    numpy arrays (and other tensor types through the same adapter interface) convert
+    to and from it. Depends on `wrap-module`.
+- Kind: new behaviour.
+- Success measure (a draft; the spec makes each testable):
+    1. A new port kind `Array` carries its shape, dtype and values; `Series` is removed
+        (the user's choice, 2026-10-22: two kinds that nearly do the same thing are
+        not wanted). `Plot`, the job reports and the MNIST example use `Array`.
+    2. A parameter or return hinted `NDArray[...]` becomes an `Array` port, and the
+        ufunc nodes of `wrap-module` take and return arrays; a user's functions keep
+        their numpy hints and run as plain Python.
+    3. An adapter interface (a `Protocol`) lets another library register a converter;
+        a test uses a stand-in tensor class. PyTorch is not shipped or installed.
+    4. The card shows an array (shape and dtype; 1-D as the line chart as now; 2-D
+        as a picture or a table: to decide in the spec), the hidden tree describes
+        it, every part is keyboard reachable and AA in all themes.
+    5. Files saved by 0.3.0 (format version 4) still load, and a graph with a Plot
+        looks the same after loading.
+- Status: direction approved 2026-10-22 (replace `Series` with `Array`). Not
+    specified; waits for `wrap-module`.
+- Open questions: the size limit of an array on the wire (a `Series` is 100,000
+    values), and whether a 2-D array is shown as a picture or a table. A saved file
+    holds no port types (only values, positions, links and series colours keyed by
+    input name), so the file format may need no change at all: the spec checks.
+- Added: 2026-10-22
+
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
@@ -673,6 +742,43 @@ restarts (not saved, by decision).
 - Running the four walk-throughs in parallel: saves some seconds at the price of a pool of ports
     and browsers; revisit only if the pre-push run is too slow.
 - Running the browser tests in the Stop hook: it would start Chromium after every turn.
+
+### Goal `wrap-module`: task list (proposed 2026-10-22, waiting for approval)
+
+Spec: DESIGN.md, `wrap-module spec`. Every task is new code in a new module, so no existing test
+pins it; each writes its tests first and the gates (ruff, mypy, pytest at 100%, ty) pass before
+and after. No Rust, so `cargo` and the browser walk-throughs are unaffected (run once at the
+end).
+
+Tier 1:
+
+1. **Scan a module** (criteria 1 and 2). New `src/element_51/wrap.py` with `Skipped`, `Scan` and
+    `nodes_from_module`; both names exported from `src/element_51/__init__.py`; tests in
+    `tests/test_wrap.py` (fitting functions in order, each skip reason, private, imported and
+    `__all__` rules, a duplicate name, an already decorated function and a `Node` subclass passing
+    through). About 120 lines, no new concept beyond the spec, no new dependency. Risk low.
+2. **Scan numpy's ufuncs** (criterion 3). `UfuncNode` and `nodes_from_ufuncs` in `wrap.py`: loop
+    choice from `types`, ports from `nin` and `nout`, the result model for two outputs, the
+    one-line source text, `np.errstate`, aliases and the gufunc and no-loop skips. Tests: every
+    distinct ufunc is a node or skipped with a reason, the five known skips by name, `sin`,
+    `hypot`, `modf`, `isnan`, `ldexp` through `App.run`, and a Hypothesis test that each all-float
+    node equals numpy on random floats. About 200 lines. Risk medium: numpy's loop tables hold
+    surprises (the reason this task has the property test).
+
+Tier 2:
+
+3. **Two examples and the docs page** (criterion 4). `examples/h_wrapping/h1_numpy_ufuncs.py`
+    and `h2_own_module.py` (a module that scans itself), laid out like `examples/template.py`,
+    rows in `tests/test_examples.py`, `docs/wrapping.md` in the toctree (docs build with `-W`).
+    About 120 lines of Python and a page of prose that I draft for the user's review. Risk low.
+4. **Notebook and notes.** `tests/functional/wrapping.ipynb` and its row in
+    `tests/functional/README.md` (a test fails without it), a README line, CODEMAP.md, the
+    Results row in DESIGN.md, and the browser walk-throughs run once with the cargo suites.
+    Risk low.
+
+Tier 3 (listed, not executed): sub-menus by kind (trig, bitwise) because numpy gives no machine
+readable grouping; a name prefix option; a test with `scipy.special` (scipy is not a
+dependency); numpy functions that are not ufuncs (a goal of its own, from numpy's `.pyi` stubs).
 
 ### Tier 3: listed, not executed
 

@@ -990,6 +990,52 @@ chose the recommended options:
     so the runner's pure parts are tested in `tests/test_browser_runner.py` and the driving by the
     run itself; a row that depends on real focus needs the one click above.
 
+### wrap-module spec (approved 2026-10-22)
+
+- Users and purpose: a library author who already has typed Python functions, or wants numpy's
+    element-wise functions, as nodes without a decorator on each. Scalars only (`float`, `int`,
+    `str`, `bool`); arrays come with the goal `array-ports`, after which the same ufunc nodes
+    take arrays.
+- Architecture: one new module, `src/element_51/wrap.py`, and two new names in `element_51`. No
+    Rust or page change, so no WASM rebuild.
+    - `nodes_from_module(module, category="")` returns a frozen `Scan` record with `nodes` and
+        `skipped` (`Skipped(name, reason)`). It calls the public `node(category=...)` on each
+        public function, in definition order, so every existing hint check applies and the
+        `TypeError` text becomes the reason. Left out: names starting with `_`, names defined in
+        another module, names outside `__all__` when the module has one. Already decorated
+        `NodeFunction` objects and `Node` subclasses defined in the module are included as they
+        are. Two with one name are reported, not dropped.
+    - `nodes_from_ufuncs(namespace, category="")` returns the same `Scan`. It reads every
+        `numpy.ufunc` in the namespace, one node per distinct ufunc (the node is named by the
+        ufunc's `__name__`, so `acos` and `arccos` give one `arccos`). Each is a `UfuncNode`, a
+        class that follows the `Registered` interface like `PlotNode`. Inputs: `x`, or `x1` and
+        `x2` (numpy's own names). Outputs: `out`, or `out1` and `out2` (`modf`, `divmod`,
+        `frexp`), through a pydantic model made with `create_model`.
+    - Port types come from the documented loops (`ufunc.types`): the first loop whose inputs are
+        all float64, else all int64, else all bool, else a mix of those (`ldexp` is `dl->d`);
+        outputs follow the loop (kind `f` float, `i` or `u` int, `b` bool). The result is
+        converted to a plain `float`, `int` or `bool`. Calls run under `np.errstate(all="ignore")`,
+        so a divide by zero gives `inf` or `nan` as numpy does and prints no warning (the page
+        shows them as `null`: Known problems).
+    - A ufunc is skipped, with its reason, when it has a `signature` (a generalised ufunc such as
+        `matmul`, `matvec`, `vecdot`, `vecmat`: they need whole arrays) or no loop of those types
+        (`isnat`: dates only). On numpy 2.5.4: 106 names, 90 distinct ufuncs, 85 nodes, 5 skipped.
+    - "View source code" on a ufunc node shows one line such as `numpy.hypot(x1, x2)` (a ufunc has
+        no source file).
+- Acceptance criteria and tests: PLAN.md, goal `wrap-module`, criteria 1 to 4. The ufunc test
+    checks that every distinct ufunc is a node or is in `skipped` with a reason, and names the
+    five known skips; it does not list all 85 nodes, so a numpy upgrade that adds a ufunc does not
+    break it. A property test compares each all-float ufunc node with numpy on random floats.
+- Decisions (the user's answers 2026-10-22): both entry points; scalars first and arrays as the
+    next goal; keep a skipped function in a list, not an exception. Mine: a name clash between a
+    scanned function and a ufunc (`add`) raises at `App(...)` as it does today, with no prefix
+    option; one `Numpy` flyout for all 85 (it scrolls and the search finds them), no sub-menus;
+    `nodes_from_ufuncs(scipy.special)` should work since scipy's functions are numpy ufuncs, but
+    scipy is not a dependency and it is not tested.
+- Non-goals: arrays; numpy functions that are not ufuncs (`np.mean`: `typing.get_type_hints` gives
+    `{}`, numpy's types live in `.pyi` stubs that Python cannot read at run time); a decorated
+    copy of a module on disk; classes and methods; a job form of a wrapped function.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1899,6 +1945,18 @@ have to go through `tools/compress_images.py`).
 - A keyboard way to resize a card (2026-10-22): the hidden accessibility tree has no resize
     action, so a screen reader or keyboard user cannot use the grip, which only changes how
     the card looks. The user chose not to add it.
+- A file of about 100 hand-written numpy wrappers as the way in (2026-10-22): the user's own
+    library is what `nodes_from_module` serves, and numpy's ufuncs describe themselves (`nin`,
+    `nout`, `types`), so nothing needs writing.
+- Generating a decorated copy of a module (`@node` above every function) (2026-10-22): the file
+    goes stale when the functions change.
+- MonkeyType, or guessing from parameter names, for untyped numpy functions (2026-10-22): it
+    records what a run happened to contain, not what numpy accepts, and the names `a`, `axis`,
+    `dtype` do not tell a port type. Reading numpy's `.pyi` stubs is the exact source, but
+    `np.mean` has about ten `@overload` variants, so it is a goal of its own.
+- Mapping `NDArray[np.float64]` onto the `Series` port (2026-10-22): the user wants one general
+    `Array` port in place of `Series` (goal `array-ports`), and mapping first would change every
+    graph later.
 
 ## Results
 
