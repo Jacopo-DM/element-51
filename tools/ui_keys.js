@@ -486,6 +486,27 @@ async function uiKeysDisplay() {
     check("the chart file is larger than the card's chart area", image.naturalWidth > 400 && image.naturalHeight > 200, image.naturalWidth + " by " + image.naturalHeight);
     HTMLElement.prototype.click = originalClick;
     banner.setAttribute("hidden", "");
+
+    const swatch = (port) => document.getElementById("swatch-n4-" + port);
+    const reset = (port) => document.getElementById("reset-n4-" + port);
+    const ports = ["series_1", "series_2", "series_3"];
+    check(
+        "each series input of the Plot has a named colour box",
+        ports.every((port) => swatch(port) && swatch(port).type === "color" && swatch(port).getAttribute("aria-label") === "Colour of " + port + " on n4"),
+        ports.map((port) => swatch(port) && swatch(port).getAttribute("aria-label")).join(" | "),
+    );
+    check("a box shows the line's colour and no reset button is shown", /^#[0-9a-f]{6}$/.test(swatch("series_1").value) && ports.every((port) => reset(port).hidden), swatch("series_1").value);
+    const before = swatch("series_2").value;
+    swatch("series_2").value = "#1a1a80";
+    swatch("series_2").dispatchEvent(new Event("change", { bubbles: true }));
+    await wait(400);
+    check("choosing a colour keeps it and shows the reset button", swatch("series_2").value === "#1a1a80" && !reset("series_2").hidden && reset("series_1").hidden, swatch("series_2").value);
+    check("a colour that is hard to see is marked, with the ratio", swatch("series_2").hasAttribute("data-low") && /^Hard to see on this chart \(\d+\.\d to 1\)$/.test(swatch("series_2").title), swatch("series_2").title);
+    check("the status line says which colour was set", status.textContent === "Set the colour of series_2 of n4 to #1a1a80", status.textContent);
+    reset("series_2").click();
+    await wait(400);
+    check("reset gives the theme's colour back and hides itself", swatch("series_2").value === before && reset("series_2").hidden && !swatch("series_2").hasAttribute("data-low"), swatch("series_2").value);
+    check("the status line says the series follows the theme", status.textContent === "The colour of series_2 of n4 follows the theme", status.textContent);
     return {
         passed: rows.filter((row) => row[1]).length,
         failed: rows.filter((row) => !row[1]).length,

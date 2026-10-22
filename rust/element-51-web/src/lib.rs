@@ -23,6 +23,7 @@ mod pictures;
 mod run_ui;
 mod save_png;
 mod source_ui;
+mod swatch_ui;
 mod theme_ui;
 mod tree_keys;
 
@@ -56,6 +57,7 @@ use menu_keys::{on_card_menu_key, on_menu_key, on_menu_search_key};
 use menu_ui::{on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search};
 use pictures::Pictures;
 use source_ui::{close_source, on_press_outside, on_source_key};
+use swatch_ui::sync_swatches;
 use theme_ui::{
     on_app_menu_button, on_palette_key, on_palette_submit, on_select_theme, on_theme_click,
     on_try_palette,
@@ -347,6 +349,7 @@ pub(crate) fn redraw(shared: &Shared) {
     sync_tree(shared);
     draw_canvas(shared);
     sync_fields(shared);
+    sync_swatches(shared);
 }
 
 /// Hide the error banner.

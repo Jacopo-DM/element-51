@@ -393,6 +393,7 @@ impl Theme {
             ("--run-hover-text", &colours.run_hover_text),
             ("--accent", &colours.accent),
             ("--focus", &colours.focus),
+            ("--refused", &colours.refused),
         ]
         .into_iter()
         .map(|(name, value)| (name.to_string(), value.clone()))

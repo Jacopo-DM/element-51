@@ -99,6 +99,35 @@ pub fn output_row(node_type: &NodeType, index: usize) -> usize {
     node_type.inputs.len() + index
 }
 
+/// The side of a series colour swatch, in graph units.
+pub const SWATCH_SIDE: f64 = 14.0;
+/// The side of the button that gives a series the theme's colour again.
+pub const RESET_SIDE: f64 = 12.0;
+const SWATCH_GAP: f64 = 4.0;
+/// The room a chart card's label column gives the swatch and its reset button,
+/// left of the port names: what both take, and the gap before and between.
+pub const SWATCH_ROOM: f64 = SWATCH_SIDE + RESET_SIDE + 2.0 * SWATCH_GAP;
+
+/// Where the colour swatch and its reset button of the series input on row
+/// `row` sit: in the label column, just right of the port.
+pub fn swatch_boxes(rect: &Rect, row: usize, metrics: &Metrics) -> (Rect, Rect) {
+    let middle = row_centre(rect, row, metrics);
+    let left = rect.x + metrics.port_inset + metrics.port_size / 2.0 + SWATCH_GAP;
+    let swatch = Rect {
+        x: left,
+        y: middle - SWATCH_SIDE / 2.0,
+        w: SWATCH_SIDE,
+        h: SWATCH_SIDE,
+    };
+    let reset = Rect {
+        x: left + SWATCH_SIDE + SWATCH_GAP,
+        y: middle - RESET_SIDE / 2.0,
+        w: RESET_SIDE,
+        h: RESET_SIDE,
+    };
+    (swatch, reset)
+}
+
 fn row_centre(rect: &Rect, row: usize, metrics: &Metrics) -> f64 {
     rect.y + metrics.header_height + metrics.row_height * (row as f64 + 0.5)
 }

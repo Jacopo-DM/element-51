@@ -8,13 +8,14 @@ use crate::draw_wires::{draw_links, wire, wire_colour};
 use crate::pictures::Pictures;
 use element_51_core::job::JobButton;
 use element_51_core::layout::{
-    PortHit, Rect, Side, anchor_of, input_anchor, node_rect, output_anchor, output_row,
+    PortHit, Rect, SWATCH_ROOM, Side, anchor_of, input_anchor, node_rect, output_anchor, output_row,
 };
 use element_51_core::rows::{find_input, type_of};
 use element_51_core::theme::{Metrics, PortShape, PortStyle, Theme};
 use element_51_core::view::View;
 use element_51_core::{
-    Edit, Graph, JobUpdate, Link, NodeType, PlacedNode, PortRef, PortType, RunResult, apply_edit,
+    CardDisplay, Edit, Graph, JobUpdate, Link, NodeType, PlacedNode, PortRef, PortType, RunResult,
+    apply_edit,
 };
 use std::collections::BTreeMap;
 use std::f64::consts::TAU;
@@ -100,7 +101,13 @@ pub fn columns(
         widest = widest.max(context.measure_text(&port.name)?.width());
     }
     let edge = metrics.port_inset + metrics.port_size / 2.0 + metrics.port_gap;
-    let label_right = rect.x + edge + widest;
+    // A chart card keeps room before the names for each series' colour swatch.
+    let room = if node_type.display == CardDisplay::Chart {
+        SWATCH_ROOM
+    } else {
+        0.0
+    };
+    let label_right = rect.x + edge + room + widest;
     Ok(Columns {
         label_right,
         box_left: label_right + metrics.box_gap,

@@ -149,6 +149,22 @@ pub const CHART_LINE_STYLES: [PortType; 5] = [
     PortType::Series,
 ];
 
+/// The number of the chart line the series input `port` of `node` draws, or
+/// would draw if it were linked: the linked series inputs before it, in order.
+pub fn line_slot(
+    graph: &crate::Graph,
+    node: &crate::PlacedNode,
+    node_type: &NodeType,
+    port: &str,
+) -> usize {
+    node_type
+        .inputs
+        .iter()
+        .take_while(|input| input.name != port)
+        .filter(|input| input.kind == PortType::Series && graph.is_linked(&node.id, &input.name))
+        .count()
+}
+
 /// The style of line number `index`, counting from 0.
 pub fn line_style(index: usize) -> (PortType, bool) {
     (

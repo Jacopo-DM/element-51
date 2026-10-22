@@ -191,10 +191,14 @@ pub fn describe_ports(graph: &Graph, node_types: &[NodeType], id: &str) -> Vec<P
             Some(end) => format!("linked from {}", end_name(end)),
             None => "not linked".to_string(),
         };
+        let colour = node
+            .colours
+            .get(&port.name)
+            .map_or_else(String::new, |colour| format!(", colour {colour}"));
         PortItem {
             port: port.name.clone(),
             side: Side::Input,
-            label: format!("Input {}, {}, {state}", port.name, port.kind),
+            label: format!("Input {}, {}, {state}{colour}", port.name, port.kind),
         }
     });
     let outputs = node_type.outputs.iter().map(|port| {

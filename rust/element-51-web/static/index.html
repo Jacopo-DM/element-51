@@ -60,6 +60,17 @@ canvas { display: block; width: 100%; height: 100%; }
     background: var(--field-bg); color: var(--field-text); border: 1px solid var(--field-border);
     border-radius: var(--field-radius); font-family: var(--value-font, monospace); }
 #fields input::placeholder { color: var(--placeholder); }
+#swatches { position: fixed; left: 0; top: 0; width: 0; height: 0; }
+#swatches input, #swatches button { position: fixed; box-sizing: border-box; margin: 0; padding: 0;
+    background: var(--field-bg); color: var(--field-text); border: 1px solid var(--field-border);
+    border-radius: var(--field-radius); cursor: pointer; }
+#swatches input::-webkit-color-swatch-wrapper { padding: 0; }
+#swatches input::-webkit-color-swatch { border: none; border-radius: var(--field-radius); }
+#swatches input::-moz-color-swatch { border: none; border-radius: var(--field-radius); }
+#swatches button { line-height: 1; font-family: var(--font, sans-serif); font-size: var(--font-px); }
+#swatches button[hidden] { display: none; }
+#swatches input[data-low] { outline: 2px solid var(--refused); outline-offset: 1px; }
+#swatches input:focus-visible, #swatches button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 #fields input[type=checkbox] { padding: 0; accent-color: var(--accent); }
 #menu { position: fixed; display: flex; flex-direction: column; min-width: var(--menu-min-width);
     background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
@@ -140,6 +151,7 @@ canvas { display: block; width: 100%; height: 100%; }
 <button type="submit">Apply</button>
 </form>
 <div id="fields"></div>
+<div id="swatches"></div>
 <div id="menu" hidden>
 <input id="menu-search" type="search" placeholder="Search nodes" aria-label="Search nodes" autocomplete="off" spellcheck="false">
 <div id="menu-tree"></div>

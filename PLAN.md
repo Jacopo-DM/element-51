@@ -720,7 +720,7 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (series-colour tasks 1 and 2 done)
+### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (series-colour tasks 1 to 3 done)
 
 Written 2026-10-22 after the user approved the three goals and their order. On approval the
 architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).
@@ -894,6 +894,12 @@ Oldest first.
     the light theme's. The contrast of every pair, the grip included, is tested for every theme
     and every pasted palette (`tests/theme.rs`); what the canvas draws is not, because the page
     gives a script no card positions (a pixel test would need a debug hook in the shipped code).
+- The series colour box is the browser's own (`<input type="color">`): its dialog differs by browser
+    and the pane cannot open it, so the pick was checked by setting the value and sending `change`.
+    The swatch sits in the label column, so a chart card's value boxes are 34 units narrower. Redraw
+    at 200 nodes after the swatches and the overlap fix: median 1.49 ms, range 0.99 to 2.66
+    (11 runs of 100 wheel events, 2026-10-22; the known band is 1.3 to 1.6). Not checked: a screen
+    reader on the colour box, touch.
 - No keyboard way to resize a card: the hidden tree has no resize action, so a screen reader or
     keyboard user cannot use the grip (the size only changes how the card looks). A touch screen
     was not tried either (the grip is 14 graph units square).

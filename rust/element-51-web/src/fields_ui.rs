@@ -4,7 +4,8 @@ use element_51_core::PortType;
 use element_51_core::fields::{field_label, format_value, parse_input};
 use element_51_core::layout::{Rect, Side, node_rect, output_row};
 use element_51_core::rows::{find_input, type_of};
-use element_51_core::{Edit, PlacedNode, Port, Status};
+use element_51_core::theme::Metrics;
+use element_51_core::{Edit, Graph, NodeType, PlacedNode, Port, Status};
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlInputElement};
 
@@ -16,6 +17,23 @@ use crate::a11y_ui::port_element_id;
 use crate::draw::field_box;
 use crate::input::dragged_graph;
 use crate::{Shared, State, listen, redraw, show_error, submit};
+
+/// The box of every node's card, in graph order; None for a node of an unknown
+/// type. A page element over the canvas is hidden where a card after its own
+/// covers it.
+pub(crate) fn card_rects(
+    graph: &Graph,
+    types: &[NodeType],
+    metrics: &Metrics,
+) -> Vec<Option<Rect>> {
+    graph
+        .nodes
+        .iter()
+        .map(|node| {
+            type_of(graph, types, node).map(|node_type| node_rect(node, &node_type, metrics))
+        })
+        .collect()
+}
 
 /// Make the input boxes over the canvas match the graph: one per unlinked
 /// input, placed on its node's row under the current pan and zoom.
@@ -34,14 +52,7 @@ pub(crate) fn sync_fields(shared: &Shared) {
     let zoom = state.view.zoom();
     let focused = state.document.active_element().map(|element| element.id());
     let mut wanted: Vec<String> = Vec::new();
-    let cards: Vec<Option<Rect>> = graph
-        .nodes
-        .iter()
-        .map(|node| {
-            type_of(graph, replica.node_types(), node)
-                .map(|node_type| node_rect(node, &node_type, metrics))
-        })
-        .collect();
+    let cards = card_rects(graph, replica.node_types(), metrics);
     for (index, node) in graph.nodes.iter().enumerate() {
         let Some(node_type) = type_of(graph, replica.node_types(), node) else {
             continue;
