@@ -32,6 +32,9 @@ Notes
     * Set `epochs` to 0 and press Start: the job fails at once and the banner
         says why. The results of the last Start stay on the Plot until the next
         one.
+    * After a run, open the card menu of the `Plot` and choose Save as CSV: the
+        browser downloads `n3-chart.csv`, one row per point with a column for
+        the loss and one for the accuracy, ready for your own script.
 
 """
 

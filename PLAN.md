@@ -219,26 +219,12 @@ cells. Left alone on purpose (Tier 3): a live preview while the colour window is
 box, a Python call `app.set_colour` (`app.apply(SetColour(...))` works), a colour for anything but
 a series line.
 
-### save-as-csv (draft, waiting for approval, 2026-10-22)
+### save-as-csv: done (2026-10-22)
 
-- Goal: a Plot card can save its series as a CSV file, so the user's own script can draw them.
-- Kind: new behaviour. Order: second (independent of the colour, but it shares the card menu and
-    the series data with the PNG goal).
-- Success measure:
-    1. A Plot card's menu has `Save as CSV` (disabled, with the reason, while the chart shows no
-        numbers).
-    2. The file `<node id>.csv` has the header `index,<name>,...`, one column per series in port
-        order; a name is the linked source (`n2.loss`) or `series_N` when unlinked.
-    3. There is one row per index up to the longest series; a gap, or a shorter series, is an empty
-        cell; numbers are written in full (shortest text that reads back exactly).
-    4. It works in the page alone: the series are already there, nothing is asked of Python.
-    5. Native tests pin the text (a gap, series of different lengths, a series with a NaN) and the
-        file name; the download works by hand in the browser pane.
-- Decided by the user 2026-10-22: one file, a column per series.
-- Non-goals: a picture card's pixels as CSV, a choice of separator or decimal mark, copying to the
-    clipboard.
-- Status: draft.
-- Added: 2026-10-22
+Branch `save-as-csv`: the core `csv` module (`chart_csv`, `csv_data_url`, `csv_file_name`),
+`CardAction::SaveCsv` on chart cards, `download.rs` shared with Save as PNG, `save_csv.rs`, five
+rows in `uiKeysDisplay` (28 of 28), docs and the `g3_mnist.py` notes. Left alone on purpose (Tier 3):
+a separator or decimal-mark choice, a CSV of a picture's pixels, copy to the clipboard.
 
 ### matplotlib-png (draft, waiting for approval, 2026-10-22)
 
@@ -698,7 +684,7 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (`series-colour` done)
+### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (`series-colour` and `save-as-csv` done)
 
 Written 2026-10-22 after the user approved the three goals and their order. On approval the
 architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).
@@ -730,27 +716,6 @@ versions 1 to 3, `Save as PNG` until `matplotlib-png` replaces it, and the 200-n
 (1.3 to 1.6 ms; the swatches are page elements, not canvas drawing). The web crate has no automated
 tests, so the new rules live in `element-51-core` where tests exist and the web code stays thin;
 the page behaviour is checked by hand in the browser pane.
-
-#### Goal `save-as-csv`
-
-Architecture and the alternatives not taken: DESIGN.md, `save-as-csv spec`.
-
-Tier 1:
-
-1. Core: `csv.rs`, `csv_file_name`, `CardAction::SaveCsv`, tests. Serves 2, 3, 5. Risk low. About
-    120 lines. Verify: native tests for a gap, series of different lengths, a NaN, a name with a
-    comma, an empty chart (None), the file name, and that the entry is offered on a chart card only.
-2. Page: `download.rs` (moved), `save_csv.rs`, the menu wiring in `menu_ui.rs`, the banner when
-    there is nothing to save. Serves 1, 4. Risk low. About 80 lines. Verify: by hand in the pane
-    (the click on `Save as CSV` after Run: read the data URL by stubbing the anchor's `click`, and
-    compare it with the expected text; before Run: the banner with Dismiss).
-
-Tier 2:
-
-3. Try-out: a line in the `Notes` of `examples/g_experiments/g3_mnist.py` and in `docs/experiments.md`
-    (save the loss and accuracy of a run as CSV and plot them with your own script). Risk low.
-
-Tier 3: a choice of separator or decimal mark; a CSV of a picture's pixels; copy to the clipboard.
 
 #### Goal `matplotlib-png`
 

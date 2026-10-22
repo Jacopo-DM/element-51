@@ -31,6 +31,14 @@ pictures; its last point uses all 10,000.
 
 A Plot node draws both series as they arrive.
 
+## Saving the curves
+
+After a run, the card menu of the `Plot` (the three bars) has Save as CSV. The
+file is named for the node, `n3-chart.csv`, and holds an `index` column, then
+`loss` and `accuracy` named as the chart's legend names them. There is one row
+per point; read it with `numpy.loadtxt(path, delimiter=",", skiprows=1)` or
+pandas. A gap, or a line that ends early, is an empty cell.
+
 ## What to expect
 
 On the default settings MNIST ends at about 97.7% test accuracy in about 7

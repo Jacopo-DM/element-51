@@ -83,6 +83,16 @@ Ctrl+Z undoes a resize. A saved file with a card size is format version 3;
 version 1 and 2 files still load (version 4 adds series colours; all
 earlier versions still load).
 
+## Save as CSV
+
+The card menu of a Plot card also has Save as CSV, which downloads the numbers
+of the chart as `n3-chart.csv`: an `index` column, then one column per line,
+named as the chart's legend names it (`loss`, or `n3 loss` when two lines share
+a name), and one row per point. A gap, a number that is not finite, and the end
+of a shorter line are empty cells. Numbers are written with all their digits.
+Before a run there is nothing to save, and the page says so with a message you
+can dismiss.
+
 ## Line colours
 
 Beside each `series_N` name of a Plot card is a small colour box in the colour of
