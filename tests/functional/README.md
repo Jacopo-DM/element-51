@@ -44,6 +44,7 @@ a row (a test fails without it).
 | `edits` | `editing.ipynb` |
 | `protocol` | `server_and_protocol.ipynb` |
 | `server` | `server_and_protocol.ipynb` |
+| `figures` | none yet |
 
 Notebooks that cover an example rather than a module:
 
