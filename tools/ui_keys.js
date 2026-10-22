@@ -1,6 +1,7 @@
-// Walk the editor's hidden tree by keyboard and check what it says. Run it in
-// the page of tools/ui_states.py (or any example) with the browser pane's
-// javascript tool: paste the function, then `await uiKeys()`.
+// Walk the editor's hidden tree by keyboard and check what it says. All four
+// walks run in Chromium with `uv run python tools/run_browser_tests.py`. By hand,
+// run one in the page of tools/ui_states.py (or any example) with the browser
+// pane's javascript tool: paste the function, then `await uiKeys()`.
 // The page must have keyboard focus (click empty canvas first), or the browser
 // sends no focus events and rows that depend on them fail. Reload the page and
 // restart the server before a run: the rows delete and restore a node and a link.

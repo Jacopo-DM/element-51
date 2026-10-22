@@ -725,7 +725,7 @@ Tier 2 (ordered by value over risk plus cost):
     `uv sync --locked`, `tools/build_wasm.py`, `uv run playwright install --with-deps chromium`,
     the runner). Serves measure 3. Risk: medium (a Linux-only failure shows only on GitHub; fix
     forward with the user's say-so for each push). Verify: the run is green.
-5. Docs: `CLAUDE.md` (the keyboard walk-through row and the new command), `CODEMAP.md` (the tools
+5. Done 2026-10-22 except the goal's one-line done entry, which waits for the GitHub run (the spec and decisions are in DESIGN.md, `browser-tests spec`). Docs: `CLAUDE.md` (the keyboard walk-through row and the new command), `CODEMAP.md` (the tools
     row and the new test), `DESIGN.md` (the spec, the decisions with the rejected alternatives, the
     Results row), `tools/ui_keys.js`'s header (how it is run now), then the goal's one-line done
     entry here. Risk: low.

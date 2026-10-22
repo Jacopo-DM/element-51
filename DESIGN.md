@@ -954,6 +954,42 @@ chose the recommended options:
     taken (user's answers 2026-10-22): matplotlib as an optional extra with the Rust PNG kept as
     a fallback; matplotlib's own colour cycle; a figure that follows the theme.
 
+### browser-tests spec (approved 2026-10-22)
+
+- Architecture: a runner script, not pytest tests. `tools/run_browser_tests.py` starts a fresh
+    `tools/ui_states.py --graph G --port P` for each walk-through (the rows delete, move and link
+    things, so one server serves one walk; `P` is a free port, never 8765 or 8768), opens it in
+    Playwright's headless Chromium (viewport 1280 by 800), waits for `html.ready`, clicks the empty
+    canvas at (1150, 700) for focus (the page does not see key events without it), adds
+    `tools/ui_keys.js` as a script tag and calls `uiKeys`, `uiKeysDisplay`, `uiKeysJob` or
+    `uiKeysAuto` inside `Promise.race` against a timer (120 s by default, `--timeout`). The return
+    value (`passed`, `failed`, `rows`; other fields ignored) is parsed into a pydantic model; a walk
+    passes when no row failed and at least one ran; an error, a timeout or a server that does not
+    start is a failed walk. One line per walk: name, PASS or FAIL, seconds, rows passed, then the
+    failed rows; the exit code is 1 when any walk failed. `--only NAME` runs one (repeatable). The
+    rows in `ui_keys.js` are the checks and were not rewritten; the browser pane way of running them
+    by hand still works. Chromium missing: the run prints `Chromium is not installed. Run: uv run
+    playwright install --only-shell chromium` and exits 1 (the user's choice: no quiet skip). The
+    WASM build missing: it prints the build command and exits 1. Runs at pre-push (the hook
+    `run-browser-tests`, `always_run`) and as the `browser` job of `.github/workflows/rust.yml`.
+- Decisions (the user's answers 2026-10-22): the driver is Playwright with its own Chromium; all four
+    walk-throughs; the pre-push hook as well as CI; a runner script; fail on a missing Chromium; the
+    job goes into `rust.yml`. Mine: the headless shell only (`--only-shell`: 103.8 MB plus ffmpeg
+    1.4 MB, 206 MB unpacked, against 195 MB more for the full Chrome for Testing), no retries, no
+    parallel walks, Playwright's sync API.
+- Alternatives not taken: tests inside pytest (`tests/browser`), because the plain `pytest` and the
+    Stop hook would start a browser after every turn unless `pytest.ini`, a template file, were
+    edited; Selenium with Firefox (11.8 MB wheel, uses the installed Firefox.app; the user chose
+    Playwright); Homebrew Chromium (the cask is disabled since 2026-09-01, it fails the macOS
+    Gatekeeper check) and Homebrew Google Chrome (self-updating, so the version would drift away from
+    the one GitHub runs); a separate `browser.yml` (about 30 duplicated lines for the Rust and
+    wasm-bindgen setup); retries (they hide a flaky row); running the four walks in parallel (saves
+    seconds, costs a pool of ports and browsers); screenshots, axe-core, other engines and touch
+    (non-goals; touch belongs to a possible future feature).
+- Non-goals and limits: the rows are not rewritten in Python; `tools/` is outside the coverage gate,
+    so the runner's pure parts are tested in `tests/test_browser_runner.py` and the driving by the
+    run itself; a row that depends on real focus needs the one click above.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
