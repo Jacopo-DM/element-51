@@ -278,46 +278,15 @@ purpose gives `FAIL` and exit code 1; the pre-push hook runs it; the `browser` j
 `rust.yml` passed on GitHub (3 min 40 s with the toolchain and the Chromium install). Spec and
 decisions: DESIGN.md, `browser-tests spec`; numbers: Baseline and the Results rows.
 
-### wrap-module
+### wrap-module: done (2026-10-22)
 
-- Goal: a library author turns the plain functions they already have into nodes
-    with one call and no decorator on each: their own typed modules, and numpy's
-    element-wise functions (ufuncs).
-- Kind: new behaviour.
-- Success measure (each is a test):
-    1. `element_51.nodes_from_module(module, category="Stats")` returns a node for
-        every public function of `module` whose parameters and return value are
-        annotated with `float`, `int`, `str`, `bool` (or a pydantic model of those),
-        in the order they are defined, each in the menu under that category;
-        `App(...)` takes them as they are.
-    2. A function that does not fit (no hint, `*args` or `**kwargs`, a
-        positional-only parameter, an unsupported type) is skipped, not raised on, and
-        comes back in a second list with its name and the reason; the others still
-        become nodes. Names that start with `_`, names imported from elsewhere and
-        names outside `__all__` (when the module has one) are not scanned; two
-        functions with one name are reported, not silently dropped.
-    3. `element_51.nodes_from_ufuncs(np, category="Numpy")` makes a node for every
-        numpy ufunc without anything written by hand: inputs from `nin`, outputs
-        from `nout` (`modf` and `divmod` get two), port types from the ufunc's
-        documented loops (`types`: `d` float, `l` int, `?` bool), the result converted
-        back to a plain `float`, `int` or `bool`. An alias (`abs` for `absolute`) gives
-        one node. A ufunc with no float, int or bool loop is skipped with its reason.
-    4. `examples/h_wrapping/` has two short examples (numpy's ufuncs; a small module
-        of the user's own typed functions); a test builds the nodes from `np`, runs
-        a sample through `App.run` (`sin(0)` is 0, `hypot(3, 4)` is 5, `modf(2.5)`
-        gives 0.5 and 2.0, `isnan(nan)` is true) and checks the skipped list against
-        a written-out expected list.
-- Status: approved 2026-10-22 (both entry points; scalars first, arrays in
-    `array-ports`). Spec: proposed, waiting for the user's approval.
-- Constraints: no new dependency (numpy is a runtime dependency already); the public
-    surface grows by two functions; examples follow `examples/template.py` and get
-    rows in `tests/test_examples.py`; only scalar ports (arrays come with
-    `array-ports`, after which the same ufunc nodes take arrays).
-- Non-goals: arrays (the next goal); numpy functions that are not ufuncs (`np.mean`,
-    `np.clip`: no run-time hints; reading numpy's `.pyi` stubs would be a goal of its
-    own, MonkeyType was considered and left out, DESIGN.md); writing a decorated copy
-    of a module to disk; classes and methods; a job form of a wrapped function.
-- Added: 2026-10-22
+Branch `wrap-module`, commits `131a3e5..` (plan, then tasks 1 to 4). `element_51.nodes_from_module` and
+`nodes_from_ufuncs` return a `Scan` of nodes and skips (`src/element_51/wrap.py`); numpy 2.5.4 gives 85
+nodes and 5 skips; examples `h1_numpy_ufuncs.py` and `h2_own_module.py`, `docs/wrapping.md` (my draft,
+for the user's review), `tests/functional/wrapping.ipynb`. All four criteria are met (spec and decisions in
+DESIGN.md, `wrap-module spec`; numbers in Results). The user's own try-out is still to come. Left alone
+on purpose (Tier 3 below): sub-menus by kind, a name prefix option, a `scipy.special` test, numpy functions
+that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes take floats.
 
 ### array-ports
 
@@ -373,7 +342,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: none is set. 0.3.0 is released (2026-10-22). The examples below were tried by the user on 2026-10-22 and are fine. The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version). No approved goal is open; the next new goal needs `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner), the README GIF (`docs/images/mnist.gif`, 220 KB, now the top picture), 0.3.0 (published by the user, tagged `v0.3.0`) and `browser-tests` (`tools/run_browser_tests.py`, pre-push hook, `browser` job in `rust.yml`). GitHub CI, Docs and Rust and WASM passed for every push up to `af539ee` except that its CI run failed (three embedding tests, fixed in `1d3b0fd`: see DESIGN.md, Gotchas); CI and Docs passed for `678d4b9` and its Rust and WASM run was still running when last read (2026-10-22 with `gh run list --branch main --limit 3`). A push now takes about 57 s because the pre-push hook runs the notebooks and the browser walk-throughs. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
+Next step: none is set. 0.3.0 is released (2026-10-22). The examples below were tried by the user on 2026-10-22 and are fine. The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version). `wrap-module` is done on the branch `wrap-module` (not merged, not pushed); the user's own try-out is still to come: `uv run python tools/build_wasm.py` if needed, then `uv run examples/h_wrapping/h1_numpy_ufuncs.py` (right-click, the `Numpy` flyout; Run) and `uv run examples/h_wrapping/h2_own_module.py`, and a read of `docs/wrapping.md`. Next: the goal `array-ports` (direction approved, replaces `Series`; it needs its spec with `/zz-02-project-plan`). Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner), the README GIF (`docs/images/mnist.gif`, 220 KB, now the top picture), 0.3.0 (published by the user, tagged `v0.3.0`) and `browser-tests` (`tools/run_browser_tests.py`, pre-push hook, `browser` job in `rust.yml`). GitHub CI, Docs and Rust and WASM passed for every push up to `af539ee` except that its CI run failed (three embedding tests, fixed in `1d3b0fd`: see DESIGN.md, Gotchas); CI and Docs passed for `678d4b9` and its Rust and WASM run was still running when last read (2026-10-22 with `gh run list --branch main --limit 3`). A push now takes about 57 s because the pre-push hook runs the notebooks and the browser walk-throughs. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -399,9 +368,9 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-22);
-`main` equals `origin/main` at `678d4b9` (pushed 2026-10-22 at the user's say-so, each time).
-No other local branch is left: every merged branch was deleted at the user's say-so
-(the last three, `browser-tests`, `release-0.3.0` and `embed-examples`, on 2026-10-22).
+`main` equals `origin/main` at `644dd37` (pushed 2026-10-22 at the user's say-so, each time); the branch `wrap-module` is 5 commits ahead of `main` and local only.
+No other local branch is left but `wrap-module`: every merged branch was deleted at the user's say-so
+(the last four, `browser-tests`, `release-0.3.0`, `embed-examples` and the remote Dependabot `setup-uv-10.3.0`, on 2026-10-22).
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
 merged branches deleted, all at the user's say-so. The repo was pushed on
@@ -743,35 +712,6 @@ restarts (not saved, by decision).
     and browsers; revisit only if the pre-push run is too slow.
 - Running the browser tests in the Stop hook: it would start Chromium after every turn.
 
-### Goal `wrap-module`: task list (proposed 2026-10-22, waiting for approval)
-
-Spec: DESIGN.md, `wrap-module spec`. Every task is new code in a new module, so no existing test
-pins it; each writes its tests first and the gates (ruff, mypy, pytest at 100%, ty) pass before
-and after. No Rust, so `cargo` and the browser walk-throughs are unaffected (run once at the
-end).
-
-Tier 1:
-
-1. Done (2026-10-22): `nodes_from_module`, `Scan` and `Skipped` in `src/element_51/wrap.py`, 9 tests in
-    `tests/test_wrap.py`, a "none yet" row for `wrap` in `tests/functional/README.md` until task 4.
-2. Done (2026-10-22): `nodes_from_ufuncs` and `UfuncNode` in `wrap.py`, 17 tests and two property tests in
-    `tests/test_wrap_ufuncs.py`; 85 nodes and 5 skipped on numpy 2.5.4. One limit found, in Known
-    problems.
-
-Tier 2:
-
-3. Done (2026-10-22): `examples/h_wrapping/h1_numpy_ufuncs.py` and `h2_own_module.py`, their rows in
-    `tests/test_examples.py`, two checks in `tests/test_wrapping_examples.py`, and `docs/wrapping.md` (a draft for the
-    user's review; the docs build with `-W` passes).
-4. **Notebook and notes.** `tests/functional/wrapping.ipynb` and its row in
-    `tests/functional/README.md` (a test fails without it), a README line, CODEMAP.md, the
-    Results row in DESIGN.md, and the browser walk-throughs run once with the cargo suites.
-    Risk low.
-
-Tier 3 (listed, not executed): sub-menus by kind (trig, bitwise) because numpy gives no machine
-readable grouping; a name prefix option; a test with `scipy.special` (scipy is not a
-dependency); numpy functions that are not ufuncs (a goal of its own, from numpy's `.pyi` stubs).
-
 ### Tier 3: listed, not executed
 
 - `wasm-opt` size pass on the 706 KB WASM: no size budget was set.
@@ -779,6 +719,9 @@ dependency); numpy functions that are not ufuncs (a goal of its own, from numpy'
 - Export the graph as Python code: a possible future feature (the user wants it on the list, 2026-10-22).
 - Touch screen support (the resize grip and the colour box were never tried on touch): a possible
     future feature (the user wants it on the list, 2026-10-22).
+- `wrap-module` Tier 3: sub-menus by kind (trig, bitwise) because numpy gives no machine readable grouping; a name
+    prefix option for a clash such as `add`; a test with `scipy.special` (scipy is not a dependency); numpy
+    functions that are not ufuncs (a goal of its own, from numpy's `.pyi` stubs).
 - Docs prose and README body: not unasked.
 
 ## Open questions

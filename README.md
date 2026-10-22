@@ -82,7 +82,8 @@ with Ctrl+C.
 
 More examples, grouped by topic, are in
 [`examples/`](examples): the basics, node types, using the graph from plain
-Python, editor features, themes, and embedding the editor in FastAPI or NiceGUI.
+Python, editor features, themes, making nodes from your own functions or from
+numpy in bulk, and embedding the editor in FastAPI or NiceGUI.
 
 ## Looks
 

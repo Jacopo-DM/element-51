@@ -92,7 +92,7 @@ def build_app() -> element_51.App:
 def main() -> None:
     """Entry point."""
     for item in scan().skipped:
-        console.print(f"skipped {item.name}: {item.reason}")
+        console.print(f"skipped: {item.reason}")
     element_51.serve(build_app())
 
 
