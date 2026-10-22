@@ -1854,6 +1854,14 @@ have to go through `tools/compress_images.py`).
 
 ## Gotchas
 
+- A script cannot find a card, a grip or a border on the canvas by pixels: the page keeps card
+    positions in Rust and exposes only the hidden tree (no geometry) and a few CSS variables (not
+    `card`, `label`, `title`, `header` or the error border). The `Theme` colour pairs
+    (`contrast_pairs`, tested for every built-in theme and palette) are the automatic check; the
+    drawing itself is checked by eye per theme (`tools/ui_states.py --theme ...`, the `display`
+    graph for the grip and titles, Run on the default graph for the red border). A pixel test was
+    asked for and not built, because it would need a debug hook in shipped code (2026-10-22).
+
 - Property tests (Hypothesis, since 2026-10-21) cover the six places Python reads outside data
     or has a dump and load pair: `ClientMessage` (`test_protocol.py`), `Image`, `Series` and
     `RunResult` (`test_visuals.py`), `load_graph` and `save_graph` (`test_store.py`), and

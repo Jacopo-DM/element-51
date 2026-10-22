@@ -708,6 +708,13 @@ Oldest first.
     hidden since the overlap fix; the wire is left, because it is the link itself. Checked in the
     browser pane only (the fix to `fields_ui.rs` hides a box with `visibility: hidden`, so a
     hidden box is also out of the Tab order; the hidden tree keeps the field for a screen reader).
+- Themes (checked 2026-10-22 by eye in the browser pane with `tools/ui_states.py`: the light
+    theme on the picture and chart graph and on the default graph after Run, `purple-synthwave` on
+    the picture and chart graph): the grip, the title, the red failed-node border and its header
+    all read clearly. `antimony` (dark) was not looked at on its own; its cards are the same as
+    the light theme's. The contrast of every pair, the grip included, is tested for every theme
+    and every pasted palette (`tests/theme.rs`); what the canvas draws is not, because the page
+    gives a script no card positions (a pixel test would need a debug hook in the shipped code).
 - No keyboard way to resize a card: the hidden tree has no resize action, so a screen reader or
     keyboard user cannot use the grip (the size only changes how the card looks). A touch screen
     was not tried either (the grip is 14 graph units square).
