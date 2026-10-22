@@ -721,7 +721,7 @@ Tier 2 (ordered by value over risk plus cost):
     false`, `always_run: true`, `stages: [pre-push]`), next to the notebooks. Serves measure 3.
     Risk: low. Verify: `uv run pre-commit run run-browser-tests --hook-stage pre-push --all-files`
     passes; the next push shows the line and the push time is recorded.
-4. The GitHub job: a `browser` job in `.github/workflows/rust.yml` (toolchain, wasm-bindgen CLI,
+4. Written 2026-10-22 (a `browser` job in `rust.yml`, the YAML parses; it has not run on GitHub yet, which needs a push with the user's say-so). The GitHub job: a `browser` job in `.github/workflows/rust.yml` (toolchain, wasm-bindgen CLI,
     `uv sync --locked`, `tools/build_wasm.py`, `uv run playwright install --with-deps chromium`,
     the runner). Serves measure 3. Risk: medium (a Linux-only failure shows only on GitHub; fix
     forward with the user's say-so for each push). Verify: the run is green.

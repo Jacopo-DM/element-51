@@ -49,7 +49,7 @@ the ignore list in CLAUDE.md.
     values; the native tests in `theme.rs` fail if a key has no row.
 - `.github/dependabot.yml`: weekly updates for github-actions, uv and cargo (`/rust`).
 - `.github/workflows/`: `ci.yml` (Python checks, from the `rsync-sync` template),
-    `rust.yml` (Rust checks and the WASM build and wheel check) and `docs.yml`.
+    `rust.yml` (Rust checks, the WASM build and wheel check, and the browser walk-throughs) and `docs.yml`.
 - Browser: `element_51_web::start()` runs when the page loads, opens `/ws`, and
     wires the canvas, the right-click menu and the window.
 
