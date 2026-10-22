@@ -531,6 +531,19 @@ fn a_pair_below_aa_is_named_in_the_failures() {
 }
 
 #[test]
+fn a_resize_grip_that_matches_its_card_is_named_in_the_failures() {
+    let mut theme = Theme::default();
+    theme.colours.label = theme.colours.card.clone();
+    let failures = theme.contrast_failures();
+    assert!(
+        failures
+            .iter()
+            .any(|line| line.contains("resize grip (label) on card")),
+        "{failures:?}"
+    );
+}
+
+#[test]
 fn a_colour_that_is_not_hex_is_a_failure_too() {
     let mut theme = Theme::default();
     theme.colours.title = "red".to_string();

@@ -492,6 +492,7 @@ impl Theme {
             ),
             text("error_text on error", &c.error_text, &c.error),
             graphic("icon on header".to_string(), &c.icon, &c.header),
+            graphic("resize grip (label) on card".to_string(), &c.label, &c.card),
             graphic("selected on canvas".to_string(), &c.selected, &c.canvas),
             graphic(
                 "card_error_border on canvas".to_string(),
