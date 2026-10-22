@@ -211,35 +211,13 @@ resize action), so a screen reader user cannot resize.
 - Status: waiting for the recording.
 - Added: 2026-10-22
 
-### series-colour (draft, waiting for approval, 2026-10-22)
+### series-colour: done (2026-10-22)
 
-- Goal: the user chooses the line colour of each series on a Plot card with a swatch beside the
-    `series_N` name.
-- Kind: new behaviour. Order: first of the three plot goals (it changes the graph file; the PNG
-    goal reads its colours).
-- Success measure (each is a test, native, Python or by hand in the browser pane):
-    1. A Plot card shows a swatch beside each `series_N` name, in the colour the line has now (the
-        theme's, or the one chosen).
-    2. Picking a colour redraws the line and its legend entry at once and sends a `SetColour` edit
-        that Python acks; a value that is not `#rrggbb` is refused with a reason; Undo and Redo
-        cover it.
-    3. A small `x` beside the swatch shows only when a colour was chosen; pressing it makes the
-        series follow the theme again (an edit, so Undo covers it).
-    4. The colour is saved in the graph file (format version 4; versions 1, 2 and 3 still load),
-        is in `app.graph` in Python, and survives a reload.
-    5. A chosen colour is drawn as chosen on every theme. When it is below 3:1 against the chart
-        background of the current theme the swatch carries a warning mark with a hover text.
-    6. The swatch and the `x` have names in the hidden tree and work from the keyboard, are
-        hidden while a later card covers them (DESIGN.md, Gotchas), and every theme still passes
-        the AA pairs.
-    7. One shared fixture file holds the new edit's cases; the Rust and the Python suites read it.
-- Decided by the user 2026-10-22: saved in the graph file; the browser's own colour box
-    (`<input type="color">`), not a wheel we draw; allow a hard-to-see colour and mark the swatch;
-    a small `x` to go back to the theme colour.
-- Non-goals: a colour for anything but a series line, a palette or colour history, naming a
-    series, a log axis.
-- Status: draft.
-- Added: 2026-10-22
+Commits `4a12228..385a651` on branch `series-colour`: the `SetColour` edit and file version 4,
+the drawing, the colour box and reset button, the example `d7_series_colours.py`, docs and notebook
+cells. Left alone on purpose (Tier 3): a live preview while the colour window is open, a hex text
+box, a Python call `app.set_colour` (`app.apply(SetColour(...))` works), a colour for anything but
+a series line.
 
 ### save-as-csv (draft, waiting for approval, 2026-10-22)
 
@@ -720,7 +698,7 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (series-colour tasks 1 to 4 done)
+### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (`series-colour` done)
 
 Written 2026-10-22 after the user approved the three goals and their order. On approval the
 architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).
@@ -752,43 +730,6 @@ versions 1 to 3, `Save as PNG` until `matplotlib-png` replaces it, and the 200-n
 (1.3 to 1.6 ms; the swatches are page elements, not canvas drawing). The web crate has no automated
 tests, so the new rules live in `element-51-core` where tests exist and the web code stays thin;
 the page behaviour is checked by hand in the browser pane.
-
-#### Goal `series-colour`
-
-Architecture and the alternatives not taken: DESIGN.md, `series-colour spec`.
-
-Tier 1 (the thinnest slice through every layer, in this order):
-
-1. Wire: `colours` and `SetColour` in Python and Rust, the store at version 4, the fixtures
-    (`edit_cases.json`, `snapshot.json`), history and announce. Files: `edits.py`, `model.py`,
-    `store.py`, `edit.rs`, `model.rs`, `history.rs`, `announce.rs`, `tests/fixtures/*`, `test_store.py`
-    (the property test draws colours too), a new `rust/element-51-core/tests/colour.rs`. Serves
-    measures 2 (edit, refusal, Undo), 4, 7. Risk medium (a wire record, 23 files for the last one).
-    Complexity: about 250 lines, one new edit, no dependency. Verify: both suites read the same
-    fixture; a version 1, 2 and 3 file loads; a save and load round trip with colours; Undo and Redo
-    tests in `tests/history.rs`.
-2. Draw: `plotted()` also returns each line's input port and chosen colour; `draw_chart` and the
-    legend use the chosen colour, else the card's. A core `line_colour` and `colour_is_low` (below
-    3:1 on `colours.field`). Files: `draw_chart.rs`, a new `rust/element-51-core/src/colour.rs`,
-    tests. Serves 1, 5. Risk low. About 80 lines. Verify: native tests for both rules; by hand
-    (a chosen colour on the chart and the legend, in all three themes).
-3. Page: the swatch, the `x`, the edit on `change`, the warning mark, the hidden-tree names, the
-    covered-card rule. Files: a new `rust/element-51-web/src/swatch_ui.rs`, `layout.rs` (`swatch_box`),
-    `index.html` (CSS), `a11y_ui.rs`, `lib.rs`, `tools/ui_keys.js` (rows in `uiKeysDisplay`). Serves
-    1, 2, 3, 6. Risk medium (page elements over the canvas, keyboard use, a native colour dialog the
-    pane cannot open: the check dispatches `input` and `change` events). About 250 lines. Verify:
-    native tests for `swatch_box`; the new keyboard rows; by hand in the pane, in all three themes.
-
-Tier 2:
-
-4. Try-out and docs: an example `examples/d_editor/d7_series_colours.py` (a Plot with two series
-    whose colours are set by `app.apply(SetColour(...))`, notes saying what to try), its row in
-    `tests/test_examples.py`, a line in `docs/visual-ports.md` and in `tests/functional/editing.ipynb`
-    (a `SetColour` and its refusal). Risk low. About 120 lines.
-
-Tier 3 (listed, not executed): a live preview while the dialog is open; a text box for a hex value;
-a colour for anything but a series line; a Python call `app.set_colour(...)` beside `app.apply`
-(`apply` already works from a script).
 
 #### Goal `save-as-csv`
 
