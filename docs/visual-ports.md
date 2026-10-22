@@ -108,6 +108,46 @@ from the script.
 ## Save as PNG
 
 The card menu (the three bars on a card, or Shift+F10 with the node focused)
+has Save as PNG on a card that shows a picture or a chart. The page asks Python
+for the file, so the editor must be connected, and the browser downloads
+`n1-out.png` for a picture and `n5-chart.png` for a chart. The first chart takes
+a second longer, while matplotlib loads.
+
+A chart is drawn by matplotlib: 2100 by 1400 pixels (7 by 4 2/3 inches at 300
+dpi) on a white page, a light grid, the lines in the colours of the card (a
+colour you picked is used exactly; a theme colour that is too pale for white is
+darkened, keeping its hue, to reach 3 to 1), a legend when there is more than
+one line, and the line's name as the y label when there is only one. A picture
+is enlarged by a whole number with crisp pixels (a 28 by 28 digit becomes 1400
+by 1400). The file says it is 300 dpi, so Word and LaTeX place it at its real
+size. Before a run there is nothing to save, and a chart with no numbers cannot
+be drawn; the page says so with a message you can dismiss.
+
+## Save as CSV
+
+The card menu of a Plot card also has Save as CSV, which downloads the numbers
+of the chart as `n3-chart.csv`: an `index` column, then one column per line,
+named as the chart's legend names it (`loss`, or `n3 loss` when two lines share
+a name), and one row per point. A gap, a number that is not finite, and the end
+of a shorter line are empty cells. Numbers are written with all their digits.
+Before a run there is nothing to save, and the page says so with a message you
+can dismiss.
+
+## Line colours
+
+Beside each `series_N` name of a Plot card is a small colour box in the colour of
+that line. Click it and pick a colour: the line and its legend entry change. A
+small `x` then appears beside the box, and pressing it gives the line the
+theme's colour again. A colour that is hard to see on the chart (below 3:1
+against its background) is drawn as you chose it, and the box gets a red outline
+with the ratio as its hover text. The colour belongs to the series input: Python
+holds it (`app.graph`, `SetColour`), Ctrl+Z undoes it, and a saved file keeps it
+(format version 4). `examples/d_editor/d7_series_colours.py` sets two colours
+from the script.
+
+## Save as PNG
+
+The card menu (the three bars on a card, or Shift+F10 with the node focused)
 has Save as PNG on a card that shows a picture or a chart. The browser downloads
 `n1-out.png` for a picture, and `n5-chart.png` for a chart. Both are made to be
 put in a paper, whatever theme the editor has: a chart is 2100 by 1400 pixels

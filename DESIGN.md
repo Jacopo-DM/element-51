@@ -847,7 +847,7 @@ Part of the experiment goals (PLAN.md). The goal and its five criteria were appr
     choice and the user chose the text box); a convolutional network (slow in plain numpy and beside
     the point of the example); Adam (more code, no better demo than a visibly falling SGD loss).
 
-### png-paper spec (the user's request, 2026-10-22; choices made by me on "go")
+### png-paper spec (the user's request, 2026-10-22; choices made by me on "go"; superseded the same day by `matplotlib-png spec`, which keeps the size, the 300 dpi and the whole-number picture scale and drops the PGFPlots look and the Rust drawing)
 
 The user asked for Save as PNG to be "academic paper ready" and pointed to the PGFPlots gallery
 as the look they like (`pgfplots.sourceforge.net/gallery.html`, saved by them, 525 plots). They
@@ -1439,6 +1439,19 @@ public area has a notebook or a row saying none yet", and a test keeps it true.
 - `fixed` and `only` on `run_graph` (not a second engine function): a plain Run, Start
     and the end-of-job run are the same loop over different subsets.
 
+### Clarifications to the plot goals (approved 2026-10-22)
+
+- `save-as-csv`: the columns are named as the chart's legend names the lines (the output port's
+    name, or `n3 loss` when two lines share one): `plotted()` already gives them, and only linked
+    series are in the chart, so an unlinked `series_N` has no column. `Save as CSV` is offered on
+    every Plot card, like Save as PNG, and with nothing to save shows the same banner with Dismiss
+    ("n3 has nothing to save yet: press Run first.").
+- `series-colour`: the line is redrawn when the pick is confirmed (the browser's `change` event,
+    when its colour dialog closes), not live while the user drags inside the dialog.
+- The accessibility scan with axe-core (`tools/ui_axe.js`) was not re-run for the new controls: it
+    needs a download and the user's yes by name, source and size. They are checked by the keyboard
+    walk-through rows (`uiKeysDisplay`, 28) and by hand.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -1831,6 +1844,12 @@ have to go through `tools/compress_images.py`).
         the wire records, `g3_mnist.py` a single file an example reader follows top to bottom,
         `run_notebooks.py` and `compress_images.py` copies of the user's templates; `input.rs`
         (464) and `display.rs` (454) each hold one concern and no split cut them usefully.
+- A PGFPlots-style PNG drawn in Rust (`paper.rs`, `png.rs`, `paper_ui.rs`, built 2026-10-22 for
+    `png-paper`): the user found it "quite fugly" on the first try-out and chose matplotlib, drawn by
+    Python, as a required dependency (answers of 2026-10-22). The Rust code was deleted outright
+    (about 900 lines with tests); the size, the 300 dpi and the whole-number picture scale were kept.
+    Alternatives the user declined: matplotlib as an optional extra with the Rust PNG as a fallback,
+    matplotlib's own colour cycle, a figure that follows the theme.
 
 ## Results
 
@@ -1901,8 +1920,19 @@ have to go through `tools/compress_images.py`).
 | 2026-10-22 | Save as PNG is paper ready (the user's request, PGFPlots look) | native tests: 10 in `tests/paper.rs` (plot inside the figure, y label only for one line, blue circle then red cross then dashed again after six, ticks inside the plot with a true minus, about ten markers spread along a long line and all on a short one, a gap breaks the line and has no marker, no numbers gives no chart, a flat line has a scale, points are pixels at 300 dpi, a 28 by 28 picture is enlarged 50 times) and 3 in `tests/png.rs` (CRC-32 standard value, the `pHYs` chunk of 11811 pixels per metre placed after IHDR with a valid CRC, a non-PNG refused); by hand in the browser pane on the MNIST example: the chart saves as `n3-chart.png`, 2100 by 1400 with `pHYs` 11811, and looks like the gallery (white page, frame, serif numbers, blue circles and red crosses, boxed legend); the digit saves as `n1-image.png`, 1400 by 1400; not checked: opening the file in Word or LaTeX, a font that is really Latin Modern (this Mac's fallback was a Times-like serif) |
 | 2026-10-22 | a resize handle on picture and chart cards (the user's request) | Python: shared edit cases (a resize, a reset to the default, one direction only, an unknown node, a size of zero, a size of 100000), a size saved and loaded, a version 2 file still loads, the property test of save and load now draws sizes; Rust: 10 tests in `tests/resize.rs` (default size, a bigger card and picture area, the chart area, a size below the default drawn at the default, a card that shows nothing, the handle in the corner, a drag clamped between the default and 4000, undo and redo, undo of a delete brings back the size, the status line); by hand in the browser pane (MNIST example): the grip shows on the picture and Plot cards, dragging the Plot's grip widened and heightened the card and its boxes, a reload kept the size (Python holds it), a second drag shrank it and Ctrl+Z restored the bigger size; not checked: a keyboard way to resize, a touch screen, the light theme, the redraw benchmark |
 | 2026-10-22 | goal restructure-3: share the chart's padded range and the topmost-node walk | jscpd clones 2 to 0 (28 duplicated lines, 0.21%, to 0), `bounds` in `display.rs` takes the pad because the card uses 0.05 and the paper figure 0.04; `topmost_hit` in `layout.rs` serves `node_at` and `handle_at`; 27 Rust test results ok and clippy clean, both unchanged; files over 400 lines 23 and modules over five imports 18, left alone (see Rejected approaches) |
+| 2026-10-22 | goal series-colour: a colour box and a reset button beside each series of a Plot card (the user's request) | Python 454 tests, Rust 28 test groups; shared fixture `colour_cases.json` (11 cases) read by both suites; file version 4 (1 to 3 load); `uiKeysDisplay` 23 of 23, `uiKeys` 90 of 90; redraw at 200 nodes 1.49 ms (0.99 to 2.66), inside the known 1.3 to 1.6; checked in the browser on purple-synthwave and antimony-light |
+| 2026-10-22 | goal save-as-csv: Save as CSV on a Plot card | native: 7 tests in `tests/csv.rs`, 4 more for the card action; `uiKeysDisplay` 28 of 28 (the CSV read back from the download: header, 60 rows, empty cells) |
+| 2026-10-22 | goal matplotlib-png: Save as PNG drawn by Python (matplotlib for a chart, Pillow for a picture), the Rust PNG deleted | 475 Python tests at 100% (11 in `tests/test_figures.py` incl. a property test of the darkening and a fresh-process check that `import element_51` loads no matplotlib; 3 over a real WebSocket); the messages in the shared `messages.json`; `uiKeysDisplay` 28 of 28 with the PNG downloaded from Python (2100 by 1400); about 900 lines of Rust removed |
 
 ## Gotchas
+
+- Save as PNG needs Python: the page sends the lines or the picture and downloads the reply
+    (`save_png.rs`), so a page without a connection shows the banner "Not connected to Python."
+    matplotlib and numpy are imported inside `chart_png` so `import element_51` stays quick (a test
+    checks it in a fresh process); the first chart costs about a second. `Figure` is used without
+    `pyplot`, so there is no global state and the drawing is safe on a worker thread. The editor's
+    own line colours are pale (1.7 to 2.6 to 1 on white), so `darken_to` lowers the lightness of an
+    unchosen colour until it reaches 3 to 1; a chosen colour is never changed.
 
 - A script cannot find a card, a grip or a border on the canvas by pixels: the page keeps card
     positions in Rust and exposes only the hidden tree (no geometry) and a few CSS variables (not

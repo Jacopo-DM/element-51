@@ -226,41 +226,14 @@ Branch `save-as-csv`: the core `csv` module (`chart_csv`, `csv_data_url`, `csv_f
 rows in `uiKeysDisplay` (28 of 28), docs and the `g3_mnist.py` notes. Left alone on purpose (Tier 3):
 a separator or decimal-mark choice, a CSV of a picture's pixels, copy to the clipboard.
 
-### matplotlib-png (draft, waiting for approval, 2026-10-22)
+### matplotlib-png: done (2026-10-22)
 
-- Goal: Save as PNG gives a figure drawn by matplotlib (Plot card) or Pillow (picture card), made
-    by Python, and the Rust PNG code is removed.
-- Kind: new behaviour (replaces the PGFPlots-style PNG of `png-paper`). Order: third (it reads the
-    colours of `series-colour`).
-- Success measure:
-    1. Save as PNG on a Plot card sends the lines (name, values, colour) to Python, which answers
-        with a PNG of 2100 by 1400 pixels at 300 dpi (the file says so), white background,
-        matplotlib's clean style, axes, a light grid and a legend, the x label `index` and the
-        y label the line's name when there is one line.
-    2. A series with no chosen colour is drawn in the card's colour darkened, keeping its hue, to
-        at least 3:1 on white; a chosen colour is drawn exactly. A test covers this for every
-        built-in theme.
-    3. Save as PNG on a picture card is written by Pillow: the picture enlarged by whole pixels,
-        1400 pixels on a side, 300 dpi, as now.
-    4. matplotlib is a required dependency; `import element_51` does not import it (it loads on the
-        first PNG).
-    5. `paper.rs`, `png.rs`, `save_png.rs`, `paper_ui.rs` and their tests are gone, nothing the
-        Rust PNG did is left unreplaced, and the Rust and Python suites pass; the new Python code is
-        at 100% coverage.
-    6. If Python cannot make the file (no server, an error) the page shows a banner with a Dismiss
-        button.
-- Decided by the user 2026-10-22: matplotlib draws the Plot PNG, as a required dependency, and the
-    Rust PNG goes; Pillow writes the picture PNG; a white figure in matplotlib's clean style;
-    unchosen lines in the editor's colours, darkened to 3:1 on white.
-- Needs the user's yes by name, source and size before it is added: `matplotlib` 3.11.2 (PyPI, wheel
-    9.3 MB) with `contourpy` 0.29 MB, `fonttools` 1.21 MB, `kiwisolver` 0.06 MB, `cycler` 0.01 MB,
-    `pyparsing` 0.13 MB and `python-dateutil` 0.09 MB; `numpy` and `pillow` (already in `uv.lock`
-    as dev or examples dependencies) become runtime dependencies. All are in the lockfile now as
-    dev tools or through them, so `uv lock` downloads nothing new for most.
-- Non-goals: log axes, a title, editing the figure in the page, checking the file in Word or
-    LaTeX (still open), a choice of figure size or style.
-- Status: draft.
-- Added: 2026-10-22
+Branch `matplotlib-png`: matplotlib, numpy and pillow as runtime dependencies, `figures.py`
+(`chart_png`, `picture_png`, `darken_to`), the `png_chart`, `png_picture` and `png_reply` messages,
+`save_png.rs` rewritten to ask Python (the plan said it would be deleted; it stayed as the thin
+sender and downloader), `paper.rs`, `png.rs`, `paper_ui.rs` and their tests deleted, the notebook
+`figures.ipynb`, docs. Left alone on purpose (Tier 3): a PDF or SVG file (matplotlib writes them,
+nobody asked), a figure size or style choice, log axes, a title, a theme-following figure.
 
 ### speed-up-frame: done (2026-10-21)
 
@@ -684,79 +657,6 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
-### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, approved 2026-10-22 (`series-colour` and `save-as-csv` done; `matplotlib-png` tasks 1 to 4 done, 5 left)
-
-Written 2026-10-22 after the user approved the three goals and their order. On approval the
-architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).
-
-Four clarifications to the success measures, found while reading the code; they change the
-wording above and need the same approval:
-
-- `save-as-csv` 2: the columns are named as the chart's legend names the lines (the output port's
-    name, or `n3 loss` when two lines share one), not `n2.loss`: `plotted()` in `draw_chart.rs` already
-    gives them, and only linked series are in the chart, so an unlinked `series_N` has no column.
-- `save-as-csv` 1: `Save as CSV` is offered on every Plot card, like `Save as PNG`; with nothing
-    to save (no run, or a failed run) it shows the same banner with Dismiss ("n3 has nothing to
-    save yet: press Run first."), instead of a disabled entry.
-- `series-colour` 2: the line is redrawn when the pick is confirmed (the browser's `change`
-    event, when its colour dialog closes), not live while the user drags inside the dialog.
-- The accessibility scan with axe-core (`tools/ui_axe.js`) is not re-run: it needs a download
-    (DESIGN.md, ui-design-pass spec) and the user's yes by name, source and size. The new controls
-    are checked by the keyboard walk-through rows and by hand instead.
-
-Integration points (from the code): `PlacedNode`, the edit enum and `store.py` on the Python side and
-`model.rs`, `edit.rs`, `history.rs`, `announce.rs` on the Rust side (the checklist of every file
-`ResizeNode` touched: 23 files, DESIGN.md `card-resize spec`); `plotted()` and `line_style()` in
-`draw_chart.rs` for the lines; `fields_ui.rs` and `sync_fields` for page elements over the canvas
-(and the covered-card rule, DESIGN.md Gotchas); `menu.rs` `CardAction` and `menu_ui.rs` for the
-card menu; `save_png.rs` for the download; `server.py` `reply_to` and `protocol.py` for messages.
-
-Existing behaviour that must not regress: every current test, the shared fixtures, graph files of
-versions 1 to 3, `Save as PNG` until `matplotlib-png` replaces it, and the 200-node redraw time
-(1.3 to 1.6 ms; the swatches are page elements, not canvas drawing). The web crate has no automated
-tests, so the new rules live in `element-51-core` where tests exist and the web code stays thin;
-the page behaviour is checked by hand in the browser pane.
-
-#### Goal `matplotlib-png`
-
-Architecture and the alternatives not taken: DESIGN.md, `matplotlib-png spec`.
-
-Tier 1:
-
-1. Dependency (needs the user's yes by name, source and size; listed in the goal above): move
-    `matplotlib` and `pillow` from the dev group to the runtime dependencies, add `numpy` as a
-    runtime dependency (`uv remove --dev ...` then `uv add ...`); `uv.lock` changes; scan the lock
-    with `osv-scanner` before the commit. Risk low. Complexity: about 11 MB more on every
-    install, 3 runtime dependencies more (and their 6 small ones).
-2. Python figures: `figures.py` and its tests (the PNG's size, dpi chunk and white corner; the
-    darkening reaches 3:1 for every built-in theme's line colours and leaves a chosen colour as it
-    is, as a property test; the picture enlarged by a whole factor; matplotlib not imported by
-    `import element_51`). Risk medium. About 200 lines plus 150 of tests; Python stays at 100% coverage.
-3. Protocol and server: `PngRequest`, `PngReply`, `reply_to`, the shared fixture `messages.json`
-    (both suites read it), the Rust message types. Risk medium-high (a new message, an answer that
-    arrives later, a large text message). Verify: both suites on the fixture; a server test over a
-    real WebSocket.
-
-Tier 2:
-
-4. Page: the new `save_png.rs` (builds the request, sends it, downloads the reply), then delete the
-    Rust PNG files and their tests, and `picture_scale`/`png_file_name` users as needed. Risk
-    medium. About minus 900 lines. Verify: Rust gates; by hand in the pane (the Plot PNG at 2100
-    by 1400, `pHYs` 11811, white, the legend and the colours; the digit PNG at 1400 by 1400; the
-    banner with Dismiss when the server is stopped).
-5. Try-out and docs: `docs/experiments.md` and the `Notes` of `g3_mnist.py`; a notebook
-    `tests/functional/figures.ipynb` that shows the two PNGs inline, and its row in the table
-    (module `figures`); PLAN known problems (Word and LaTeX check) and DESIGN (the `png-paper` spec
-    marked as superseded). Risk low.
-
-Tier 3 (listed, not executed): a PDF or SVG file (matplotlib writes them, but nobody asked); a
-figure size or style choice; log axes; a title; a theme-following figure.
-
-Not pinned by tests today: the web crate (no automated tests; the new web code is thin and checked
-by hand) and `plotted()` (in the web crate; task 2 of `series-colour` moves the new decisions into
-core). Characterisation tests of the current chart drawing are not possible without a browser, so
-the by-hand checks above stand in; say if you want a different safety net first.
-
 ### Tier 3: listed, not executed
 
 - Automated browser tests for `element-51-web`: large setup, and the logic is
@@ -813,10 +713,11 @@ Oldest first.
     (`tip_at` in `fields_ui.rs`). It does nothing on touch or for the keyboard; the hidden tree
     and the status line keep the word `last`. Not measured: the redraw cost on the 200-node page
     after the tooltip lookup and the grip strokes (it was 1.52 to 1.67 ms before the grip).
-- The paper PNG was checked as a file in the browser pane only (2100 by 1400, `pHYs` 11811, the
-    PGFPlots look). Not checked: opening it in Word or LaTeX; whether the system has Latin
-    Modern or Computer Modern (this Mac fell back to a Times-like serif); log axes (a chart has
-    no log mode); axis names (a series carries none, so the x label is the fixed word `index`).
+- The PNG files (matplotlib, `figures.py`) were checked as files in the browser pane and by tests
+    (2100 by 1400, 300 dpi, white, the darkened colours). Not checked: opening one in Word or LaTeX;
+    log axes (a chart has no log mode); axis names (a series carries none, so the x label is the
+    fixed word `index`). Save as PNG needs the Python connection, and the first chart takes about a
+    second (matplotlib loads).
 - `readme-gif`: capturing frames from browser-pane screenshots does not work (the pane throttles
     a page it is not showing, and each screenshot in a `browser_batch` is inlined into the
     conversation); a real screen recording converted with `ffmpeg` is the plan.

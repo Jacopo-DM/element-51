@@ -29,8 +29,8 @@ Notes
     * Open the card menu (the three bars) of `ramp` and choose Save as PNG: the
         browser downloads `n1-out.png`, the picture enlarged to fill a page
         with crisp pixels. On the `Plot` card the same entry saves
-        `n5-chart.png`, a figure ready for a paper: white page, serif text, blue
-        and red lines with markers, 300 dpi. Before you press Run there is
+        `n5-chart.png`, a figure ready for a paper drawn by matplotlib: white
+        page, a light grid, a legend, 300 dpi. Before you press Run there is
         nothing to save, and the page says so.
     * Drag the `accuracy` link off its row (or delete it with the link's
         card menu or the Delete key): the row goes and the card shrinks.
