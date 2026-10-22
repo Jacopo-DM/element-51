@@ -720,6 +720,174 @@ Tasks 1 to 7 are done (DESIGN.md, Results and the spec). Tier 3, listed and not 
 replaces (no job needs it); status text on the card; keeping results when the page or the server
 restarts (not saved, by decision).
 
+### Goals `series-colour`, `save-as-csv`, `matplotlib-png`: spec and tasks, awaiting approval
+
+Written 2026-10-22 after the user approved the three goals and their order. On approval the
+architecture and the rejected alternatives move to DESIGN.md (Specs, Decisions, Rejected approaches).
+
+Four clarifications to the success measures, found while reading the code; they change the
+wording above and need the same approval:
+
+- `save-as-csv` 2: the columns are named as the chart's legend names the lines (the output port's
+    name, or `n3 loss` when two lines share one), not `n2.loss`: `plotted()` in `draw_chart.rs` already
+    gives them, and only linked series are in the chart, so an unlinked `series_N` has no column.
+- `save-as-csv` 1: `Save as CSV` is offered on every Plot card, like `Save as PNG`; with nothing
+    to save (no run, or a failed run) it shows the same banner with Dismiss ("n3 has nothing to
+    save yet: press Run first."), instead of a disabled entry.
+- `series-colour` 2: the line is redrawn when the pick is confirmed (the browser's `change`
+    event, when its colour dialog closes), not live while the user drags inside the dialog.
+- The accessibility scan with axe-core (`tools/ui_axe.js`) is not re-run: it needs a download
+    (DESIGN.md, ui-design-pass spec) and the user's yes by name, source and size. The new controls
+    are checked by the keyboard walk-through rows and by hand instead.
+
+Integration points (from the code): `PlacedNode`, the edit enum and `store.py` on the Python side and
+`model.rs`, `edit.rs`, `history.rs`, `announce.rs` on the Rust side (the checklist of every file
+`ResizeNode` touched: 23 files, DESIGN.md `card-resize spec`); `plotted()` and `line_style()` in
+`draw_chart.rs` for the lines; `fields_ui.rs` and `sync_fields` for page elements over the canvas
+(and the covered-card rule, DESIGN.md Gotchas); `menu.rs` `CardAction` and `menu_ui.rs` for the
+card menu; `save_png.rs` for the download; `server.py` `reply_to` and `protocol.py` for messages.
+
+Existing behaviour that must not regress: every current test, the shared fixtures, graph files of
+versions 1 to 3, `Save as PNG` until `matplotlib-png` replaces it, and the 200-node redraw time
+(1.3 to 1.6 ms; the swatches are page elements, not canvas drawing). The web crate has no automated
+tests, so the new rules live in `element-51-core` where tests exist and the web code stays thin;
+the page behaviour is checked by hand in the browser pane.
+
+#### Goal `series-colour`
+
+Proposed architecture: `PlacedNode.colours: Mapping[str, str]` (input port name to `#rrggbb`, empty
+by default) in Python and Rust; a new edit `SetColour(node, port, colour | None)` (`kind`
+`set_colour`; `None` removes the colour) with `EditErrorKind.BAD_COLOUR` (not `#rrggbb`, a port that
+is not a series input of the node); graph file version 4, versions 1 to 3 read as having no
+colours; `history.rs` inverse restores the earlier colour or none; `announce.rs` says
+"Colour of series_1 on n3 set to #aabbcc"; a pure core function `line_colour(chosen, index, theme)`
+and a contrast check against `colours.field` (3:1, `contrast::ratio`); one `<input type="color">`
+and one `x` button per series input of a Plot card, in a new `#swatches` container (placed by a core
+`layout::swatch_box`, hidden by the covered-card rule, named in the hidden tree); the warning mark
+is a `data-low` attribute with CSS using `--refused` (a new CSS variable for the existing colour, no
+new theme key). Alternatives not taken (user's answers 2026-10-22): a wheel drawn in Rust, a
+colour that is refused when pale, reset only by Undo.
+
+Tier 1 (the thinnest slice through every layer, in this order):
+
+1. Wire: `colours` and `SetColour` in Python and Rust, the store at version 4, the fixtures
+    (`edit_cases.json`, `snapshot.json`), history and announce. Files: `edits.py`, `model.py`,
+    `store.py`, `edit.rs`, `model.rs`, `history.rs`, `announce.rs`, `tests/fixtures/*`, `test_store.py`
+    (the property test draws colours too), a new `rust/element-51-core/tests/colour.rs`. Serves
+    measures 2 (edit, refusal, Undo), 4, 7. Risk medium (a wire record, 23 files for the last one).
+    Complexity: about 250 lines, one new edit, no dependency. Verify: both suites read the same
+    fixture; a version 1, 2 and 3 file loads; a save and load round trip with colours; Undo and Redo
+    tests in `tests/history.rs`.
+2. Draw: `plotted()` also returns each line's input port and chosen colour; `draw_chart` and the
+    legend use the chosen colour, else the card's. A core `line_colour` and `colour_is_low` (below
+    3:1 on `colours.field`). Files: `draw_chart.rs`, a new `rust/element-51-core/src/colour.rs`,
+    tests. Serves 1, 5. Risk low. About 80 lines. Verify: native tests for both rules; by hand
+    (a chosen colour on the chart and the legend, in all three themes).
+3. Page: the swatch, the `x`, the edit on `change`, the warning mark, the hidden-tree names, the
+    covered-card rule. Files: a new `rust/element-51-web/src/swatch_ui.rs`, `layout.rs` (`swatch_box`),
+    `index.html` (CSS), `a11y_ui.rs`, `lib.rs`, `tools/ui_keys.js` (rows in `uiKeysDisplay`). Serves
+    1, 2, 3, 6. Risk medium (page elements over the canvas, keyboard use, a native colour dialog the
+    pane cannot open: the check dispatches `input` and `change` events). About 250 lines. Verify:
+    native tests for `swatch_box`; the new keyboard rows; by hand in the pane, in all three themes.
+
+Tier 2:
+
+4. Try-out and docs: an example `examples/d_editor/d7_series_colours.py` (a Plot with two series
+    whose colours are set by `app.apply(SetColour(...))`, notes saying what to try), its row in
+    `tests/test_examples.py`, a line in `docs/visual-ports.md` and in `tests/functional/editing.ipynb`
+    (a `SetColour` and its refusal). Risk low. About 120 lines.
+
+Tier 3 (listed, not executed): a live preview while the dialog is open; a text box for a hex value;
+a colour for anything but a series line; a Python call `app.set_colour(...)` beside `app.apply`
+(`apply` already works from a script).
+
+#### Goal `save-as-csv`
+
+Proposed architecture: pure core function `chart_csv(lines: &[(&str, &Series)]) -> Option<String>`
+in a new `csv.rs` (header `index,name,...`; one row per index to the longest series; a gap or a
+non-finite number or a missing value is an empty cell; numbers are Rust's shortest round-trip text;
+a name with a comma, quote or newline is quoted as RFC 4180 says; lines end `\n`), `csv_file_name(node)`
+(`n3-chart.csv`, the same safe-name rule as `png_file_name`) and `CardAction::SaveCsv` (label
+`Save as CSV`, offered where the card shows a chart, no edit) in `menu.rs`; the page builds the
+text from `plotted()` and downloads it as a `data:text/csv` URL through the download helper, which
+moves out of `save_png.rs` into a new `download.rs` (the PNG goal deletes `save_png.rs`, so the
+helper must not live there). Python is not involved. Alternatives not taken: long format
+(index, series, value) (the user chose columns), a Python round trip (the page already has the
+numbers).
+
+Tier 1:
+
+1. Core: `csv.rs`, `csv_file_name`, `CardAction::SaveCsv`, tests. Serves 2, 3, 5. Risk low. About
+    120 lines. Verify: native tests for a gap, series of different lengths, a NaN, a name with a
+    comma, an empty chart (None), the file name, and that the entry is offered on a chart card only.
+2. Page: `download.rs` (moved), `save_csv.rs`, the menu wiring in `menu_ui.rs`, the banner when
+    there is nothing to save. Serves 1, 4. Risk low. About 80 lines. Verify: by hand in the pane
+    (the click on `Save as CSV` after Run: read the data URL by stubbing the anchor's `click`, and
+    compare it with the expected text; before Run: the banner with Dismiss).
+
+Tier 2:
+
+3. Try-out: a line in the `Notes` of `examples/g_experiments/g3_mnist.py` and in `docs/experiments.md`
+    (save the loss and accuracy of a run as CSV and plot them with your own script). Risk low.
+
+Tier 3: a choice of separator or decimal mark; a CSV of a picture's pixels; copy to the clipboard.
+
+#### Goal `matplotlib-png`
+
+Proposed architecture: Python draws. A new module `src/element_51/figures.py` holds
+`chart_png(lines: tuple[Line, ...]) -> bytes` (matplotlib, the Agg backend, a 7 by 4.667 inch
+figure at 300 dpi = 2100 by 1400 pixels, white, a light grid, a legend, the x label `index`, the y
+label the line's name when there is one line; `matplotlib` is imported inside the function, so
+`import element_51` stays fast), `picture_png(image: Image) -> bytes` (Pillow, enlarged by the whole
+factor that brings the longer side nearest to 1400 pixels, `dpi=(300, 300)`) and
+`darken_to(colour, ratio=3.0)` (keeps the hue, lowers the lightness until the contrast with white
+reaches the ratio; used for the card's colours, never for a chosen colour). `protocol.py` gets
+`PngRequest` (`op` `png`, `node`, and either `lines` (name, values with `null` for a gap, colour,
+chosen flag) or `picture` (width, height, channels, pixels)) and `PngReply` (`op` `png`, `node`,
+`name`, `data` base64, or `reason`); `server.py` `reply_to` answers it in a worker thread so the
+event loop is not blocked while matplotlib draws. The page sends the request from the lines it
+already has, receives the reply and downloads the file; a refusal or a missing connection shows the
+banner with Dismiss. Deleted: `paper.rs`, `png.rs`, `paper_ui.rs`, `save_png.rs`, `tests/paper.rs`,
+`tests/png.rs`. Alternatives not taken (user's answers 2026-10-22): matplotlib as an optional extra
+with the Rust PNG kept as a fallback; matplotlib's own colour cycle; a figure that follows the
+theme.
+
+Tier 1:
+
+1. Dependency (needs the user's yes by name, source and size; listed in the goal above): move
+    `matplotlib` and `pillow` from the dev group to the runtime dependencies, add `numpy` as a
+    runtime dependency (`uv remove --dev ...` then `uv add ...`); `uv.lock` changes; scan the lock
+    with `osv-scanner` before the commit. Risk low. Complexity: about 11 MB more on every
+    install, 3 runtime dependencies more (and their 6 small ones).
+2. Python figures: `figures.py` and its tests (the PNG's size, dpi chunk and white corner; the
+    darkening reaches 3:1 for every built-in theme's line colours and leaves a chosen colour as it
+    is, as a property test; the picture enlarged by a whole factor; matplotlib not imported by
+    `import element_51`). Risk medium. About 200 lines plus 150 of tests; Python stays at 100% coverage.
+3. Protocol and server: `PngRequest`, `PngReply`, `reply_to`, the shared fixture `messages.json`
+    (both suites read it), the Rust message types. Risk medium-high (a new message, an answer that
+    arrives later, a large text message). Verify: both suites on the fixture; a server test over a
+    real WebSocket.
+
+Tier 2:
+
+4. Page: the new `save_png.rs` (builds the request, sends it, downloads the reply), then delete the
+    Rust PNG files and their tests, and `picture_scale`/`png_file_name` users as needed. Risk
+    medium. About minus 900 lines. Verify: Rust gates; by hand in the pane (the Plot PNG at 2100
+    by 1400, `pHYs` 11811, white, the legend and the colours; the digit PNG at 1400 by 1400; the
+    banner with Dismiss when the server is stopped).
+5. Try-out and docs: `docs/experiments.md` and the `Notes` of `g3_mnist.py`; a notebook
+    `tests/functional/figures.ipynb` that shows the two PNGs inline, and its row in the table
+    (module `figures`); PLAN known problems (Word and LaTeX check) and DESIGN (the `png-paper` spec
+    marked as superseded). Risk low.
+
+Tier 3 (listed, not executed): a PDF or SVG file (matplotlib writes them, but nobody asked); a
+figure size or style choice; log axes; a title; a theme-following figure.
+
+Not pinned by tests today: the web crate (no automated tests; the new web code is thin and checked
+by hand) and `plotted()` (in the web crate; task 2 of `series-colour` moves the new decisions into
+core). Characterisation tests of the current chart drawing are not possible without a browser, so
+the by-hand checks above stand in; say if you want a different safety net first.
+
 ### Tier 3: listed, not executed
 
 - Automated browser tests for `element-51-web`: large setup, and the logic is
