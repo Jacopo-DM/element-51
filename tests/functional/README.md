@@ -44,3 +44,9 @@ a row (a test fails without it).
 | `edits` | `editing.ipynb` |
 | `protocol` | `server_and_protocol.ipynb` |
 | `server` | `server_and_protocol.ipynb` |
+
+Notebooks that cover an example rather than a module:
+
+| Example | Notebook |
+| --- | --- |
+| `examples/g_experiments/g3_mnist.py` | `mnist_example.ipynb` |
