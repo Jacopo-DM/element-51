@@ -365,6 +365,42 @@ pub struct Chart {
     pub lines: Vec<Vec<Vec<(f64, f64)>>>,
 }
 
+/// The scale of a chart: the lowest and highest value, padded, and the last
+/// index on the x axis.
+pub(crate) struct Bounds {
+    pub low: f64,
+    pub high: f64,
+    pub x_max: f64,
+}
+
+/// The bounds of every finite number in `lines`, with `pad` (a share of the
+/// span) added on both ends. A flat line gets half a unit each side. None if no
+/// series has a number in it. A card and a paper figure each choose their pad.
+pub(crate) fn bounds<'a>(
+    lines: impl Iterator<Item = &'a Series> + Clone,
+    pad: f64,
+) -> Option<Bounds> {
+    let numbers: Vec<f64> = lines
+        .clone()
+        .flat_map(|series| series.values.iter().flatten().copied())
+        .filter(|number| number.is_finite())
+        .collect();
+    let lowest = numbers.iter().copied().reduce(f64::min)?;
+    let highest = numbers.iter().copied().reduce(f64::max)?;
+    let (low, high) = if highest > lowest {
+        let reach = (highest - lowest) * pad;
+        (lowest - reach, highest + reach)
+    } else {
+        (lowest - 0.5, highest + 0.5)
+    };
+    let longest = lines.map(|series| series.values.len()).max()?;
+    Some(Bounds {
+        low,
+        high,
+        x_max: (longest.max(2) - 1) as f64,
+    })
+}
+
 /// Lay out `lines` in the chart area `area`: a plot with room on the left for
 /// the y labels and below for the x labels, one scale for every line, ticks at
 /// round numbers, and each line thinned to the plot's width. None if no series
@@ -385,21 +421,7 @@ pub fn chart_layout(area: &Rect, metrics: &Metrics, lines: &[&Series]) -> Option
         w: area.w - left - pad,
         h: area.y + area.h - below - top,
     };
-    let numbers: Vec<f64> = lines
-        .iter()
-        .flat_map(|series| series.values.iter().flatten().copied())
-        .filter(|number| number.is_finite())
-        .collect();
-    let lowest = numbers.iter().copied().reduce(f64::min)?;
-    let highest = numbers.iter().copied().reduce(f64::max)?;
-    let (low, high) = if highest > lowest {
-        let reach = (highest - lowest) * RANGE_PAD;
-        (lowest - reach, highest + reach)
-    } else {
-        (lowest - 0.5, highest + 0.5)
-    };
-    let longest = lines.iter().map(|series| series.values.len()).max()?;
-    let x_max = (longest.max(2) - 1) as f64;
+    let Bounds { low, high, x_max } = bounds(lines.iter().copied(), RANGE_PAD)?;
     let to_x = |index: f64| plot.x + index / x_max * plot.w;
     let to_y = |value: f64| plot.y + plot.h - (value - low) / (high - low) * plot.h;
     let x_ticks = nice_ticks(0.0, x_max, X_TICK_TARGET)

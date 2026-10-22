@@ -3,7 +3,7 @@
 //! pixels at 300 dpi for a figure 7 inches wide.
 
 use crate::Series;
-use crate::display::{Tick, nice_ticks, short_number, thin};
+use crate::display::{Bounds, Tick, bounds, nice_ticks, short_number, thin};
 use crate::layout::Rect;
 
 /// The width of the figure in pixels: 7 inches at 300 dpi.
@@ -113,21 +113,7 @@ pub fn paper_chart(lines: &[(&str, &Series)]) -> Option<PaperChart> {
         w: f64::from(PAPER_WIDTH) - LEFT - RIGHT,
         h: f64::from(PAPER_HEIGHT) - TOP - BOTTOM,
     };
-    let numbers: Vec<f64> = lines
-        .iter()
-        .flat_map(|(_, series)| series.values.iter().flatten().copied())
-        .filter(|number| number.is_finite())
-        .collect();
-    let lowest = numbers.iter().copied().reduce(f64::min)?;
-    let highest = numbers.iter().copied().reduce(f64::max)?;
-    let (low, high) = if highest > lowest {
-        let reach = (highest - lowest) * RANGE_PAD;
-        (lowest - reach, highest + reach)
-    } else {
-        (lowest - 0.5, highest + 0.5)
-    };
-    let longest = lines.iter().map(|(_, series)| series.values.len()).max()?;
-    let x_max = (longest.max(2) - 1) as f64;
+    let Bounds { low, high, x_max } = bounds(lines.iter().map(|(_, series)| *series), RANGE_PAD)?;
     let to_x = |index: f64| plot.x + index / x_max * plot.w;
     let to_y = |value: f64| plot.y + plot.h - (value - low) / (high - low) * plot.h;
     let ticks = |values: Vec<f64>, to: &dyn Fn(f64) -> f64| -> Vec<Tick> {
