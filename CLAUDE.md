@@ -176,7 +176,8 @@ the user approved this difference on 2026-10-21.
 - After moving the repo folder, run `uv sync --reinstall` and `uv run
     pre-commit install`: the virtual environment and the installed git hook both
     hold the old absolute path. `pre-commit install` also sets up the pre-push hook, which
-    runs every functional notebook (about 10 s), so a push is slower than a commit.
+    runs every functional notebook (about 10 s) and the browser walk-throughs (about 37 s, needs
+    Chromium and the WASM build), so a push is slower than a commit.
 - The browser pane's redraw timing is not repeatable between page loads (one build gave 0.10,
     7.0 and 1.5 ms). Compare two versions only inside one page session, with a switch and
     interleaved rounds (DESIGN.md, Gotchas).

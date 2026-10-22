@@ -42,3 +42,10 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+      - id: run-browser-tests
+        name: run browser tests (walk-throughs in Chromium)
+        entry: uv run --locked python tools/run_browser_tests.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

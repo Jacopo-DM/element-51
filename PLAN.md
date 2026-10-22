@@ -717,7 +717,7 @@ Tier 2 (ordered by value over risk plus cost):
     a hidden or fast browser). Cost: about 80 lines. Verify: 160 of 160 pass; a throwaway change that
     breaks one row makes the exit code 1 and lists the row (shown once, then reverted); the run
     time is recorded in Baseline (3 runs, median and range).
-3. The pre-push hook: a `run-browser-tests` entry in `.pre-commit-config.yaml` (`pass_filenames:
+3. Done (2026-10-22; `pre-commit run run-browser-tests --hook-stage pre-push --all-files` passes; the push time is recorded at the next push). The pre-push hook: a `run-browser-tests` entry in `.pre-commit-config.yaml` (`pass_filenames:
     false`, `always_run: true`, `stages: [pre-push]`), next to the notebooks. Serves measure 3.
     Risk: low. Verify: `uv run pre-commit run run-browser-tests --hook-stage pre-push --all-files`
     passes; the next push shows the line and the push time is recorded.
