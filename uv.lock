@@ -773,6 +773,9 @@ version = "0.2.0"
 source = { editable = "." }
 default-groups = ["dev", "examples"]
 dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pillow" },
     { name = "pydantic" },
     { name = "starlette" },
     { name = "uvicorn" },
@@ -783,11 +786,9 @@ dependencies = [
 dev = [
     { name = "hypothesis" },
     { name = "ipykernel" },
-    { name = "matplotlib" },
     { name = "mypy" },
     { name = "nbclient" },
     { name = "nbformat" },
-    { name = "pillow" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -803,12 +804,14 @@ docs = [
 examples = [
     { name = "fastapi" },
     { name = "nicegui" },
-    { name = "numpy" },
     { name = "rich" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "matplotlib", specifier = ">=3.11.2" },
+    { name = "numpy", specifier = ">=2.5.4" },
+    { name = "pillow", specifier = ">=13.0.0" },
     { name = "pydantic", specifier = ">=2.14.1" },
     { name = "starlette", specifier = ">=1.9.0" },
     { name = "uvicorn", specifier = ">=0.54.0" },
@@ -819,11 +822,9 @@ requires-dist = [
 dev = [
     { name = "hypothesis", specifier = ">=6.170.5" },
     { name = "ipykernel", specifier = ">=7.4.0" },
-    { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "mypy", specifier = ">=2.4.0" },
     { name = "nbclient", specifier = ">=0.11.0" },
     { name = "nbformat", specifier = ">=5.11.1" },
-    { name = "pillow", specifier = ">=13.0.0" },
     { name = "pre-commit", specifier = ">=4.7.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
@@ -839,7 +840,6 @@ docs = [
 examples = [
     { name = "fastapi", specifier = ">=0.156.0" },
     { name = "nicegui", specifier = ">=3.18.0" },
-    { name = "numpy", specifier = ">=2.5.4" },
     { name = "rich", specifier = ">=15.0.0" },
 ]
 

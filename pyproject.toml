@@ -15,6 +15,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+    "pillow>=13.0.0",
     "pydantic>=2.14.1",
     "starlette>=1.9.0",
     "uvicorn>=0.54.0",
@@ -32,11 +35,9 @@ build-backend = "uv_build"
 dev = [
     "hypothesis>=6.170.5",
     "ipykernel>=7.4.0",
-    "matplotlib>=3.11.2",
     "mypy>=2.4.0",
     "nbclient>=0.11.0",
     "nbformat>=5.11.1",
-    "pillow>=13.0.0",
     "pre-commit>=4.7.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
@@ -50,7 +51,6 @@ docs = [
     "sphinx-autobuild>=2025.8.25",
 ]
 examples = [
-    "numpy>=2.5.4",
     "rich>=15.0.0",
     "fastapi>=0.156.0",
     "nicegui>=3.18.0",
