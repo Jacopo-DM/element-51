@@ -117,7 +117,9 @@ def test_the_job_panel_example_serves_the_page_and_the_editor(
     assert web_dir.exists()
     with running_example("f_embedding/f4_nicegui_job.py") as port:
         assert fetch(port, "/")[0] == HTTPStatus.OK
-        assert fetch(port, "/editor/")[2].lower().startswith(b"<!doctype html")
+        assert (
+            fetch(port, "/editor/")[2] == (web_dir / "index.html").read_bytes()
+        )
 
 
 def test_the_two_doors_example_shares_its_functions(web_dir: Path) -> None:

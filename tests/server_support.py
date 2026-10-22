@@ -152,9 +152,11 @@ import importlib.util
 import sys
 from pathlib import Path
 
+from element_51 import server
 from server_support import running
 
-path, mode, folder = sys.argv[1:4]
+path, mode, folder, web = sys.argv[1:5]
+server.WEB_DIR = Path(web)
 spec = importlib.util.spec_from_file_location("example", path)
 module = importlib.util.module_from_spec(spec)
 sys.modules["example"] = module
@@ -174,7 +176,9 @@ def running_example(name: str, *, folder: Path | None = None) -> Generator[int]:
 
     NiceGUI keeps one global app that cannot be started twice in one process,
     so an example that uses it runs in a process of its own. The child tells
-    its port on its first line and stops when its input closes.
+    its port on its first line and stops when its input closes. It serves the
+    web folder of this process (the `web_dir` fixture's fake one, or the real
+    one), so it needs no built browser layer.
 
     Parameters
     ----------
@@ -198,6 +202,7 @@ def running_example(name: str, *, folder: Path | None = None) -> Generator[int]:
             str(EXAMPLES / name),
             mode,
             str(folder or ""),
+            str(server.WEB_DIR),
         ],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,

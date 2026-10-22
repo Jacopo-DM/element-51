@@ -1975,9 +1975,17 @@ have to go through `tools/compress_images.py`).
 | 2026-10-22 | goal browser-tests, task 1: `tools/run_browser_tests.py` runs `uiKeys` in Playwright's headless Chromium (`tools/ui_states.py` gets `--port`) | 12 unit tests in `tests/test_browser_runner.py` (verdicts, report lines, exit code, the timeout script, a missing browser, a free port, every walk names a function in `ui_keys.js`); by hand: 90 of 90 rows passed in 19.4, 18.9 and 19.0 s, no server or Chromium process left behind; playwright 1.64.0 (dev group, with `greenlet` and `pyee`), headless shell 103.8 MB and ffmpeg 1.4 MB downloaded; not yet: the other three walk-throughs, a deliberately broken row, the hook, the GitHub job |
 | 2026-10-22 | goal browser-tests, task 2: the other three walk-throughs, `--only`, the failed-row listing | 14 unit tests in `tests/test_browser_runner.py`; by hand: 160 of 160 rows (`uiKeys` 90 in 18.9 s, `uiKeysDisplay` 28 in 8.0 s, `uiKeysJob` 21 in 3.5 s, `uiKeysAuto` 21 in 6.2 s), the whole run 37.2 to 37.3 s wall; a row broken on purpose (a throwaway edit of `ui_keys.js`, restored from a copy) printed `FAIL` with `one item per node: saw broken on purpose` and exited 1; not yet: the hook, the GitHub job |
 | 2026-10-22 | goal browser-tests, task 3: a `run-browser-tests` pre-push hook in `.pre-commit-config.yaml` (it now differs from the template copy by this one entry, the user's choice) | `uv run --locked pre-commit run run-browser-tests --hook-stage pre-push --all-files` passed; not yet: a real push, the GitHub job |
+| 2026-10-22 | goal browser-tests, tasks 4 and 5: the `browser` job on GitHub, the docs | the first run on GitHub (`af539ee`): `rust` 51 s, `wasm` 2 min 20 s, `browser` 3 min 40 s, all green; the pre-push run of that push took 57 s in all (notebooks and the walk-throughs); the same push turned CI red for another reason (three embedding tests, see Gotchas), fixed after |
 
 ## Gotchas
 
+- `src/element_51/web/` is generated and git-ignored, so GitHub's pytest job has no copy of it while
+    every local run has. A test that needs the page uses the `web_dir` fixture (a fake folder it
+    swaps in); a test that starts the page in a child process must hand the child that folder too
+    (`running_example` in `tests/server_support.py` passes `server.WEB_DIR`), because a monkeypatch
+    stays in its own process. Found on 2026-10-22: three embedding tests passed here and failed on
+    GitHub (`RuntimeError: Directory ... web does not exist` in the child). Check by moving
+    `src/element_51/web/` aside and running `uv run --locked pytest`.
 - Save as PNG needs Python: the page sends the lines or the picture and downloads the reply
     (`save_png.rs`), so a page without a connection shows the banner "Not connected to Python."
     matplotlib and numpy are imported inside `chart_png` so `import element_51` stays quick (a test
