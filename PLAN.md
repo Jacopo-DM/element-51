@@ -858,8 +858,10 @@ None open.
 - `examples/template.py` is the project template, not an example of the library: it
     imports numpy and creates `__data__`; it sits outside the group folders, so the
     example tests do not load it.
-- The NiceGUI host example (`f2_nicegui_host.py`) has no automated test, because
-    `ui.run_with` changes NiceGUI's global state; the FastAPI one is tested.
+- The NiceGUI host example `f2_nicegui_host.py` has no automated test, because `ui.run_with`
+    changes NiceGUI's global state. `f4`, `f5` and `f6` are tested in a child process
+    (`running_example` in `tests/server_support.py`); `f2` could be added the same way. `f1`, `f2`
+    (x step of 40 graph units) place a new node mostly on top of the last one.
 - The page keeps a few fixed sizes (1 px borders, the banner and search-box
     paddings, the Run triangle, letter spacing); see DESIGN.md, task 22.
 - The undo history is per page: a reload empties it, and edits made by other

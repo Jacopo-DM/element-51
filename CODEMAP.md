@@ -33,7 +33,10 @@ the ignore list in CLAUDE.md.
     `d2_values.py`, `d3_undo_redo.py`, `d4_menu.py`, `d5_card_menu.py`, `d6_auto_run.py`, `d7_series_colours.py`. `e_look`:
     `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`, `e3_palette.py`, `e4_purple_synthwave.py`. `f_embedding`:
     `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
-    in a FastAPI or NiceGUI host, with a side panel). `g_experiments`:
+    in a FastAPI or NiceGUI host, with a side panel), `f3_fastapi_api.py` (a typed JSON API),
+    `f4_nicegui_job.py` (a NiceGUI panel for a job node), `f5_both_front_doors.py` (a NiceGUI page and a
+    JSON API on one graph) and `f6_workspace_server.py` (many graphs, an editor each, mounted at run time;
+    `Workspaces` is the class both doors call). `g_experiments`:
     `g3_mnist.py` (a sample node, a numpy training job and a Plot; the data and the network are in the file, the data comes from `__data__/`), `g2_job_nodes.py` (a step job into a Plot, a work job into a node, a job that fails when `blow_up` is ticked, and `Stubborn`, a job in its own process that Stop kills), `g1_picture_and_plot.py` (nodes that make and pass pictures and series; a picture shows on the card, and a `Plot` node draws the series linked to it, with a row for each link and an empty one after them). Each example has
     `build_app()`; `tests/test_examples.py` runs every one.
 - `docs/images/`: the three README screenshots (`dark`, `light`, `palette`; how they
@@ -132,7 +135,7 @@ reject, run, run result, a partial run result, start and stop requests, a job up
 Python, `tests/`, one file per module: `test_model.py`, `test_edits.py`,
 `test_nodes.py`, `test_job_node.py`, `test_jobs.py`, `test_isolated.py` (real child processes: a finished job, a kill, a crash, a refusal), `test_engine.py`, `test_protocol.py`, `test_session.py`,
 `test_store.py`, `test_colours.py` (the shared colour cases, the saved file and the refusals), `test_figures.py` (the chart and picture PNG files, the darkening, a fresh-process check that `import element_51` loads no matplotlib), `test_theme.py`, `test_visuals.py` (the `Image` and `Series` records, the `image` and `series` port kinds, `PlotNode` and the engine's `shown`), `test_server.py` (the page, `serve` and the process), `test_server_websocket.py` (a real uvicorn server and the `websockets` client), `test_server_hosts.py` (themes, and the FastAPI example's host with a fake web folder); `server_support.py` holds `running`, `fetch`, `post` and `free_port`, and `conftest.py` the `web_dir` fixture,
-`test_examples.py` (loads every example in `examples/` and runs its graph), `test_mnist_example.py` (the MNIST example's reader, downloads, network and nodes, on fake data), `test_functional_coverage.py` (every public module has a row in `tests/functional/README.md`).
+`test_examples.py` (loads every example in `examples/` and runs its graph), `test_embedding_examples.py` (the `f_embedding` hosts: the API example in process, the NiceGUI ones in a child process through `running_example` in `server_support.py`), `test_mnist_example.py` (the MNIST example's reader, downloads, network and nodes, on fake data), `test_functional_coverage.py` (every public module has a row in `tests/functional/README.md`).
 `sample_nodes.py` holds node functions shared by several test files; `sample_jobs.py` holds the step job `Steps` and its gate `Pause`, `Timed`, and the isolated jobs `Counting`, `IsoSteps`, `Sleeper`, `Chatty`, `Dies` and `Raises`.
 
 Functional notebooks, `tests/functional/`: `nodes_and_running.ipynb`, `save_and_load.ipynb`, `themes.ipynb`, `pictures_and_series.ipynb`, `jobs.ipynb`, `editing.ipynb`, `server_and_protocol.ipynb`, `mnist_example.ipynb` (the example `g3_mnist.py`, on made-up pictures), `figures.ipynb` (the chart and picture PNG files), and `README.md` with the coverage table (a row per public module of `src/element_51/`: its notebook, plus a row for the example). Every public module has a notebook. They cover the Python side only.

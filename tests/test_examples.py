@@ -99,6 +99,13 @@ EXPECTED: dict[str, Expected] = {
         ("n5", "skipped", {}),
     ],
     "f_embedding/f2_nicegui_host.py": [("n1", "ok", {"out": 3.0})],
+    "f_embedding/f3_fastapi_api.py": [("n1", "ok", {"out": 3.0})],
+    "f_embedding/f4_nicegui_job.py": [
+        ("n1", "skipped", {}),
+        ("n2", "skipped", {}),
+    ],
+    "f_embedding/f5_both_front_doors.py": [("n1", "ok", {"out": 3.0})],
+    "f_embedding/f6_workspace_server.py": [("n1", "ok", {"out": 3.0})],
     "e_look/e2_theme_file.py": [
         ("n1", "ok", {"out": 3.0}),
         ("n2", "ok", {"out": 3.0}),

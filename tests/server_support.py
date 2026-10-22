@@ -2,10 +2,14 @@
 
 import http.client
 import json
+import os
 import socket
+import subprocess  # ruff: ignore[suspicious-subprocess-import]  # runs our own code
+import sys
 import threading
 from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
 
 import uvicorn
 from starlette.types import ASGIApp
@@ -97,3 +101,114 @@ def post(port: int, path: str) -> object:
         return json.loads(connection.getresponse().read())
     finally:
         connection.close()
+
+
+def post_json(port: int, path: str, body: object) -> tuple[int, object]:
+    """POST `body` as JSON to `path` on the local server.
+
+    Returns
+    -------
+    tuple[int, object]
+        The status and the JSON the server answered with (`None` if it sent
+        nothing, as for a 204).
+    """
+    connection = http.client.HTTPConnection(server.HOST, port, timeout=10)
+    try:
+        connection.request(
+            "POST",
+            path,
+            body=json.dumps(body),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        answer = response.read()
+        return response.status, json.loads(answer) if answer else None
+    finally:
+        connection.close()
+
+
+def delete(port: int, path: str) -> int:
+    """Send a DELETE for `path` to the local server.
+
+    Returns
+    -------
+    int
+        The status the server answered with.
+    """
+    connection = http.client.HTTPConnection(server.HOST, port, timeout=10)
+    try:
+        connection.request("DELETE", path)
+        response = connection.getresponse()
+        response.read()
+        return response.status
+    finally:
+        connection.close()
+
+
+EXAMPLES = Path(__file__).parent.parent / "examples"
+
+CHILD = """
+import importlib.util
+import sys
+from pathlib import Path
+
+from server_support import running
+
+path, mode, folder = sys.argv[1:4]
+spec = importlib.util.spec_from_file_location("example", path)
+module = importlib.util.module_from_spec(spec)
+sys.modules["example"] = module
+spec.loader.exec_module(module)
+host = module.build_host(
+    module.build_app() if mode == "app" else Path(folder)
+)
+with running(host) as port:
+    print(port, flush=True)
+    sys.stdin.readline()
+"""
+
+
+@contextmanager
+def running_example(name: str, *, folder: Path | None = None) -> Generator[int]:
+    """Run an example's host in a child Python and yield its port.
+
+    NiceGUI keeps one global app that cannot be started twice in one process,
+    so an example that uses it runs in a process of its own. The child tells
+    its port on its first line and stops when its input closes.
+
+    Parameters
+    ----------
+    name
+        The example's path under `examples/`.
+    folder
+        Where a host that saves files keeps them. `None` for a host that is
+        built from the example's `build_app()`.
+
+    Yields
+    ------
+    int
+        The port the example's host listens on.
+    """
+    mode = "app" if folder is None else "folder"
+    child = subprocess.Popen(  # ruff: ignore[subprocess-without-shell-equals-true]  # our own code
+        [
+            sys.executable,
+            "-c",
+            CHILD,
+            str(EXAMPLES / name),
+            mode,
+            str(folder or ""),
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).parent)},
+    )
+    assert child.stdin is not None
+    assert child.stdout is not None
+    try:
+        yield int(child.stdout.readline())
+    finally:
+        child.stdin.close()
+        child.stdout.close()
+        child.wait(timeout=30)

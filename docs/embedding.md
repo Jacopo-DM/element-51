@@ -45,6 +45,31 @@ ui.element("iframe").props("src=/editor/").style("width: 100%; height: 100%")
 `examples/f_embedding/f2_nicegui_host.py` shows a splitter page with NiceGUI
 buttons that run the graph and add nodes.
 
+## More examples, simplest first
+
+All six are in `examples/f_embedding/`. Run each on its own: they share port
+8765.
+
+| Example | Host | What it adds |
+| --- | --- | --- |
+| `f1_fastapi_host.py` | FastAPI | A side panel with Run and Add node. |
+| `f2_nicegui_host.py` | NiceGUI on FastAPI | The same panel, written in Python widgets. |
+| `f3_fastapi_api.py` | FastAPI | A typed JSON API: pydantic bodies, refusals as 404 and 409, FastAPI's `/docs` page. |
+| `f4_nicegui_job.py` | NiceGUI on FastAPI | Start and Stop for a job node, a progress bar and a message that stays until you press Dismiss. |
+| `f5_both_front_doors.py` | both | A NiceGUI page and a JSON API that call the same plain functions on one graph. |
+| `f6_workspace_server.py` | both | Many graphs: each workspace has its own editor mounted at run time, its own file, and one dashboard and one API for all of them. |
+
+Three things to know when you build on these:
+
+- NiceGUI keeps one global app, so a process can call `ui.run_with` once. The
+    tests for `f4` to `f6` start each host in a child process.
+- NiceGUI is mounted at `/`, which matches every path. An editor mounted after
+    it, as `f6` does while the server runs, is never reached; `f6` puts each new
+    mount first in the router's list instead of calling `host.mount`.
+- `App.apply` and the browser's edits do not call `App.subscribe` listeners,
+    only `add_node` and `add_link` do. A panel that must follow the page's own
+    edits polls `app.graph`, as `f4` and `f5` do with a NiceGUI timer.
+
 ## Limits
 
 - The editor and the host share one process, and `App` holds one graph. Run

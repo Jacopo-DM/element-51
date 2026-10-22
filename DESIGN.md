@@ -2088,3 +2088,15 @@ have to go through `tools/compress_images.py`).
     (`visibility: hidden`) a box that a later card overlaps, using `Rect::is_covered_by`; the port
     squares are canvas drawing and are skipped in `draw.rs` by the same rule. A box covered only
     in part is hidden whole. Any new element placed over the canvas needs the same rule.
+- NiceGUI hosts (`f2` to `f6` in `examples/f_embedding/`): `ui.run_with` can run once per process
+    (a second call raises "Cannot add middleware after an application has started"), so the tests
+    start `f4` to `f6` in a child process (`running_example` in `tests/server_support.py`: the child
+    prints its port and exits when its input closes). NiceGUI is mounted at `/`, which matches every
+    path, so an editor mounted later (`f6` makes one per workspace while the server runs) must go
+    first in `host.router.routes`; `host.mount` appends and a request for it ends in NiceGUI's 404.
+    A NiceGUI page has a light Quasar theme but the browser canvas follows the system: in a dark
+    browser the panel text came out black on dark grey (seen in the browser pane on 2026-10-22), so
+    each page adds `html { color-scheme: light; }` (`f1` does the same in its own CSS; `f2` does
+    not). `App.subscribe` and `App.subscribe_jobs` listeners run in the caller's thread (a job's
+    thread for jobs), so a panel stores the update and a NiceGUI timer redraws; and an edit made in
+    the page does not call `App.subscribe` listeners, so a panel polls `app.graph` to follow it.
