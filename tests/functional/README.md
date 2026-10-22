@@ -42,5 +42,5 @@ a row (a test fails without it).
 | `theme` | `themes.ipynb` |
 | `visuals` | `pictures_and_series.ipynb` |
 | `edits` | `editing.ipynb` |
-| `protocol` | none yet |
-| `server` | none yet |
+| `protocol` | `server_and_protocol.ipynb` |
+| `server` | `server_and_protocol.ipynb` |
