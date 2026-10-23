@@ -440,7 +440,8 @@ reply ("Yes, start task N, and delete the merged branch ...").
 On GitHub (2026-10-21, all at the user's say-so): GitHub Pages is on (build type
 `workflow`) and the docs are live at https://jacopo-dm.github.io/element-51/; the
 repo's About homepage is that address; Dependabot (`.github/dependabot.yml`: weekly
-for github-actions, uv and cargo in `/rust`) is running; the workflows `CI`, `Rust
+for github-actions, uv and pre-commit, one grouped pull request each, and cargo in `/rust`
+ungrouped, since 2026-10-24) is running; the workflows `CI`, `Rust
 and WASM` and `Docs` ran for the first time and passed (the first Docs run failed
 only because Pages was off, then passed after the user enabled it). The README has
 seven badges, a header screenshot (the `purple-synthwave` theme) and a Looks section;
