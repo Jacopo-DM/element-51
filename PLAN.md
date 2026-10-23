@@ -316,45 +316,9 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
     input name), so the file format may need no change at all: the spec checks.
 - Added: 2026-10-22
 
-### default-nodes
+### default-nodes: done (2026-10-24, `34c6e5e..0a5734a`)
 
-- Goal: every editor starts with a tree of built-in node types in the right-click
-    menu, in place of each script registering `PlotNode` by hand, unless the
-    host turns them off.
-- Kind: new behaviour (public API: scripts that list `PlotNode` change).
-- The tree (the user's, 2026-10-23): `Default nodes` holds `Input nodes`
-    (`Variable`, `Slider`), `Output nodes` (`Plot`) and `Triggers` (`Clock`);
-    `User defined nodes` holds the rest. This goal builds the tree, the switch and
-    moves `Plot` in; `variable-node` adds the others (an empty group is not shown).
-- Success measure (each is a test):
-    1. `App(nodes)` offers `Plot` without being given it. The menu path of `Plot`
-        is `Default nodes/Output nodes/Plot`.
-    2. A node the user registers appears under `User defined nodes`: with no
-        category directly under it, with category `Numpy` at
-        `User defined nodes/Numpy`.
-    3. `App(nodes, defaults=False)` offers no default node and shows no
-        `Default nodes` folder and no `User defined nodes` wrapper: `hypot` is at
-        `Numpy/hypot`, the 0.3.0 menu (one switch for all groups, the user's choice).
-    4. A user node named like a default, and `PlotNode` itself in the list, each
-        raise `ValueError` at `App(...)`. The first names both nodes and says to
-        rename yours or pass `defaults=False`; the second says `Plot` is a
-        default node and to remove it from the list (the user's choice
-        2026-10-23: old scripts are rewritten, not tolerated).
-    5. No example, notebook, test or tool in the repo lists `PlotNode`; the
-        docs say `Plot` is built in. A saved graph with a `Plot` loads as before
-        (nodes are saved by name).
-    6. Keyboard reachable and AA in all themes: the menu is the existing nested
-        menu, so the existing walk-throughs cover it; their rows that name menu
-        paths are updated.
-- Status: goal approved 2026-10-23. Spec in DESIGN.md (`default-nodes spec`); the task
-    list below waits for approval in words.
-- Decisions so far (2026-10-23): user nodes under `User defined nodes`, every
-    existing menu moves one level down; old scripts are rewritten; triggers group
-    is called `Triggers`; clash is an error; with `defaults=False` there is no
-    wrapper.
-- Open questions: none. The release that carries this is 0.4.0 (a script that
-    lists `PlotNode` stops working), not 0.3.1.
-- Added: 2026-10-23
+Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `User defined nodes`, `defaults=False` gives the 0.3.0 menu, and a clashing name or a listed `PlotNode` raises (spec in DESIGN.md, `default-nodes spec`). Example `d8_default_nodes.py`. Not released: it carries 0.4.0, because a script that lists `PlotNode` stops working. `variable-node` builds on it.
 
 ### auto-run-default
 
@@ -435,7 +399,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: none is set. 0.3.0 is released (2026-10-22). The examples below were tried by the user on 2026-10-22 and are fine. The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version). `wrap-module` is done and merged into `main` and pushed; the user's own try-out is still to come: `uv run python tools/build_wasm.py` if needed, then `uv run examples/h_wrapping/h1_numpy_ufuncs.py` (right-click, the `Numpy` flyout; Run) and `uv run examples/h_wrapping/h2_own_module.py`, and a read of `docs/wrapping.md`. Next: the goal `array-ports` (direction approved, replaces `Series`; it needs its spec with `/zz-02-project-plan`). Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner), the README GIF (`docs/images/mnist.gif`, 220 KB, now the top picture), 0.3.0 (published by the user, tagged `v0.3.0`) and `browser-tests` (`tools/run_browser_tests.py`, pre-push hook, `browser` job in `rust.yml`). GitHub CI, Docs and Rust and WASM passed for every push up to `af539ee` except that its CI run failed (three embedding tests, fixed in `1d3b0fd`: see DESIGN.md, Gotchas); CI, Docs and Rust and WASM passed for `678d4b9`, `644dd37` and `ab99a7e` (read 2026-10-23 with `gh run list --branch main --limit 6`). A push now takes about 57 s because the pre-push hook runs the notebooks and the browser walk-throughs. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
+Next step: none is set. 0.3.0 is released (2026-10-22). The examples below were tried by the user on 2026-10-22 and are fine. The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version). `wrap-module` is done and merged into `main` and pushed; the user's own try-out is still to come: `uv run python tools/build_wasm.py` if needed, then `uv run examples/h_wrapping/h1_numpy_ufuncs.py` (right-click, the `Numpy` flyout; Run) and `uv run examples/h_wrapping/h2_own_module.py`, and a read of `docs/wrapping.md`. `default-nodes` is done on `main` (2026-10-24; not pushed, not released); the user's own try-out is still to come: `uv run examples/d_editor/d8_default_nodes.py`, then set `DEFAULTS = False` in the file and start it again. Next: the goals `array-ports` (direction approved, replaces `Series`) and `variable-node`, each needing its spec with `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner), the README GIF (`docs/images/mnist.gif`, 220 KB, now the top picture), 0.3.0 (published by the user, tagged `v0.3.0`) and `browser-tests` (`tools/run_browser_tests.py`, pre-push hook, `browser` job in `rust.yml`). GitHub CI, Docs and Rust and WASM passed for every push up to `af539ee` except that its CI run failed (three embedding tests, fixed in `1d3b0fd`: see DESIGN.md, Gotchas); CI, Docs and Rust and WASM passed for `678d4b9`, `644dd37` and `ab99a7e` (read 2026-10-23 with `gh run list --branch main --limit 6`). A push now takes about 57 s because the pre-push hook runs the notebooks and the browser walk-throughs. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two
@@ -816,46 +780,6 @@ restarts (not saved, by decision).
     prefix option for a clash such as `add`; a test with `scipy.special` (scipy is not a dependency); numpy
     functions that are not ufuncs (a goal of its own, from numpy's `.pyi` stubs).
 - Docs prose and README body: not unasked.
-
-### Goal `default-nodes`: Tier 1 and Tier 2 (waiting for approval, 2026-10-23)
-
-Tier 1, one commit:
-
-- Task 1, the defaults in `App`, the switch, the prefixes, both errors, and every
-    rewrite. Files: new `src/element_51/defaults.py`, `session.py` (the
-    `defaults=` parameter, `default_names`, the prefix in `snapshot`), `nodes.py`
-    (`PlotNode` declares category `Output nodes`), `__init__.py`; the listed
-    `PlotNode` removed from 5 examples, 2 notebooks, 5 test files and 2 tools
-    (`tools/bench_page.py`, `tools/ui_states.py`); new tests in `tests/test_session.py`
-    for criteria 1 to 4 (menu paths, the switch, both errors, the same function in two
-    apps), written first. Serves criteria 1 to 5. Risk medium (many files, but each
-    edit is the removal of one name; the atomic commit is needed because the error
-    would break every untouched list). Cost: about 120 lines added, 40 removed, one
-    module, no dependency. Verify: the new tests, then all 531 Python tests, the
-    notebooks with `tools/run_notebooks.py`, and `cargo test` (the shared
-    `tests/fixtures/snapshot.json` carries no category for Plot; read it first).
-
-Tier 2:
-
-- Task 2, the page. Files: `tools/ui_keys.js`, `tools/ui_states.py` and the rows of the
-    four walk-throughs that open the menu by a path or search for `Plot` (the menu is
-    one level deeper); `rust/element-51-core/tests` only if one names a menu path.
-    Serves criterion 6. Risk low; the effect is read by `tools/run_browser_tests.py`
-    (160 rows) and by eye in the browser pane. Cost: rows edited, no new concept.
-- Task 3, docs. Files: `docs/visual-ports.md`, `docs/reference.md` if it lists
-    `PlotNode`, the README line that registers it, CODEMAP.md (`defaults.py`), CLAUDE.md
-    only if a command changes (none expected). Serves criterion 5. Risk low; verify with
-    `uv-docs build`.
-- Task 4, an example the user can try: `examples/d_editor/d8_default_nodes.py` (the
-    tree, and a `DEFAULTS` constant at the top to switch to `defaults=False`), a row in
-    `tests/test_examples.py`, laid out like `examples/template.py`. Serves criteria 1 to
-    3. Risk low; cost about 70 lines.
-
-Tier 3, listed and not executed: any default other than `Plot` (it is `variable-node`),
-a per-group switch, hiding one default.
-
-No test pins the menu paths in the browser except the walk-throughs (task 2); the
-Python tests pin them as strings in the snapshot.
 
 ## Open questions
 
