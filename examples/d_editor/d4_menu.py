@@ -1,7 +1,7 @@
 """A nested add-node menu with search.
 
-Right-click the canvas. The menu has two submenus, `Math` (with `Trig` inside
-it) and `Text`, and two nodes at the top level.
+Right-click the canvas. Inside the `User defined nodes` folder the menu has two
+submenus, `Math` (with `Trig` inside it) and `Text`, and two nodes beside them.
 
 The categories come from `@node(category="Math/Trig")` and, for a class, a
 `category = "Text"` line. A slash separates the levels.
@@ -10,7 +10,8 @@ Build the browser layer first: `uv run python tools/build_wasm.py`.
 
 Notes
 -----
-    * Move the pointer over `Math`, then `Trig`, and click `sine` to add it.
+    * Move the pointer over `User defined nodes`, then `Math`, then `Trig`, and
+        click `sine` to add it.
     * Type `sin` in the search box: every match shows at once, with its path.
     * Type `math`: the search looks at the whole path, so all of Math matches.
     * Press Enter to add the first match, or Escape to close the menu.

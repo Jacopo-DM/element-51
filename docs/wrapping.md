@@ -23,7 +23,7 @@ def percent(part: float, whole: float) -> float:
     return 100.0 * part / whole
 ```
 
-One call makes both into nodes, in the `Stats` flyout of the add-node menu:
+One call makes both into nodes, in the `Stats` flyout of `User defined nodes` in the add-node menu:
 
 ```python
 import element_51

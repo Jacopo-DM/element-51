@@ -13,8 +13,8 @@ Notes
 -----
     * Press Run: `mean_of_two` shows 70.0, and `zscore` takes it as its mean and
         shows 1.5 for a score of 82 with a spread of 8. `percent` shows 75.0.
-    * Right-click the canvas: the `Stats` flyout holds `mean_of_two`, `zscore`
-        and `percent`, and no `describe`.
+    * Right-click the canvas: `User defined nodes` has a `Stats` flyout that
+        holds `mean_of_two`, `zscore` and `percent`, and no `describe`.
     * Change the `std` box of `zscore` to 0 and press Run: the node fails with
         ZeroDivisionError and the others still run.
 

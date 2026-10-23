@@ -12,8 +12,8 @@ Notes
     * Press Run: `hypot` has 3 and 4 typed into its two boxes and shows 5.
         `modf` splits 2.5 into 0.5 (`out1`) and 2.0 (`out2`). `exp2` takes the
         2.0 and shows 4.0.
-    * Right-click the canvas: the `Numpy` flyout lists all 85 nodes. Type `sin`
-        to search them.
+    * Right-click the canvas: `User defined nodes` has a `Numpy` flyout with all
+        85 nodes. Type `sin` to search them.
     * Add `divide`, leave `x2` at 0 and press Run: the result is `inf`, as in
         numpy, with no warning. The page shows it as `null` (a known limit).
     * Click the menu icon of a numpy node and choose View source code: it shows

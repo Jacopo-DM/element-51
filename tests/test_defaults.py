@@ -1,5 +1,6 @@
 """The default nodes every editor starts with, and the switch for them."""
 
+from pathlib import Path
 from typing import override
 
 import pytest
@@ -7,6 +8,7 @@ from sample_nodes import add
 
 from element_51.nodes import Node, PlotNode, node
 from element_51.session import App
+from element_51.store import StoreError
 
 
 @node(category="Numpy")
@@ -113,3 +115,14 @@ def test_add_node_accepts_plot_node_from_the_defaults() -> None:
     app = App([])
     node_id = app.add_node(PlotNode, x=0.0, y=0.0)
     assert app.graph.nodes[0].id == node_id
+
+
+def test_a_saved_plot_needs_the_defaults_to_load(tmp_path: Path) -> None:
+    """A graph with a `Plot` loads with the defaults and is refused without."""
+    path = tmp_path / "graph.json"
+    app = App([])
+    app.add_node(PlotNode, x=0.0, y=0.0)
+    app.save(path)
+    App([]).load(path)
+    with pytest.raises(StoreError, match="Plot"):
+        App([], defaults=False).load(path)

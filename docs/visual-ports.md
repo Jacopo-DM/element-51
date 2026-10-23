@@ -62,7 +62,7 @@ Pass `defaults=False` to leave them out: the editor then offers only your nodes,
 the folders they declare, with no `Default nodes` and no `User defined nodes`.
 
 ```python
-app = element_51.App([ramp, training])                  # Plot is there
+app = element_51.App([ramp, training])  # Plot is there
 plain = element_51.App([ramp, training], defaults=False)  # only your nodes
 ```
 

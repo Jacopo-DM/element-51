@@ -3,7 +3,7 @@
 // tool, then take a screenshot. Usage: `await uiState("menu")`.
 //   default      nothing open
 //   menu         the add-node menu, at the middle of the canvas
-//   flyout       the menu with the Math submenu open
+//   flyout       the menu with User defined nodes and its Math submenu open
 //   search       the menu with a search that finds nodes
 //   search-none  the menu with a search that finds nothing
 //   card-menu    the card menu of the first node's header icon
@@ -27,8 +27,11 @@ async function uiState(name) {
     if (name === "menu") openMenu();
     if (name === "flyout") {
         openMenu();
-        const category = document.querySelector('#menu-tree button[data-category="Math"]');
-        category.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+        for (const label of ["User defined nodes", "Math"]) {
+            const category = document.querySelector(`#menu-tree button[data-category="${label}"]`);
+            category.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+            category.parentElement.classList.add("open");
+        }
     }
     if (name === "search") {
         openMenu();
