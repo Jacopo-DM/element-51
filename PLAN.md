@@ -321,24 +321,39 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
 - Goal: every editor starts with a tree of built-in node types in the right-click
     menu, in place of each script registering `PlotNode` by hand, unless the
     host turns them off.
-- Kind: new behaviour (the examples that register `PlotNode` change).
+- Kind: new behaviour (public API: scripts that list `PlotNode` change).
 - The tree (the user's, 2026-10-23): `Default nodes` holds `Input nodes`
     (`Variable`, `Slider`), `Output nodes` (`Plot`) and `Triggers` (`Clock`);
-    `User defined nodes` holds the rest. The first step moves `Plot` in and
-    builds the tree and the switch; `variable-node` adds the others.
-- Success measure (a draft; the spec makes each testable):
-    1. `App(nodes)` has the default nodes without being given them; the menu
-        shows the tree above, with the user's nodes under `User defined nodes`.
-    2. `App(nodes, defaults=False)` has none of them (one switch for all, the
-        user's choice 2026-10-23; no per-group switch).
-    3. A user node whose name is taken by a default (`Plot`, `Variable`) raises
-        a `ValueError` naming both and saying to rename it or pass
-        `defaults=False` (the user's choice, 2026-10-23).
-    4. Existing examples and saved graphs that name `PlotNode` still work or
-        change in one place, and no example registers `PlotNode` by hand.
-- Status: direction from the user 2026-10-23. Not specified, not approved to start.
-- Open questions: where `Triggers` lives until `Clock` exists (an empty group is
-    not shown); whether the menu order puts `Default nodes` first.
+    `User defined nodes` holds the rest. This goal builds the tree, the switch and
+    moves `Plot` in; `variable-node` adds the others (an empty group is not shown).
+- Success measure (each is a test):
+    1. `App(nodes)` offers `Plot` without being given it. The menu path of `Plot`
+        is `Default nodes/Output nodes/Plot`.
+    2. A node the user registers appears under `User defined nodes`: with no
+        category directly under it, with category `Numpy` at
+        `User defined nodes/Numpy`.
+    3. `App(nodes, defaults=False)` offers no default node and shows no
+        `Default nodes` folder (one switch for all groups, the user's choice).
+    4. A user node named like a default, and `PlotNode` itself in the list, each
+        raise `ValueError` at `App(...)`. The first names both nodes and says to
+        rename yours or pass `defaults=False`; the second says `Plot` is a
+        default node and to remove it from the list (the user's choice
+        2026-10-23: old scripts are rewritten, not tolerated).
+    5. No example, notebook, test or tool in the repo lists `PlotNode`; the
+        docs say `Plot` is built in. A saved graph with a `Plot` loads as before
+        (nodes are saved by name).
+    6. Keyboard reachable and AA in all themes: the menu is the existing nested
+        menu, so the existing walk-throughs cover it; their rows that name menu
+        paths are updated.
+- Status: draft, shown to the user 2026-10-23, waiting for approval in words.
+    The menu question and the old-scripts question are answered (below).
+- Decisions so far (2026-10-23): user nodes under `User defined nodes`, every
+    existing menu moves one level down; old scripts are rewritten; triggers group
+    is called `Triggers`; clash is an error.
+- Open questions: with `defaults=False`, does the menu keep the 0.3.0 shape (no
+    `User defined nodes` wrapper, since there is nothing to separate from)?
+    Recommended yes; waits for the user. The release that carries this is 0.4.0
+    (a script that lists `PlotNode` stops working), not 0.3.1.
 - Added: 2026-10-23
 
 ### auto-run-default
