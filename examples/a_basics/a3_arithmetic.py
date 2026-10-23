@@ -14,6 +14,7 @@ from rich.traceback import install
 
 # Local libraries
 import element_51
+from element_51.edits import SetValue
 
 # --- Globals --- #
 
@@ -24,16 +25,6 @@ import element_51
 # --- TERMINAL OUTPUT SETUP --- #
 install(show_locals=False)
 console = Console()
-
-
-@element_51.node
-def three() -> float:
-    return 3.0
-
-
-@element_51.node
-def four() -> float:
-    return 4.0
 
 
 @element_51.node
@@ -52,16 +43,18 @@ def show(value: float) -> float:
 
 
 def build_app() -> element_51.App:
-    """Build the graph `show((three + four) * three)`.
+    """Build the graph `show((3 + 4) * 3)` from two `Float` input nodes.
 
     Returns
     -------
     element_51.App
-        The app, with five nodes and five links.
+        The app: two `Float` nodes, `add`, `multiply` and `show`, five links.
     """
-    app = element_51.App([three, four, add, multiply, show])
-    n_three = app.add_node(three, x=60.0, y=80.0)
-    n_four = app.add_node(four, x=60.0, y=220.0)
+    app = element_51.App([add, multiply, show])
+    n_three = app.add_node(element_51.Float, x=60.0, y=80.0)
+    n_four = app.add_node(element_51.Float, x=60.0, y=220.0)
+    app.apply(SetValue(node=n_three, port="value", value=3.0))
+    app.apply(SetValue(node=n_four, port="value", value=4.0))
     n_add = app.add_node(add, x=320.0, y=120.0)
     n_multiply = app.add_node(multiply, x=580.0, y=120.0)
     n_show = app.add_node(show, x=840.0, y=140.0)

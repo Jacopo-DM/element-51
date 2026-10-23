@@ -8,6 +8,7 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+from test_defaults import DEFAULT_MENU
 
 from element_51.edits import SetValue
 from element_51.protocol import JobUpdate
@@ -310,7 +311,7 @@ def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
     app = build("d_editor/d4_menu.py")
     categories = {t.name: t.category for t in app.snapshot().node_types}
     assert categories == {
-        "Plot": "Default nodes/Output nodes",
+        **DEFAULT_MENU,
         "sine": "User defined nodes/Math/Trig",
         "cosine": "User defined nodes/Math/Trig",
         "square_root": "User defined nodes/Math",
@@ -332,7 +333,7 @@ def test_the_default_nodes_example_shows_both_menus() -> None:
         for t in module.build_app(defaults=False).snapshot().node_types
     }
     assert on == {
-        "Plot": "Default nodes/Output nodes",
+        **DEFAULT_MENU,
         "add": "User defined nodes",
         "show": "User defined nodes",
     }

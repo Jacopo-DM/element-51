@@ -31,6 +31,7 @@ a row (a test fails without it).
 | --- | --- |
 | `nodes` | `nodes_and_running.ipynb` |
 | `defaults` | `nodes_and_running.ipynb` |
+| `inputs` | `nodes_and_running.ipynb` |
 | `ports` | `nodes_and_running.ipynb` |
 | `model` | `nodes_and_running.ipynb` |
 | `engine` | `nodes_and_running.ipynb` |

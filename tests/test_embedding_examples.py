@@ -32,7 +32,16 @@ def test_the_api_example_checks_requests_and_reports_runs(
     with running(host) as port:
         status, _, body = fetch(port, "/api/node-types")
         assert status == HTTPStatus.OK
-        assert json.loads(body) == ["Plot", "add", "multiply"]
+        assert json.loads(body) == [
+            "Flag",
+            "Float",
+            "Integer",
+            "Plot",
+            "Slider",
+            "Text",
+            "add",
+            "multiply",
+        ]
         with connect(f"ws://{server.HOST}:{port}/editor/ws") as websocket:
             Snapshot.model_validate_json(websocket.recv())
             made = post_json(

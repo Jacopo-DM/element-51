@@ -1,9 +1,17 @@
 """The node types every editor starts with, and where the menu puts them."""
 
+from element_51.inputs import Flag, Float, Integer, Slider, Text
 from element_51.model import NodeType
 from element_51.nodes import PlotNode, Registered
 
-DEFAULT_NODES: tuple[Registered, ...] = (PlotNode,)
+DEFAULT_NODES: tuple[Registered, ...] = (
+    Float,
+    Integer,
+    Text,
+    Flag,
+    Slider,
+    PlotNode,
+)
 """The nodes an `App` adds before the user's own, unless told not to."""
 
 DEFAULT_FOLDER = "Default nodes"

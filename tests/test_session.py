@@ -31,12 +31,20 @@ def test_snapshot_lists_node_types_in_registration_order() -> None:
     """The browser gets every type, whether or not a node uses it."""
     app = App([add, show])
     snapshot = app.snapshot()
-    assert [t.name for t in snapshot.node_types] == [
+    names = [t.name for t in snapshot.node_types]
+    assert names == [
+        "Float",
+        "Integer",
+        "Text",
+        "Flag",
+        "Slider",
         "Plot",
         "add",
         "show",
     ]
-    assert snapshot.node_types[1].outputs[0].kind is PortType.FLOAT
+    assert snapshot.node_types[names.index("add")].outputs[0].kind is (
+        PortType.FLOAT
+    )
     assert snapshot.graph.nodes == ()
 
 

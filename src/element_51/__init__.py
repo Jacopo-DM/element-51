@@ -1,5 +1,6 @@
 """Build browser node-editor GUIs from Python."""
 
+from element_51.inputs import Flag, Float, Integer, Slider, Text
 from element_51.job_node import JobNode, Report, Stopped
 from element_51.model import Model
 from element_51.nodes import Node, NodeFunction, PlotNode, node
@@ -11,7 +12,10 @@ from element_51.wrap import Scan, Skipped, nodes_from_module, nodes_from_ufuncs
 
 __all__ = [
     "App",
+    "Flag",
+    "Float",
     "Image",
+    "Integer",
     "JobNode",
     "Model",
     "Node",
@@ -21,8 +25,10 @@ __all__ = [
     "Scan",
     "Series",
     "Skipped",
+    "Slider",
     "Stopped",
     "StoreError",
+    "Text",
     "asgi_app",
     "node",
     "nodes_from_module",

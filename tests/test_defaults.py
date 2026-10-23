@@ -26,6 +26,16 @@ class Plot(Node):
         return self.x
 
 
+DEFAULT_MENU = {
+    "Float": "Default nodes/Input nodes",
+    "Integer": "Default nodes/Input nodes",
+    "Text": "Default nodes/Input nodes",
+    "Flag": "Default nodes/Input nodes",
+    "Slider": "Default nodes/Input nodes",
+    "Plot": "Default nodes/Output nodes",
+}
+
+
 def menu_categories(app: App) -> dict[str, str]:
     """Return the menu path of every node type the page is told about.
 
@@ -37,18 +47,18 @@ def menu_categories(app: App) -> dict[str, str]:
     return {t.name: t.category for t in app.snapshot().node_types}
 
 
-def test_plot_is_offered_without_being_given() -> None:
-    """A new app has `Plot`, under `Default nodes/Output nodes`."""
+def test_the_defaults_are_offered_without_being_given() -> None:
+    """A new app has the input nodes and `Plot`, in their folders."""
     app = App([])
-    assert list(app.node_functions) == ["Plot"]
-    assert menu_categories(app) == {"Plot": "Default nodes/Output nodes"}
+    assert list(app.node_functions) == list(DEFAULT_MENU)
+    assert menu_categories(app) == DEFAULT_MENU
 
 
 def test_user_nodes_sit_under_user_defined_nodes() -> None:
     """No category goes directly under the folder, a category inside it."""
     app = App([add, hypot])
     assert menu_categories(app) == {
-        "Plot": "Default nodes/Output nodes",
+        **DEFAULT_MENU,
         "add": "User defined nodes",
         "hypot": "User defined nodes/Numpy",
     }
@@ -56,7 +66,8 @@ def test_user_nodes_sit_under_user_defined_nodes() -> None:
 
 def test_the_defaults_come_first_in_the_menu_order() -> None:
     """The page lists the default nodes before the user's."""
-    assert list(App([add, hypot]).node_functions) == ["Plot", "add", "hypot"]
+    names = list(App([add, hypot]).node_functions)
+    assert names == [*DEFAULT_MENU, "add", "hypot"]
 
 
 def test_defaults_false_gives_the_plain_menu() -> None:
