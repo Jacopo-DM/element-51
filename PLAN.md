@@ -318,7 +318,7 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
 
 ### default-nodes: done (2026-10-24, `34c6e5e..0a5734a`)
 
-Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `User defined nodes`, `defaults=False` gives the 0.3.0 menu, and a clashing name or a listed `PlotNode` raises (spec in DESIGN.md, `default-nodes spec`). Example `d8_default_nodes.py`. Not released: it carries 0.4.0, because a script that lists `PlotNode` stops working. `variable-node` builds on it.
+Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `User defined nodes`, `defaults=False` gives the 0.3.0 menu, and a clashing name or a listed `PlotNode` raises (spec in DESIGN.md, `default-nodes spec`). Example `d8_default_nodes.py`. Not released: it carries 0.4.0, because a script that lists `PlotNode` stops working. `input-nodes` and `time-plot` build on it.
 
 ### auto-run-default
 
@@ -338,40 +338,82 @@ Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `
     ever starts by itself (it must not: it is never run automatically).
 - Added: 2026-10-23
 
-### variable-node
+### input-nodes
 
-- Goal: built-in input nodes hold a value the user sets and feed it to any number
-    of inputs, in place of one-off constant nodes such as `three` and `four` in
-    `examples/a_basics/a3_arithmetic.py`; the slider can drive a live plot.
+- Goal: built-in nodes under `Default nodes/Input nodes` hold a value the user
+    sets and feed it to any number of inputs, in place of one-off constant nodes
+    such as `three` and `four` in `examples/a_basics/a3_arithmetic.py`; one of
+    them is a slider from a minimum to a maximum (the user's example: -10 to 10).
+    Split from the user's `variable-node` idea on 2026-10-24; depends on
+    `default-nodes` (done). `time-plot` builds on it.
 - Kind: new behaviour.
 - Success measure (a draft; the spec makes each testable):
-    1. The right-click menu has a `Variable` node (one value box, one output
-        port, a default) and a `Slider` node (a slider with a minimum and a
-        maximum, one output port), added with no code written by the user.
-    2. The output port has the matching type, so a link into an incompatible
-        input is refused as for any node. One Variable linked to two inputs gives
-        both the same value (the `three` fan-out in `a3_arithmetic.py`), and
-        `a3_arithmetic.py` uses it in place of `three` and `four`.
-    3. The Slider has an input `tick`. Left unlinked, the graph updates at every
-        change of the slider. Linked to a `Clock` node (a new node with a rate),
-        the graph updates at the clock's rate instead.
-    4. A `Plot` shows its progression over time: each update appends a point. A
-        new example has a Slider from -10 to 10 into a `Plot`, and the same
-        Slider into numpy's `sin` and then a second `Plot`; moving the slider
-        draws the path of the slider in one and its sine in the other.
-    5. A saved graph loads again with the same values, ranges and clock links.
-    6. Keyboard reachable and AA in all themes, like every node.
-- Depends on `default-nodes` (the tree and the switch). `Clock` goes under `Triggers`.
-- Status: idea from the user 2026-10-23 (seen in `h1_numpy_ufuncs.py`, which now
-    types 3 and 4 into `hypot` instead); the Slider, `tick` and `Clock` design is
-    the user's answer of the same day (a separate Slider node, not a mode of
-    Variable). Not specified, not approved to start.
-- Open questions: whether the `Plot` keeps its history itself or a node does;
-    how the history is cleared and how long it can grow; whether `Clock` is a job
-    node (it has to run on its own, like the existing job nodes) or a new kind;
-    whether Python can read or set a Variable by name (`app.run(speed=3.0)`);
-    one `Variable` per port type or one that picks its type on the card.
-- Added: 2026-10-23
+    1. The right-click menu has `Default nodes/Input nodes/Variable` (one value
+        box with a default, one output port of the same type) and
+        `Default nodes/Input nodes/Slider` (one float output), added with no code
+        written by the user.
+    2. A link from a Variable to an input of another type is refused as for any
+        node; one Variable linked to two inputs gives both the same value (the
+        `three` fan-out), and `a3_arithmetic.py` uses it in place of `three` and
+        `four`.
+    3. The Slider card draws a track and a handle on the canvas for its value
+        between its minimum and maximum (boxes on the card, defaults -10 and 10);
+        dragging the handle sets the value; the arrow keys move it by a step; the
+        hidden tree says `Slider, value 3.2, from -10 to 10`.
+    4. With `Run automatically` ticked, moving the slider runs the graph (under
+        the existing 300 ms rule) and the nodes after it show the new value.
+    5. A saved graph loads again with the same values, minimums and maximums;
+        undo takes a whole drag back in one step.
+    6. Keyboard reachable and AA in all themes, like every node; a runnable
+        example in `examples/d_editor/`.
+- Status: draft, 2026-10-24, waiting for approval in words.
+- Open questions: one `Variable` per port type or one that picks its type on the
+    card (recommended: four nodes named `Float`, `Integer`, `Text` and `Flag`, since
+    a port has one fixed type); the slider's step and whether `Integer` also gets a
+    slider; whether the slider handle is drawn on the canvas (as the resize grip
+    and the series boxes are) or is an HTML control over it (recommended: canvas,
+    for the same reasons as the series boxes).
+- Added: 2026-10-24
+
+### time-plot
+
+- Goal: a `Plot` keeps its history across runs, a `Clock` node triggers runs at
+    a rate, and the slider's `tick` input chooses between sampling at every
+    change and sampling at the clock's rate, so a moving slider draws its path
+    over time. Split from the user's `variable-node` idea on 2026-10-24; depends
+    on `input-nodes`.
+- Kind: new behaviour.
+- Success measure (a draft; the spec makes each testable):
+    1. A `Plot` appends one point per linked input at every run and keeps them
+        (the user's choice: the history is kept in Python, in the `App`): after a
+        slider moved through 0, 1, 2, 3, 4, 5 with `Run automatically` ticked, the
+        line has 6 points. The x axis is the sample number (the user's choice).
+    2. A card menu action `Clear history` empties it; Save as CSV and Save as PNG
+        export the whole history; a page reload keeps it; a history longer than a
+        limit (to set in the spec) drops its oldest points, and the card says so.
+    3. `Clock` is a job node (the user's choice) under `Default nodes/Triggers`
+        with a `rate` (per second), Start and Stop; each tick runs the graph once.
+        It keeps sampling with the browser closed.
+    4. The Slider has a `tick` input. Left unlinked, the graph runs at every
+        change as in `input-nodes`; linked to a Clock, a change of the slider no
+        longer runs it and only the ticks do, so the Plot samples at the rate.
+    5. A new example: a Slider from -10 to 10 into a `Plot`, and the same Slider
+        into numpy's `sin` and a second `Plot`; moving the slider, with and
+        without a Clock, draws the path of the slider in one and its sine in the
+        other.
+    6. A saved graph loads again with the clock links; the history is not saved
+        in the file (recommended; the CSV is the export).
+    7. Keyboard reachable and AA in all themes; the hidden tree says how many
+        points a plot holds.
+- Status: draft, 2026-10-24, waiting for approval in words.
+- Open questions: how a job triggers a run of the graph (the engine runs a node
+    after a job only when the job ends today, so this is new); the type of the
+    `tick` port (a counter `int` from the Clock, or a new port kind); whether a
+    Run press also appends a point (recommended: yes, it is a run); the history
+    limit. Touches the same files as `auto-run-default` (the run triggers and
+    `autorun.rs`): order proposed, `time-plot` first, then `auto-run-default`,
+    which waits for the user's answer.
+- Added: 2026-10-24
 
 ## Current state
 
@@ -399,7 +441,7 @@ the menu button sits at the top right, `Try palette` is `Load palette from Coolo
 a new `Select theme` entry lists the three built-in themes and switches at once, and
 the default theme is now `purple-synthwave`. The user closed their unfinished second
 point on 2026-10-21 (nothing more to add; the link box keeps its grey placeholder hint).
-Next step: none is set. 0.3.0 is released (2026-10-22). The examples below were tried by the user on 2026-10-22 and are fine. The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version). `wrap-module` is done and merged into `main` and pushed; the user's own try-out is still to come: `uv run python tools/build_wasm.py` if needed, then `uv run examples/h_wrapping/h1_numpy_ufuncs.py` (right-click, the `Numpy` flyout; Run) and `uv run examples/h_wrapping/h2_own_module.py`, and a read of `docs/wrapping.md`. `default-nodes` is done on `main` (2026-10-24; pushed, not released); the user tried `d8_default_nodes.py` on 2026-10-24 and said it looks good (the `DEFAULTS = False` half was not confirmed). Next: the goals `array-ports` (direction approved, replaces `Series`) and `variable-node`, each needing its spec with `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner), the README GIF (`docs/images/mnist.gif`, 220 KB, now the top picture), 0.3.0 (published by the user, tagged `v0.3.0`) and `browser-tests` (`tools/run_browser_tests.py`, pre-push hook, `browser` job in `rust.yml`). GitHub CI, Docs and Rust and WASM passed for every push up to `af539ee` except that its CI run failed (three embedding tests, fixed in `1d3b0fd`: see DESIGN.md, Gotchas); CI, Docs and Rust and WASM passed for `678d4b9`, `644dd37` and `ab99a7e` (read 2026-10-23 with `gh run list --branch main --limit 6`). A push now takes about 57 s because the pre-push hook runs the notebooks and the browser walk-throughs. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
+Next step: none is set. 0.3.0 is released (2026-10-22). The examples below were tried by the user on 2026-10-22 and are fine. The examples were: `uv run examples/d_editor/d7_series_colours.py` (the colour box and the small `x` beside each `series_N` name on the Plot, a dark colour for the red mark, Ctrl+Z, a reload; Save as PNG and Save as CSV in the Plot's card menu), `uv run examples/g_experiments/g3_mnist.py` (Start on `Train`, then Save as CSV and Save as PNG on the Plot; the PNG now comes from Python, so the first one takes about a second), `d6_auto_run.py` and the resize grip. The user revokes the exposed PyPI tokens (unconfirmed). The release is 0.3.0 (new runtime dependencies matplotlib, numpy and pillow, a new file format version). `wrap-module` is done and merged into `main` and pushed; the user's own try-out is still to come: `uv run python tools/build_wasm.py` if needed, then `uv run examples/h_wrapping/h1_numpy_ufuncs.py` (right-click, the `Numpy` flyout; Run) and `uv run examples/h_wrapping/h2_own_module.py`, and a read of `docs/wrapping.md`. `default-nodes` is done on `main` (2026-10-24; pushed, not released); the user tried `d8_default_nodes.py` on 2026-10-24 and said it looks good (the `DEFAULTS = False` half was not confirmed). Next: the goals `input-nodes` then `time-plot` (drafts), then `array-ports` (direction approved, replaces `Series`) and `auto-run-default`, each needing its approval and spec with `/zz-02-project-plan`. Done and pushed 2026-10-21 and 2026-10-22: `restructure-2`, `restructure-3`, `speed-up-frame` (task 3 skipped), `visual-ports`, `card-polish`, `job-nodes`, `job-isolation`, `plot-polish`, `auto-run` (ticking also runs once), `mnist-experiment`, `png-paper` (its PGFPlots PNG was replaced the same day), `card-resize`, `series-colour`, `save-as-csv`, `matplotlib-png`, the notebooks `editing`, `server_and_protocol`, `mnist_example` and `figures` (nine in all), and the small requests `box-summaries`, `code-colours`, the source panel closing on Escape or a press outside (button says Close), the series box bare number with a hover text, the overlap fix (a card on top hides the boxes and ports under it), the lighter `purple-synthwave` card title, a contrast pair for the resize grip, and `certifi` 2026.10.19 (osv-scanner), the README GIF (`docs/images/mnist.gif`, 220 KB, now the top picture), 0.3.0 (published by the user, tagged `v0.3.0`) and `browser-tests` (`tools/run_browser_tests.py`, pre-push hook, `browser` job in `rust.yml`). GitHub CI, Docs and Rust and WASM passed for every push up to `af539ee` except that its CI run failed (three embedding tests, fixed in `1d3b0fd`: see DESIGN.md, Gotchas); CI, Docs and Rust and WASM passed for `678d4b9`, `644dd37` and `ab99a7e` (read 2026-10-23 with `gh run list --branch main --limit 6`). A push now takes about 57 s because the pre-push hook runs the notebooks and the browser walk-throughs. `vulture`, `pip-audit`, `gitleaks` and `osv-scanner` are installed globally (2026-10-22, approved); gitleaks found nothing in 258 commits.
 Tasks 34 (a picture on a card), 35 (a series and a one-line chart), 36 (rows that grow with links), 37 (Save as PNG) and 38 (accessibility and docs) are done: see DESIGN.md, Results and the spec's task 34
 outcome, and try it with `uv run python examples/g_experiments/g1_picture_and_plot.py`
 after `uv run python tools/build_wasm.py` (it now also shows a `training` node feeding two

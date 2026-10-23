@@ -1047,7 +1047,7 @@ chose the recommended options:
 Users: a Python author who builds an editor with `App(...)` and `serve`, and a host that
 embeds the editor and wants a plain one. Acceptance criteria and non-goals are the goal's
 in PLAN.md. Non-goals: a per-group switch, user-defined default groups, hiding a single
-default, and any default but `Plot` (the inputs and `Clock` belong to `variable-node`).
+default, and any default but `Plot` (the inputs belong to `input-nodes`, `Clock` to `time-plot`).
 
 - Integration points: `App.__init__` in `session.py` builds `node_functions` (name to
     registered function) and raises `ValueError` for two functions with one name; the
