@@ -1074,6 +1074,47 @@ default, and any default but `Plot` (the inputs belong to `input-nodes`, `Clock`
 - Rewrites: every `PlotNode` in the list of an example, notebook, test or tool goes
     (5 examples, 2 notebooks, 5 test files, 2 tools); the docs say `Plot` is built in.
 
+### input-nodes spec (approved goal 2026-10-24)
+
+Users: a Python author or an editor user who wants a constant, or a value they can move,
+without writing a node for it. Acceptance criteria and non-goals: the goal's in PLAN.md.
+Non-goals: a slider for integers, a step or log-scale option, a vertical slider, the
+`tick` input and the history (`time-plot`).
+
+- Integration points: `defaults.DEFAULT_NODES` and `in_menu` (the `Default nodes` folder
+    and the group each default declares in its `category`); `Node` subclasses give a
+    node type from their fields and `run` hint; `NodeType.display` (`none`, `image`,
+    `chart`) is read by `layout::node_rect`, `draw_card`, `fields_ui` and the hidden tree;
+    value boxes are HTML inputs over the canvas placed by `layout::field_box`
+    (`fields_ui::sync_fields`); the colour boxes of a chart (`swatch_ui`) are the model
+    for a control that sits over a row, hides under a later card and sends an edit;
+    `History::record(before, edit)` makes one undo step per edit; `autorun_ui::changed`
+    runs the graph 300 ms after the last change that alters a result.
+- Existing behaviour that must not regress: every current node, saved files (nodes are
+    saved by name and input values by input name), the menu search, `Plot`.
+- Architecture. Python: a new module `inputs.py` with five class-form nodes in the
+    group `Input nodes`: `Float`, `Integer`, `Text` and `Flag`, each one field `value`
+    with a default (0.0, 0, "", False) returning it, and `Slider`, three float fields
+    `value` (0.0), `minimum` (-10.0) and `maximum` (10.0) returning `value`; `run`
+    raises `ValueError` if `minimum` is not below `maximum` or `value` lies outside
+    them, so the card shows the failure. `DEFAULT_NODES` lists the five. Wire:
+    `NodeType.display` gets `"slider"` (Python `Literal`, Rust `CardDisplay`, the shared
+    fixtures); `Node` gets a `display` class variable so `Slider` can declare it.
+    Rust core: `layout::slider_box(rect, row, metrics)` places the track on the `value`
+    row, over the label and the value box columns; a `slider` card draws no value box
+    on that row. Web: a new module `slider_ui.rs` holds one `<input type="range">` per
+    slider card (`sync_sliders`, like `sync_swatches`): its `min`, `max` and `value` come
+    from the node's three values, `step` is (maximum - minimum) / 100, it is hidden under
+    a later card, has an `aria-label` naming the node, and an `input` event sends
+    `SetValue` at once (the graph updates while the hand moves). One drag is one undo step:
+    the page keeps the graph as it was at pointer down and calls `History::record` with
+    it on the `change` event, and the live edits in between are not recorded.
+- Hidden tree text for a slider card: `Slider, value 3.2, from -10 to 10`
+    (`announce`/`access` in core, native tests).
+- Rewrites: `a3_arithmetic.py` uses `Float` in place of `three` and `four` (the `three`
+    fan-out stays); `docs/` says what the input nodes are; the notebook
+    `nodes_and_running.ipynb` gets a section; a new example `d9_slider.py`.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1583,6 +1624,16 @@ public area has a notebook or a row saying none yet", and a test keeps it true.
     rule of no compatibility shims); the group is called `Triggers`, not `Action nodes`,
     because `Clock` makes ticks; the release is 0.4.0.
 
+- input-nodes (2026-10-24): the user's design is a separate Slider node (not a mode of
+    Variable) under `Input nodes`; the node types are four typed Variables named `Float`,
+    `Integer`, `Text` and `Flag` because a port has one fixed type (Claude's recommendation,
+    to be confirmed by the user with the task list); the slider is an HTML range input over
+    the canvas, not a canvas drawing: the value boxes and colour boxes are already HTML
+    controls over the canvas, and a native range input brings the keyboard (arrow keys,
+    Home, End), focus ring and the role `slider` for free (this reverses the draft's
+    first recommendation of the canvas, made before the code was read); a value outside
+    the range or a minimum not below the maximum raises, so nothing is clamped silently.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -2010,6 +2061,14 @@ have to go through `tools/compress_images.py`).
     node that clashes with a default, as `nodes_from_module` does: a node written by hand
     would vanish from its own menu. (4) Letting a second `PlotNode` in the list pass:
     a shim for scripts that exist only in this repo.
+
+- input-nodes (2026-10-24): (1) A slider drawn on the canvas: it needs hit tests, a keyboard
+    model, focus drawing and a screen-reader role that the native control gives; it was
+    the first recommendation, withdrawn after reading `swatch_ui`. (2) One `Variable` node
+    that picks its type on the card: a port's type is fixed by the node type, so the card
+    would have to change its ports. (3) Clamping a slider value silently in Python: a
+    value outside the range is an input the user should see as an error. (4) One undo step
+    per `input` event: a drag would take hundreds of undos.
 
 ## Results
 

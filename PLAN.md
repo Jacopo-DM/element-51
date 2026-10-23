@@ -366,13 +366,11 @@ Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `
         undo takes a whole drag back in one step.
     6. Keyboard reachable and AA in all themes, like every node; a runnable
         example in `examples/d_editor/`.
-- Status: draft, 2026-10-24, waiting for approval in words.
-- Open questions: one `Variable` per port type or one that picks its type on the
-    card (recommended: four nodes named `Float`, `Integer`, `Text` and `Flag`, since
-    a port has one fixed type); the slider's step and whether `Integer` also gets a
-    slider; whether the slider handle is drawn on the canvas (as the resize grip
-    and the series boxes are) or is an HTML control over it (recommended: canvas,
-    for the same reasons as the series boxes).
+- Status: goal approved 2026-10-24. Spec in DESIGN.md (`input-nodes spec`); the task list
+    below waits for approval in words.
+- Open questions: whether `Variable` is four nodes named `Float`, `Integer`, `Text` and
+    `Flag` (Claude's recommendation, in the task list for the user to confirm). The slider
+    handle is an HTML range input over the canvas (decided, DESIGN.md).
 - Added: 2026-10-24
 
 ### time-plot
@@ -405,7 +403,8 @@ Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `
         in the file (recommended; the CSV is the export).
     7. Keyboard reachable and AA in all themes; the hidden tree says how many
         points a plot holds.
-- Status: draft, 2026-10-24, waiting for approval in words.
+- Status: goal approved 2026-10-24. Not specified yet: its spec follows `input-nodes`,
+    because how a job triggers a run of the graph needs the slider in place to try it.
 - Open questions: how a job triggers a run of the graph (the engine runs a node
     after a job only when the job ends today, so this is new); the type of the
     `tick` port (a counter `int` from the Clock, or a new port kind); whether a
@@ -823,6 +822,59 @@ restarts (not saved, by decision).
     prefix option for a clash such as `add`; a test with `scipy.special` (scipy is not a dependency); numpy
     functions that are not ufuncs (a goal of its own, from numpy's `.pyi` stubs).
 - Docs prose and README body: not unasked.
+
+### Goal `input-nodes`: Tier 1 and Tier 2 (waiting for approval, 2026-10-24)
+
+Tier 1, walking skeleton and what the rest needs:
+
+- Task 1, the five input nodes working end to end as plain value boxes. Files: new
+    `src/element_51/inputs.py`, `defaults.py`, `examples/a_basics/a3_arithmetic.py`
+    (`Float` in place of `three` and `four`), `tests/test_inputs.py`, rows in
+    `tests/test_examples.py` and `tests/test_defaults.py` (the menu paths), the
+    notebook `nodes_and_running.ipynb`, CODEMAP.md. Serves criteria 1, 2 and 5 (saved
+    graphs use the existing path). Risk low; cost about 110 lines and one module, no
+    dependency; the existing `a3` row in `test_examples.py` pins its results (7.0, 21.0).
+    Verify: new tests first (menu path of each node, a `Float` into two inputs, a
+    refused `Text` into a float input, the two `Slider` errors), all 545 tests, the
+    notebooks.
+- Task 2, the `slider` card kind on the wire. Files: `model.py` (`display` literal),
+    `nodes.py` (`display` class variable), `inputs.py` (`Slider` declares it),
+    `tests/fixtures/snapshot.json`, `rust/element-51-core/src/model.rs` and `layout.rs`
+    (`CardDisplay::Slider`; a card of that kind has the normal height). Serves criterion 3
+    (prepares it). Risk medium: a wire change both suites read. Cost about 40 lines.
+    Verify: `tests/test_model.py` and the Rust `snapshot.rs` read the new fixture; all
+    tests in both languages.
+
+Tier 2, ordered by value over risk plus cost:
+
+- Task 3, the slider control. Files: `layout.rs` (`slider_box`), new
+    `rust/element-51-web/src/slider_ui.rs`, `fields_ui.rs` (no value box on a slider's
+    `value` row), `lib.rs`, `index.html` (a `.slider` style by `var(--...)` from the
+    theme, with a theme colour pair if the track needs one: row in `docs/themes.md`,
+    key in both theme JSON files, a pair in `Theme::contrast_pairs`), native tests for
+    `slider_box`. Serves criteria 3 and 4 (the live `SetValue`, then the existing
+    300 ms rule). Risk medium; cost about 220 lines. Verify: native tests, then by eye in
+    the browser pane with `tools/ui_states.py` (drag it, see the nodes after it change).
+- Task 4, one undo step per drag. Files: `slider_ui.rs`, `history.rs` only if its
+    `record` cannot take the earlier graph (it takes one already), `tests/history.rs`
+    (a native test: many live edits and one `record`). Serves criterion 5. Risk
+    medium; cost about 50 lines.
+- Task 5, the hidden tree and the keyboard. Files: `access.rs` and `announce.rs` (the
+    sentence `Slider, value 3.2, from -10 to 10`), `tools/ui_keys.js` and
+    `tools/ui_states.py` (a graph with a slider; `uiKeysSlider`, about 15 rows: Tab
+    reaches it, Arrow and Home and End move it, undo takes the drag back),
+    `tools/run_browser_tests.py` (a fifth walk-through), contrast pair covered by the
+    existing AA tests. Serves criterion 6. Risk low; cost about 150 lines.
+- Task 6, the example and the docs. Files: new `examples/d_editor/d9_slider.py`
+    (a Slider into a `show` node and a numpy `sin`), a row in `tests/test_examples.py`,
+    `docs/` (a section on the input nodes), CODEMAP.md, CLAUDE.md only if a command
+    changes. Serves criterion 6. Risk low; cost about 90 lines.
+
+Tier 3, listed and not executed: a slider for integers, a step or log-scale option, a
+vertical slider, a `Variable` that picks its type on the card.
+
+No test pins the card kinds in the browser except the walk-throughs; the slider gets
+its own rows in task 5. The history rule has native tests.
 
 ## Open questions
 
