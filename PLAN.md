@@ -333,7 +333,7 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
         user's choice 2026-10-23; no per-group switch).
     3. A user node whose name is taken by a default (`Plot`, `Variable`) raises
         a `ValueError` naming both and saying to rename it or pass
-        `defaults=False` (my suggestion, not yet confirmed by the user).
+        `defaults=False` (the user's choice, 2026-10-23).
     4. Existing examples and saved graphs that name `PlotNode` still work or
         change in one place, and no example registers `PlotNode` by hand.
 - Status: direction from the user 2026-10-23. Not specified, not approved to start.
