@@ -99,11 +99,9 @@ EXPECTED: dict[str, Expected] = {
         ("n5", "skipped", {}),
     ],
     "h_wrapping/h1_numpy_ufuncs.py": [
-        ("n1", "ok", {"out": 3.0}),
-        ("n2", "ok", {"out": 4.0}),
-        ("n3", "ok", {"out": 5.0}),
-        ("n4", "ok", {"out1": 0.5, "out2": 2.0}),
-        ("n5", "ok", {"out": 4.0}),
+        ("n1", "ok", {"out": 5.0}),
+        ("n2", "ok", {"out1": 0.5, "out2": 2.0}),
+        ("n3", "ok", {"out": 4.0}),
     ],
     "h_wrapping/h2_own_module.py": [
         ("n1", "ok", {"out": 70.0}),

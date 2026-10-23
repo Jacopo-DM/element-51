@@ -4,7 +4,7 @@ from test_examples import load
 
 
 def test_the_numpy_example_serves_every_ufunc_that_fits() -> None:
-    """The app knows the five-node graph and also the rest of numpy's nodes."""
+    """The app knows the three-node graph and also the rest of numpy's nodes."""
     app = load("h_wrapping/h1_numpy_ufuncs.py").build_app()
     assert {"hypot", "modf", "exp2", "sin", "isnan", "gcd"} <= set(
         app.node_functions

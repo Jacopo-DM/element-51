@@ -102,7 +102,7 @@ Four nodes have a limit you may notice: `logical_and`, `logical_or`,
 linked to a float input, so `isnan` cannot feed `logical_not`.
 
 The example `examples/h_wrapping/h1_numpy_ufuncs.py` serves all 85 and a small
-graph of five.
+graph of three.
 
 ## What this does not do yet
 
