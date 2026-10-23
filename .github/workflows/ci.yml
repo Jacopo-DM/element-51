@@ -1,5 +1,6 @@
 # Pulled into every project by `rsync-sync pull python`. Action SHAs and the uv version
-# come from docs.astral.sh/uv/guides/integration/github (uv 0.13.1). Let Dependabot bump them.
+# come from docs.astral.sh/uv/guides/integration/github (uv 0.13.1). Dependabot bumps the
+# SHAs; when it bumps the uv-pre-commit rev, set the uv version here to the same number.
 name: CI
 
 on:
