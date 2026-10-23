@@ -78,6 +78,7 @@ EXPECTED: dict[str, Expected] = {
     ],
     "c_python_api/c2_live_push.py": [("n1", "ok", {"out": 1.0})],
     "d_editor/d4_menu.py": [("n1", "ok", {"out": 3.0})],
+    "d_editor/d8_default_nodes.py": [("n1", "ok", {"out": 3.0})],
     "f_embedding/f1_fastapi_host.py": [("n1", "ok", {"out": 3.0})],
     "g_experiments/g1_picture_and_plot.py": [
         ("n1", "ok", {}),
@@ -317,6 +318,22 @@ def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
         "add": "User defined nodes",
         "show": "User defined nodes",
     }
+
+
+def test_the_default_nodes_example_shows_both_menus() -> None:
+    """The folders with the defaults on, the plain menu with them off."""
+    module = load("d_editor/d8_default_nodes.py")
+    on = {t.name: t.category for t in module.build_app().snapshot().node_types}
+    off = {
+        t.name: t.category
+        for t in module.build_app(defaults=False).snapshot().node_types
+    }
+    assert on == {
+        "Plot": "Default nodes/Output nodes",
+        "add": "User defined nodes",
+        "show": "User defined nodes",
+    }
+    assert off == {"add": "", "show": ""}
 
 
 def test_the_theme_file_example_changes_the_dark_theme() -> None:
