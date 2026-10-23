@@ -125,6 +125,10 @@ No tool ignore or deny file exists in this repo, so none was changed.
 `/src/element_51/web/`, `/rust/target/` and the saved graph of `c3_save_load.py`);
 the user approved this difference on 2026-10-21.
 
+`.vscode/tasks.json` is the template plus `"problemMatcher": []` on the docs-build
+task, which stops VS Code from asking for a matcher; the user approved this
+difference on 2026-10-23.
+
 ## Things that bite
 
 - `rustup run stable cargo` still uses the Homebrew `rustc`, because the
