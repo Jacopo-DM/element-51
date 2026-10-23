@@ -368,8 +368,8 @@ Waiting on the user: their own try-out of goal
 page look and the palette box; they have looked at `a2_two_nodes` and said it
 looks good. The sharpness question below needs their screenshot.
 Nothing is uncommitted in this repo (checked 2026-10-22);
-`origin/main` is at `ab99a7e` (pushed 2026-10-22 at the user's say-so, each time); `main` is ahead of it by the 2026-10-23 commits, not pushed (audit follow-ups: the `.gitignore` Icon line, the `tasks.json` exception in CLAUDE.md, two Conclusions cells, the unused `WHITE` constant, the notes update).
-The other local branches are all merged into `main` (`wrap-module`, `compliance-gitignore-icon`, `notebook-conclusions`, `remove-white-constant`; their deletion waits for the user's say-so): every merged branch was deleted at the user's say-so
+`origin/main` was pushed up to `4b20343` on 2026-10-23 at the user's say-so (the audit follow-ups: the `.gitignore` Icon line, the `tasks.json` exception in CLAUDE.md, two Conclusions cells, the unused `WHITE` constant, the notes update).
+The other local branches are all merged into `main` (`wrap-module` and the six branches of the 2026-10-23 follow-ups; their deletion waits for the user's say-so): every merged branch was deleted at the user's say-so
 (the last four, `browser-tests`, `release-0.3.0`, `embed-examples` and the remote Dependabot `setup-uv-10.3.0`, on 2026-10-22).
 In `~/Functions`, the VS Code profile settings and the project template
 settings were committed, the `.bak` files deleted and `*.bak` ignored, and its
