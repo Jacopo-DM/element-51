@@ -2216,3 +2216,13 @@ have to go through `tools/compress_images.py`).
     not). `App.subscribe` and `App.subscribe_jobs` listeners run in the caller's thread (a job's
     thread for jobs), so a panel stores the update and a NiceGUI timer redraws; and an edit made in
     the page does not call `App.subscribe` listeners, so a panel polls `app.graph` to follow it.
+
+- `import element_51` must load no numpy and no matplotlib (`tests/test_figures.py` runs a fresh process
+    and fails if either is in `sys.modules`), so `wrap.py` imports numpy inside the functions that need it,
+    with `# ruff: ignore[import-outside-top-level]  # loaded on first use`, and types the ufunc it reads
+    with the `Ufunc` protocol. Two typing traps met there: mypy counts `np.dtype` in an annotation as an
+    explicit `Any` (`np.dtype[np.generic]` too; compare `dtype.name` strings instead), and a pydantic model
+    made with `create_model` does not type-check (one `UfuncOutputs` model with `extra="allow"` serves every
+    ufunc). In a notebook ruff refuses `# noqa` as everywhere (`# ruff: ignore[exec-builtin]  # reason`),
+    and `ty` flags a value typed `object` (what `Registered.call` returns) passed to `math.isnan` or a plot, so
+    the notebook checks `type(value) is float` in a small helper first.
