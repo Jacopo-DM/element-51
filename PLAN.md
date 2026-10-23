@@ -318,27 +318,36 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
 
 ### variable-node
 
-- Goal: a built-in node type holds a value the user types, with a default, and
-    feeds it to any number of inputs, in place of one-off constant nodes such as
-    `three` and `four` in `examples/a_basics/a3_arithmetic.py`.
+- Goal: built-in input nodes hold a value the user sets and feed it to any number
+    of inputs, in place of one-off constant nodes such as `three` and `four` in
+    `examples/a_basics/a3_arithmetic.py`; the slider can drive a live plot.
 - Kind: new behaviour.
 - Success measure (a draft; the spec makes each testable):
-    1. The right-click menu has a `Variable` entry (category to decide) that adds
-        a node with one value box and one output port, with no code written by
-        the user.
-    2. The value box has a default and takes a number, a text or a tick box; the
-        output port has the matching type, so a link into an incompatible input
-        is refused as for any node.
-    3. One Variable linked to two inputs gives both the same value (the
-        `three` fan-out in `a3_arithmetic.py`), and `a3_arithmetic.py` uses it
-        in place of `three` and `four`.
-    4. A saved graph with Variables loads again with the same values.
-    5. Keyboard reachable and AA in all themes, like every node.
+    1. The right-click menu has a `Variable` node (one value box, one output
+        port, a default) and a `Slider` node (a slider with a minimum and a
+        maximum, one output port), added with no code written by the user.
+    2. The output port has the matching type, so a link into an incompatible
+        input is refused as for any node. One Variable linked to two inputs gives
+        both the same value (the `three` fan-out in `a3_arithmetic.py`), and
+        `a3_arithmetic.py` uses it in place of `three` and `four`.
+    3. The Slider has an input `tick`. Left unlinked, the graph updates at every
+        change of the slider. Linked to a `Clock` node (a new node with a rate),
+        the graph updates at the clock's rate instead.
+    4. A `Plot` shows its progression over time: each update appends a point. A
+        new example has a Slider from -10 to 10 into a `Plot`, and the same
+        Slider into numpy's `sin` and then a second `Plot`; moving the slider
+        draws the path of the slider in one and its sine in the other.
+    5. A saved graph loads again with the same values, ranges and clock links.
+    6. Keyboard reachable and AA in all themes, like every node.
 - Status: idea from the user 2026-10-23 (seen in `h1_numpy_ufuncs.py`, which now
-    types 3 and 4 into `hypot` instead). Not specified, not approved to start.
-- Open questions: one node per port type (`Float`, `Int`, `Text`, `Flag`) or one
-    node whose type the user picks on the card; whether Python can read a
-    Variable's value by name (`app.run(speed=3.0)`); the name on the card.
+    types 3 and 4 into `hypot` instead); the Slider, `tick` and `Clock` design is
+    the user's answer of the same day (a separate Slider node, not a mode of
+    Variable). Not specified, not approved to start.
+- Open questions: whether the `Plot` keeps its history itself or a node does;
+    how the history is cleared and how long it can grow; whether `Clock` is a job
+    node (it has to run on its own, like the existing job nodes) or a new kind;
+    whether Python can read or set a Variable by name (`app.run(speed=3.0)`);
+    one `Variable` per port type or one that picks its type on the card.
 - Added: 2026-10-23
 
 ## Current state
