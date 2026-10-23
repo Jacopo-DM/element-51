@@ -296,8 +296,7 @@ async function uiKeys() {
 
     await pressWith("n", {});
     await pressWith("ArrowDown", {});
-    await pressWith("ArrowRight", {});
-    for (let i = 0; i < 12 && active().dataset.nodeType === undefined; i++) await pressWith("ArrowDown", {});
+    for (let i = 0; i < 12 && active().dataset.nodeType === undefined; i++) await pressWith(active().hasAttribute("aria-expanded") ? "ArrowRight" : "ArrowDown", {});
     const picked = active().dataset.nodeType;
     const countBefore = nodes().length;
     if (picked !== undefined) active().click();
