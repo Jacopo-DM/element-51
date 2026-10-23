@@ -346,8 +346,8 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
     6. Keyboard reachable and AA in all themes: the menu is the existing nested
         menu, so the existing walk-throughs cover it; their rows that name menu
         paths are updated.
-- Status: draft, shown to the user 2026-10-23, waiting for approval in words.
-    The menu, old-scripts and `defaults=False` menu questions are answered (below).
+- Status: goal approved 2026-10-23. Spec in DESIGN.md (`default-nodes spec`); the task
+    list below waits for approval in words.
 - Decisions so far (2026-10-23): user nodes under `User defined nodes`, every
     existing menu moves one level down; old scripts are rewritten; triggers group
     is called `Triggers`; clash is an error; with `defaults=False` there is no
@@ -816,6 +816,46 @@ restarts (not saved, by decision).
     prefix option for a clash such as `add`; a test with `scipy.special` (scipy is not a dependency); numpy
     functions that are not ufuncs (a goal of its own, from numpy's `.pyi` stubs).
 - Docs prose and README body: not unasked.
+
+### Goal `default-nodes`: Tier 1 and Tier 2 (waiting for approval, 2026-10-23)
+
+Tier 1, one commit:
+
+- Task 1, the defaults in `App`, the switch, the prefixes, both errors, and every
+    rewrite. Files: new `src/element_51/defaults.py`, `session.py` (the
+    `defaults=` parameter, `default_names`, the prefix in `snapshot`), `nodes.py`
+    (`PlotNode` declares category `Output nodes`), `__init__.py`; the listed
+    `PlotNode` removed from 5 examples, 2 notebooks, 5 test files and 2 tools
+    (`tools/bench_page.py`, `tools/ui_states.py`); new tests in `tests/test_session.py`
+    for criteria 1 to 4 (menu paths, the switch, both errors, the same function in two
+    apps), written first. Serves criteria 1 to 5. Risk medium (many files, but each
+    edit is the removal of one name; the atomic commit is needed because the error
+    would break every untouched list). Cost: about 120 lines added, 40 removed, one
+    module, no dependency. Verify: the new tests, then all 531 Python tests, the
+    notebooks with `tools/run_notebooks.py`, and `cargo test` (the shared
+    `tests/fixtures/snapshot.json` carries no category for Plot; read it first).
+
+Tier 2:
+
+- Task 2, the page. Files: `tools/ui_keys.js`, `tools/ui_states.py` and the rows of the
+    four walk-throughs that open the menu by a path or search for `Plot` (the menu is
+    one level deeper); `rust/element-51-core/tests` only if one names a menu path.
+    Serves criterion 6. Risk low; the effect is read by `tools/run_browser_tests.py`
+    (160 rows) and by eye in the browser pane. Cost: rows edited, no new concept.
+- Task 3, docs. Files: `docs/visual-ports.md`, `docs/reference.md` if it lists
+    `PlotNode`, the README line that registers it, CODEMAP.md (`defaults.py`), CLAUDE.md
+    only if a command changes (none expected). Serves criterion 5. Risk low; verify with
+    `uv-docs build`.
+- Task 4, an example the user can try: `examples/d_editor/d8_default_nodes.py` (the
+    tree, and a `DEFAULTS` constant at the top to switch to `defaults=False`), a row in
+    `tests/test_examples.py`, laid out like `examples/template.py`. Serves criteria 1 to
+    3. Risk low; cost about 70 lines.
+
+Tier 3, listed and not executed: any default other than `Plot` (it is `variable-node`),
+a per-group switch, hiding one default.
+
+No test pins the menu paths in the browser except the walk-throughs (task 2); the
+Python tests pin them as strings in the snapshot.
 
 ## Open questions
 

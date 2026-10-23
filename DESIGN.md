@@ -1042,6 +1042,38 @@ chose the recommended options:
     `{}`, numpy's types live in `.pyi` stubs that Python cannot read at run time); a decorated
     copy of a module on disk; classes and methods; a job form of a wrapped function.
 
+### default-nodes spec (approved 2026-10-23)
+
+Users: a Python author who builds an editor with `App(...)` and `serve`, and a host that
+embeds the editor and wants a plain one. Acceptance criteria and non-goals are the goal's
+in PLAN.md. Non-goals: a per-group switch, user-defined default groups, hiding a single
+default, and any default but `Plot` (the inputs and `Clock` belong to `variable-node`).
+
+- Integration points: `App.__init__` in `session.py` builds `node_functions` (name to
+    registered function) and raises `ValueError` for two functions with one name; the
+    menu reads `NodeType.category`, levels joined with `/`, from the `Snapshot`'s
+    `node_types`, built in `App.snapshot`. The Rust side needs no change: a category
+    is only a path. Nodes are saved by name, so a file is unaffected.
+- Existing behaviour that must not regress: `App.node_types` (the raw types), the
+    engine, jobs, `source` and every saved file; the same function registered in two
+    apps; the menu search (it matches the path, so `Default nodes` words match too).
+- Architecture: a new module `defaults.py` holds `DEFAULT_NODES`, a tuple of registered
+    nodes (`PlotNode` for now) and the two menu prefixes. `App(node_functions, *,
+    defaults=True)` puts the defaults first in `node_functions`. A default is marked
+    by name (`self.default_names`). `App.snapshot` sends each node type with its menu
+    category: `Default nodes/<group>` for a default (the group is the category the
+    default declares, `PlotNode` declares `Output nodes`), and for any other node
+    `User defined nodes` or `User defined nodes/<category>`. With `defaults=False`
+    nothing is prefixed. The prefix is added with `model_copy(update=...)` on the way
+    out, so a node function's own `NodeType` is never changed and the same function can
+    be in two apps with different switches.
+- Errors, both at `App(...)`: a different function named like a default raises `ValueError`
+    naming the two and saying to rename yours or pass `defaults=False`; a default itself
+    in the list says `Plot` is a default node and to remove it from the list. The existing
+    message for two user nodes with one name stays.
+- Rewrites: every `PlotNode` in the list of an example, notebook, test or tool goes
+    (5 examples, 2 notebooks, 5 test files, 2 tools); the docs say `Plot` is built in.
+
 ## Decisions
 
 - Product shape and Rust/WASM role (renderer and engine): user choice,
@@ -1544,6 +1576,13 @@ public area has a notebook or a row saying none yet", and a test keeps it true.
     grey text (`label` 4.6:1 on the card, `text_dim`, `placeholder` 3.7:1) was left: the user
     then said the text looks good.
 
+- default-nodes (2026-10-23): the tree is `Default nodes` (`Input nodes`, `Output nodes`,
+    `Triggers`) and `User defined nodes`; one switch `defaults=False` for all groups; with
+    it the menu is the 0.3.0 menu (no wrapper); a clash or a listed `PlotNode` is an error
+    and old scripts are rewritten, not tolerated (a one-person project at 0.3.0, and the
+    rule of no compatibility shims); the group is called `Triggers`, not `Action nodes`,
+    because `Clock` makes ticks; the release is 0.4.0.
+
 ## Rejected approaches
 
 - Python owns the graph and the browser asks first: every drag waits for a
@@ -1963,6 +2002,14 @@ have to go through `tools/compress_images.py`).
 - Mapping `NDArray[np.float64]` onto the `Series` port (2026-10-22): the user wants one general
     `Array` port in place of `Series` (goal `array-ports`), and mapping first would change every
     graph later.
+
+- default-nodes (2026-10-23): (1) The wrapper added in the Rust menu: it would need a flag on
+    the wire to tell a default from a user node, and the Rust crate has no other reason to
+    know. (2) Changing `category` on the node function when it is registered: the same function
+    in two apps with different switches would show one menu for both. (3) Skipping a user
+    node that clashes with a default, as `nodes_from_module` does: a node written by hand
+    would vanish from its own menu. (4) Letting a second `PlotNode` in the list pass:
+    a shim for scripts that exist only in this repo.
 
 ## Results
 
