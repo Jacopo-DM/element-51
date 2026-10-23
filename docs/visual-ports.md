@@ -50,14 +50,27 @@ hover over the box to read what it is (`last of 282 points`). A linked input
 shows the same number, and the name of the output it is linked to after it,
 such as `0.0842 [n4.loss]`.
 
-## Plot
+## Default nodes
 
-`element_51.PlotNode` draws the series linked to it as lines on its card. Register
-the class itself:
+Every editor starts with a few built-in nodes, in the `Default nodes` folder of the
+right-click menu. At present that is `Plot`, in `Output nodes`. The nodes you list
+go under `User defined nodes`, with their own category inside it. You do not list
+the defaults, and listing `PlotNode` or a node named `Plot` raises a `ValueError`
+that says what to change.
+
+Pass `defaults=False` to leave them out: the editor then offers only your nodes, in
+the folders they declare, with no `Default nodes` and no `User defined nodes`.
 
 ```python
-app = element_51.App([ramp, training, element_51.PlotNode])
+app = element_51.App([ramp, training])                  # Plot is there
+plain = element_51.App([ramp, training], defaults=False)  # only your nodes
 ```
+
+## Plot
+
+`Plot` draws the series linked to it as lines on its card. It is a default node, so
+`element_51.App([ramp, training])` offers it. To place one from Python, use the
+class: `app.add_node(element_51.PlotNode, x=380.0, y=60.0)`.
 
 The card starts with one input, `series_1`. Every series you link adds a row,
 and a new empty row waits below for the next one, so a plot of three lines has
