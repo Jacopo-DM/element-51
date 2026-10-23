@@ -107,6 +107,38 @@
             "display": "none",
             "variadic": null,
             "job": true
+        },
+        {
+            "name": "Slider",
+            "inputs": [
+                {
+                    "name": "value",
+                    "kind": "float"
+                },
+                {
+                    "name": "minimum",
+                    "kind": "float"
+                },
+                {
+                    "name": "maximum",
+                    "kind": "float"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "out",
+                    "kind": "float"
+                }
+            ],
+            "defaults": {
+                "value": 0.0,
+                "minimum": -10.0,
+                "maximum": 10.0
+            },
+            "category": "Input nodes",
+            "display": "slider",
+            "variadic": null,
+            "job": false
         }
     ],
     "graph": {

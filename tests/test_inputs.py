@@ -83,3 +83,10 @@ def test_a_slider_needs_a_minimum_below_its_maximum() -> None:
     app.apply(SetValue(node=slider, port="minimum", value=10.0))
     with pytest.raises(ValueError, match="below"):
         app.run()
+
+
+def test_only_the_slider_declares_a_slider_card() -> None:
+    """The page draws a slider control where a node says `slider`."""
+    assert Slider.node_type.display == "slider"
+    for kind in (Float, Integer, Text, Flag):
+        assert kind.node_type.display == "none"

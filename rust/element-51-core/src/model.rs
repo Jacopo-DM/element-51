@@ -73,7 +73,7 @@ pub struct Variadic {
     pub kind: PortType,
 }
 
-/// What a card shows below its ports.
+/// What a card shows below its ports, or which control it has in a row.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum CardDisplay {
@@ -84,6 +84,15 @@ pub enum CardDisplay {
     Image,
     /// A chart of the series linked to the node's inputs.
     Chart,
+    /// A slider control in the `value` row; the card has no area below its ports.
+    Slider,
+}
+
+impl CardDisplay {
+    /// Whether the card has a picture or chart area below its ports.
+    pub fn has_area(self) -> bool {
+        matches!(self, CardDisplay::Image | CardDisplay::Chart)
+    }
 }
 
 /// A grey or colour picture a node produced: `width * height * channels` bytes

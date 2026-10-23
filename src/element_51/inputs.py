@@ -62,6 +62,7 @@ class Slider(Node):
     """
 
     category = GROUP
+    card = "slider"
     value: float = 0.0
     minimum: float = -10.0
     maximum: float = 10.0

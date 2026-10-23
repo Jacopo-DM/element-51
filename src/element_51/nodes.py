@@ -3,7 +3,7 @@
 import inspect
 import textwrap
 from collections.abc import Callable, Mapping
-from typing import ClassVar, Protocol, cast, get_type_hints, overload
+from typing import ClassVar, Literal, Protocol, cast, get_type_hints, overload
 
 from pydantic import BaseModel
 
@@ -162,6 +162,7 @@ class Node(Model):
 
     node_type: ClassVar[NodeType]
     category: ClassVar[str] = ""
+    card: ClassVar[Literal["slider"] | None] = None
     is_job: ClassVar[bool] = False
     defaults: ClassVar[Mapping[str, PortValue]]
     output_model: ClassVar[type[BaseModel] | None]
@@ -208,7 +209,7 @@ class Node(Model):
             outputs=outputs,
             defaults=defaults,
             category=check_category(cls.category, name),
-            display=display_of(outputs),
+            display=cls.card or display_of(outputs),
             job=cls.is_job,
         )
         cls.defaults = defaults

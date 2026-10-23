@@ -29,9 +29,10 @@ def test_shared_fixture_parses_into_a_snapshot() -> None:
         "picture",
         "Plot",
         "train",
+        "Slider",
     ]
     assert snapshot.graph.links[0].source.node == "n1"
-    assert [t.job for t in snapshot.node_types] == [False] * 4 + [True]
+    assert [t.job for t in snapshot.node_types] == [False] * 4 + [True, False]
 
 
 def test_snapshot_serialises_back_to_the_same_json() -> None:

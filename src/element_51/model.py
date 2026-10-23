@@ -139,7 +139,8 @@ class NodeType(Model):
     places the type in the add-node menu: `""` for the top level, with `/`
     between levels (`"Math/Trig"` is `Trig` inside `Math`). `display` says what
     the card shows below its ports: `"image"` for a node with a picture output,
-    `"chart"` for a node that plots the series linked to it, else `"none"`.
+    `"chart"` for a node that plots the series linked to it, `"slider"` for a
+    node whose `value` row has a slider, else `"none"`.
     `variadic` makes the inputs grow: see `Variadic`. `job` is true for a node
     that is started and stopped by hand and works in the background.
     """
@@ -149,7 +150,7 @@ class NodeType(Model):
     outputs: tuple[Port, ...]
     defaults: Mapping[str, PortValue] = {}
     category: str = ""
-    display: Literal["none", "image", "chart"] = "none"
+    display: Literal["none", "image", "chart", "slider"] = "none"
     variadic: Variadic | None = None
     job: bool = False
 

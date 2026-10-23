@@ -258,3 +258,12 @@ fn a_stale_position_past_the_end_is_brought_back_in() {
     assert_eq!(step_menu(Some(9), 3, true), Some(2));
     assert_eq!(step_menu(Some(9), 3, false), Some(2));
 }
+
+#[test]
+fn a_slider_card_offers_neither_save_entry() {
+    use element_51_core::CardDisplay;
+    use element_51_core::menu::CardAction;
+    assert!(!CardAction::SavePng.offered(CardDisplay::Slider));
+    assert!(!CardAction::SaveCsv.offered(CardDisplay::Slider));
+    assert!(CardAction::ViewSource.offered(CardDisplay::Slider));
+}

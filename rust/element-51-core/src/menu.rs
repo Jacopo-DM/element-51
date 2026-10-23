@@ -124,7 +124,7 @@ impl CardAction {
     /// numbers needs a chart.
     pub fn offered(self, display: CardDisplay) -> bool {
         match self {
-            CardAction::SavePng => display != CardDisplay::None,
+            CardAction::SavePng => display.has_area(),
             CardAction::SaveCsv => display == CardDisplay::Chart,
             CardAction::ViewSource | CardAction::DeleteNode => true,
         }

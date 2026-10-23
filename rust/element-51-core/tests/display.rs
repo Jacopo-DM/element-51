@@ -660,3 +660,22 @@ fn the_tooltip_says_what_the_box_is_a_summary_of() {
     });
     assert_eq!(shown_tooltip(&colour), "colour picture, 1 x 2");
 }
+
+#[test]
+fn the_shared_snapshot_has_a_slider_node_with_a_slider_display() {
+    let Message::Snapshot(snapshot) = Message::from_json(SNAPSHOT).unwrap() else {
+        panic!("not a snapshot");
+    };
+    let slider = snapshot.node_type("Slider").unwrap();
+    assert_eq!(slider.display, CardDisplay::Slider);
+    assert_eq!(slider.category, "Input nodes");
+}
+
+#[test]
+fn a_slider_card_is_as_tall_as_a_plain_one_and_has_no_picture_area() {
+    let (node, plain) = card(CardDisplay::None);
+    let (_, slider) = card(CardDisplay::Slider);
+    let rect = node_rect(&node, &slider, &m());
+    assert_eq!(rect.h, node_rect(&node, &plain, &m()).h);
+    assert_eq!(picture_rect(&rect, &slider, &m()), None);
+}

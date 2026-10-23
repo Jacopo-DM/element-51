@@ -47,7 +47,9 @@ pub(crate) fn on_png_reply(shared: &Shared, reply: &PngReply) {
 fn request(state: &State, id: &str) -> Result<String, String> {
     let shown = shown_node(state, id)?;
     let (name, message) = match shown.node_type.display {
-        CardDisplay::None => return Err(format!("{id} shows no picture or chart.")),
+        CardDisplay::None | CardDisplay::Slider => {
+            return Err(format!("{id} shows no picture or chart."));
+        }
         CardDisplay::Image => picture_request(id, &shown)?,
         CardDisplay::Chart => chart_request(state, id, &shown),
     };

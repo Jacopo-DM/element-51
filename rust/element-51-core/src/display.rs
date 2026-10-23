@@ -30,7 +30,7 @@ pub fn picture_side(metrics: &Metrics) -> f64 {
 /// that shows nothing.
 pub fn default_area_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
     match node_type.display {
-        CardDisplay::None => 0.0,
+        CardDisplay::None | CardDisplay::Slider => 0.0,
         CardDisplay::Image => picture_side(metrics),
         CardDisplay::Chart => chart_height(metrics),
     }
@@ -40,9 +40,10 @@ pub fn default_area_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
 /// default size: the picture or chart area and a margin under it. It depends on
 /// the type only, so a card does not change size when results arrive.
 pub fn display_height(node_type: &NodeType, metrics: &Metrics) -> f64 {
-    match node_type.display {
-        CardDisplay::None => 0.0,
-        _ => default_area_height(node_type, metrics) + metrics.title_pad,
+    if node_type.display.has_area() {
+        default_area_height(node_type, metrics) + metrics.title_pad
+    } else {
+        0.0
     }
 }
 
@@ -56,7 +57,7 @@ pub fn chart_height(metrics: &Metrics) -> f64 {
 /// card's width less the inset on each side, and what is left of its height
 /// above the margin under it. None if the node type shows nothing.
 fn display_area(card: &Rect, node_type: &NodeType, metrics: &Metrics) -> Option<Rect> {
-    if node_type.display == CardDisplay::None {
+    if !node_type.display.has_area() {
         return None;
     }
     let rows = node_type.inputs.len() + node_type.outputs.len();
@@ -110,7 +111,7 @@ pub const HANDLE_SIDE: f64 = 14.0;
 /// The resize handle of the card at `card`: a square inside its bottom right
 /// corner. None if the node type shows nothing to enlarge.
 pub fn resize_handle(card: &Rect, node_type: &NodeType) -> Option<Rect> {
-    if node_type.display == CardDisplay::None {
+    if !node_type.display.has_area() {
         return None;
     }
     Some(Rect {
