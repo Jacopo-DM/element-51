@@ -316,6 +316,49 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
     input name), so the file format may need no change at all: the spec checks.
 - Added: 2026-10-22
 
+### default-nodes
+
+- Goal: every editor starts with a tree of built-in node types in the right-click
+    menu, in place of each script registering `PlotNode` by hand, unless the
+    host turns them off.
+- Kind: new behaviour (the examples that register `PlotNode` change).
+- The tree (the user's, 2026-10-23): `Default nodes` holds `Input nodes`
+    (`Variable`, `Slider`), `Output nodes` (`Plot`) and `Triggers` (`Clock`);
+    `User defined nodes` holds the rest. The first step moves `Plot` in and
+    builds the tree and the switch; `variable-node` adds the others.
+- Success measure (a draft; the spec makes each testable):
+    1. `App(nodes)` has the default nodes without being given them; the menu
+        shows the tree above, with the user's nodes under `User defined nodes`.
+    2. `App(nodes, defaults=False)` has none of them (one switch for all, the
+        user's choice 2026-10-23; no per-group switch).
+    3. A user node whose name is taken by a default (`Plot`, `Variable`) raises
+        a `ValueError` naming both and saying to rename it or pass
+        `defaults=False` (my suggestion, not yet confirmed by the user).
+    4. Existing examples and saved graphs that name `PlotNode` still work or
+        change in one place, and no example registers `PlotNode` by hand.
+- Status: direction from the user 2026-10-23. Not specified, not approved to start.
+- Open questions: where `Triggers` lives until `Clock` exists (an empty group is
+    not shown); whether the menu order puts `Default nodes` first.
+- Added: 2026-10-23
+
+### auto-run-default
+
+- Goal: `Run automatically` is ticked when the page loads, in place of unticked.
+- Kind: new behaviour.
+- Success measure (a draft): a fresh page runs the graph once at load and again
+    300 ms after each change that alters a result; the box can still be unticked;
+    a graph with a slow node does not run it on every keystroke (the 300 ms rule
+    stays). The walk-throughs `uiKeys*` and the Rust `autorun.rs` tests that
+    assume an unticked start change with it.
+- Status: asked for by the user 2026-10-23 ("can we have it on by default"). Not
+    specified, not approved to start. Known cost: `auto-run` was built as
+    "unticked at every load" and Run is disabled while it is ticked, so the
+    default also hides the Run button at first look.
+- Open questions: whether `serve(auto_run=False)` lets a host keep the old start
+    (an option nobody has asked for yet, so not by default); whether a job node
+    ever starts by itself (it must not: it is never run automatically).
+- Added: 2026-10-23
+
 ### variable-node
 
 - Goal: built-in input nodes hold a value the user sets and feed it to any number
@@ -339,6 +382,7 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
         draws the path of the slider in one and its sine in the other.
     5. A saved graph loads again with the same values, ranges and clock links.
     6. Keyboard reachable and AA in all themes, like every node.
+- Depends on `default-nodes` (the tree and the switch). `Clock` goes under `Triggers`.
 - Status: idea from the user 2026-10-23 (seen in `h1_numpy_ufuncs.py`, which now
     types 3 and 4 into `hypot` instead); the Slider, `tick` and `Clock` design is
     the user's answer of the same day (a separate Slider node, not a mode of
