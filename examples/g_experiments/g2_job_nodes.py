@@ -208,7 +208,6 @@ def build_app() -> element_51.App:
         Countdown,
         Stubborn,
         double,
-        element_51.PlotNode,
     ])
     training = app.add_node(Training, x=60.0, y=60.0)
     countdown = app.add_node(Countdown, x=60.0, y=420.0)

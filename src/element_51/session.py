@@ -4,6 +4,7 @@ import threading
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
+from element_51.defaults import DEFAULT_NODES, in_menu
 from element_51.edits import AddLink, AddNode, AnyEdit, DeleteNode, apply_edit
 from element_51.engine import RunResult, closure, descendants, run_graph
 from element_51.jobs import JobRunner, JobState
@@ -37,18 +38,38 @@ class App:
     Parameters
     ----------
     node_functions
-        The node types the editor offers, in the order it lists them.
+        The node types the editor offers, in the order it lists them, after
+        the default nodes.
+    defaults
+        False leaves the default nodes out, and the menu shows the nodes
+        under the folders they declare, with no `User defined nodes` folder.
 
     Raises
     ------
     ValueError
-        If two node functions share a name.
+        If two node functions share a name, if one has the name of a default
+        node, or if a default node is listed.
     """
 
-    def __init__(self, node_functions: Iterable[Registered]) -> None:
+    def __init__(
+        self, node_functions: Iterable[Registered], *, defaults: bool = True
+    ) -> None:
         self.node_functions: dict[str, Registered] = {}
+        self._defaults = defaults
+        self._default_names: frozenset[str] = frozenset()
+        if defaults:
+            self.node_functions = {f.node_type.name: f for f in DEFAULT_NODES}
+            self._default_names = frozenset(self.node_functions)
         for function in node_functions:
             name = function.node_type.name
+            if name in self._default_names:
+                msg = (
+                    f"{name} is a default node; remove it from the list"
+                    if function is self.node_functions[name]
+                    else f"your node {name!r} has the name of a default node:"
+                    " rename it, or pass defaults=False"
+                )
+                raise ValueError(msg)
             if name in self.node_functions:
                 msg = f"two node types are named {name!r}"
                 raise ValueError(msg)
@@ -428,7 +449,10 @@ class App:
                     fonts=self._theme.fonts,
                 ),
                 node_types=tuple(
-                    f.node_type for f in self.node_functions.values()
+                    in_menu(f.node_type, default=n in self._default_names)
+                    if self._defaults
+                    else f.node_type
+                    for n, f in self.node_functions.items()
                 ),
                 graph=self.graph,
                 jobs=self.job_states(),

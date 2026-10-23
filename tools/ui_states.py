@@ -219,7 +219,7 @@ def build_display_app() -> App:
         An app whose first two nodes show pictures, whose fourth makes two
         series, and whose fifth is a Plot with two rows linked and one empty.
     """
-    app = App([ramp, invert, training, PlotNode])
+    app = App([ramp, invert, training])
     first = app.add_node(ramp, x=60.0, y=60.0)
     second = app.add_node(invert, x=320.0, y=60.0)
     curves = app.add_node(training, x=60.0, y=400.0)
@@ -292,7 +292,7 @@ def build_job_app() -> App:
         An app whose first node is `Slow` (n1), the second `Quick` (n2), the
         third `Fail` (n3) and the fourth a Plot with `Quick`'s loss linked.
     """
-    app = App([Slow, Quick, Fail, PlotNode])
+    app = App([Slow, Quick, Fail])
     app.add_node(Slow, x=60.0, y=60.0)
     quick = app.add_node(Quick, x=320.0, y=60.0)
     app.add_node(Fail, x=60.0, y=300.0)

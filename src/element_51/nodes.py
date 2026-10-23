@@ -430,14 +430,16 @@ def check_category(category: str, where: str) -> str:
 class PlotNode:
     """A node that draws the series linked to it as lines on one chart.
 
-    Register the class itself: `App([..., PlotNode])`. It has no outputs. Its
-    first input is `series_1`; link a series to it and the chart draws it.
+    Every `App` has it: do not list it. `app.add_node(PlotNode, ...)` places
+    one. It has no outputs. Its first input is `series_1`; link a series to it
+    and the chart draws it.
     """
 
     node_type: ClassVar[NodeType] = NodeType(
         name="Plot",
         inputs=(Port(name="series_1", kind=PortType.SERIES),),
         outputs=(),
+        category="Output nodes",
         display="chart",
         variadic=Variadic(prefix="series", kind=PortType.SERIES),
     )

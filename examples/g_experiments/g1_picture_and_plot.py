@@ -152,7 +152,6 @@ def build_app() -> element_51.App:
         invert,
         pixels,
         training,
-        element_51.PlotNode,
     ])
     first = app.add_node(ramp, x=60.0, y=60.0)
     second = app.add_node(invert, x=360.0, y=60.0)

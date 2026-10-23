@@ -51,7 +51,7 @@ def test_websocket_sends_a_snapshot_on_connect(web_dir: Path) -> None:
     ):
         message = websocket.recv()
     snapshot = Snapshot.model_validate_json(message)
-    assert [t.name for t in snapshot.node_types] == ["add"]
+    assert [t.name for t in snapshot.node_types] == ["Plot", "add"]
     assert [(n.id, n.x, n.y) for n in snapshot.graph.nodes] == [
         ("n1", 5.0, 6.0)
     ]

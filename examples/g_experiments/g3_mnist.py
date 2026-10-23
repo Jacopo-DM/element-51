@@ -780,7 +780,7 @@ def build_app() -> element_51.App:
         (n2) with its `dataset` linked to the sample's, and the third a Plot
         (n3) with the loss and the accuracy linked.
     """
-    app = element_51.App([MnistSample, Train, element_51.PlotNode])
+    app = element_51.App([MnistSample, Train])
     sample = app.add_node(MnistSample, x=60.0, y=60.0)
     train = app.add_node(Train, x=380.0, y=60.0)
     chart = app.add_node(element_51.PlotNode, x=700.0, y=60.0)

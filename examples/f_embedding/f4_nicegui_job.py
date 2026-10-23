@@ -160,7 +160,7 @@ def build_app() -> element_51.App:
         An app whose first node, `n1`, is a `Ticker`, with a Plot, `n2`,
         linked to its series.
     """
-    app = element_51.App([Ticker, element_51.PlotNode])
+    app = element_51.App([Ticker])
     ticker = app.add_node(Ticker, x=FIRST_X, y=FIRST_Y)
     chart = app.add_node(element_51.PlotNode, x=360.0, y=FIRST_Y)
     app.add_link(ticker, "total", chart, "series_1")

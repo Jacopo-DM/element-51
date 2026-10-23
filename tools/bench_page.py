@@ -136,7 +136,7 @@ def build_chart_app() -> App:
     App
         The app, with two nodes and one link.
     """
-    app = App([big, PlotNode])
+    app = App([big])
     source = app.add_node(big, x=60.0, y=80.0)
     chart = app.add_node(PlotNode, x=360.0, y=80.0)
     app.add_link(source, "out", chart, "series_1")

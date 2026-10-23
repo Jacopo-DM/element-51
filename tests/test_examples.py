@@ -307,17 +307,15 @@ def test_the_purple_synthwave_example_uses_that_theme() -> None:
 def test_the_menu_example_puts_nodes_in_nested_categories() -> None:
     """The categories of the example's node types, in menu order."""
     app = build("d_editor/d4_menu.py")
-    categories = {
-        name: function.node_type.category
-        for name, function in app.node_functions.items()
-    }
+    categories = {t.name: t.category for t in app.snapshot().node_types}
     assert categories == {
-        "sine": "Math/Trig",
-        "cosine": "Math/Trig",
-        "square_root": "Math",
-        "Shout": "Text",
-        "add": "",
-        "show": "",
+        "Plot": "Default nodes/Output nodes",
+        "sine": "User defined nodes/Math/Trig",
+        "cosine": "User defined nodes/Math/Trig",
+        "square_root": "User defined nodes/Math",
+        "Shout": "User defined nodes/Text",
+        "add": "User defined nodes",
+        "show": "User defined nodes",
     }
 
 

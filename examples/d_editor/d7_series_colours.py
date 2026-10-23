@@ -106,7 +106,7 @@ def build_app() -> element_51.App:
         The app: `decay`, `rise` and `wave` linked to `series_1` to
         `series_3` of a `Plot`, the first two with their own colours.
     """
-    app = element_51.App([decay, rise, wave, element_51.PlotNode])
+    app = element_51.App([decay, rise, wave])
     sources = [
         app.add_node(function, x=60.0, y=60.0 + 130.0 * index)
         for index, function in enumerate([decay, rise, wave])

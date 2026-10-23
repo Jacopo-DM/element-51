@@ -31,8 +31,12 @@ def test_snapshot_lists_node_types_in_registration_order() -> None:
     """The browser gets every type, whether or not a node uses it."""
     app = App([add, show])
     snapshot = app.snapshot()
-    assert [t.name for t in snapshot.node_types] == ["add", "show"]
-    assert snapshot.node_types[0].outputs[0].kind is PortType.FLOAT
+    assert [t.name for t in snapshot.node_types] == [
+        "Plot",
+        "add",
+        "show",
+    ]
+    assert snapshot.node_types[1].outputs[0].kind is PortType.FLOAT
     assert snapshot.graph.nodes == ()
 
 
@@ -344,7 +348,7 @@ def test_the_source_of_a_class_node_is_its_class() -> None:
 
 def test_the_source_of_the_plot_node_is_its_class() -> None:
     """The built-in node can be read like any other."""
-    app = App([PlotNode])
+    app = App([])
     node_id = app.add_node(PlotNode, x=0.0, y=0.0)
     reply = app.source(node_id)
     assert reply.source is not None

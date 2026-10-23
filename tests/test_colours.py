@@ -65,7 +65,7 @@ def plot_app() -> App:
     App
         An app whose graph holds `n1`, a Plot.
     """
-    app = App([PlotNode])
+    app = App([])
     app.add_node(PlotNode, x=0.0, y=0.0)
     return app
 
@@ -89,7 +89,7 @@ def test_a_chosen_colour_is_in_the_graph_and_the_saved_file(
         "series_1": ORANGE,
         "series_2": GREEN,
     }
-    fresh = App([PlotNode])
+    fresh = App([])
     fresh.load(path)
     assert fresh.graph == app.graph
 
@@ -108,7 +108,7 @@ def test_an_older_file_without_colours_still_loads(
         }),
         "utf-8",
     )
-    app = App([PlotNode])
+    app = App([])
     app.load(path)
     assert app.graph.nodes[0].colours == {}
 
@@ -133,4 +133,4 @@ def test_a_file_with_a_bad_colour_is_refused(tmp_path: Path) -> None:
         "utf-8",
     )
     with pytest.raises(StoreError, match="#rrggbb"):
-        App([PlotNode]).load(path)
+        App([]).load(path)
