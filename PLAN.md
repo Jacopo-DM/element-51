@@ -333,7 +333,8 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
         category directly under it, with category `Numpy` at
         `User defined nodes/Numpy`.
     3. `App(nodes, defaults=False)` offers no default node and shows no
-        `Default nodes` folder (one switch for all groups, the user's choice).
+        `Default nodes` folder and no `User defined nodes` wrapper: `hypot` is at
+        `Numpy/hypot`, the 0.3.0 menu (one switch for all groups, the user's choice).
     4. A user node named like a default, and `PlotNode` itself in the list, each
         raise `ValueError` at `App(...)`. The first names both nodes and says to
         rename yours or pass `defaults=False`; the second says `Plot` is a
@@ -346,14 +347,13 @@ that are not ufuncs. Known limit, in Known problems: the four `logical_*` nodes 
         menu, so the existing walk-throughs cover it; their rows that name menu
         paths are updated.
 - Status: draft, shown to the user 2026-10-23, waiting for approval in words.
-    The menu question and the old-scripts question are answered (below).
+    The menu, old-scripts and `defaults=False` menu questions are answered (below).
 - Decisions so far (2026-10-23): user nodes under `User defined nodes`, every
     existing menu moves one level down; old scripts are rewritten; triggers group
-    is called `Triggers`; clash is an error.
-- Open questions: with `defaults=False`, does the menu keep the 0.3.0 shape (no
-    `User defined nodes` wrapper, since there is nothing to separate from)?
-    Recommended yes; waits for the user. The release that carries this is 0.4.0
-    (a script that lists `PlotNode` stops working), not 0.3.1.
+    is called `Triggers`; clash is an error; with `defaults=False` there is no
+    wrapper.
+- Open questions: none. The release that carries this is 0.4.0 (a script that
+    lists `PlotNode` stops working), not 0.3.1.
 - Added: 2026-10-23
 
 ### auto-run-default
