@@ -53,10 +53,10 @@ such as `0.0842 [n4.loss]`.
 ## Default nodes
 
 Every editor starts with a few built-in nodes, in the `Default nodes` folder of the
-right-click menu. At present that is `Plot`, in `Output nodes`. The nodes you list
-go under `User defined nodes`, with their own category inside it. You do not list
-the defaults, and listing `PlotNode` or a node named `Plot` raises a `ValueError`
-that says what to change.
+right-click menu: the input nodes below, in `Input nodes`, and `Plot`, in `Output
+nodes`. The nodes you list go under `User defined nodes`, with their own category
+inside it. You do not list the defaults, and listing `PlotNode` or a node named
+`Plot` raises a `ValueError` that says what to change.
 
 Pass `defaults=False` to leave them out: the editor then offers only your nodes, in
 the folders they declare, with no `Default nodes` and no `User defined nodes`.
@@ -65,6 +65,25 @@ the folders they declare, with no `Default nodes` and no `User defined nodes`.
 app = element_51.App([ramp, training])  # Plot is there
 plain = element_51.App([ramp, training], defaults=False)  # only your nodes
 ```
+
+## Input nodes
+
+`Float`, `Integer`, `Text` and `Flag` hold a value you type (a number, a whole number,
+a text, a tick box) and pass it on as it is. They replace the one-off constant nodes a
+script used to write, and one of them can feed any number of inputs: link a `Float` of
+3 to both inputs of an `add` and you get 6.
+
+`Slider` is a number you move. It has three boxes, `value`, `minimum` and `maximum`
+(0, -10 and 10 to start with), and a slider on the `value` row. Drag the handle, or
+click it and press Left or Right: one step is a hundredth of the range. With
+`Run automatically` ticked the nodes after it follow your hand. A drag is one step for
+Ctrl+Z. A value outside the range, or a minimum that is not below the maximum, is an
+error on the card; nothing is clamped. Link something to `value` and the slider goes
+away, because a linked input takes its value from its source.
+
+`examples/d_editor/d9_slider.py` links a slider to a `show` node and to numpy's `sin`.
+`element_51.Slider` and the others are classes: `app.add_node(element_51.Float, x=0.0,
+y=0.0)` places one from Python.
 
 ## Plot
 

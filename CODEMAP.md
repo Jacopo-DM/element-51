@@ -31,7 +31,7 @@ the ignore list in CLAUDE.md.
     `c1_script_api.py` (the graph from plain Python, no browser), `c2_live_push.py`
     (a script edits the graph while the page is open), `c3_save_load.py`.
     `d_editor`: `d1_big_graph.py` (pan, zoom, move, select, delete),
-    `d2_values.py`, `d3_undo_redo.py`, `d4_menu.py`, `d5_card_menu.py`, `d6_auto_run.py`, `d7_series_colours.py`, `d8_default_nodes.py` (the `Default nodes` and `User defined nodes` folders, and `defaults=False`). `e_look`:
+    `d2_values.py`, `d3_undo_redo.py`, `d4_menu.py`, `d5_card_menu.py`, `d6_auto_run.py`, `d7_series_colours.py`, `d8_default_nodes.py` (the `Default nodes` and `User defined nodes` folders, and `defaults=False`), `d9_slider.py` (a `Slider` into a `show` node and numpy's `sin`). `e_look`:
     `e1_light_theme.py`, `e2_theme_file.py` with `my_theme.json`, `e3_palette.py`, `e4_purple_synthwave.py`. `f_embedding`:
     `f1_fastapi_host.py` and `f2_nicegui_host.py` (the editor mounted at `/editor`
     in a FastAPI or NiceGUI host, with a side panel), `f3_fastapi_api.py` (a typed JSON API),

@@ -1,6 +1,7 @@
 """Every example builds its graph and runs to the outcome it describes."""
 
 import importlib.util
+import math
 import sys
 import threading
 import time
@@ -80,6 +81,11 @@ EXPECTED: dict[str, Expected] = {
     "c_python_api/c2_live_push.py": [("n1", "ok", {"out": 1.0})],
     "d_editor/d4_menu.py": [("n1", "ok", {"out": 3.0})],
     "d_editor/d8_default_nodes.py": [("n1", "ok", {"out": 3.0})],
+    "d_editor/d9_slider.py": [
+        ("n1", "ok", {"out": 1.0}),
+        ("n2", "ok", {"out": 1.0}),
+        ("n3", "ok", {"out": math.sin(1.0)}),
+    ],
     "f_embedding/f1_fastapi_host.py": [("n1", "ok", {"out": 3.0})],
     "g_experiments/g1_picture_and_plot.py": [
         ("n1", "ok", {}),
