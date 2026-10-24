@@ -8,7 +8,7 @@ use crate::redraw;
 use crate::run_ui::clear_run;
 use crate::show_error;
 use element_51_core::announce::{edit_text, refusal_text, undo_text};
-use element_51_core::{Edit, EditRequest, Message};
+use element_51_core::{Edit, EditRequest, Graph, Message};
 
 pub(crate) fn send(state: &State, request: EditRequest) {
     let text = Message::Edit(request).to_json();
@@ -60,6 +60,14 @@ pub(crate) fn submit_edit(shared: &Shared, edit: Edit, record: bool) {
         changed(shared);
     }
     redraw(shared);
+}
+
+/// Put `edit`, which was already applied and sent without a record, in the undo
+/// history as one step back to `before`, the graph it started from.
+pub(crate) fn record_applied(shared: &Shared, before: &Graph, edit: &Edit) {
+    let mut state = shared.borrow_mut();
+    state.history.record(before, edit);
+    announce(&state.document, &edit_text(edit));
 }
 
 /// Undo the newest step, or redo the newest undone one. The edits go to Python

@@ -8,7 +8,7 @@ use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlInputElement};
 
 use crate::draw::field_box;
-use crate::edit_ui::submit_edit;
+use crate::edit_ui::{record_applied, submit_edit};
 use crate::fields_ui::card_rects;
 use crate::input::dragged_graph;
 use crate::{Shared, listen};
@@ -107,10 +107,14 @@ fn slider_for(
     control.set_type("range");
     let _ = control.set_attribute("aria-label", &field_label(&node.id, VALUE_PORT));
     let _ = control.set_attribute("data-node", &node.id);
-    let shared = shared.clone();
-    let source = control.clone();
+    let (on_input, on_change) = (shared.clone(), shared.clone());
+    let (input_source, change_source) = (control.clone(), control.clone());
     listen(&control, "input", move |_event: web_sys::Event| {
-        on_slider_input(&shared, &source)
+        on_slider_input(&on_input, &input_source)
+    })
+    .ok()?;
+    listen(&control, "change", move |_event: web_sys::Event| {
+        on_slider_change(&on_change, &change_source)
     })
     .ok()?;
     container.append_child(&control).ok()?;
@@ -118,7 +122,8 @@ fn slider_for(
 }
 
 /// The handle moved: send the new value now, so the graph follows the hand.
-/// The edit joins the undo history in `on_slider_change`, not here.
+/// The first move of a drag remembers the graph as it was; the edit joins the
+/// undo history, as one step, in `on_slider_change`.
 fn on_slider_input(shared: &Shared, control: &HtmlInputElement) {
     let Some(node) = control.get_attribute("data-node") else {
         return;
@@ -126,6 +131,16 @@ fn on_slider_input(shared: &Shared, control: &HtmlInputElement) {
     let Ok(Some(value)) = parse_input(&control.value(), PortType::Float) else {
         return;
     };
+    {
+        let mut state = shared.borrow_mut();
+        let started = state
+            .slider_start
+            .as_ref()
+            .is_some_and(|(id, _)| *id == node);
+        if !started && let Some(replica) = state.replica.as_ref() {
+            state.slider_start = Some((node.clone(), replica.graph().clone()));
+        }
+    }
     submit_edit(
         shared,
         Edit::SetValue {
@@ -134,5 +149,34 @@ fn on_slider_input(shared: &Shared, control: &HtmlInputElement) {
             value: Some(value),
         },
         false,
+    );
+}
+
+/// The drag ended: put the whole drag in the undo history as one step.
+fn on_slider_change(shared: &Shared, control: &HtmlInputElement) {
+    let Some(node) = control.get_attribute("data-node") else {
+        return;
+    };
+    let Ok(Some(value)) = parse_input(&control.value(), PortType::Float) else {
+        return;
+    };
+    let start = {
+        let mut state = shared.borrow_mut();
+        match state.slider_start.take() {
+            Some((id, before)) if id == node => before,
+            other => {
+                state.slider_start = other;
+                return;
+            }
+        }
+    };
+    record_applied(
+        shared,
+        &start,
+        &Edit::SetValue {
+            node,
+            port: VALUE_PORT.to_string(),
+            value: Some(value),
+        },
     );
 }

@@ -38,7 +38,7 @@ use element_51_core::history::History;
 use element_51_core::layout::PortHit;
 use element_51_core::theme::Theme;
 use element_51_core::view::View;
-use element_51_core::{JobUpdate, PortRef, Replica, RunResult};
+use element_51_core::{Graph, JobUpdate, PortRef, Replica, RunResult};
 use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::{
@@ -77,6 +77,9 @@ pub(crate) struct State {
     theme: Theme,
     view: View,
     history: History,
+    /// The graph as it was when the slider being moved started to move, with
+    /// that slider's node id; the edits in between are live, not in `history`.
+    slider_start: Option<(String, Graph)>,
     selected: Option<Selected>,
     /// The hidden tree's item that has the keyboard focus, if any.
     focus: Option<Focus>,
@@ -146,6 +149,7 @@ pub fn start() -> Result<(), JsValue> {
         view: View::default(),
         theme,
         history: History::default(),
+        slider_start: None,
         selected: None,
         focus: None,
         pending_link: None,

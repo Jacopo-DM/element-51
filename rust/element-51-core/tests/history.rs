@@ -184,3 +184,25 @@ fn steps_come_back_newest_first_and_the_stacks_run_dry() {
     assert_eq!(history.redo().unwrap(), vec![to_two]);
     assert!(history.redo().is_none());
 }
+
+#[test]
+fn a_drag_of_many_live_edits_is_one_step_back_to_where_it_started() {
+    let fixture = fixture();
+    let types = &fixture.node_types;
+    let set = |value: f64| Edit::SetValue {
+        node: "n2".into(),
+        port: "b".into(),
+        value: Some(json!(value)),
+    };
+    let start = apply_edit(&fixture.graph, types, &set(1.0)).unwrap();
+    // The page applies each live edit without recording it; only the last is
+    // recorded, against the graph as it was at the start of the drag.
+    let dragged = apply_all(&start, types, &[set(2.0), set(3.0), set(4.0), set(5.0)]);
+    let mut history = History::default();
+    history.record(&start, &set(5.0));
+    let undone = apply_all(&dragged, types, &history.undo().unwrap());
+    assert_eq!(sorted(&undone), sorted(&start));
+    assert!(!history.can_undo());
+    let redone = apply_all(&undone, types, &history.redo().unwrap());
+    assert_eq!(sorted(&redone), sorted(&dragged));
+}
