@@ -19,17 +19,24 @@ const VALUE_PORT: &str = "value";
 /// Make the sliders over the canvas match the graph: one per slider card whose
 /// `value` input is not linked, on that input's row, with the card's range.
 pub(crate) fn sync_sliders(shared: &Shared) {
+    if place_sliders(shared) {
+        shared.borrow_mut().slider_start = None;
+    }
+}
+
+/// Place the sliders; true if a drag was in progress on a slider that is gone,
+/// whose remembered graph must be dropped.
+fn place_sliders(shared: &Shared) -> bool {
     let state = shared.borrow();
     let (Some(container), Some(replica)) = (
         state.document.get_element_by_id("sliders"),
         state.replica.as_ref(),
     ) else {
-        return;
+        return false;
     };
     let preview = dragged_graph(&state);
     let graph = preview.as_ref().unwrap_or_else(|| replica.graph());
     let metrics = &state.theme.metrics;
-    let focused = state.document.active_element().map(|element| element.id());
     let cards = card_rects(graph, replica.node_types(), metrics);
     let mut wanted: Vec<String> = Vec::new();
     for (index, node) in graph.nodes.iter().enumerate() {
@@ -77,7 +84,11 @@ pub(crate) fn sync_sliders(shared: &Shared) {
         control.set_min(&shown.minimum.to_string());
         control.set_max(&shown.maximum.to_string());
         control.set_step(&shown.step.to_string());
-        if focused.as_deref() != Some(id.as_str()) {
+        let dragging = state
+            .slider_start
+            .as_ref()
+            .is_some_and(|(started, _)| *started == node.id);
+        if !dragging {
             control.set_value(&shown.value.to_string());
         }
     }
@@ -89,6 +100,10 @@ pub(crate) fn sync_sliders(shared: &Shared) {
             child.remove();
         }
     }
+    state
+        .slider_start
+        .as_ref()
+        .is_some_and(|(started, _)| !wanted.contains(&format!("slider-{started}")))
 }
 
 /// The range input with `id`, made (and wired up) if it does not exist yet.
@@ -144,12 +159,26 @@ fn on_slider_input(shared: &Shared, control: &HtmlInputElement) {
     submit_edit(
         shared,
         Edit::SetValue {
-            node,
+            node: node.clone(),
             port: VALUE_PORT.to_string(),
-            value: Some(value),
+            value: Some(value.clone()),
         },
         false,
     );
+    // A refused edit leaves the graph as it was: there is no drag to record.
+    let mut state = shared.borrow_mut();
+    let applied = state.replica.as_ref().is_some_and(|replica| {
+        replica
+            .graph()
+            .nodes
+            .iter()
+            .find(|placed| placed.id == node)
+            .and_then(|placed| placed.values.get(VALUE_PORT))
+            == Some(&value)
+    });
+    if !applied {
+        state.slider_start = None;
+    }
 }
 
 /// The drag ended: put the whole drag in the undo history as one step.

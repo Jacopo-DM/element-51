@@ -165,7 +165,9 @@ fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> N
         node_type.outputs.len(),
         plural(node_type.outputs.len(), "output"),
     );
-    if let Some(slider) = slider_values(node, &node_type) {
+    if let Some(slider) =
+        slider_values(node, &node_type).filter(|_| !graph.is_linked(&node.id, "value"))
+    {
         label.push_str(&format!(
             " Value {}, from {} to {}.",
             short_number(slider.value),

@@ -974,3 +974,42 @@ fn a_slider_card_with_an_empty_range_says_only_what_the_other_cards_say() {
     let items = list_nodes(&graph, &node_types);
     assert_eq!(items[0].label, "n1, Slider. 3 inputs, 1 output.");
 }
+
+#[test]
+fn a_slider_whose_value_is_linked_says_nothing_about_a_value_of_its_own() {
+    let (mut graph, mut node_types) = slider_card(&[("value", 3.2)]);
+    let float = |name: &str| port(name, PortType::Float);
+    node_types.push(NodeType {
+        job: false,
+        name: "Float".to_string(),
+        inputs: vec![float("value")],
+        outputs: vec![float("out")],
+        defaults: Default::default(),
+        category: "Input nodes".to_string(),
+        display: element_51_core::CardDisplay::None,
+        variadic: Default::default(),
+    });
+    graph.nodes.push(PlacedNode {
+        id: "n2".to_string(),
+        node_type: "Float".to_string(),
+        x: 0.0,
+        y: 100.0,
+        values: Default::default(),
+        width: None,
+        display_height: None,
+        colours: Default::default(),
+    });
+    graph.links.push(Link {
+        source: PortRef {
+            node: "n2".to_string(),
+            port: "out".to_string(),
+        },
+        target: PortRef {
+            node: "n1".to_string(),
+            port: "value".to_string(),
+        },
+    });
+    let items = list_nodes(&graph, &node_types);
+    let slider = items.iter().find(|item| item.id == "n1").unwrap();
+    assert_eq!(slider.label, "n1, Slider. 3 inputs, 1 output.");
+}

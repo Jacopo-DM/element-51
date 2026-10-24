@@ -77,6 +77,8 @@ pub(crate) fn step_history(shared: &Shared, undo: bool) {
     let edits = {
         let mut state = shared.borrow_mut();
         state.selected = None;
+        // An undo in the middle of a drag ends that drag's record.
+        state.slider_start = None;
         if undo {
             state.history.undo()
         } else {

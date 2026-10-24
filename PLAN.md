@@ -800,6 +800,11 @@ None open.
 
 ## Known problems
 
+- A slider card's handle snaps to its step grid (`minimum` plus whole steps of a hundredth of the
+    range), so a value the grid does not hold, such as 0.05 on -10 to 10, is drawn at 0.0 while Python
+    and the hidden tree say 0.05. Found by the review of `input-nodes` (2026-10-24), not fixed: the
+    drag always gives a grid value, and `step="any"` would lose the keyboard step. A value outside
+    the range is drawn at the end while the card reports the error, on purpose.
 - `uv run --locked ty check` (advisory) reports 3 items in the notebooks: `import g3_mnist` in
     `tests/functional/mnist_example.ipynb` (the example is put on `sys.path` at run time) and
     `model_dump_json` on the `Reply` union (it includes `None` and `NoReply`) in two cells of

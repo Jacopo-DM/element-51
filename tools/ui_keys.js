@@ -745,7 +745,8 @@ async function uiKeysSlider() {
     const status = document.getElementById("status");
     const label = () => document.getElementById("tree-n1").getAttribute("aria-label");
     const press = async (key, shift) => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key, ctrlKey: true, shiftKey: Boolean(shift), bubbles: true, cancelable: true }));
+        // The handle keeps the focus after a drag, so the key goes to it.
+        slider.dispatchEvent(new KeyboardEvent("keydown", { key, ctrlKey: true, shiftKey: Boolean(shift), bubbles: true, cancelable: true }));
         await wait(400);
     };
     // The value of n1 in the graph Python holds, read from a snapshot on a second socket.
@@ -782,7 +783,7 @@ async function uiKeysSlider() {
     await drag([2, 3, 4, 5]);
     check("a drag sets the value in Python", (await held()) === 5, await held());
     check("the hidden tree follows the hand", label().includes("Value 5, from -10 to 10."), label());
-    slider.blur();
+    slider.focus();
     await press("z");
     check("one undo takes the whole drag back", slider.value === "1" && (await held()) === 1, slider.value + " / " + (await held()));
     check("the status line says it undid a change", status.textContent === "Undid the last change", status.textContent);

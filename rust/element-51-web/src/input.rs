@@ -340,6 +340,19 @@ pub(crate) fn on_key_down(shared: &Shared, event: &KeyboardEvent) {
                 _ => {}
             }
         }
+        // A slider takes arrow keys itself but has no text to undo, so Ctrl+Z
+        // and Ctrl+Y still reach the graph's history after a drag.
+        let history_key = matches!(event.key().to_lowercase().as_str(), "z" | "y");
+        if field.id().starts_with("slider-")
+            && (event.ctrl_key() || event.meta_key())
+            && history_key
+        {
+            event.prevent_default();
+            step_history(
+                shared,
+                event.key().to_lowercase() == "z" && !event.shift_key(),
+            );
+        }
         return;
     }
     if event.ctrl_key() || event.meta_key() {
