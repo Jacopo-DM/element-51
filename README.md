@@ -24,7 +24,9 @@ Build browser node-editor GUIs from Python, with a Rust/WASM canvas.
 
 </div>
 
-![Training a small network on handwritten digits in the element-51 editor: a Train node learns while a Plot draws its loss and accuracy](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/mnist.gif)
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/mnist.gif" alt="Training a small network on handwritten digits in the element-51 editor: a Train node learns while a Plot draws its loss and accuracy" width="100%">
+</p>
 
 Three nodes: one shows a picture from the MNIST digits, one trains a small
 network on them, and a Plot draws the loss and the accuracy as they change.
