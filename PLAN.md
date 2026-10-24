@@ -383,6 +383,15 @@ Every `App` offers `Plot` in `Default nodes/Output nodes`, your nodes go under `
     which waits for the user's answer.
 - Added: 2026-10-24
 
+### header-gif
+
+- Goal: record a better header GIF for the README. The current one
+    (`docs/images/mnist.gif`, 720 px wide, 17 s) looks soft when stretched to the
+    full width of the README.
+- Status: proposed by the user 2026-10-25; not approved, no spec yet. The user
+    records the page (macOS Cmd+Shift+5) and `ffmpeg` converts it.
+- Added: 2026-10-25
+
 ## Current state
 
 Phase: executing the task list. Done: walking skeleton, rename to `element-51`,
