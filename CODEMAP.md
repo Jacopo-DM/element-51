@@ -42,6 +42,7 @@ the ignore list in CLAUDE.md.
     `build_app()`; `tests/test_examples.py` runs every one.
 - `docs/images/`: the three README screenshots (`dark`, `light`, `palette`; how they
     were made is in DESIGN.md, Gotchas).
+- `docs/logo.svg`: the project logo at the top of `README.md`.
 - `docs/jobs.md`: how to write and use a job node (step and work forms, what other nodes see, a script's API).
 - `docs/wrapping.md`: make nodes from a module's typed functions or from numpy's ufuncs in bulk (`nodes_from_module`, `nodes_from_ufuncs`, what the scan skips and why).
 - `docs/themes.md`: the theme reference. A hand-written introduction, then one

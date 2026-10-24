@@ -1,39 +1,34 @@
+<div align="center">
+
+<img src="docs/logo.svg" alt="element-51 logo: three linked node cards on a dark dotted canvas" width="160">
+
 # element-51
 
-[![PyPI](https://img.shields.io/pypi/v/element-51)](https://pypi.org/project/element-51/)
-[![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://pypi.org/project/element-51/)
-[![License](https://img.shields.io/pypi/l/element-51)](LICENSE)
-[![CI](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml)
-[![Rust and WASM](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml/badge.svg)](https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml)
-[![Docs](https://github.com/Jacopo-DM/element-51/actions/workflows/docs.yml/badge.svg)](https://jacopo-dm.github.io/element-51/)
-[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+Build browser node-editor GUIs from Python, with a Rust/WASM canvas.
+
+[![CI][ci-shield]][ci-url]
+[![Rust and WASM][rust-shield]][rust-url]
+[![Docs][docs-shield]][docs-url]
+[![PyPI][pypi-shield]][pypi-url]
+[![License][license-shield]][license-url]
+[![Last commit][commit-shield]][commit-url]
+
+[![Python][tool-python-shield]][tool-python-url]
+[![uv][tool-uv-shield]][tool-uv-url]
+[![Rust][tool-rust-shield]][tool-rust-url]
+[![WebAssembly][tool-wasm-shield]][tool-wasm-url]
+[![Pydantic][tool-pydantic-shield]][tool-pydantic-url]
+[![Starlette][tool-starlette-shield]][tool-starlette-url]
+
+[Docs](https://jacopo-dm.github.io/element-51/) · [Report a bug][issues-url]
+
+</div>
 
 ![Training a small network on handwritten digits in the element-51 editor: a Train node learns while a Plot draws its loss and accuracy](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/mnist.gif)
 
 Three nodes: one shows a picture from the MNIST digits, one trains a small
 network on them, and a Plot draws the loss and the accuracy as they change.
 The example is `examples/g_experiments/g3_mnist.py`.
-
-Design node-editor GUIs from Python. You write nodes as typed functions or small
-classes. element-51 serves an editor in the browser where people wire them
-together, and Python keeps the graph, runs it and can change it while the page
-is open.
-
-- **Nodes from type hints.** Put `@element_51.node` on a function, or subclass
-    `element_51.Node`. Parameters become inputs and the return type becomes the
-    output (a pydantic model gives one output per field).
-- **A fast editor.** The canvas is drawn by a Rust and WebAssembly module: pan,
-    zoom, drag, link, undo and redo, typed values in the node, a nested
-    add-node menu with search, and refused links between ports of different
-    types.
-- **Python is in charge.** The graph lives in your process. Read it, run it,
-    save and load it as JSON, or add nodes from a script and watch an open page
-    update.
-- **Yours to restyle.** Three themes ship, and a small JSON file changes any colour,
-    size, font or port shape.
-- **Embeddable.** It is an ASGI app, so it mounts inside FastAPI, NiceGUI or any
-    other ASGI host.
 
 ## Installation
 
@@ -49,7 +44,7 @@ uv sync
 uv run python tools/build_wasm.py
 ```
 
-## Example
+## Usage
 
 Two nodes and a link. `number` is a function, `Double` is a class.
 
@@ -85,9 +80,31 @@ More examples, grouped by topic, are in
 Python, editor features, themes, making nodes from your own functions or from
 numpy in bulk, and embedding the editor in FastAPI or NiceGUI.
 
+## Features
+
+Design node-editor GUIs from Python. You write nodes as typed functions or small
+classes. element-51 serves an editor in the browser where people wire them
+together, and Python keeps the graph, runs it and can change it while the page
+is open.
+
+- **Nodes from type hints.** Put `@element_51.node` on a function, or subclass
+    `element_51.Node`. Parameters become inputs and the return type becomes the
+    output (a pydantic model gives one output per field).
+- **A fast editor.** The canvas is drawn by a Rust and WebAssembly module: pan,
+    zoom, drag, link, undo and redo, typed values in the node, a nested
+    add-node menu with search, and refused links between ports of different
+    types.
+- **Python is in charge.** The graph lives in your process. Read it, run it,
+    save and load it as JSON, or add nodes from a script and watch an open page
+    update.
+- **Yours to restyle.** Three themes ship, and a small JSON file changes any colour,
+    size, font or port shape.
+- **Embeddable.** It is an ASGI app, so it mounts inside FastAPI, NiceGUI or any
+    other ASGI host.
+
 ## Looks
 
-The header shows the `purple-synthwave` theme, the default. The dark `antimony` theme
+The picture under the header shows the `purple-synthwave` theme, the default. The dark `antimony` theme
 is one argument away (`serve(app, theme="antimony")`):
 
 ![The same graph in the dark antimony theme](https://raw.githubusercontent.com/Jacopo-DM/element-51/main/docs/images/dark.jpg)
@@ -113,3 +130,33 @@ The look of the editor is inspired by
 [Antimony](https://www.mattkeeter.com/projects/antimony/3/), the graph-based
 CAD tool by Matt Keeter. element-51 shares no code or images with Antimony; the
 colours, shapes and layout were drawn again from scratch.
+
+## License
+
+Apache License 2.0; see [`LICENSE`](LICENSE).
+
+[ci-shield]: https://img.shields.io/github/actions/workflow/status/Jacopo-DM/element-51/ci.yml?branch=main&label=CI
+[ci-url]: https://github.com/Jacopo-DM/element-51/actions/workflows/ci.yml
+[rust-shield]: https://img.shields.io/github/actions/workflow/status/Jacopo-DM/element-51/rust.yml?branch=main&label=Rust%20and%20WASM
+[rust-url]: https://github.com/Jacopo-DM/element-51/actions/workflows/rust.yml
+[docs-shield]: https://img.shields.io/github/actions/workflow/status/Jacopo-DM/element-51/docs.yml?branch=main&label=docs
+[docs-url]: https://github.com/Jacopo-DM/element-51/actions/workflows/docs.yml
+[pypi-shield]: https://img.shields.io/pypi/v/element-51
+[pypi-url]: https://pypi.org/project/element-51/
+[license-shield]: https://img.shields.io/github/license/Jacopo-DM/element-51
+[license-url]: LICENSE
+[commit-shield]: https://img.shields.io/github/last-commit/Jacopo-DM/element-51
+[commit-url]: https://github.com/Jacopo-DM/element-51/commits
+[tool-python-shield]: https://img.shields.io/badge/Python-3.13%2B-3776AB?style=for-the-badge&logo=python&logoColor=white
+[tool-python-url]: https://www.python.org/
+[tool-uv-shield]: https://img.shields.io/badge/uv-DE5FE9?style=for-the-badge&logo=uv&logoColor=white
+[tool-uv-url]: https://docs.astral.sh/uv/
+[tool-rust-shield]: https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white
+[tool-rust-url]: https://www.rust-lang.org/
+[tool-wasm-shield]: https://img.shields.io/badge/WebAssembly-654FF0?style=for-the-badge&logo=webassembly&logoColor=white
+[tool-wasm-url]: https://webassembly.org/
+[tool-pydantic-shield]: https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white
+[tool-pydantic-url]: https://docs.pydantic.dev/
+[tool-starlette-shield]: https://img.shields.io/badge/Starlette-333333?style=for-the-badge
+[tool-starlette-url]: https://www.starlette.io/
+[issues-url]: https://github.com/Jacopo-DM/element-51/issues
