@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="docs/logo.svg" alt="element-51 logo: three linked node cards on a dark dotted canvas" width="160">
-
-# element-51
+# <img src="docs/logo.svg" alt="element-51 logo: three linked node cards on a dark dotted canvas" width="160"><br>element-51
 
 Build browser node-editor GUIs from Python, with a Rust/WASM canvas.
 
