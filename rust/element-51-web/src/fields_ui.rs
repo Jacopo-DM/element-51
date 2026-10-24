@@ -1,7 +1,7 @@
 //! The input boxes laid over the canvas, one per unlinked input.
 
 use element_51_core::PortType;
-use element_51_core::fields::{field_label, format_value, parse_input};
+use element_51_core::fields::{field_label, format_value, parse_input, slider_values};
 use element_51_core::layout::{Rect, Side, node_rect, output_row};
 use element_51_core::rows::{find_input, type_of};
 use element_51_core::theme::Metrics;
@@ -64,6 +64,7 @@ pub(crate) fn sync_fields(shared: &Shared) {
         for (row, port) in node_type.inputs.iter().enumerate() {
             if graph.is_linked(&node.id, &port.name)
                 || matches!(port.kind, PortType::Image | PortType::Series)
+                || slider_values(node, &node_type).is_some() && port.name == "value"
             {
                 continue;
             }

@@ -1,7 +1,9 @@
 //! What a person types into an input box, and what the box shows.
 
-use element_51_core::fields::{field_label, format_value, parse_input};
-use element_51_core::{Graph, Link, PlacedNode, PortRef, PortType};
+use element_51_core::fields::{
+    SliderValues, field_label, format_value, parse_input, slider_values,
+};
+use element_51_core::{CardDisplay, Graph, Link, NodeType, PlacedNode, Port, PortRef, PortType};
 use serde_json::json;
 
 #[test]
@@ -185,4 +187,87 @@ fn a_value_that_fills_the_box_leaves_no_room_for_the_source() {
     assert_eq!(share_room(80.0, 40.0, 60.0, 6.0), (60.0, 0.0));
     assert_eq!(share_room(54.0, 40.0, 60.0, 6.0), (54.0, 0.0));
     assert_eq!(share_room(10.0, 10.0, 0.0, 6.0), (0.0, 0.0));
+}
+
+fn slider_type(display: CardDisplay) -> NodeType {
+    let float = |name: &str| Port {
+        name: name.to_string(),
+        kind: PortType::Float,
+    };
+    NodeType {
+        job: false,
+        name: "Slider".to_string(),
+        inputs: vec![float("value"), float("minimum"), float("maximum")],
+        outputs: vec![float("out")],
+        defaults: [
+            ("value".to_string(), json!(0.0)),
+            ("minimum".to_string(), json!(-10.0)),
+            ("maximum".to_string(), json!(10.0)),
+        ]
+        .into_iter()
+        .collect(),
+        category: "Input nodes".to_string(),
+        display,
+        variadic: Default::default(),
+    }
+}
+
+fn slider_node(values: &[(&str, f64)]) -> PlacedNode {
+    PlacedNode {
+        id: "n1".to_string(),
+        node_type: "Slider".to_string(),
+        x: 0.0,
+        y: 0.0,
+        values: values
+            .iter()
+            .map(|(name, value)| ((*name).to_string(), json!(*value)))
+            .collect(),
+        width: None,
+        display_height: None,
+        colours: Default::default(),
+    }
+}
+
+#[test]
+fn a_slider_with_no_values_of_its_own_shows_the_defaults() {
+    let shown = slider_values(&slider_node(&[]), &slider_type(CardDisplay::Slider));
+    assert_eq!(
+        shown,
+        Some(SliderValues {
+            value: 0.0,
+            minimum: -10.0,
+            maximum: 10.0,
+            step: 0.2
+        })
+    );
+}
+
+#[test]
+fn a_slider_shows_its_own_values_and_a_hundredth_of_the_range_as_the_step() {
+    let node = slider_node(&[("value", 3.2), ("minimum", 0.0), ("maximum", 5.0)]);
+    let shown = slider_values(&node, &slider_type(CardDisplay::Slider)).unwrap();
+    assert_eq!((shown.value, shown.minimum, shown.maximum), (3.2, 0.0, 5.0));
+    assert!((shown.step - 0.05).abs() < 1e-12);
+}
+
+#[test]
+fn only_a_slider_card_has_slider_values() {
+    let node = slider_node(&[]);
+    assert_eq!(slider_values(&node, &slider_type(CardDisplay::None)), None);
+}
+
+#[test]
+fn an_empty_range_has_no_slider_to_move() {
+    let node = slider_node(&[("minimum", 5.0), ("maximum", 5.0)]);
+    assert_eq!(
+        slider_values(&node, &slider_type(CardDisplay::Slider)),
+        None
+    );
+}
+
+#[test]
+fn a_slider_type_without_a_default_and_a_value_has_no_slider() {
+    let mut node_type = slider_type(CardDisplay::Slider);
+    node_type.defaults.remove("maximum");
+    assert_eq!(slider_values(&slider_node(&[]), &node_type), None);
 }

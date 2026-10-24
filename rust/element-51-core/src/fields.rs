@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::{NodeOutcome, PortRef, PortType, Status};
+use crate::{CardDisplay, NodeOutcome, NodeType, PlacedNode, PortRef, PortType, Status};
 
 /// Read what a person typed for an input of type `kind`.
 ///
@@ -88,4 +88,37 @@ pub fn share_room(value_width: f64, source_width: f64, room: f64, gap: f64) -> (
     }
     let value_room = value_width.min(room).max(0.0);
     (value_room, (room - value_room - gap).max(0.0))
+}
+
+/// What a slider card's control shows: its value, its range and the size of one
+/// arrow-key step.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SliderValues {
+    pub value: f64,
+    pub minimum: f64,
+    pub maximum: f64,
+    /// A hundredth of the range.
+    pub step: f64,
+}
+
+/// The slider of `node`, from its own values or the type's defaults. None for
+/// a card that is not a slider, for a number that is missing, and for a range
+/// that is empty (Python reports that one on the card; there is nothing to move).
+pub fn slider_values(node: &PlacedNode, node_type: &NodeType) -> Option<SliderValues> {
+    if node_type.display != CardDisplay::Slider {
+        return None;
+    }
+    let number = |name: &str| {
+        node.values
+            .get(name)
+            .or_else(|| node_type.defaults.get(name))
+            .and_then(Value::as_f64)
+    };
+    let (value, minimum, maximum) = (number("value")?, number("minimum")?, number("maximum")?);
+    (minimum < maximum).then_some(SliderValues {
+        value,
+        minimum,
+        maximum,
+        step: (maximum - minimum) / 100.0,
+    })
 }

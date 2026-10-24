@@ -23,6 +23,7 @@ mod pictures;
 mod run_ui;
 mod save_csv;
 mod save_png;
+mod slider_ui;
 mod source_ui;
 mod swatch_ui;
 mod theme_ui;
@@ -57,6 +58,7 @@ use input::{Gesture, on_key_down, on_mouse_down, on_mouse_move, on_mouse_up, on_
 use menu_keys::{on_card_menu_key, on_menu_key, on_menu_search_key};
 use menu_ui::{on_card_menu_click, on_context_menu, on_menu_click, on_menu_hover, on_menu_search};
 use pictures::Pictures;
+use slider_ui::sync_sliders;
 use source_ui::{close_source, on_press_outside, on_source_key};
 use swatch_ui::sync_swatches;
 use theme_ui::{
@@ -351,6 +353,7 @@ pub(crate) fn redraw(shared: &Shared) {
     draw_canvas(shared);
     sync_fields(shared);
     sync_swatches(shared);
+    sync_sliders(shared);
 }
 
 /// Hide the error banner.

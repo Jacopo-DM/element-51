@@ -71,6 +71,10 @@ canvas { display: block; width: 100%; height: 100%; }
 #swatches button[hidden] { display: none; }
 #swatches input[data-low] { outline: 2px solid var(--refused); outline-offset: 1px; }
 #swatches input:focus-visible, #swatches button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+#sliders { position: fixed; left: 0; top: 0; width: 0; height: 0; }
+#sliders input { position: fixed; box-sizing: border-box; margin: 0; padding: 0;
+    accent-color: var(--accent); cursor: pointer; background: transparent; }
+#sliders input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 #fields input[type=checkbox] { padding: 0; accent-color: var(--accent); }
 #menu { position: fixed; display: flex; flex-direction: column; min-width: var(--menu-min-width);
     background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: var(--menu-radius); padding: var(--menu-pad) 0;
@@ -152,6 +156,7 @@ canvas { display: block; width: 100%; height: 100%; }
 </form>
 <div id="fields"></div>
 <div id="swatches"></div>
+<div id="sliders"></div>
 <div id="menu" hidden>
 <input id="menu-search" type="search" placeholder="Search nodes" aria-label="Search nodes" autocomplete="off" spellcheck="false">
 <div id="menu-tree"></div>
