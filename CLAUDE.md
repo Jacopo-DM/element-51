@@ -42,7 +42,7 @@ has no WASM target and is not used. Every Rust command below is prefixed with
 | Rust lint | `R cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings` | about 1 s warm |
 | Rust tests (native) | `R cargo test --manifest-path rust/Cargo.toml --no-fail-fast` | about 1 s warm; without the flag the files after a failing one do not run |
 | Build the browser layer | `uv run python tools/build_wasm.py` | about 4 s; rewrites `src/element_51/web/` |
-| Structure numbers | `uv run python tools/measure_structure.py [--jscpd <binary>]` | under 1 s; files and lines, files over 400 lines, modules over 5 imports; jscpd is not a dependency (downloaded by hand, see DESIGN.md) |
+| Structure numbers | `uv run python tools/measure_structure.py [--jscpd <binary>]` | under 1 s; files and lines, files over 400 lines, modules over 5 imports; jscpd is not a dependency (Homebrew has it: `brew install jscpd`, 5.4.2 installed 2026-10-24, at `/opt/homebrew/bin/jscpd`; earlier a binary downloaded by hand, see DESIGN.md) |
 | Time the Python side | `uv run python tools/bench_python.py` | about 30 s; build, run and snapshot of a 2000-node chain, median and range of 11 runs; `--profile` prints a cProfile |
 | Time the page | `uv run python tools/bench_page.py [--workload nodes\|pictures\|chart]` (`nodes` is the default; the other two need Run pressed first), open http://127.0.0.1:8767, then run `tools/bench_page.js` in the page (Claude: the browser pane's javascript tool) | redraw ms per wheel event and page load ms; Ctrl+C stops the server; the pane may need its tab fronted |
 | Serve every page state | `uv run python tools/ui_states.py [--theme antimony-light]`, open http://127.0.0.1:8768, then `await uiState("menu")` from `tools/ui_states.js` in the page | port 8768; states `default`, `menu`, `flyout`, `search`, `search-none`, `card-menu`, `run`; `--graph display` serves a picture, a chart and a Plot instead; `--graph job` serves a slow job, a quick one into a Plot and a failing one; Claude takes the screenshot in the browser pane |
@@ -225,7 +225,7 @@ difference on 2026-10-23.
     out in the folder; then commit from a `git worktree add <scratchpad>/wt -b <branch> main`
     and, once `main` is checked out and clean, `git merge --ff-only <branch>` there).
 - The permission check refuses a push or a branch delete unless the user's message says it in
-    explicit words: a bare "Go" was refused three times, and "Push main to origin." or "Push main to
+    explicit words: a bare "Go" was refused three times (a button "Push now (Recommended)" that answered a question naming the push was accepted on 2026-10-24), and "Push main to origin." or "Push main to
     origin, then delete the local branches X and Y (both merged into main)." worked. Ask with
     buttons whose message is that sentence, and keep a push in a command of its own (a push chained
     behind a commit and a merge was refused as a whole).

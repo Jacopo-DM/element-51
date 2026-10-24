@@ -1626,8 +1626,8 @@ public area has a notebook or a row saying none yet", and a test keeps it true.
 
 - input-nodes (2026-10-24): the user's design is a separate Slider node (not a mode of
     Variable) under `Input nodes`; the node types are four typed Variables named `Float`,
-    `Integer`, `Text` and `Flag` because a port has one fixed type (Claude's recommendation,
-    to be confirmed by the user with the task list); the slider is an HTML range input over
+    `Integer`, `Text` and `Flag` because a port has one fixed type (Claude's recommendation;
+    the user approved the task list with it, 2026-10-24); the slider is an HTML range input over
     the canvas, not a canvas drawing: the value boxes and colour boxes are already HTML
     controls over the canvas, and a native range input brings the keyboard (arrow keys,
     Home, End), focus ring and the role `slider` for free (this reverses the draft's
@@ -2156,6 +2156,29 @@ have to go through `tools/compress_images.py`).
 
 ## Gotchas
 
+- `ruff format` formats the Python blocks inside `docs/*.md` too, so a hand-aligned trailing comment in a
+    docs code block is collapsed (seen on `docs/visual-ports.md`, 2026-10-24). Write the block as ruff
+    would, or run `uv run --locked ruff format` before the commit and keep what it changes.
+- A test of an example must not follow a constant the example tells the reader to edit. The Stop hook
+    failed on 2026-10-24 when the user set `DEFAULTS = False` in `examples/d_editor/d8_default_nodes.py`
+    for their try-out and `tests/test_examples.py` called `build_app()` with no argument; the test now
+    passes `defaults=True`. The user's editor also re-sorted that file's imports, which ruff refused.
+- `element-51-web` has no `serde_json` dependency (and none may be added without asking): make a JSON
+    value for an edit with `element_51_core::fields::parse_input(text, PortType::Float)`, as
+    `slider_ui.rs` does.
+- Synthetic key events do not run a native control's default action, so `uiKeysSlider` cannot press the
+    arrow keys of the range input: it drives `input` and `change` events and presses Ctrl+Z on the
+    focused slider (a handle keeps the focus after a drag). `input.rs` `on_key_down` returns early for
+    any focused input; a focused `slider-` input lets Ctrl+Z and Ctrl+Y through to `step_history`.
+- A submenu opens by CSS `:hover` or by the class `open` on its `.submenu` (`index.html`); a synthetic
+    `mouseover` only places the flyout (`menu_ui::on_menu_hover`). `tools/ui_states.js`, state `flyout`,
+    adds `open` to `User defined nodes` and then `Math`, because a nested menu needs both levels open.
+- A slider drag's undo bookkeeping lives in `State::slider_start` (the graph at the drag's first `input`
+    event). It is dropped when the edit is refused, when any undo or redo runs, and when the slider
+    disappears (`slider_ui::sync_sliders`); a stale start would make the next undo jump back to an old
+    graph. The review of `input-nodes` found each of these (2026-10-24).
+- `App.node_types` does not exist (the raw types are `App._node_types()`); a test reads the menu through
+    `App.snapshot().node_types`, which is where the folder prefixes are added.
 - `src/element_51/web/` is generated and git-ignored, so GitHub's pytest job has no copy of it while
     every local run has. A test that needs the page uses the `web_dir` fixture (a fake folder it
     swaps in); a test that starts the page in a child process must hand the child that folder too
