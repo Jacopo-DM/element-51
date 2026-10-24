@@ -5,7 +5,8 @@ tick box, and node types in several menu categories. With `--graph display` it
 is a picture, its negative, two series and a Plot card instead (the states of
 `tools/ui_keys.js`' `uiKeysDisplay`). With `--graph job` it is three job nodes
 and a Plot (the states of `uiKeysJob`: a slow job to stop, a quick one that
-finishes into the Plot, and one that fails). Open the page, then put
+finishes into the Plot, and one that fails). With `--graph slider` it is a
+slider linked to a `sine` node (`uiKeysSlider`). Open the page, then put
 it in a state with `tools/ui_states.js` (which opens the menus, runs the graph
 and shows the error banner). Run it from the repo root: `uv run python
 tools/ui_states.py [--theme antimony-light] [--graph display] [--port 8768]`.
@@ -33,6 +34,7 @@ from element_51 import (
     PlotNode,
     Report,
     Series,
+    Slider,
     node,
     serve,
 )
@@ -301,19 +303,38 @@ def build_job_app() -> App:
     return app
 
 
+def build_slider_app() -> App:
+    """Build the graph: a slider at 1.0 linked to a `sine` node.
+
+    Returns
+    -------
+    App
+        An app whose first node is the `Slider` (n1) and the second `sine` (n2).
+    """
+    app = App([sine])
+    slider = app.add_node(Slider, x=60.0, y=60.0)
+    sine_node = app.add_node(sine, x=420.0, y=60.0)
+    app.add_link(slider, "out", sine_node, "angle")
+    app.apply(SetValue(node=slider, port="value", value=1.0))
+    return app
+
+
 def main() -> None:
     """Serve the graph."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--theme", default="antimony")
     parser.add_argument("--port", type=int, default=PORT)
     parser.add_argument(
-        "--graph", choices=["standard", "display", "job"], default="standard"
+        "--graph",
+        choices=["standard", "display", "job", "slider"],
+        default="standard",
     )
     args = parser.parse_args()
     builders = {
         "standard": build_app,
         "display": build_display_app,
         "job": build_job_app,
+        "slider": build_slider_app,
     }
     app = builders[args.graph]()
     serve(app, port=args.port, theme=args.theme)

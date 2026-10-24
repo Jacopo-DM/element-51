@@ -917,3 +917,60 @@ fn plot_outcome_for(node: &str, lines: &[(&str, &[Option<f64>])]) -> NodeOutcome
         ..plot_outcome(lines)
     }
 }
+
+fn slider_card(values: &[(&str, f64)]) -> (Graph, Vec<NodeType>) {
+    let float = |name: &str| port(name, PortType::Float);
+    let node_type = NodeType {
+        job: false,
+        name: "Slider".to_string(),
+        inputs: vec![float("value"), float("minimum"), float("maximum")],
+        outputs: vec![float("out")],
+        defaults: [
+            ("value".to_string(), serde_json::json!(0.0)),
+            ("minimum".to_string(), serde_json::json!(-10.0)),
+            ("maximum".to_string(), serde_json::json!(10.0)),
+        ]
+        .into_iter()
+        .collect(),
+        category: "Input nodes".to_string(),
+        display: element_51_core::CardDisplay::Slider,
+        variadic: Default::default(),
+    };
+    let node = PlacedNode {
+        id: "n1".to_string(),
+        node_type: "Slider".to_string(),
+        x: 0.0,
+        y: 0.0,
+        values: values
+            .iter()
+            .map(|(name, value)| ((*name).to_string(), serde_json::json!(*value)))
+            .collect(),
+        width: None,
+        display_height: None,
+        colours: Default::default(),
+    };
+    (
+        Graph {
+            nodes: vec![node],
+            links: vec![],
+        },
+        vec![node_type],
+    )
+}
+
+#[test]
+fn a_slider_card_says_its_value_and_range() {
+    let (graph, node_types) = slider_card(&[("value", 3.2)]);
+    let items = list_nodes(&graph, &node_types);
+    assert_eq!(
+        items[0].label,
+        "n1, Slider. 3 inputs, 1 output. Value 3.2, from -10 to 10."
+    );
+}
+
+#[test]
+fn a_slider_card_with_an_empty_range_says_only_what_the_other_cards_say() {
+    let (graph, node_types) = slider_card(&[("minimum", 4.0), ("maximum", 4.0)]);
+    let items = list_nodes(&graph, &node_types);
+    assert_eq!(items[0].label, "n1, Slider. 3 inputs, 1 output.");
+}

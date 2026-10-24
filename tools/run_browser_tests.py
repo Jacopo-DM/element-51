@@ -55,7 +55,7 @@ BUILD_COMMAND = "uv run python tools/build_wasm.py"
 NAME_WIDTH = 16
 MILLISECONDS = 1000
 
-type Graph = Literal["standard", "display", "job"]
+type Graph = Literal["standard", "display", "job", "slider"]
 type Status = Literal["PASS", "FAIL"]
 type Row = tuple[str, bool, str]
 
@@ -98,6 +98,7 @@ WALKS = (
     Walk(function="uiKeysDisplay", graph="display"),
     Walk(function="uiKeysJob", graph="job"),
     Walk(function="uiKeysAuto", graph="standard"),
+    Walk(function="uiKeysSlider", graph="slider"),
 )
 
 

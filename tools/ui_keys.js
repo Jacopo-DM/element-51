@@ -731,3 +731,69 @@ async function uiKeysAuto() {
         rows,
     };
 }
+
+// The same kind of walk for a slider card. Run it in the page of
+// `uv run python tools/ui_states.py --graph slider` (a fresh server, a fresh page,
+// the empty canvas clicked for focus), then `await uiKeysSlider()`. It moves the
+// slider of n1 and undoes it; a second page socket reads what Python holds. Each row
+// is [step, passed, what was seen].
+async function uiKeysSlider() {
+    const rows = [];
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const check = (step, passed, seen) => rows.push([step, Boolean(passed), String(seen)]);
+    const slider = document.getElementById("slider-n1");
+    const status = document.getElementById("status");
+    const label = () => document.getElementById("tree-n1").getAttribute("aria-label");
+    const press = async (key, shift) => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key, ctrlKey: true, shiftKey: Boolean(shift), bubbles: true, cancelable: true }));
+        await wait(400);
+    };
+    // The value of n1 in the graph Python holds, read from a snapshot on a second socket.
+    const held = () =>
+        new Promise((resolve) => {
+            const socket = new WebSocket(location.href.replace(/^http/, "ws").replace(/\/?$/, "/ws"));
+            socket.onmessage = (event) => {
+                const node = JSON.parse(event.data).graph.nodes.find((n) => n.id === "n1");
+                socket.close();
+                resolve(node.values.value);
+            };
+            socket.onerror = () => resolve("no socket");
+        });
+    const drag = async (values) => {
+        for (const value of values) {
+            slider.value = String(value);
+            slider.dispatchEvent(new Event("input", { bubbles: true }));
+            await wait(60);
+        }
+        slider.dispatchEvent(new Event("change", { bubbles: true }));
+        await wait(400);
+    };
+
+    check("the slider is a range input", Boolean(slider) && slider.type === "range", slider && slider.type);
+    check("it is named after its node and port", slider.getAttribute("aria-label") === "value of node n1", slider.getAttribute("aria-label"));
+    check("its range and step come from the card", [slider.min, slider.max, slider.step].join(" ") === "-10 10 0.2", [slider.min, slider.max, slider.step].join(" "));
+    const box = slider.getBoundingClientRect();
+    check("it can take the focus and is on the screen", slider.tabIndex >= 0 && getComputedStyle(slider).visibility !== "hidden" && box.width > 0 && box.height > 0, box.width + "x" + box.height);
+    check("the slider's value row has no text box", document.getElementById("field-n1-value") === null, "no field-n1-value");
+    check("the minimum and maximum keep their boxes", document.getElementById("field-n1-minimum") !== null && document.getElementById("field-n1-maximum") !== null, "boxes");
+    check("the hidden tree says the value and the range", label().includes("Value 1, from -10 to 10."), label());
+    check("Python holds 1 at the start", (await held()) === 1, await held());
+
+    await drag([2, 3, 4, 5]);
+    check("a drag sets the value in Python", (await held()) === 5, await held());
+    check("the hidden tree follows the hand", label().includes("Value 5, from -10 to 10."), label());
+    slider.blur();
+    await press("z");
+    check("one undo takes the whole drag back", slider.value === "1" && (await held()) === 1, slider.value + " / " + (await held()));
+    check("the status line says it undid a change", status.textContent === "Undid the last change", status.textContent);
+    await press("z");
+    check("a second undo changes nothing", slider.value === "1" && (await held()) === 1, slider.value);
+    await press("z", true);
+    check("redo puts the drag back in one step", slider.value === "5" && (await held()) === 5, slider.value + " / " + (await held()));
+
+    return {
+        passed: rows.filter((row) => row[1]).length,
+        failed: rows.filter((row) => !row[1]).length,
+        rows,
+    };
+}

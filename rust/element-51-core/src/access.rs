@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 
 use crate::announce::{end_name, join_names, plural};
 use crate::display::{last_value, line_names, short_number};
+use crate::fields::slider_values;
 use crate::job::state_text;
 use crate::layout::{Rect, Side, node_rect};
 use crate::rows::type_of;
@@ -155,7 +156,7 @@ fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> N
             ports: Vec::new(),
         };
     };
-    let label = format!(
+    let mut label = format!(
         "{}, {}. {} {}, {} {}.",
         node.id,
         node_type.name,
@@ -164,6 +165,14 @@ fn describe_node(graph: &Graph, node_types: &[NodeType], node: &PlacedNode) -> N
         node_type.outputs.len(),
         plural(node_type.outputs.len(), "output"),
     );
+    if let Some(slider) = slider_values(node, &node_type) {
+        label.push_str(&format!(
+            " Value {}, from {} to {}.",
+            short_number(slider.value),
+            short_number(slider.minimum),
+            short_number(slider.maximum),
+        ));
+    }
     NodeItem {
         id: node.id.clone(),
         label,
